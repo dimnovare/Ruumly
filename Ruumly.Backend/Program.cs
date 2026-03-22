@@ -7,11 +7,12 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.Middleware;
+using Ruumly.Backend.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ─── Database ───
-builder.Services.AddDbContext<AppDbContext>(options =>
+builder.Services.AddDbContext<RuumlyDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // ─── JWT Authentication ───
