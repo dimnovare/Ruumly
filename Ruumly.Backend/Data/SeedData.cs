@@ -824,7 +824,7 @@ public static class SeedData
                 ApproverRole     = "admin",
                 PostingChannel   = PostingMode.Manual,
                 Priority         = 5,
-                IsActive         = false,
+                IsActive         = true,
                 CreatedAt        = Utc(2025, 9, 1),
                 UpdatedAt        = Utc(2025, 9, 1),
             },
