@@ -12,7 +12,8 @@ namespace Ruumly.Backend.Services.Implementations;
 public class OrderService(
     RuumlyDbContext db,
     IIntegrationDispatchService dispatchService,
-    INotificationService notificationService) : IOrderService
+    INotificationService notificationService,
+    IInvoiceService invoiceService) : IOrderService
 {
     // ─── Queries ──────────────────────────────────────────────────────────────
 
@@ -243,7 +244,6 @@ public class OrderService(
 
         var booking = await db.Bookings
             .Include(b => b.Listing)
-            .Include(b => b.Invoice)
             .FirstOrDefaultAsync(b => b.Id == order.BookingId);
 
         if (booking is not null)
@@ -260,20 +260,8 @@ public class OrderService(
                 CreatedAt = DateTime.UtcNow,
             });
 
-            // Auto-generate invoice if not yet created
-            if (booking.Invoice is null)
-            {
-                db.Invoices.Add(new Invoice
-                {
-                    Id          = Guid.NewGuid(),
-                    BookingId   = booking.Id,
-                    Amount      = booking.Total,
-                    Status      = InvoiceStatus.Pending,
-                    IssuedAt    = DateTime.UtcNow,
-                    Description = $"{booking.Listing?.Title ?? order.ListingTitle} — {booking.Duration}",
-                    CreatedAt   = DateTime.UtcNow,
-                });
-            }
+            // Auto-generate invoice (idempotent — skips if already exists)
+            await invoiceService.GenerateAsync(booking.Id);
         }
 
         await db.SaveChangesAsync();
