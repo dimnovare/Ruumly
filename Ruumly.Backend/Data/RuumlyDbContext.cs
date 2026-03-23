@@ -21,6 +21,7 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<OrderRoutingRule> OrderRoutingRules => Set<OrderRoutingRule>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<PlatformSetting> PlatformSettings => Set<PlatformSetting>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -144,6 +145,9 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
             .WithOne(e => e.IntegrationSettings)
             .HasForeignKey<IntegrationSettings>(e => e.SupplierId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // ─── PlatformSetting primary key ───
+        model.Entity<PlatformSetting>().HasKey(s => s.Key);
 
         // ─── Decimal precision ───
         foreach (var prop in model.Model.GetEntityTypes()

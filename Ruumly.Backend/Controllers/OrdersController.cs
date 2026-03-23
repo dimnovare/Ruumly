@@ -81,12 +81,12 @@ public class OrdersController(IOrderService orderService) : ControllerBase
     /// Confirms an order (supplier webhook or admin manual confirmation).
     /// </summary>
     [HttpPost("{id:guid}/confirm")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Provider")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Confirm(Guid id)
     {
-        var order = await orderService.ConfirmAsync(id);
+        var order = await orderService.ConfirmAsync(id, User.GetUserId());
         return Ok(order);
     }
 

@@ -11,6 +11,6 @@ public interface IOrderService
     Task<OrderDto?>       GetByBookingIdAsync(Guid bookingId);
     Task<OrderDto>        ApproveAsync(Guid id, Guid approvedByUserId);
     Task<OrderDto>        RejectAsync(Guid id, string reason, Guid rejectedByUserId);
-    Task<OrderDto>        ConfirmAsync(Guid id);
+    Task<OrderDto>        ConfirmAsync(Guid id, Guid confirmedByUserId);
     Task<OrderDto>        UpdateStatusAsync(Guid id, UpdateOrderStatusRequest request);
 }

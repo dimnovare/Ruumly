@@ -26,6 +26,7 @@ public static class SeedData
             await SeedListingsAsync(db);
             await SeedUsersAsync(db);
             await SeedRoutingRulesAsync(db);
+            await SeedPlatformSettingsAsync(db);
             Console.WriteLine("[Seed] Complete.");
         }
         catch (Exception ex)
@@ -832,6 +833,46 @@ public static class SeedData
 
         await db.SaveChangesAsync();
         Console.WriteLine("[Seed] RoutingRules done.");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // PLATFORM SETTINGS
+    // ─────────────────────────────────────────────────────────────────────────
+    private static async Task SeedPlatformSettingsAsync(RuumlyDbContext db)
+    {
+        if (await db.PlatformSettings.AnyAsync()) return;
+
+        var defaults = new Dictionary<string, (string value, string note)>
+        {
+            ["siteName"]            = ("Ruumly",         "Platform name"),
+            ["siteEmail"]           = ("info@ruumly.eu", "Contact email"),
+            ["sitePhone"]           = ("+372 5555 1234", "Contact phone"),
+            ["defaultLanguage"]     = ("et",             "Default UI language"),
+            ["currency"]            = ("EUR",            "Currency code"),
+            ["commissionRate"]      = ("5",              "Platform commission % on base price"),
+            ["extrasMarginRate"]    = ("0",              "Platform margin % on extras (0 = pass-through)"),
+            ["warehouseMarginRate"] = ("5",              "Platform savings % shown to customer for warehouse"),
+            ["movingMarginRate"]    = ("5",              "Platform savings % shown to customer for moving"),
+            ["trailerMarginRate"]   = ("5",              "Platform savings % shown to customer for trailer"),
+            ["packingMargin"]       = ("0",              "Margin % on packing extra"),
+            ["loadingMargin"]       = ("0",              "Margin % on loading extra"),
+            ["insuranceMargin"]     = ("0",              "Margin % on insurance extra"),
+            ["forkliftMargin"]      = ("0",              "Margin % on forklift extra"),
+            ["emailNotifications"]  = ("true",           "Send email notifications"),
+            ["maintenanceMode"]     = ("false",          "Put site in maintenance mode"),
+            ["autoApproveListings"] = ("false",          "Auto-approve new provider listings"),
+        };
+
+        db.PlatformSettings.AddRange(defaults.Select(kv => new PlatformSetting
+        {
+            Key       = kv.Key,
+            Value     = kv.Value.value,
+            Note      = kv.Value.note,
+            UpdatedAt = DateTime.UtcNow,
+            UpdatedBy = "system",
+        }));
+        await db.SaveChangesAsync();
+        Console.WriteLine("[Seed] Platform settings seeded.");
     }
 
     // ─────────────────────────────────────────────────────────────────────────

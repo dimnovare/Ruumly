@@ -214,10 +214,13 @@ public class OrderService(
 
     // ─── Confirm (webhook / admin manual) ────────────────────────────────────
 
-    public async Task<OrderDto> ConfirmAsync(Guid id)
+    public async Task<OrderDto> ConfirmAsync(Guid id, Guid confirmedByUserId)
     {
         var order = await LoadOrder(id)
             ?? throw new NotFoundException($"Order {id} not found.");
+
+        var confirmer     = await db.Users.FindAsync(confirmedByUserId);
+        var confirmerName = confirmer?.Name ?? "Partner";
 
         order.Status      = OrderStatus.Confirmed;
         order.ConfirmedAt = DateTime.UtcNow;
@@ -228,9 +231,9 @@ public class OrderService(
             Id        = Guid.NewGuid(),
             OrderId   = order.Id,
             Status    = FulfillmentStatus.Confirmed,
-            Actor     = "system",
-            ActorRole = UserRole.Admin,
-            Detail    = "Partner kinnitas tellimuse",
+            Actor     = confirmerName,
+            ActorRole = confirmer?.Role ?? UserRole.Provider,
+            Detail    = $"Kinnitas: {confirmerName}",
             CreatedAt = DateTime.UtcNow,
         });
 
@@ -240,7 +243,7 @@ public class OrderService(
             OrderId   = order.Id,
             Event     = "Partner kinnitas tellimuse",
             Status    = OrderStatus.Confirmed,
-            Detail    = "Automaatne kinnitus",
+            Detail    = $"Kinnitas: {confirmerName}",
             CreatedAt = DateTime.UtcNow,
         });
 
@@ -261,6 +264,15 @@ public class OrderService(
                 Status    = BookingStatus.Active,
                 CreatedAt = DateTime.UtcNow,
             });
+
+            await notificationService.CreateAsync(
+                booking.UserId,
+                NotificationType.Booking,
+                "Broneering kinnitatud",
+                $"{booking.Listing?.Title ?? "Teenus"} on kinnitatud — teenus on aktiivne",
+                actionUrl:  "/account?tab=bookings",
+                entityId:   booking.Id.ToString(),
+                entityType: "booking");
 
             // Auto-generate invoice (idempotent — skips if already exists)
             await invoiceService.GenerateAsync(booking.Id);

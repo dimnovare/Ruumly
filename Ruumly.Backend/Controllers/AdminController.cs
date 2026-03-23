@@ -387,6 +387,64 @@ public class AdminController(
     }
 
     // ══════════════════════════════════════════════════════════════════════════
+    // PLATFORM SETTINGS
+    // ══════════════════════════════════════════════════════════════════════════
+
+    [HttpGet("settings")]
+    public async Task<IActionResult> GetSettings()
+    {
+        var rows = await db.PlatformSettings
+            .OrderBy(s => s.Key)
+            .ToListAsync();
+
+        var dict = rows.ToDictionary(
+            s => s.Key,
+            s => (object)new
+            {
+                value     = s.Value,
+                note      = s.Note,
+                updatedAt = s.UpdatedAt.ToString("yyyy-MM-dd HH:mm"),
+                updatedBy = s.UpdatedBy,
+            });
+        return Ok(dict);
+    }
+
+    [HttpPatch("settings")]
+    public async Task<IActionResult> PatchSettings([FromBody] Dictionary<string, string> updates)
+    {
+        if (updates is null || updates.Count == 0)
+            return BadRequest(Error("No settings provided"));
+
+        var actor = User.GetUserEmail();
+        foreach (var kv in updates)
+        {
+            var existing = await db.PlatformSettings.FindAsync(kv.Key);
+            if (existing is not null)
+            {
+                existing.Value     = kv.Value;
+                existing.UpdatedAt = DateTime.UtcNow;
+                existing.UpdatedBy = actor;
+            }
+            else
+            {
+                db.PlatformSettings.Add(new PlatformSetting
+                {
+                    Key       = kv.Key,
+                    Value     = kv.Value,
+                    UpdatedAt = DateTime.UtcNow,
+                    UpdatedBy = actor,
+                });
+            }
+        }
+
+        await Audit("settings.updated", actor,
+            string.Join(", ", updates.Keys), null);
+        await db.SaveChangesAsync();
+
+        return Ok(new { updated = updates.Count });
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
     // Helpers
     // ══════════════════════════════════════════════════════════════════════════
 
