@@ -23,6 +23,10 @@ public class Listing
     public ListingBadge? Badge { get; set; }
     public decimal Rating { get; set; }
     public int ReviewCount { get; set; }
+    public decimal? PartnerDiscountRateOverride { get; set; }
+    public decimal? ClientDiscountRateOverride { get; set; }
+    public decimal? VatRate { get; set; }
+    public bool PricesIncludeVat { get; set; } = false;
 
     /// <summary>
     /// JSON array of image URLs. First element is the cover image.

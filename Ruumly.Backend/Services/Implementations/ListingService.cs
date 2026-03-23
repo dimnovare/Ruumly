@@ -128,7 +128,11 @@ public class ListingService(RuumlyDbContext db) : IListingService
         ReviewCount: l.ReviewCount,
         Description: l.Description,
         Images:      DeserializeList(l.ImagesJson),
-        Features:    DeserializeDict(l.FeaturesJson)
+        Features:    DeserializeDict(l.FeaturesJson),
+        PartnerDiscountRateOverride: l.PartnerDiscountRateOverride,
+        ClientDiscountRateOverride:  l.ClientDiscountRateOverride,
+        VatRate:         l.VatRate,
+        PricesIncludeVat: l.PricesIncludeVat
     );
 
     private static string? BadgeToString(ListingBadge? badge) => badge switch

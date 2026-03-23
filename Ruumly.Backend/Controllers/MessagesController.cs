@@ -47,12 +47,12 @@ public class MessagesController(IMessageService messageService) : ControllerBase
     /// Marks all messages from the other party as read in the given thread.
     /// </summary>
     [HttpPost("mark-read")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> MarkRead([FromQuery] Guid bookingId)
     {
         await messageService.MarkReadAsync(bookingId, User.GetUserId(), User.GetUserRole());
-        return Ok();
+        return NoContent();
     }
 }

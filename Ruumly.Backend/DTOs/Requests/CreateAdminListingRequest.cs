@@ -1,0 +1,44 @@
+namespace Ruumly.Backend.DTOs.Requests;
+
+public record CreateAdminListingRequest(
+    string              Type,
+    string              Title,
+    Guid                SupplierId,
+    string              Address,
+    string              City,
+    double              Lat,
+    double              Lng,
+    decimal             PriceFrom,
+    string              PriceUnit,
+    bool                AvailableNow,
+    string?             Badge,
+    string              Description,
+    List<string>?       Images,
+    Dictionary<string, object>? Features,
+    decimal?            PartnerDiscountRateOverride,
+    decimal?            ClientDiscountRateOverride,
+    decimal?            VatRate,
+    bool                PricesIncludeVat
+);
+
+public record PatchAdminListingRequest(
+    string?             Type,
+    string?             Title,
+    Guid?               SupplierId,
+    string?             Address,
+    string?             City,
+    double?             Lat,
+    double?             Lng,
+    decimal?            PriceFrom,
+    string?             PriceUnit,
+    bool?               AvailableNow,
+    bool?               IsActive,
+    string?             Badge,
+    string?             Description,
+    List<string>?       Images,
+    Dictionary<string, object>? Features,
+    decimal?            PartnerDiscountRateOverride,
+    decimal?            ClientDiscountRateOverride,
+    decimal?            VatRate,
+    bool?               PricesIncludeVat
+);

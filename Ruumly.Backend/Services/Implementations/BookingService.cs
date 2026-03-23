@@ -70,10 +70,24 @@ public class BookingService(
 
         // 2. Calculate pricing (mirrors pricing.ts formulas exactly)
         var basePrice     = listing.PriceFrom;
-        var platformPrice = Math.Round(basePrice * 0.95m);
+
+        // Effective client discount: listing override takes precedence over supplier default
+        var supplier              = listing.Supplier;
+        var clientDiscountRate    = listing.ClientDiscountRateOverride ?? supplier.ClientDiscountRate;
+        var discountMultiplier    = 1m - (clientDiscountRate / 100m);
+        var discountedBase        = basePrice * discountMultiplier;
+        var platformPrice         = Math.Round(discountedBase * 0.95m);
+
         var extrasTotal   = request.Extras
             .Sum(e => ExtrasPrices.TryGetValue(e, out var p) ? p : 0m);
-        var total         = platformPrice + extrasTotal;
+
+        // VAT calculation
+        var vatRate    = listing.VatRate ?? 0m;
+        var subtotal   = platformPrice + extrasTotal;
+        var vatAmount  = listing.PricesIncludeVat
+            ? Math.Round(subtotal * vatRate / (100m + vatRate), 2)
+            : Math.Round(subtotal * vatRate / 100m, 2);
+        var total = listing.PricesIncludeVat ? subtotal : subtotal + vatAmount;
 
         if (!DateTime.TryParse(request.StartDate, out var startDate))
             throw new ArgumentException("Invalid startDate format. Use yyyy-MM-dd.");
@@ -100,6 +114,7 @@ public class BookingService(
             BasePrice     = basePrice,
             PlatformPrice = platformPrice,
             ExtrasTotal   = extrasTotal,
+            VatAmount     = vatAmount,
             Total         = total,
             ContactName   = request.ContactName,
             ContactEmail  = request.ContactEmail,
@@ -155,6 +170,7 @@ public class BookingService(
         BasePrice:    b.BasePrice,
         PlatformPrice: b.PlatformPrice,
         ExtrasTotal:  b.ExtrasTotal,
+        VatAmount:    b.VatAmount,
         Total:        b.Total,
         CreatedAt:    b.CreatedAt.ToString("yyyy-MM-dd HH:mm"),
         Timeline:     b.Timeline

@@ -17,6 +17,8 @@ public class Supplier
     public string? RecipientEmail { get; set; }
     public bool IsActive { get; set; } = true;
     public IntegrationHealth IntegrationHealth { get; set; } = IntegrationHealth.Healthy;
+    public decimal PartnerDiscountRate { get; set; } = 0;
+    public decimal ClientDiscountRate { get; set; } = 0;
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

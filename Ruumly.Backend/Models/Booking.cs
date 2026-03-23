@@ -29,6 +29,7 @@ public class Booking
     public decimal BasePrice { get; set; }
     public decimal PlatformPrice { get; set; }
     public decimal ExtrasTotal { get; set; }
+    public decimal VatAmount { get; set; }
     public decimal Total { get; set; }
     public string? ContactName { get; set; }
     public string? ContactEmail { get; set; }

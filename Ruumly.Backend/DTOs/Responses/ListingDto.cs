@@ -17,5 +17,9 @@ public record ListingDto(
     int              ReviewCount,
     string           Description,
     List<string>     Images,
-    Dictionary<string, object> Features
+    Dictionary<string, object> Features,
+    decimal?         PartnerDiscountRateOverride,
+    decimal?         ClientDiscountRateOverride,
+    decimal?         VatRate,
+    bool             PricesIncludeVat
 );

@@ -25,22 +25,22 @@ public class NotificationsController(INotificationService notificationService) :
     /// Marks a single notification as read. 404 if it belongs to another user.
     /// </summary>
     [HttpPatch("{id:guid}/read")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> MarkRead(Guid id)
     {
         await notificationService.MarkReadAsync(id, User.GetUserId());
-        return Ok();
+        return NoContent();
     }
 
     /// <summary>
     /// Marks all of the current user's notifications as read.
     /// </summary>
     [HttpPost("read-all")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> MarkAllRead()
     {
         await notificationService.MarkAllReadAsync(User.GetUserId());
-        return Ok();
+        return NoContent();
     }
 }

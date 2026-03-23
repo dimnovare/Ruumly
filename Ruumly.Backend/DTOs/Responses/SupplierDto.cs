@@ -13,6 +13,8 @@ public record SupplierDto(
     string? RecipientEmail,
     bool    IsActive,
     string  IntegrationHealth,
+    decimal PartnerDiscountRate,
+    decimal ClientDiscountRate,
     string? Notes,
     string  CreatedAt,
     string  UpdatedAt,

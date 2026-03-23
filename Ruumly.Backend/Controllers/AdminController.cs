@@ -325,6 +325,146 @@ public class AdminController(
     }
 
     // ══════════════════════════════════════════════════════════════════════════
+    // LISTINGS
+    // ══════════════════════════════════════════════════════════════════════════
+
+    [HttpGet("listings")]
+    public async Task<IActionResult> GetListings()
+    {
+        var listings = await db.Listings
+            .Include(l => l.Supplier)
+            .OrderByDescending(l => l.CreatedAt)
+            .ToListAsync();
+        return Ok(listings.Select(MapListing));
+    }
+
+    [HttpGet("listings/{id:guid}")]
+    public async Task<IActionResult> GetListing(Guid id)
+    {
+        var listing = await db.Listings
+            .Include(l => l.Supplier)
+            .FirstOrDefaultAsync(l => l.Id == id);
+        if (listing is null) return NotFound(Error("Listing not found"));
+        return Ok(MapListing(listing));
+    }
+
+    [HttpPost("listings")]
+    public async Task<IActionResult> CreateListing([FromBody] CreateAdminListingRequest body)
+    {
+        if (!Enum.TryParse<ListingType>(body.Type, ignoreCase: true, out var type))
+            return BadRequest(Error($"Invalid listing type '{body.Type}'."));
+
+        ListingBadge? badge = null;
+        if (!string.IsNullOrWhiteSpace(body.Badge))
+        {
+            var normalized = body.Badge.Replace("-", "");
+            if (Enum.TryParse<ListingBadge>(normalized, ignoreCase: true, out var b)) badge = b;
+        }
+
+        var supplier = await db.Suppliers.FindAsync(body.SupplierId);
+        if (supplier is null) return NotFound(Error("Supplier not found"));
+
+        var listing = new Listing
+        {
+            Id                          = Guid.NewGuid(),
+            Type                        = type,
+            Title                       = body.Title,
+            SupplierId                  = body.SupplierId,
+            Address                     = body.Address,
+            City                        = body.City,
+            Lat                         = body.Lat,
+            Lng                         = body.Lng,
+            PriceFrom                   = body.PriceFrom,
+            PriceUnit                   = body.PriceUnit,
+            AvailableNow                = body.AvailableNow,
+            IsActive                    = true,
+            Badge                       = badge,
+            Description                 = body.Description,
+            ImagesJson                  = System.Text.Json.JsonSerializer.Serialize(body.Images ?? []),
+            FeaturesJson                = System.Text.Json.JsonSerializer.Serialize(body.Features ?? new Dictionary<string, object>()),
+            PartnerDiscountRateOverride = body.PartnerDiscountRateOverride,
+            ClientDiscountRateOverride  = body.ClientDiscountRateOverride,
+            VatRate                     = body.VatRate,
+            PricesIncludeVat            = body.PricesIncludeVat,
+            CreatedAt                   = DateTime.UtcNow,
+            UpdatedAt                   = DateTime.UtcNow,
+        };
+
+        db.Listings.Add(listing);
+        await Audit("listing.created", User.GetUserEmail(), listing.Title, null);
+        await db.SaveChangesAsync();
+
+        listing.Supplier = supplier;
+        return CreatedAtAction(nameof(GetListing), new { id = listing.Id }, MapListing(listing));
+    }
+
+    [HttpPatch("listings/{id:guid}")]
+    public async Task<IActionResult> PatchListing(Guid id, [FromBody] PatchAdminListingRequest body)
+    {
+        var listing = await db.Listings
+            .Include(l => l.Supplier)
+            .FirstOrDefaultAsync(l => l.Id == id);
+        if (listing is null) return NotFound(Error("Listing not found"));
+
+        if (body.Type is not null && Enum.TryParse<ListingType>(body.Type, ignoreCase: true, out var t))
+            listing.Type = t;
+        if (body.Title is not null)         listing.Title       = body.Title;
+        if (body.Address is not null)       listing.Address     = body.Address;
+        if (body.City is not null)          listing.City        = body.City;
+        if (body.Lat.HasValue)              listing.Lat         = body.Lat.Value;
+        if (body.Lng.HasValue)              listing.Lng         = body.Lng.Value;
+        if (body.PriceFrom.HasValue)        listing.PriceFrom   = body.PriceFrom.Value;
+        if (body.PriceUnit is not null)     listing.PriceUnit   = body.PriceUnit;
+        if (body.AvailableNow.HasValue)     listing.AvailableNow = body.AvailableNow.Value;
+        if (body.IsActive.HasValue)         listing.IsActive    = body.IsActive.Value;
+        if (body.Description is not null)   listing.Description = body.Description;
+        if (body.Images is not null)        listing.ImagesJson  = System.Text.Json.JsonSerializer.Serialize(body.Images);
+        if (body.Features is not null)      listing.FeaturesJson = System.Text.Json.JsonSerializer.Serialize(body.Features);
+        if (body.PartnerDiscountRateOverride.HasValue) listing.PartnerDiscountRateOverride = body.PartnerDiscountRateOverride;
+        if (body.ClientDiscountRateOverride.HasValue)  listing.ClientDiscountRateOverride  = body.ClientDiscountRateOverride;
+        if (body.VatRate.HasValue)          listing.VatRate     = body.VatRate;
+        if (body.PricesIncludeVat.HasValue) listing.PricesIncludeVat = body.PricesIncludeVat.Value;
+
+        if (body.SupplierId.HasValue)
+        {
+            var s = await db.Suppliers.FindAsync(body.SupplierId.Value);
+            if (s is null) return NotFound(Error("Supplier not found"));
+            listing.SupplierId = s.Id;
+            listing.Supplier   = s;
+        }
+
+        if (body.Badge is not null)
+        {
+            if (string.IsNullOrEmpty(body.Badge))
+                listing.Badge = null;
+            else
+            {
+                var normalized = body.Badge.Replace("-", "");
+                listing.Badge = Enum.TryParse<ListingBadge>(normalized, ignoreCase: true, out var b) ? b : null;
+            }
+        }
+
+        listing.UpdatedAt = DateTime.UtcNow;
+        await Audit("listing.updated", User.GetUserEmail(), listing.Title, null);
+        await db.SaveChangesAsync();
+
+        return Ok(MapListing(listing));
+    }
+
+    [HttpDelete("listings/{id:guid}")]
+    public async Task<IActionResult> DeleteListing(Guid id)
+    {
+        var listing = await db.Listings.FindAsync(id);
+        if (listing is null) return NotFound(Error("Listing not found"));
+
+        db.Listings.Remove(listing);
+        await Audit("listing.deleted", User.GetUserEmail(), listing.Title, null);
+        await db.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
     // AUDIT LOG
     // ══════════════════════════════════════════════════════════════════════════
 
@@ -486,6 +626,8 @@ public class AdminController(
         RecipientEmail:      s.RecipientEmail,
         IsActive:            s.IsActive,
         IntegrationHealth:   s.IntegrationHealth.ToString().ToLower(),
+        PartnerDiscountRate: s.PartnerDiscountRate,
+        ClientDiscountRate:  s.ClientDiscountRate,
         Notes:               s.Notes,
         CreatedAt:           s.CreatedAt.ToString("yyyy-MM-dd"),
         UpdatedAt:           s.UpdatedAt.ToString("yyyy-MM-dd"),
@@ -531,4 +673,34 @@ public class AdminController(
         Target:    a.Target,
         Detail:    a.Detail,
         CreatedAt: a.CreatedAt.ToString("yyyy-MM-dd HH:mm"));
+
+    private static ListingDto MapListing(Models.Listing l) => new(
+        Id:          l.Id,
+        Type:        l.Type.ToString().ToLower(),
+        Title:       l.Title,
+        SupplierName: l.Supplier?.Name ?? string.Empty,
+        Address:     l.Address,
+        City:        l.City,
+        Lat:         l.Lat,
+        Lng:         l.Lng,
+        PriceFrom:   l.PriceFrom,
+        PriceUnit:   l.PriceUnit,
+        AvailableNow: l.AvailableNow,
+        Badge:       l.Badge switch
+        {
+            ListingBadge.Cheapest  => "cheapest",
+            ListingBadge.Closest   => "closest",
+            ListingBadge.BestValue => "best-value",
+            ListingBadge.Promoted  => "promoted",
+            _                      => null,
+        },
+        Rating:      l.Rating,
+        ReviewCount: l.ReviewCount,
+        Description: l.Description,
+        Images:      System.Text.Json.JsonSerializer.Deserialize<List<string>>(l.ImagesJson) ?? [],
+        Features:    System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(l.FeaturesJson) ?? [],
+        PartnerDiscountRateOverride: l.PartnerDiscountRateOverride,
+        ClientDiscountRateOverride:  l.ClientDiscountRateOverride,
+        VatRate:         l.VatRate,
+        PricesIncludeVat: l.PricesIncludeVat);
 }

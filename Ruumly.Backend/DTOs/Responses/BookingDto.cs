@@ -34,6 +34,7 @@ public record BookingDto(
     decimal BasePrice,
     decimal PlatformPrice,
     decimal ExtrasTotal,
+    decimal VatAmount,
     decimal Total,
     string CreatedAt,
     List<BookingTimelineDto> Timeline,
