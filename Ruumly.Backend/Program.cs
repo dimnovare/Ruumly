@@ -1,5 +1,6 @@
 using System.Text;
 using FluentValidation;
+using Microsoft.AspNetCore.RateLimiting;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -48,6 +49,19 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
+// ─── Rate limiting ───
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("auth", limiterOptions =>
+    {
+        limiterOptions.PermitLimit           = 10;
+        limiterOptions.Window                = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueProcessingOrder  = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit            = 0;
+    });
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
+
 // ─── CORS ───
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()!;
 builder.Services.AddCors(options =>
@@ -93,6 +107,13 @@ else
     builder.Services.AddTransient<IEmailSender, DevConsoleEmailSender>();
 }
 
+// ─── Health checks ───
+builder.Services.AddHealthChecks()
+    .AddNpgSql(
+        connectionString!,
+        name: "postgres",
+        tags: new[] { "db", "ready" });
+
 // ─── Controllers ───
 builder.Services.AddControllers()
     .AddJsonOptions(o =>
@@ -130,6 +151,7 @@ var app = builder.Build();
 
 // ─── Middleware pipeline ───
 app.UseMiddleware<ExceptionMiddleware>();
+app.UseMiddleware<SecurityHeadersMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
@@ -140,7 +162,27 @@ if (app.Environment.IsDevelopment())
 app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.MapControllers();
+
+app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var result = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            status = report.Status.ToString(),
+            checks = report.Entries.Select(e => new
+            {
+                name     = e.Key,
+                status   = e.Value.Status.ToString(),
+                duration = e.Value.Duration.TotalMilliseconds,
+            }),
+        });
+        await context.Response.WriteAsync(result);
+    }
+});
 
 if (app.Environment.IsProduction())
 {
