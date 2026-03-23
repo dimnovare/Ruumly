@@ -20,6 +20,23 @@ public class Supplier
     public decimal PartnerDiscountRate { get; set; } = 0;
     public decimal ClientDiscountRate { get; set; } = 0;
     public string? Notes { get; set; }
+
+    /// <summary>
+    /// IBAN for payout transfers (e.g. EE382200221011xxx).
+    /// Stored and displayed only to admin and the partner themselves.
+    /// </summary>
+    public string? Iban { get; set; }
+
+    /// <summary>
+    /// Bank account holder name (may differ from company name).
+    /// </summary>
+    public string? BankAccountName { get; set; }
+
+    /// <summary>
+    /// Bank name for display purposes (e.g. "LHV", "SEB", "Swedbank").
+    /// </summary>
+    public string? BankName { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

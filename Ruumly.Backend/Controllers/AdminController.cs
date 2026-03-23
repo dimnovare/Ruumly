@@ -674,6 +674,73 @@ public class AdminController(
     // Helpers
     // ══════════════════════════════════════════════════════════════════════════
 
+    // ─── Provider bank details ─────────────────────────────────────────────────
+
+    [HttpGet("my-bank-details")]
+    [Authorize(Roles = "Provider,Admin")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetBankDetails()
+    {
+        var userId   = User.GetUserId();
+        var user     = await db.Users
+            .Include(u => u.Supplier)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+        var supplier = user?.Supplier;
+        if (supplier is null)
+            return BadRequest(Error("No supplier linked to this account."));
+
+        return Ok(new
+        {
+            iban            = supplier.Iban,
+            bankAccountName = supplier.BankAccountName,
+            bankName        = supplier.BankName,
+        });
+    }
+
+    [HttpPatch("my-bank-details")]
+    [Authorize(Roles = "Provider")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateBankDetails([FromBody] UpdateBankDetailsRequest body)
+    {
+        var userId = User.GetUserId();
+        var user   = await db.Users
+            .Include(u => u.Supplier)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user?.SupplierId is null)
+            return BadRequest(Error("Teie kontoga ei ole seotud ühtegi partnerit."));
+
+        var supplier = await db.Suppliers.FindAsync(user.SupplierId.Value);
+        if (supplier is null) return NotFound(Error("Partner not found"));
+
+        if (!string.IsNullOrWhiteSpace(body.Iban))
+        {
+            var cleanIban = body.Iban.Replace(" ", "").ToUpper();
+            if (cleanIban.Length < 15 || cleanIban.Length > 34)
+                return BadRequest(Error("IBAN formaat on vale. Näide: EE382200221011xxxx"));
+            supplier.Iban = cleanIban;
+        }
+
+        if (body.BankAccountName is not null)
+            supplier.BankAccountName = body.BankAccountName.Trim();
+
+        if (body.BankName is not null)
+            supplier.BankName = body.BankName.Trim();
+
+        supplier.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        return Ok(new
+        {
+            iban            = supplier.Iban,
+            bankAccountName = supplier.BankAccountName,
+            bankName        = supplier.BankName,
+        });
+    }
+
     private async Task Audit(string action, string actor, string target, string? detail)
     {
         db.AuditLogs.Add(new AuditLog
@@ -716,6 +783,9 @@ public class AdminController(
         PartnerDiscountRate: s.PartnerDiscountRate,
         ClientDiscountRate:  s.ClientDiscountRate,
         Notes:               s.Notes,
+        Iban:                s.Iban,
+        BankAccountName:     s.BankAccountName,
+        BankName:            s.BankName,
         CreatedAt:           s.CreatedAt.ToString("yyyy-MM-dd"),
         UpdatedAt:           s.UpdatedAt.ToString("yyyy-MM-dd"),
         OrdersTotal:         ordersTotal,

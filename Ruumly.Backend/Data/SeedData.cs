@@ -877,6 +877,7 @@ public static class SeedData
             ["emailNotifications"]  = ("true",           "Send email notifications"),
             ["maintenanceMode"]     = ("false",          "Put site in maintenance mode"),
             ["autoApproveListings"] = ("false",          "Auto-approve new provider listings"),
+            ["defaultVatRate"]      = ("24",             "Estonia standard VAT rate (since Jan 2024)"),
         };
 
         db.PlatformSettings.AddRange(defaults.Select(kv => new PlatformSetting
