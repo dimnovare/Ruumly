@@ -878,6 +878,8 @@ public static class SeedData
             ["maintenanceMode"]     = ("false",          "Put site in maintenance mode"),
             ["autoApproveListings"] = ("false",          "Auto-approve new provider listings"),
             ["defaultVatRate"]      = ("24",             "Estonia standard VAT rate (since Jan 2024)"),
+            ["openHours"]           = ("E–R 9–18",       "Weekday opening hours shown on homepage"),
+            ["openHoursSat"]        = ("",               "Saturday hours (leave empty to hide)"),
         };
 
         db.PlatformSettings.AddRange(defaults.Select(kv => new PlatformSetting
