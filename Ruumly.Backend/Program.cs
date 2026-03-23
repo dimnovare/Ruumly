@@ -7,7 +7,12 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.Middleware;
+// SeedData is in Ruumly.Backend.Data namespace — already covered
 using Ruumly.Backend.Models;
+using Ruumly.Backend.Services.Implementations;
+using Ruumly.Backend.Services.Interfaces;
+// BookingService, OrderRoutingService, IntegrationDispatchService are in same namespace
+using Ruumly.Backend.DTOs.Requests;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,8 +57,21 @@ builder.Services.AddCors(options =>
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
+// ─── Application services ───
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IListingService, ListingService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IOrderRoutingService, OrderRoutingService>();
+builder.Services.AddScoped<IIntegrationDispatchService, IntegrationDispatchService>();
+builder.Services.AddHttpClient();
+
 // ─── Controllers ───
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(o =>
+    {
+        o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+        o.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    });
 
 // ─── Swagger / OpenAPI ───
 builder.Services.AddEndpointsApiExplorer();
@@ -95,5 +113,12 @@ app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<RuumlyDbContext>();
+    await SeedData.SeedAsync(db);
+}
 
 app.Run();

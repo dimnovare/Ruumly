@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using Ruumly.Backend.Helpers;
 
 namespace Ruumly.Backend.Middleware;
 
@@ -13,7 +14,8 @@ public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddlewa
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Unhandled exception for {Method} {Path}", context.Request.Method, context.Request.Path);
+            logger.LogError(ex, "Unhandled exception for {Method} {Path}",
+                context.Request.Method, context.Request.Path);
             await HandleExceptionAsync(context, ex);
         }
     }
@@ -22,19 +24,22 @@ public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddlewa
     {
         var (statusCode, error) = exception switch
         {
-            KeyNotFoundException => (HttpStatusCode.NotFound, "Not Found"),
-            UnauthorizedAccessException => (HttpStatusCode.Forbidden, "Forbidden"),
-            ArgumentException => (HttpStatusCode.BadRequest, "Bad Request"),
-            _ => (HttpStatusCode.InternalServerError, "Internal Server Error")
+            ConflictException           => (HttpStatusCode.Conflict,             "Conflict"),
+            ForbiddenException          => (HttpStatusCode.Forbidden,            "Forbidden"),
+            UnauthorizedAccessException => (HttpStatusCode.Unauthorized,         "Unauthorized"),
+            KeyNotFoundException        => (HttpStatusCode.NotFound,             "Not Found"),
+            NotFoundException           => (HttpStatusCode.NotFound,             "Not Found"),
+            ArgumentException           => (HttpStatusCode.BadRequest,           "Bad Request"),
+            _                           => (HttpStatusCode.InternalServerError,  "Internal Server Error")
         };
 
         context.Response.ContentType = "application/json";
-        context.Response.StatusCode = (int)statusCode;
+        context.Response.StatusCode  = (int)statusCode;
 
         var payload = JsonSerializer.Serialize(new
         {
             error,
-            message = exception.Message,
+            message    = exception.Message,
             statusCode = (int)statusCode
         }, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 

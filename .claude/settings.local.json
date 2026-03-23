@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dotnet build:*)"
+      "Bash(dotnet build:*)",
+      "Bash(dotnet add:*)",
+      "Bash(dotnet ef:*)",
+      "Bash(cmd /c \"psql -U postgres -c \"\"SELECT 1\"\" 2>&1\")",
+      "Bash(cmd /c \"psql -U postgres -c \"\"\\\\l\"\" 2>&1\")"
     ]
   }
 }
