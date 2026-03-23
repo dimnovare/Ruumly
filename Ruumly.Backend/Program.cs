@@ -17,8 +17,13 @@ using Ruumly.Backend.DTOs.Requests;
 var builder = WebApplication.CreateBuilder(args);
 
 // ─── Database ───
+// Railway injects DATABASE_URL as a postgres:// URI; fall back to appsettings for local dev.
+var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL") is { Length: > 0 } dbUrl
+    ? ParseDatabaseUrl(dbUrl)
+    : builder.Configuration.GetConnectionString("DefaultConnection");
+
 builder.Services.AddDbContext<RuumlyDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(connectionString));
 
 // ─── JWT Authentication ───
 var jwtSection = builder.Configuration.GetSection("Jwt");
@@ -118,6 +123,13 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
+if (app.Environment.IsProduction())
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<RuumlyDbContext>();
+    await db.Database.MigrateAsync();
+}
+
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
@@ -125,4 +137,15 @@ if (app.Environment.IsDevelopment())
     await SeedData.SeedAsync(db);
 }
 
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+app.Urls.Add($"http://+:{port}");
 app.Run();
+
+static string ParseDatabaseUrl(string databaseUrl)
+{
+    var uri = new Uri(databaseUrl);
+    var userInfo = uri.UserInfo.Split(':');
+    var username = userInfo[0];
+    var password = userInfo.Length > 1 ? userInfo[1] : string.Empty;
+    return $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true";
+}
