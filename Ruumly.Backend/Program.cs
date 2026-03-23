@@ -9,6 +9,7 @@ using Ruumly.Backend.Data;
 using Ruumly.Backend.Middleware;
 // SeedData is in Ruumly.Backend.Data namespace — already covered
 using Ruumly.Backend.Models;
+using Resend;
 using Ruumly.Backend.Services.Implementations;
 using Ruumly.Backend.Services.Interfaces;
 // BookingService, OrderRoutingService, IntegrationDispatchService are in same namespace
@@ -73,6 +74,24 @@ builder.Services.AddScoped<IIntegrationDispatchService, IntegrationDispatchServi
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddHttpClient();
+
+if (builder.Environment.IsProduction())
+{
+    builder.Services.AddOptions();
+    builder.Services.AddHttpClient<ResendClient>();
+    builder.Services.Configure<ResendClientOptions>(o =>
+    {
+        o.ApiToken = builder.Configuration["Resend:ApiKey"]
+            ?? throw new InvalidOperationException(
+                "Resend:ApiKey is required in production. Set it via RESEND__APIKEY environment variable.");
+    });
+    builder.Services.AddTransient<IResend, ResendClient>();
+    builder.Services.AddTransient<IEmailSender, ResendEmailSender>();
+}
+else
+{
+    builder.Services.AddTransient<IEmailSender, DevConsoleEmailSender>();
+}
 
 // ─── Controllers ───
 builder.Services.AddControllers()

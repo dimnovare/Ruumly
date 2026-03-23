@@ -1,4 +1,3 @@
-using System.Net.Mail;
 using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +11,7 @@ namespace Ruumly.Backend.Services.Implementations;
 public class IntegrationDispatchService(
     RuumlyDbContext db,
     IHttpClientFactory httpClientFactory,
-    IConfiguration configuration,
+    IEmailSender emailSender,
     INotificationService notificationService,
     ILogger<IntegrationDispatchService> logger) : IIntegrationDispatchService
 {
@@ -162,51 +161,11 @@ public class IntegrationDispatchService(
 
     private async Task DispatchEmailAsync(Order order, Supplier supplier)
     {
-        var recipientEmail = supplier.RecipientEmail ?? supplier.ContactEmail;
-        var body           = BuildEmailBody(order, supplier.Name);
+        var recipient = supplier.RecipientEmail ?? supplier.ContactEmail;
+        var subject   = $"Ruumly: Uus tellimus #{order.Id.ToString()[..8]}";
+        var body      = BuildEmailBody(order, supplier.Name);
 
-        var smtpHost = configuration["Email:SmtpHost"];
-        var fromAddr = configuration["Email:FromAddress"] ?? "noreply@ruumly.eu";
-        var fromName = configuration["Email:FromName"] ?? "Ruumly";
-
-        if (!string.IsNullOrWhiteSpace(smtpHost) &&
-            !string.IsNullOrWhiteSpace(configuration["Email:Username"]))
-        {
-            try
-            {
-                var smtpPort = int.Parse(configuration["Email:SmtpPort"] ?? "587");
-                using var client = new SmtpClient(smtpHost, smtpPort)
-                {
-                    EnableSsl   = true,
-                    Credentials = new System.Net.NetworkCredential(
-                        configuration["Email:Username"],
-                        configuration["Email:Password"]),
-                };
-
-                var mail = new MailMessage
-                {
-                    From       = new MailAddress(fromAddr, fromName),
-                    Subject    = $"Ruumly tellimus {order.Id} — {order.ListingTitle}",
-                    Body       = body,
-                    IsBodyHtml = false,
-                };
-                mail.To.Add(recipientEmail);
-
-                await client.SendMailAsync(mail);
-                logger.LogInformation("Order email sent to {Email} for order {OrderId}", recipientEmail, order.Id);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Failed to send email for order {OrderId}", order.Id);
-            }
-        }
-        else
-        {
-            // SMTP not configured in dev — log the email body instead
-            logger.LogInformation(
-                "SMTP not configured. Email would be sent to {Email}:\n{Body}",
-                recipientEmail, body);
-        }
+        await emailSender.SendAsync(recipient, subject, body);
 
         order.Status         = OrderStatus.Sent;
         order.SentAt         = DateTime.UtcNow;
@@ -221,7 +180,7 @@ public class IntegrationDispatchService(
             Actor     = "system",
             ActorRole = UserRole.Admin,
             Channel   = PostingMode.Email,
-            Detail    = $"E-kiri saadetud: {recipientEmail}",
+            Detail    = $"E-kiri saadetud: {recipient}",
             CreatedAt = DateTime.UtcNow,
         });
 
@@ -231,7 +190,7 @@ public class IntegrationDispatchService(
             OrderId   = order.Id,
             Event     = "Tellimus saadetud e-postiga",
             Status    = OrderStatus.Sent,
-            Detail    = $"E-kiri saadetud: {recipientEmail}",
+            Detail    = $"E-kiri saadetud: {recipient}",
             CreatedAt = DateTime.UtcNow,
         });
 
