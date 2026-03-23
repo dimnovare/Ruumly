@@ -11,7 +11,8 @@ namespace Ruumly.Backend.Services.Implementations;
 
 public class OrderService(
     RuumlyDbContext db,
-    IIntegrationDispatchService dispatchService) : IOrderService
+    IIntegrationDispatchService dispatchService,
+    INotificationService notificationService) : IOrderService
 {
     // ─── Queries ──────────────────────────────────────────────────────────────
 
@@ -122,20 +123,14 @@ public class OrderService(
                 CreatedAt = DateTime.UtcNow,
             });
 
-            db.Notifications.Add(new Notification
-            {
-                Id         = Guid.NewGuid(),
-                UserId     = booking.UserId,
-                Type       = NotificationType.Booking,
-                Title      = "Broneering kinnitatud",
-                Desc       = $"{booking.Listing?.Title ?? order.ListingTitle} on kinnitatud",
-                Read       = false,
-                ActionUrl  = "/account?tab=bookings",
-                EntityId   = booking.Id.ToString(),
-                EntityType = "Booking",
-                Channel    = NotificationChannel.InApp,
-                CreatedAt  = DateTime.UtcNow,
-            });
+            await notificationService.CreateAsync(
+                booking.UserId,
+                NotificationType.Booking,
+                "Broneering kinnitatud",
+                $"{booking.Listing?.Title ?? order.ListingTitle} on kinnitatud",
+                actionUrl:  "/account?tab=bookings",
+                entityId:   booking.Id.ToString(),
+                entityType: "Booking");
 
             await db.SaveChangesAsync();
         }
@@ -198,22 +193,14 @@ public class OrderService(
                 CreatedAt = DateTime.UtcNow,
             });
 
-            db.Notifications.Add(new Notification
-            {
-                Id         = Guid.NewGuid(),
-                UserId     = booking.UserId,
-                Type       = NotificationType.Booking,
-                Title      = "Broneering tagasi lükatud",
-                Desc       = string.IsNullOrWhiteSpace(reason)
-                                 ? "Teie broneering lükati tagasi"
-                                 : reason,
-                Read       = false,
-                ActionUrl  = "/account?tab=bookings",
-                EntityId   = booking.Id.ToString(),
-                EntityType = "Booking",
-                Channel    = NotificationChannel.InApp,
-                CreatedAt  = DateTime.UtcNow,
-            });
+            await notificationService.CreateAsync(
+                booking.UserId,
+                NotificationType.Booking,
+                "Broneering tagasi lükatud",
+                string.IsNullOrWhiteSpace(reason) ? "Teie broneering lükati tagasi" : reason,
+                actionUrl:  "/account?tab=bookings",
+                entityId:   booking.Id.ToString(),
+                entityType: "Booking");
         }
 
         await db.SaveChangesAsync();

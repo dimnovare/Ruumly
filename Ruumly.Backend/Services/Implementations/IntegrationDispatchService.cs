@@ -13,6 +13,7 @@ public class IntegrationDispatchService(
     RuumlyDbContext db,
     IHttpClientFactory httpClientFactory,
     IConfiguration configuration,
+    INotificationService notificationService,
     ILogger<IntegrationDispatchService> logger) : IIntegrationDispatchService
 {
     public async Task DispatchAsync(Order order, Supplier supplier)
@@ -283,19 +284,14 @@ public class IntegrationDispatchService(
 
         foreach (var admin in admins)
         {
-            db.Notifications.Add(new Notification
-            {
-                Id         = Guid.NewGuid(),
-                UserId     = admin.Id,
-                Type       = NotificationType.Order,
-                Title      = "Manuaalne tellimus vajab edastamist",
-                Desc       = $"Tellimus {order.Id} — {order.ListingTitle} vajab manuaalset edastamist",
-                ActionUrl  = $"/orders/{order.Id}",
-                EntityId   = order.Id.ToString(),
-                EntityType = "Order",
-                Channel    = NotificationChannel.InApp,
-                CreatedAt  = DateTime.UtcNow,
-            });
+            await notificationService.CreateAsync(
+                admin.Id,
+                NotificationType.Order,
+                "Manuaalne tellimus vajab edastamist",
+                $"Tellimus {order.Id} — {order.ListingTitle} vajab manuaalset edastamist",
+                actionUrl:  $"/orders/{order.Id}",
+                entityId:   order.Id.ToString(),
+                entityType: "Order");
         }
 
         await db.SaveChangesAsync();

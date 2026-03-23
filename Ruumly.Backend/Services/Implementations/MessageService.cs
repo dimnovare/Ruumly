@@ -9,7 +9,7 @@ using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Services.Implementations;
 
-public class MessageService(RuumlyDbContext db) : IMessageService
+public class MessageService(RuumlyDbContext db, INotificationService notificationService) : IMessageService
 {
     public async Task<List<MessageDto>> GetByBookingIdAsync(Guid bookingId, Guid userId, UserRole role)
     {
@@ -59,44 +59,28 @@ public class MessageService(RuumlyDbContext db) : IMessageService
         // Notify the other party
         if (senderEnum == MessageSender.Customer)
         {
-            // Notify the supplier's contact user (provider)
             var providerUser = await db.Users
                 .FirstOrDefaultAsync(u => u.Email == booking.Supplier.ContactEmail);
             if (providerUser is not null)
-            {
-                db.Notifications.Add(new Notification
-                {
-                    Id         = Guid.NewGuid(),
-                    UserId     = providerUser.Id,
-                    Type       = NotificationType.Booking,
-                    Title      = "Uus sõnum broneeringus",
-                    Desc       = $"{senderName}: {TruncateText(request.Text, 80)}",
-                    Read       = false,
-                    ActionUrl  = $"/bookings/{bookingId}",
-                    EntityId   = bookingId.ToString(),
-                    EntityType = "Message",
-                    Channel    = NotificationChannel.InApp,
-                    CreatedAt  = DateTime.UtcNow,
-                });
-            }
+                await notificationService.CreateAsync(
+                    providerUser.Id,
+                    NotificationType.Booking,
+                    "Uus sõnum broneeringus",
+                    $"{senderName}: {TruncateText(request.Text, 80)}",
+                    actionUrl:  $"/bookings/{bookingId}",
+                    entityId:   bookingId.ToString(),
+                    entityType: "Message");
         }
         else
         {
-            // Notify the customer
-            db.Notifications.Add(new Notification
-            {
-                Id         = Guid.NewGuid(),
-                UserId     = booking.UserId,
-                Type       = NotificationType.Booking,
-                Title      = "Uus sõnum broneeringus",
-                Desc       = $"{senderName}: {TruncateText(request.Text, 80)}",
-                Read       = false,
-                ActionUrl  = "/account?tab=bookings",
-                EntityId   = bookingId.ToString(),
-                EntityType = "Message",
-                Channel    = NotificationChannel.InApp,
-                CreatedAt  = DateTime.UtcNow,
-            });
+            await notificationService.CreateAsync(
+                booking.UserId,
+                NotificationType.Booking,
+                "Uus sõnum broneeringus",
+                $"{senderName}: {TruncateText(request.Text, 80)}",
+                actionUrl:  "/account?tab=bookings",
+                entityId:   bookingId.ToString(),
+                entityType: "Message");
         }
 
         await db.SaveChangesAsync();

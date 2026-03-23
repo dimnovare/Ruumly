@@ -60,6 +60,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 // ─── Application services ───
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IListingService, ListingService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IOrderRoutingService, OrderRoutingService>();
 builder.Services.AddScoped<IIntegrationDispatchService, IntegrationDispatchService>();

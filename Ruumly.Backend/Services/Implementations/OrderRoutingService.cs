@@ -9,6 +9,7 @@ namespace Ruumly.Backend.Services.Implementations;
 public class OrderRoutingService(
     RuumlyDbContext db,
     IIntegrationDispatchService dispatchService,
+    INotificationService notificationService,
     ILogger<OrderRoutingService> logger) : IOrderRoutingService
 {
     public async Task RouteOrderAsync(Booking booking, Listing listing)
@@ -119,19 +120,14 @@ public class OrderRoutingService(
 
             foreach (var admin in admins)
             {
-                db.Notifications.Add(new Notification
-                {
-                    Id        = Guid.NewGuid(),
-                    UserId    = admin.Id,
-                    Type      = NotificationType.Order,
-                    Title     = "Uus tellimus vajab kinnitust",
-                    Desc      = $"Tellimus teenusele \"{listing.Title}\" ootab kinnitust",
-                    ActionUrl = $"/orders/{order.Id}",
-                    EntityId  = order.Id.ToString(),
-                    EntityType = "Order",
-                    Channel   = NotificationChannel.InApp,
-                    CreatedAt = DateTime.UtcNow,
-                });
+                await notificationService.CreateAsync(
+                    admin.Id,
+                    NotificationType.Order,
+                    "Uus tellimus vajab kinnitust",
+                    $"Tellimus teenusele \"{listing.Title}\" ootab kinnitust",
+                    actionUrl:  $"/orders/{order.Id}",
+                    entityId:   order.Id.ToString(),
+                    entityType: "Order");
             }
 
             order.Status    = OrderStatus.Sending;
