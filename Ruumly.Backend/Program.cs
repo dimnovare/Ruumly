@@ -64,6 +64,7 @@ builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IOrderRoutingService, OrderRoutingService>();
 builder.Services.AddScoped<IIntegrationDispatchService, IntegrationDispatchService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddHttpClient();
 
 // ─── Controllers ───
