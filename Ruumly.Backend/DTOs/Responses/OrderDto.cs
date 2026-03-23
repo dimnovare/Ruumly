@@ -1,8 +1,17 @@
 namespace Ruumly.Backend.DTOs.Responses;
 
+public record OrderTimelineDto(
+    string  Date,
+    string  Time,
+    string  Event,
+    string  Status,
+    string? Detail
+);
+
 public record OrderDto(
     Guid              Id,
     Guid              BookingId,
+    Guid              ListingId,
     Guid              SupplierId,
     string            SupplierName,
     string            ListingTitle,
@@ -30,5 +39,6 @@ public record OrderDto(
     string?           ConfirmedAt,
     string            Notes,
     string            CreatedAt,
+    List<OrderTimelineDto>    Timeline,
     List<FulfillmentEventDto> FulfillmentEvents
 );

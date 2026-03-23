@@ -22,6 +22,7 @@ public class OrderService(
         var query = db.Orders
             .Include(o => o.Supplier)
             .Include(o => o.FulfillmentEvents)
+            .Include(o => o.Timeline)
             .Include(o => o.Booking)
             .AsQueryable();
 
@@ -52,7 +53,8 @@ public class OrderService(
     {
         var order = await db.Orders
             .Include(o => o.Supplier)
-            .Include(o => o.FulfillmentEvents)
+            .Include(o => o.FulfillmentEvents.OrderBy(e => e.CreatedAt))
+            .Include(o => o.Timeline.OrderBy(t => t.CreatedAt))
             .Include(o => o.Booking)
             .FirstOrDefaultAsync(o => o.BookingId == bookingId);
 
@@ -314,12 +316,14 @@ public class OrderService(
         db.Orders
             .Include(o => o.Supplier)
             .Include(o => o.FulfillmentEvents.OrderBy(e => e.CreatedAt))
+            .Include(o => o.Timeline.OrderBy(t => t.CreatedAt))
             .Include(o => o.Booking)
             .FirstOrDefaultAsync(o => o.Id == id);
 
     private static OrderDto MapToDto(Order o) => new(
         Id:               o.Id,
         BookingId:        o.BookingId,
+        ListingId:        o.ListingId,
         SupplierId:       o.SupplierId,
         SupplierName:     o.Supplier?.Name ?? string.Empty,
         ListingTitle:     o.ListingTitle,
@@ -347,6 +351,14 @@ public class OrderService(
         ConfirmedAt:      o.ConfirmedAt?.ToString("yyyy-MM-dd HH:mm"),
         Notes:            o.Notes,
         CreatedAt:        o.CreatedAt.ToString("yyyy-MM-dd HH:mm"),
+        Timeline: o.Timeline
+            .Select(t => new OrderTimelineDto(
+                Date:   t.CreatedAt.ToString("yyyy-MM-dd"),
+                Time:   t.CreatedAt.ToString("HH:mm"),
+                Event:  t.Event,
+                Status: t.Status.ToString().ToLower(),
+                Detail: t.Detail
+            )).ToList(),
         FulfillmentEvents: o.FulfillmentEvents
             .Select(e => new FulfillmentEventDto(
                 Id:        e.Id,
