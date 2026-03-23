@@ -146,6 +146,17 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
             .HasForeignKey<IntegrationSettings>(e => e.SupplierId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // ─── User → Supplier (optional FK for Provider users) ───
+        model.Entity<User>()
+            .HasOne(u => u.Supplier)
+            .WithMany()
+            .HasForeignKey(u => u.SupplierId)
+            .OnDelete(DeleteBehavior.SetNull)
+            .IsRequired(false);
+
+        model.Entity<User>()
+            .HasIndex(u => u.SupplierId);
+
         // ─── PlatformSetting primary key ───
         model.Entity<PlatformSetting>().HasKey(s => s.Key);
 

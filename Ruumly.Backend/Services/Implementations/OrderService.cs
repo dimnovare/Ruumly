@@ -28,10 +28,15 @@ public class OrderService(
 
         if (role == UserRole.Provider)
         {
-            // Match by supplier whose contact email equals the logged-in user's email
             var user = await db.Users.FindAsync(userId);
             if (user is not null)
-                query = query.Where(o => o.Supplier.ContactEmail == user.Email);
+            {
+                if (user.SupplierId.HasValue)
+                    query = query.Where(o => o.SupplierId == user.SupplierId.Value);
+                else
+                    // Fallback to email match for legacy providers without SupplierId set
+                    query = query.Where(o => o.Supplier.ContactEmail == user.Email);
+            }
         }
         else if (role == UserRole.Customer)
         {

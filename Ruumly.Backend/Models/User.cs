@@ -19,6 +19,13 @@ public class User
     public string? PasswordResetToken { get; set; }
     public DateTime? PasswordResetExpiry { get; set; }
 
+    /// <summary>
+    /// For Provider role users: the supplier they manage.
+    /// Null for Customer and Admin roles.
+    /// </summary>
+    public Guid? SupplierId { get; set; }
+    public Supplier? Supplier { get; set; }
+
     public List<Booking> Bookings { get; set; } = [];
     public List<Message> Messages { get; set; } = [];
     public List<Notification> Notifications { get; set; } = [];

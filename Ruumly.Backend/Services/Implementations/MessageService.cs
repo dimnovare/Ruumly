@@ -59,8 +59,12 @@ public class MessageService(RuumlyDbContext db, INotificationService notificatio
         // Notify the other party
         if (senderEnum == MessageSender.Customer)
         {
+            // Prefer SupplierId-based lookup; fall back to contact email
             var providerUser = await db.Users
-                .FirstOrDefaultAsync(u => u.Email == booking.Supplier.ContactEmail);
+                .FirstOrDefaultAsync(u => u.SupplierId == booking.SupplierId && u.Role == UserRole.Provider)
+                ?? await db.Users
+                    .FirstOrDefaultAsync(u => u.Email == booking.Supplier.ContactEmail);
+
             if (providerUser is not null)
                 await notificationService.CreateAsync(
                     providerUser.Id,
@@ -132,11 +136,13 @@ public class MessageService(RuumlyDbContext db, INotificationService notificatio
             return;
         }
 
-        // Provider: verify their email matches the supplier's contact email
+        // Provider: verify via SupplierId FK, falling back to email match for legacy users
         var user = await db.Users.FindAsync(userId);
-        var supplier = user is not null
-            ? await db.Suppliers.FirstOrDefaultAsync(s => s.ContactEmail == user.Email)
-            : null;
+        var supplier = user?.SupplierId.HasValue == true
+            ? await db.Suppliers.FindAsync(user.SupplierId.Value)
+            : user is not null
+                ? await db.Suppliers.FirstOrDefaultAsync(s => s.ContactEmail == user.Email)
+                : null;
 
         if (supplier is null || booking.SupplierId != supplier.Id)
             throw new ForbiddenException("You do not have access to this booking.");

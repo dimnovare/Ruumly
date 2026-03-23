@@ -59,6 +59,25 @@ public class AdminController(
         return Ok(MapUser(user));
     }
 
+    [HttpPatch("users/{userId:guid}/assign-supplier/{supplierId:guid}")]
+    public async Task<IActionResult> AssignSupplier(Guid userId, Guid supplierId)
+    {
+        var user = await db.Users.FindAsync(userId);
+        if (user is null) return NotFound(Error("User not found"));
+        if (user.Role != UserRole.Provider)
+            return BadRequest(Error("User must have Provider role"));
+
+        var supplier = await db.Suppliers.FindAsync(supplierId);
+        if (supplier is null) return NotFound(Error("Supplier not found"));
+
+        user.SupplierId = supplierId;
+        await Audit("user.supplier_assigned", User.GetUserEmail(),
+            user.Name, $"Assigned to {supplier.Name}");
+        await db.SaveChangesAsync();
+
+        return Ok(new { userId, supplierId, supplierName = supplier.Name });
+    }
+
     // ══════════════════════════════════════════════════════════════════════════
     // SUPPLIERS
     // ══════════════════════════════════════════════════════════════════════════
