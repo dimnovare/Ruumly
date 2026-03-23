@@ -12,6 +12,7 @@ using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Services.Interfaces;
 using BC = BCrypt.Net.BCrypt;
+using Google.Apis.Auth;
 // IEmailSender is in Ruumly.Backend.Services.Interfaces namespace
 
 namespace Ruumly.Backend.Services.Implementations;
@@ -101,6 +102,95 @@ public class AuthService(RuumlyDbContext db, IConfiguration config, IEmailSender
             ?? throw new KeyNotFoundException("User not found");
 
         return MapToDto(user);
+    }
+
+    public async Task<AuthResponse> GoogleLoginAsync(string credential)
+    {
+        // 1. Verify the Google ID token
+        GoogleJsonWebSignature.Payload payload;
+        try
+        {
+            var settings = new GoogleJsonWebSignature.ValidationSettings
+            {
+                Audience = new[] { config["Google:ClientId"]! }
+            };
+            payload = await GoogleJsonWebSignature.ValidateAsync(credential, settings);
+        }
+        catch (InvalidJwtException ex)
+        {
+            throw new UnauthorizedAccessException($"Invalid Google token: {ex.Message}");
+        }
+
+        // 2. Find existing user by Google ID first, then by email
+        var user = await db.Users
+            .FirstOrDefaultAsync(u => u.GoogleId == payload.Subject);
+
+        if (user is null)
+        {
+            // Try to find by email (user may have registered with password first)
+            user = await db.Users
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == payload.Email.ToLower());
+
+            if (user is not null)
+            {
+                // Link Google ID to existing email account
+                user.GoogleId = payload.Subject;
+                if (string.IsNullOrWhiteSpace(user.Avatar) &&
+                    !string.IsNullOrWhiteSpace(payload.Picture))
+                    user.Avatar = payload.Picture;
+            }
+            else
+            {
+                // Create brand new user
+                user = new User
+                {
+                    Id           = Guid.NewGuid(),
+                    Name         = payload.Name ?? payload.Email,
+                    Email        = payload.Email.ToLower(),
+                    PasswordHash = BC.HashPassword(Guid.NewGuid().ToString(), workFactor: 4),
+                    Role         = UserRole.Customer,
+                    Status       = UserStatus.Active,
+                    GoogleId     = payload.Subject,
+                    Avatar       = payload.Picture,
+                    RegisteredAt = DateTime.UtcNow,
+                };
+                db.Users.Add(user);
+            }
+
+            await db.SaveChangesAsync();
+        }
+
+        // 3. Check account is not blocked
+        if (user.Status == UserStatus.Blocked)
+            throw new UnauthorizedAccessException(
+                "Konto on blokeeritud. Võtke ühendust toega.");
+
+        // 4. Update last login
+        user.LastLoginAt = DateTime.UtcNow;
+
+        // 5. Issue Ruumly JWT pair (same as email login)
+        var accessToken  = GenerateJwt(user);
+        var refreshToken = GenerateRawRefreshToken();
+        var tokenHash    = HashToken(refreshToken);
+
+        db.RefreshTokens.Add(new RefreshToken
+        {
+            Id        = Guid.NewGuid(),
+            UserId    = user.Id,
+            TokenHash = tokenHash,
+            ExpiresAt = DateTime.UtcNow.AddDays(
+                int.Parse(config["Jwt:RefreshTokenExpiryDays"] ?? "7")),
+            IsRevoked = false,
+            CreatedAt = DateTime.UtcNow,
+        });
+
+        await db.SaveChangesAsync();
+
+        return new AuthResponse(
+            User:         MapToDto(user),
+            AccessToken:  accessToken,
+            RefreshToken: refreshToken
+        );
     }
 
     public async Task RequestPasswordResetAsync(string email)

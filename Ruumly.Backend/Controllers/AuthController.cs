@@ -81,6 +81,16 @@ public class AuthController(IAuthService authService) : ControllerBase
             return BadRequest(new { message = "Invalid or expired reset token." });
         return Ok(new { message = "Password updated successfully." });
     }
+
+    [HttpPost("google")]
+    [EnableRateLimiting("auth")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
+    {
+        var response = await authService.GoogleLoginAsync(request.Credential);
+        return Ok(response);
+    }
 }
 
 // Inline request DTO for refresh/logout — too small to warrant its own file

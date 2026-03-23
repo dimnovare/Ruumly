@@ -11,7 +11,9 @@ namespace Ruumly.Backend.Services.Implementations;
 
 public class BookingService(
     RuumlyDbContext db,
-    IOrderRoutingService orderRoutingService) : IBookingService
+    IOrderRoutingService orderRoutingService,
+    IEmailSender emailSender,
+    ILogger<BookingService> logger) : IBookingService
 {
     // Extra prices matching pricing.ts EXTRAS_PRICES
     private static readonly Dictionary<string, decimal> ExtrasPrices = new(StringComparer.OrdinalIgnoreCase)
@@ -164,6 +166,38 @@ public class BookingService(
 
         // 5. Route and dispatch the order
         await orderRoutingService.RouteOrderAsync(booking, listing);
+
+        // 5b. Send booking confirmation email to customer
+        if (!string.IsNullOrWhiteSpace(booking.ContactEmail))
+        {
+            try
+            {
+                var subject = $"Ruumly — Broneeringu kinnitus #{booking.Id.ToString()[..8].ToUpper()}";
+                var body    =
+                    $"Tere {booking.ContactName},\n\n" +
+                    $"Teie broneerimise taotlus on vastu võetud.\n\n" +
+                    $"Teenus: {listing.Title}\n" +
+                    $"Alguskuupäev: {booking.StartDate:dd.MM.yyyy}\n" +
+                    $"Periood: {booking.Duration}\n" +
+                    $"Kokku: €{booking.Total:F2}" +
+                    (booking.VatAmount > 0
+                        ? $" (sisaldab KM €{booking.VatAmount:F2})"
+                        : "") +
+                    $"\n\nPartner võtab teiega ühendust kinnitusel.\n" +
+                    $"Saate broneerimise staatust jälgida: " +
+                    $"https://app.ruumly.eu/account?tab=bookings\n\n" +
+                    $"Ruumly";
+
+                await emailSender.SendAsync(booking.ContactEmail, subject, body);
+            }
+            catch (Exception ex)
+            {
+                // Don't fail the booking if email fails
+                logger.LogWarning(ex,
+                    "Failed to send booking confirmation email to {Email}",
+                    booking.ContactEmail);
+            }
+        }
 
         // 6. Reload with all navigations for response
         var result = await db.Bookings

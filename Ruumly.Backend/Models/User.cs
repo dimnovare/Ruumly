@@ -20,6 +20,13 @@ public class User
     public DateTime? PasswordResetExpiry { get; set; }
 
     /// <summary>
+    /// Google's stable subject identifier (sub claim).
+    /// Null for email/password users. A user can have both if they
+    /// later link their Google account.
+    /// </summary>
+    public string? GoogleId { get; set; }
+
+    /// <summary>
     /// For Provider role users: the supplier they manage.
     /// Null for Customer and Admin roles.
     /// </summary>

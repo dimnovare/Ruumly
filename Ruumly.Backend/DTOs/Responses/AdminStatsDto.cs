@@ -7,5 +7,17 @@ public record AdminStatsDto(
     decimal TotalRevenue,
     int     OrdersThisMonth,
     decimal RevenueThisMonth,
-    int     PendingOrders
+    int     PendingOrders,
+    IEnumerable<RecentInquiryDto> RecentInquiries
+);
+
+public record RecentInquiryDto(
+    Guid   Id,
+    string Customer,
+    string Email,
+    string Listing,
+    string Type,
+    string Date,
+    string Status,
+    string Notes
 );

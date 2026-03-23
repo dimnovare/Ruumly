@@ -69,6 +69,15 @@ builder.Services.AddAuthorization();
 builder.Services.AddDataProtection();
 builder.Services.AddSingleton<TokenProtector>();
 
+// ─── Google OAuth config validation ───
+var googleClientId = builder.Configuration["Google:ClientId"];
+if (string.IsNullOrWhiteSpace(googleClientId))
+{
+    Console.WriteLine(
+        "[Ruumly] WARNING: Google:ClientId not configured. " +
+        "Google login will be unavailable.");
+}
+
 // ─── Rate limiting ───
 builder.Services.AddRateLimiter(options =>
 {

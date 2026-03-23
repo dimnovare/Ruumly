@@ -12,4 +12,10 @@ public interface IAuthService
     Task<UserDto> GetMeAsync(Guid userId);
     Task RequestPasswordResetAsync(string email);
     Task<bool> ResetPasswordAsync(string token, string newPassword);
+
+    /// <summary>
+    /// Verifies a Google ID token, then finds or creates the user,
+    /// and returns Ruumly JWT credentials.
+    /// </summary>
+    Task<AuthResponse> GoogleLoginAsync(string credential);
 }

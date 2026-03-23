@@ -60,6 +60,11 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
             .HasIndex(e => e.Email)
             .IsUnique();
 
+        model.Entity<User>()
+            .HasIndex(u => u.GoogleId)
+            .IsUnique()
+            .HasFilter("\"GoogleId\" IS NOT NULL");
+
         model.Entity<Supplier>()
             .HasIndex(e => e.RegistryCode)
             .IsUnique();

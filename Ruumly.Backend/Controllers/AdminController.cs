@@ -486,6 +486,52 @@ public class AdminController(
     }
 
     // ══════════════════════════════════════════════════════════════════════════
+    // INQUIRIES (pending bookings awaiting operator attention)
+    // ══════════════════════════════════════════════════════════════════════════
+
+    [HttpGet("inquiries")]
+    public async Task<IActionResult> GetInquiries()
+    {
+        var pendingBookings = await db.Bookings
+            .Include(b => b.Listing)
+            .Include(b => b.User)
+            .Where(b => b.Status == BookingStatus.Pending)
+            .OrderByDescending(b => b.CreatedAt)
+            .Take(50)
+            .Select(b => new
+            {
+                id       = b.Id,
+                customer = b.User.Name,
+                email    = b.User.Email,
+                listing  = b.Listing.Title,
+                type     = b.Listing.Type.ToString().ToLower(),
+                date     = b.CreatedAt.ToString("yyyy-MM-dd"),
+                status   = "new",
+                notes    = b.Notes ?? "",
+            })
+            .ToListAsync();
+
+        return Ok(pendingBookings);
+    }
+
+    [HttpPatch("inquiries/{id:guid}")]
+    public async Task<IActionResult> UpdateInquiry(
+        Guid id, [FromBody] UpdateInquiryRequest body)
+    {
+        var booking = await db.Bookings.FindAsync(id);
+        if (booking is null) return NotFound(Error("Inquiry not found"));
+
+        if (!string.IsNullOrWhiteSpace(body.Notes))
+            booking.Notes = body.Notes;
+
+        await Audit("inquiry.updated", User.GetUserEmail(),
+            id.ToString(), body.Status);
+        await db.SaveChangesAsync();
+
+        return Ok(new { id, status = body.Status });
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
     // AUDIT LOG
     // ══════════════════════════════════════════════════════════════════════════
 
@@ -536,6 +582,24 @@ public class AdminController(
                                     .CountAsync(o => o.Status == OrderStatus.Created
                                                   || o.Status == OrderStatus.Sending);
 
+        var recentInquiries = await db.Bookings
+            .Include(b => b.Listing)
+            .Include(b => b.User)
+            .Where(b => b.Status == BookingStatus.Pending)
+            .OrderByDescending(b => b.CreatedAt)
+            .Take(5)
+            .Select(b => new RecentInquiryDto(
+                b.Id,
+                b.User.Name,
+                b.User.Email,
+                b.Listing.Title,
+                b.Listing.Type.ToString().ToLower(),
+                b.CreatedAt.ToString("yyyy-MM-dd"),
+                "new",
+                b.Notes ?? ""
+            ))
+            .ToListAsync();
+
         return Ok(new AdminStatsDto(
             TotalListings:    totalListings,
             TotalOrders:      totalOrders,
@@ -543,7 +607,8 @@ public class AdminController(
             TotalRevenue:     totalRevenue,
             OrdersThisMonth:  ordersThisMonth,
             RevenueThisMonth: revenueThisMonth,
-            PendingOrders:    pendingOrders
+            PendingOrders:    pendingOrders,
+            RecentInquiries:  recentInquiries
         ));
     }
 
