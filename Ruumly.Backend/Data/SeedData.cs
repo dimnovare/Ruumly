@@ -880,6 +880,8 @@ public static class SeedData
             ["defaultVatRate"]      = ("24",             "Estonia standard VAT rate (since Jan 2024)"),
             ["openHours"]           = ("E–R 9–18",       "Weekday opening hours shown on homepage"),
             ["openHoursSat"]        = ("",               "Saturday hours (leave empty to hide)"),
+            ["inviteCodeRequired"]  = ("true",           "Set to true to require invite code at registration"),
+            ["inviteCode"]          = ("RUUMLY2026",     "The invite code users must enter to register"),
         };
 
         db.PlatformSettings.AddRange(defaults.Select(kv => new PlatformSetting

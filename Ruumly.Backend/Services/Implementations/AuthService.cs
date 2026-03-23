@@ -23,6 +23,29 @@ public class AuthService(RuumlyDbContext db, IConfiguration config, IEmailSender
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
     {
+        // Check invite code if registration is restricted
+        var inviteRequired = await db.PlatformSettings
+            .FirstOrDefaultAsync(s => s.Key == "inviteCodeRequired");
+
+        if (inviteRequired?.Value == "true")
+        {
+            var validCode = await db.PlatformSettings
+                .FirstOrDefaultAsync(s => s.Key == "inviteCode");
+
+            var expected = validCode?.Value ?? "";
+
+            if (string.IsNullOrWhiteSpace(request.InviteCode) ||
+                !string.Equals(
+                    request.InviteCode.Trim(),
+                    expected.Trim(),
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException(
+                    "Vale kutse kood. Kui sul on kutse, " +
+                    "kontrolli koodi õigsust.");
+            }
+        }
+
         var exists = await db.Users.AnyAsync(u =>
             u.Email.ToLower() == request.Email.ToLower());
 

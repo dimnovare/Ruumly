@@ -25,6 +25,8 @@ public class SettingsController(RuumlyDbContext db) : ControllerBase
             "sitePhone",
             "openHours",
             "openHoursSat",
+            "inviteCodeRequired",
+            // Note: "inviteCode" is NOT included — the actual code stays server-side only
         };
 
         var settings = await db.PlatformSettings
@@ -34,11 +36,12 @@ public class SettingsController(RuumlyDbContext db) : ControllerBase
         // Provide defaults for any missing keys
         return Ok(new
         {
-            siteName     = settings.GetValueOrDefault("siteName",     "Ruumly"),
-            siteEmail    = settings.GetValueOrDefault("siteEmail",    "info@ruumly.eu"),
-            sitePhone    = settings.GetValueOrDefault("sitePhone",    "+372 5555 1234"),
-            openHours    = settings.GetValueOrDefault("openHours",    "E–R 9–18"),
-            openHoursSat = settings.GetValueOrDefault("openHoursSat", ""),
+            siteName           = settings.GetValueOrDefault("siteName",           "Ruumly"),
+            siteEmail          = settings.GetValueOrDefault("siteEmail",          "info@ruumly.eu"),
+            sitePhone          = settings.GetValueOrDefault("sitePhone",          "+372 5555 1234"),
+            openHours          = settings.GetValueOrDefault("openHours",          "E–R 9–18"),
+            openHoursSat       = settings.GetValueOrDefault("openHoursSat",       ""),
+            inviteCodeRequired = settings.GetValueOrDefault("inviteCodeRequired", "false") == "true",
         });
     }
 }
