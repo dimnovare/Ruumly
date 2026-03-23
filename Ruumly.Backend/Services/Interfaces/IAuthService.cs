@@ -18,4 +18,6 @@ public interface IAuthService
     /// and returns Ruumly JWT credentials.
     /// </summary>
     Task<AuthResponse> GoogleLoginAsync(string credential);
+
+    Task ChangePasswordAsync(Guid userId, ChangePasswordRequest request);
 }

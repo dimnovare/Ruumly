@@ -696,7 +696,8 @@ public class AdminController(
     private static UserDto MapUser(Models.User u) => new(
         u.Id, u.Name, u.Email, u.Role, u.Status,
         u.Company, u.Phone, u.Avatar,
-        u.RegisteredAt, u.LastLoginAt, u.BookingsCount);
+        u.RegisteredAt, u.LastLoginAt, u.BookingsCount,
+        HasGoogleAccount: u.GoogleId is not null);
 
     private static SupplierDto MapSupplier(
         Models.Supplier s, int ordersTotal, decimal revenue, bool includeSettings) => new(

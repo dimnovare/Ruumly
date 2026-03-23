@@ -303,6 +303,42 @@ public class AuthService(RuumlyDbContext db, IConfiguration config, IEmailSender
         return Convert.ToHexString(bytes).ToLower();
     }
 
+    public async Task ChangePasswordAsync(Guid userId, ChangePasswordRequest request)
+    {
+        if (request.NewPassword != request.ConfirmPassword)
+            throw new ArgumentException("Uus parool ja kinnitus ei ühti.");
+
+        if (request.NewPassword.Length < 8)
+            throw new ArgumentException("Parool peab olema vähemalt 8 tähemärki pikk.");
+
+        var user = await db.Users.FindAsync(userId)
+            ?? throw new NotFoundException("Kasutajat ei leitud.");
+
+        // For Google-only users who have no real password,
+        // allow setting a new password without verifying old one
+        bool isGoogleOnly = user.GoogleId is not null &&
+            string.IsNullOrWhiteSpace(request.CurrentPassword);
+
+        if (!isGoogleOnly)
+        {
+            if (string.IsNullOrWhiteSpace(request.CurrentPassword))
+                throw new ArgumentException("Praegune parool on kohustuslik.");
+
+            if (!BC.Verify(request.CurrentPassword, user.PasswordHash))
+                throw new ArgumentException("Praegune parool on vale.");
+        }
+
+        user.PasswordHash = BC.HashPassword(request.NewPassword, workFactor: 12);
+
+        // Revoke all refresh tokens — require re-login on all devices
+        await db.RefreshTokens
+            .Where(t => t.UserId == userId && !t.IsRevoked)
+            .ExecuteUpdateAsync(s =>
+                s.SetProperty(t => t.IsRevoked, true));
+
+        await db.SaveChangesAsync();
+    }
+
     private static UserDto MapToDto(User user) => new(
         user.Id,
         user.Name,
@@ -314,6 +350,7 @@ public class AuthService(RuumlyDbContext db, IConfiguration config, IEmailSender
         user.Avatar,
         user.RegisteredAt,
         user.LastLoginAt,
-        user.BookingsCount
+        user.BookingsCount,
+        HasGoogleAccount: user.GoogleId is not null
     );
 }

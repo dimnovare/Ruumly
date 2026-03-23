@@ -82,6 +82,16 @@ public class AuthController(IAuthService authService) : ControllerBase
         return Ok(new { message = "Password updated successfully." });
     }
 
+    [HttpPost("change-password")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+    {
+        await authService.ChangePasswordAsync(User.GetUserId(), request);
+        return Ok(new { message = "Parool uuendatud." });
+    }
+
     [HttpPost("google")]
     [EnableRateLimiting("auth")]
     [ProducesResponseType(StatusCodes.Status200OK)]

@@ -13,5 +13,6 @@ public record UserDto(
     string? Avatar,
     DateTime RegisteredAt,
     DateTime? LastLoginAt,
-    int BookingsCount
+    int BookingsCount,
+    bool HasGoogleAccount
 );
