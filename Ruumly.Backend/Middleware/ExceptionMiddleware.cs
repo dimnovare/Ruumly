@@ -14,8 +14,22 @@ public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddlewa
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Unhandled exception for {Method} {Path}",
-                context.Request.Method, context.Request.Path);
+            var (statusCodeForLog, _) = ex switch
+            {
+                ConflictException           => (409, ""),
+                ForbiddenException          => (403, ""),
+                UnauthorizedAccessException => (401, ""),
+                KeyNotFoundException        => (404, ""),
+                NotFoundException           => (404, ""),
+                ArgumentException           => (400, ""),
+                _                           => (500, ""),
+            };
+            logger.LogError(ex,
+                "Unhandled {Method} {Path} → {StatusCode}: {Message}",
+                context.Request.Method,
+                context.Request.Path,
+                statusCodeForLog,
+                ex.Message);
             await HandleExceptionAsync(context, ex);
         }
     }

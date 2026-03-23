@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Ruumly.Backend.Data;
+using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Middleware;
 // SeedData is in Ruumly.Backend.Data namespace — already covered
 using Ruumly.Backend.Models;
@@ -15,8 +16,25 @@ using Ruumly.Backend.Services.Implementations;
 using Ruumly.Backend.Services.Interfaces;
 // BookingService, OrderRoutingService, IntegrationDispatchService are in same namespace
 using Ruumly.Backend.DTOs.Requests;
+using Serilog;
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console(outputTemplate:
+        "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .WriteTo.File("logs/ruumly-.log",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 14,
+        outputTemplate:
+            "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command",
+        Serilog.Events.LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog();
 
 // ─── Database ───
 // Railway injects DATABASE_URL as a postgres:// URI; fall back to appsettings for local dev.
@@ -48,6 +66,8 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddDataProtection();
+builder.Services.AddSingleton<TokenProtector>();
 
 // ─── Rate limiting ───
 builder.Services.AddRateLimiter(options =>

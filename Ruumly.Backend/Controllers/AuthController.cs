@@ -60,6 +60,27 @@ public class AuthController(IAuthService authService) : ControllerBase
         var user   = await authService.GetMeAsync(userId);
         return Ok(user);
     }
+
+    [HttpPost("forgot-password")]
+    [EnableRateLimiting("auth")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        await authService.RequestPasswordResetAsync(request.Email);
+        // Always 200 — never reveal if email exists
+        return Ok(new { message = "If that email exists, a reset link was sent." });
+    }
+
+    [HttpPost("reset-password")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+        var success = await authService.ResetPasswordAsync(request.Token, request.NewPassword);
+        if (!success)
+            return BadRequest(new { message = "Invalid or expired reset token." });
+        return Ok(new { message = "Password updated successfully." });
+    }
 }
 
 // Inline request DTO for refresh/logout — too small to warrant its own file

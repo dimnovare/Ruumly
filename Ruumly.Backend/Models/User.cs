@@ -16,6 +16,8 @@ public class User
     public DateTime RegisteredAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastLoginAt { get; set; }
     public int BookingsCount { get; set; }
+    public string? PasswordResetToken { get; set; }
+    public DateTime? PasswordResetExpiry { get; set; }
 
     public List<Booking> Bookings { get; set; } = [];
     public List<Message> Messages { get; set; } = [];

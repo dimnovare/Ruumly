@@ -68,6 +68,29 @@ public class BookingService(
             .FirstOrDefaultAsync(l => l.Id == request.ListingId && l.IsActive)
             ?? throw new NotFoundException($"Listing {request.ListingId} not found or inactive.");
 
+        // 1b. Check for overlapping confirmed/active bookings on this listing
+        if (!string.IsNullOrEmpty(request.EndDate) &&
+            DateTime.TryParse(request.EndDate, out var endDateCheck) &&
+            DateTime.TryParse(request.StartDate, out var startDateCheck))
+        {
+            var startUtc = DateTime.SpecifyKind(startDateCheck, DateTimeKind.Utc);
+            var endUtc   = DateTime.SpecifyKind(endDateCheck,   DateTimeKind.Utc);
+
+            var hasConflict = await db.Bookings
+                .AnyAsync(b =>
+                    b.ListingId == request.ListingId &&
+                    (b.Status == BookingStatus.Confirmed ||
+                     b.Status == BookingStatus.Active) &&
+                    b.EndDate.HasValue &&
+                    b.StartDate < endUtc &&
+                    b.EndDate.Value > startUtc);
+
+            if (hasConflict)
+                throw new ArgumentException(
+                    "This listing is already booked for the selected dates. " +
+                    "Please choose different dates.");
+        }
+
         // 2. Calculate pricing (mirrors pricing.ts formulas exactly)
         var basePrice     = listing.PriceFrom;
 

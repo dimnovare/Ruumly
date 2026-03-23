@@ -17,7 +17,8 @@ namespace Ruumly.Backend.Controllers;
 public class AdminController(
     RuumlyDbContext db,
     IHttpClientFactory httpClientFactory,
-    ILogger<AdminController> logger) : ControllerBase
+    ILogger<AdminController> logger,
+    TokenProtector tokenProtector) : ControllerBase
 {
     // ══════════════════════════════════════════════════════════════════════════
     // USERS
@@ -149,13 +150,14 @@ public class AdminController(
             try
             {
                 var request = new HttpRequestMessage(HttpMethod.Head, supplier.ApiEndpoint);
-                if (!string.IsNullOrWhiteSpace(supplier.ApiAuthToken))
+                var plainToken = tokenProtector.Unprotect(supplier.ApiAuthToken);
+                if (!string.IsNullOrWhiteSpace(plainToken))
                 {
                     if (string.Equals(supplier.ApiAuthType, "bearer", StringComparison.OrdinalIgnoreCase))
                         client.DefaultRequestHeaders.Authorization =
-                            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", supplier.ApiAuthToken);
+                            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", plainToken);
                     else if (string.Equals(supplier.ApiAuthType, "apikey", StringComparison.OrdinalIgnoreCase))
-                        client.DefaultRequestHeaders.Add("X-API-Key", supplier.ApiAuthToken);
+                        client.DefaultRequestHeaders.Add("X-API-Key", plainToken);
                 }
                 var response = await client.SendAsync(request);
                 sw.Stop();

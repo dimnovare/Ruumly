@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
+using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
@@ -13,7 +14,8 @@ public class IntegrationDispatchService(
     IHttpClientFactory httpClientFactory,
     IEmailSender emailSender,
     INotificationService notificationService,
-    ILogger<IntegrationDispatchService> logger) : IIntegrationDispatchService
+    ILogger<IntegrationDispatchService> logger,
+    TokenProtector tokenProtector) : IIntegrationDispatchService
 {
     public async Task DispatchAsync(Order order, Supplier supplier)
     {
@@ -46,14 +48,15 @@ public class IntegrationDispatchService(
 
         var client = httpClientFactory.CreateClient();
 
-        // Set auth header
-        if (!string.IsNullOrWhiteSpace(supplier.ApiAuthToken))
+        // Unprotect stored token before use in HTTP header
+        var plainToken = tokenProtector.Unprotect(supplier.ApiAuthToken);
+        if (!string.IsNullOrWhiteSpace(plainToken))
         {
             if (string.Equals(supplier.ApiAuthType, "bearer", StringComparison.OrdinalIgnoreCase))
                 client.DefaultRequestHeaders.Authorization =
-                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", supplier.ApiAuthToken);
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", plainToken);
             else if (string.Equals(supplier.ApiAuthType, "apikey", StringComparison.OrdinalIgnoreCase))
-                client.DefaultRequestHeaders.Add("X-API-Key", supplier.ApiAuthToken);
+                client.DefaultRequestHeaders.Add("X-API-Key", plainToken);
         }
 
         var payload = new

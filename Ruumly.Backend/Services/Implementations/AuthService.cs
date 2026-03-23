@@ -12,10 +12,11 @@ using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Services.Interfaces;
 using BC = BCrypt.Net.BCrypt;
+// IEmailSender is in Ruumly.Backend.Services.Interfaces namespace
 
 namespace Ruumly.Backend.Services.Implementations;
 
-public class AuthService(RuumlyDbContext db, IConfiguration config) : IAuthService
+public class AuthService(RuumlyDbContext db, IConfiguration config, IEmailSender emailSender) : IAuthService
 {
     // ─── Public methods ───────────────────────────────────────────────────────
 
@@ -100,6 +101,57 @@ public class AuthService(RuumlyDbContext db, IConfiguration config) : IAuthServi
             ?? throw new KeyNotFoundException("User not found");
 
         return MapToDto(user);
+    }
+
+    public async Task RequestPasswordResetAsync(string email)
+    {
+        var user = await db.Users
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+
+        // Always return — never reveal whether email exists
+        if (user is null) return;
+
+        var token  = Convert.ToHexString(
+            System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
+        user.PasswordResetToken  = token;
+        user.PasswordResetExpiry = DateTime.UtcNow.AddHours(2);
+        await db.SaveChangesAsync();
+
+        var resetUrl = $"{config["AppUrl"]}/login?view=reset&token={token}";
+        await emailSender.SendAsync(
+            user.Email,
+            "Ruumly — paroolivahetus",
+            $"Parooli vahetamiseks kliki: {resetUrl}\n\n" +
+            $"Link kehtib 2 tundi. Kui sa ei küsinud parooli vahetust, " +
+            $"ignoreeri seda emaili.",
+            $"<p>Parooli vahetamiseks <a href=\"{resetUrl}\">kliki siia</a>.</p>" +
+            $"<p>Link kehtib 2 tundi.</p>"
+        );
+    }
+
+    public async Task<bool> ResetPasswordAsync(string token, string newPassword)
+    {
+        if (newPassword.Length < 8) return false;
+
+        var user = await db.Users
+            .FirstOrDefaultAsync(u =>
+                u.PasswordResetToken == token &&
+                u.PasswordResetExpiry > DateTime.UtcNow);
+
+        if (user is null) return false;
+
+        user.PasswordHash        = BC.HashPassword(newPassword, workFactor: 12);
+        user.PasswordResetToken  = null;
+        user.PasswordResetExpiry = null;
+
+        // Revoke all refresh tokens for security
+        var tokens = await db.RefreshTokens
+            .Where(t => t.UserId == user.Id)
+            .ToListAsync();
+        foreach (var t in tokens) t.IsRevoked = true;
+
+        await db.SaveChangesAsync();
+        return true;
     }
 
     // ─── Private helpers ──────────────────────────────────────────────────────
