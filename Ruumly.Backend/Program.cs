@@ -195,11 +195,30 @@ if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<RuumlyDbContext>();
-    await SeedData.SeedAsync(db);
+    try
+    {
+        var pending = await db.Database.GetPendingMigrationsAsync();
+        if (pending.Any())
+        {
+            Console.WriteLine($"[Startup] Applying {pending.Count()} pending migration(s)...");
+            await db.Database.MigrateAsync();
+        }
+        await SeedData.SeedAsync(db);
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex,
+            "Startup seed/migration failed. App will continue " +
+            "but data may be incomplete. Check your database connection.");
+    }
 }
 
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+var port = Environment.GetEnvironmentVariable("PORT") ?? "3000";
 app.Urls.Add($"http://+:{port}");
+Console.WriteLine($"[Ruumly] Starting on http://localhost:{port}");
+Console.WriteLine($"[Ruumly] Swagger: http://localhost:{port}/swagger");
+Console.WriteLine($"[Ruumly] Health:  http://localhost:{port}/health");
 app.Run();
 
 static string ParseDatabaseUrl(string databaseUrl)
