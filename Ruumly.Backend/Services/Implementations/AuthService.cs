@@ -231,15 +231,129 @@ public class AuthService(RuumlyDbContext db, IConfiguration config, IEmailSender
         await db.SaveChangesAsync();
 
         var resetUrl = $"{config["AppUrl"]}/login?view=reset&token={token}";
-        await emailSender.SendAsync(
-            user.Email,
-            "Ruumly — paroolivahetus",
-            $"Parooli vahetamiseks kliki: {resetUrl}\n\n" +
-            $"Link kehtib 2 tundi. Kui sa ei küsinud parooli vahetust, " +
-            $"ignoreeri seda emaili.",
-            $"<p>Parooli vahetamiseks <a href=\"{resetUrl}\">kliki siia</a>.</p>" +
-            $"<p>Link kehtib 2 tundi.</p>"
-        );
+
+        var subject = "Ruumly — parooli taastamine";
+
+        var textBody =
+            $"Tere,\n\n" +
+            $"Saime parooli taastamise taotluse teie " +
+            $"Ruumly kontole ({email}).\n\n" +
+            $"Parooli vahetamiseks klikkige alloleval " +
+            $"lingil:\n{resetUrl}\n\n" +
+            $"Link kehtib 2 tundi.\n\n" +
+            $"KUI TE SEDA TAOTLUST EI TEINUD:\n" +
+            $"Ignoreerige seda e-kirja. Teie parool " +
+            $"jääb muutmata. Keegi teine ei pääse teie " +
+            $"kontole ligi ilma teie paroolita.\n\n" +
+            $"Turvalisuse huvides soovitame:\n" +
+            $"- Mitte jagada oma parooli kellegagi\n" +
+            $"- Kasutada unikaalset parooli ainult " +
+            $"Ruumly jaoks\n\n" +
+            $"Lugupidamisega,\nRuumly meeskond\n" +
+            $"info@ruumly.eu";
+
+        var htmlBody =
+            $"""
+            <!DOCTYPE html>
+            <html lang="et">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif;">
+              <table width="100%" cellpadding="0" cellspacing="0"
+                style="background:#f5f5f5;padding:32px 0;">
+                <tr><td align="center">
+                  <table width="560" cellpadding="0" cellspacing="0"
+                    style="background:#ffffff;border-radius:8px;overflow:hidden;
+                    box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+
+                    <!-- Header -->
+                    <tr>
+                      <td style="background:#00897B;padding:28px 40px;">
+                        <h1 style="margin:0;color:#ffffff;font-size:22px;
+                          font-weight:700;letter-spacing:-0.5px;">
+                          Ruumly
+                        </h1>
+                      </td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                      <td style="padding:36px 40px;">
+                        <h2 style="margin:0 0 16px;color:#212121;font-size:18px;font-weight:600;">
+                          Parooli taastamine
+                        </h2>
+                        <p style="margin:0 0 16px;color:#455A64;font-size:15px;line-height:1.6;">
+                          Saime parooli taastamise taotluse teie Ruumly kontole
+                          <strong>{email}</strong>.
+                        </p>
+                        <p style="margin:0 0 28px;color:#455A64;font-size:15px;line-height:1.6;">
+                          Klikkige alloleval nupul parooli vahetamiseks. Link kehtib
+                          <strong>2 tundi</strong>.
+                        </p>
+
+                        <!-- Button -->
+                        <table cellpadding="0" cellspacing="0" style="margin:0 0 32px;">
+                          <tr>
+                            <td style="background:#00897B;border-radius:6px;">
+                              <a href="{resetUrl}"
+                                style="display:inline-block;padding:14px 32px;color:#ffffff;
+                                font-size:15px;font-weight:600;text-decoration:none;">
+                                Vaheta parool
+                              </a>
+                            </td>
+                          </tr>
+                        </table>
+
+                        <p style="margin:0 0 8px;color:#455A64;font-size:13px;">
+                          Või kopeerige see link oma brauserisse:
+                        </p>
+                        <p style="margin:0 0 32px;color:#00897B;font-size:13px;word-break:break-all;">
+                          {resetUrl}
+                        </p>
+
+                        <!-- Security notice -->
+                        <table width="100%" cellpadding="0" cellspacing="0"
+                          style="background:#FFF8E1;border-left:4px solid #FF8F00;
+                          border-radius:4px;margin-bottom:24px;">
+                          <tr>
+                            <td style="padding:16px 20px;">
+                              <p style="margin:0 0 8px;color:#E65100;font-size:14px;font-weight:700;">
+                                ⚠ Kui te seda taotlust ei teinud
+                              </p>
+                              <p style="margin:0;color:#5D4037;font-size:13px;line-height:1.5;">
+                                Ignoreerige seda e-kirja — teie parool jääb muutmata ja
+                                keegi teine ei pääse teie kontole ligi. Kui kahtlustate,
+                                et keegi üritab teie kontot kasutada, võtke meiega ühendust:
+                                <a href="mailto:info@ruumly.eu" style="color:#00897B;">
+                                  info@ruumly.eu
+                                </a>
+                              </p>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                      <td style="background:#F5F5F5;padding:20px 40px;border-top:1px solid #ECEFF1;">
+                        <p style="margin:0;color:#90A4AE;font-size:12px;line-height:1.5;">
+                          Ruumly OÜ · ruumly.eu<br>
+                          See on automaatne e-kiri. Palun ärge vastake sellele.
+                        </p>
+                      </td>
+                    </tr>
+
+                  </table>
+                </td></tr>
+              </table>
+            </body>
+            </html>
+            """;
+
+        await emailSender.SendAsync(user.Email, subject, textBody, htmlBody);
     }
 
     public async Task<bool> ResetPasswordAsync(string token, string newPassword)
@@ -252,6 +366,12 @@ public class AuthService(RuumlyDbContext db, IConfiguration config, IEmailSender
                 u.PasswordResetExpiry > DateTime.UtcNow);
 
         if (user is null) return false;
+
+        // Prevent reusing the same password
+        if (BC.Verify(newPassword, user.PasswordHash))
+            throw new ArgumentException(
+                "Uus parool peab erinema praegusest paroolist. " +
+                "Palun valige erinev parool.");
 
         user.PasswordHash        = BC.HashPassword(newPassword, workFactor: 12);
         user.PasswordResetToken  = null;
