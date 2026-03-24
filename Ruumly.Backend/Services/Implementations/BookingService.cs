@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.DTOs.Responses;
@@ -13,7 +14,8 @@ public class BookingService(
     RuumlyDbContext db,
     IOrderRoutingService orderRoutingService,
     IEmailSender emailSender,
-    ILogger<BookingService> logger) : IBookingService
+    ILogger<BookingService> logger,
+    IConfiguration config) : IBookingService
 {
     // Extra prices matching pricing.ts EXTRAS_PRICES
     private static readonly Dictionary<string, decimal> ExtrasPrices = new(StringComparer.OrdinalIgnoreCase)
@@ -172,23 +174,29 @@ public class BookingService(
         {
             try
             {
-                var subject = $"Ruumly — Broneeringu kinnitus #{booking.Id.ToString()[..8].ToUpper()}";
-                var body    =
-                    $"Tere {booking.ContactName},\n\n" +
-                    $"Teie broneerimise taotlus on vastu võetud.\n\n" +
-                    $"Teenus: {listing.Title}\n" +
-                    $"Alguskuupäev: {booking.StartDate:dd.MM.yyyy}\n" +
-                    $"Periood: {booking.Duration}\n" +
-                    $"Kokku: €{booking.Total:F2}" +
-                    (booking.VatAmount > 0
-                        ? $" (sisaldab KM €{booking.VatAmount:F2})"
-                        : "") +
-                    $"\n\nPartner võtab teiega ühendust kinnitusel.\n" +
-                    $"Saate broneerimise staatust jälgida: " +
-                    $"https://app.ruumly.eu/account?tab=bookings\n\n" +
-                    $"Ruumly";
+                var bookingUser = await db.Users.FindAsync(userId);
+                var lang        = bookingUser?.Language ?? "et";
+                var t           = EmailTranslations.For(lang);
 
-                await emailSender.SendAsync(booking.ContactEmail, subject, body);
+                var accountUrl  = $"{config["AppUrl"]}/account?tab=bookings";
+
+                var textBody =
+                    $"{t.BookingConfirmGreeting} {booking.ContactName},\n\n" +
+                    $"{t.BookingConfirmBody}\n\n" +
+                    $"{t.BookingConfirmService}: {listing.Title}\n" +
+                    $"{t.BookingConfirmStartDate}: {booking.StartDate:dd.MM.yyyy}\n" +
+                    $"{t.BookingConfirmPeriod}: {booking.Duration}\n" +
+                    $"{t.BookingConfirmTotal}: €{booking.Total:F2}" +
+                    (booking.VatAmount > 0
+                        ? $" ({t.BookingConfirmVat} €{booking.VatAmount:F2})"
+                        : "") +
+                    $"\n\n{t.BookingConfirmNext}\n{accountUrl}\n\n" +
+                    $"Ruumly\ninfo@ruumly.eu";
+
+                var confirmSubject =
+                    $"{t.BookingConfirmSubject} #{booking.Id.ToString()[..8].ToUpper()}";
+
+                await emailSender.SendAsync(booking.ContactEmail, confirmSubject, textBody);
             }
             catch (Exception ex)
             {

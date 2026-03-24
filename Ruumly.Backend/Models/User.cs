@@ -12,6 +12,13 @@ public class User
     public UserStatus Status { get; set; } = UserStatus.Active;
     public string? Company { get; set; }
     public string? Phone { get; set; }
+
+    /// <summary>
+    /// User's preferred language: "et", "en", or "ru".
+    /// Defaults to Estonian.
+    /// </summary>
+    public string Language { get; set; } = "et";
+
     public string? Avatar { get; set; }
     public DateTime RegisteredAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastLoginAt { get; set; }
