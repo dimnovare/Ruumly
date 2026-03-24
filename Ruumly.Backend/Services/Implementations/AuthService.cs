@@ -165,6 +165,15 @@ public class AuthService(RuumlyDbContext db, IConfiguration config, IEmailSender
             }
             else
             {
+                // New user via Google — check invite gate
+                var inviteRequired = await db.PlatformSettings
+                    .FirstOrDefaultAsync(s => s.Key == "inviteCodeRequired");
+
+                if (inviteRequired?.Value == "true")
+                    throw new UnauthorizedAccessException(
+                        "Registreerimine on hetkel ainult kutsega. " +
+                        "Võtke meiega ühendust: info@ruumly.eu");
+
                 // Create brand new user
                 user = new User
                 {
