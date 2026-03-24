@@ -26,6 +26,7 @@ public class SettingsController(RuumlyDbContext db) : ControllerBase
             "openHours",
             "openHoursSat",
             "inviteCodeRequired",
+            "maintenanceMode",
             // Note: "inviteCode" is NOT included — the actual code stays server-side only
         };
 
@@ -42,6 +43,7 @@ public class SettingsController(RuumlyDbContext db) : ControllerBase
             openHours          = settings.GetValueOrDefault("openHours",          "E–R 9–18"),
             openHoursSat       = settings.GetValueOrDefault("openHoursSat",       ""),
             inviteCodeRequired = settings.GetValueOrDefault("inviteCodeRequired", "false") == "true",
+            maintenanceMode    = settings.GetValueOrDefault("maintenanceMode",    "false") == "true",
         });
     }
 }
