@@ -20,4 +20,5 @@ public interface IAuthService
     Task<AuthResponse> GoogleLoginAsync(string credential);
 
     Task ChangePasswordAsync(Guid userId, ChangePasswordRequest request);
+    Task UpdateLanguageAsync(Guid userId, string language);
 }

@@ -374,6 +374,14 @@ public class AuthService(RuumlyDbContext db, IConfiguration config, IEmailSender
         await db.SaveChangesAsync();
     }
 
+    public async Task UpdateLanguageAsync(Guid userId, string language)
+    {
+        var user = await db.Users.FindAsync(userId)
+            ?? throw new NotFoundException("Kasutajat ei leitud.");
+        user.Language = language;
+        await db.SaveChangesAsync();
+    }
+
     private static UserDto MapToDto(User user) => new(
         user.Id,
         user.Name,

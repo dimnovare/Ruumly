@@ -92,6 +92,20 @@ public class AuthController(IAuthService authService) : ControllerBase
         return Ok(new { message = "Parool uuendatud." });
     }
 
+    [HttpPatch("language")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UpdateLanguage([FromBody] UpdateLanguageRequest request)
+    {
+        var validLangs = new[] { "et", "en", "ru" };
+        if (!validLangs.Contains(request.Language))
+            return BadRequest(new { message = "Invalid language. Use et, en, or ru." });
+
+        await authService.UpdateLanguageAsync(User.GetUserId(), request.Language);
+        return NoContent();
+    }
+
     [HttpPost("google")]
     [EnableRateLimiting("auth")]
     [ProducesResponseType(StatusCodes.Status200OK)]
