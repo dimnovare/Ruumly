@@ -1,7 +1,5 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging.Abstractions;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.Models;
@@ -23,31 +21,14 @@ public class BookingServiceTests
         return new RuumlyDbContext(opts);
     }
 
-    private static IConfiguration MakeConfig() =>
-        new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["AppUrl"] = "https://test.ruumly.eu",
-            })
-            .Build();
-
     private static BookingService MakeService(RuumlyDbContext db) =>
         new(db,
             new NoOpOrderRoutingService(),
-            new NoOpEmailSender(),
-            NullLogger<BookingService>.Instance,
-            MakeConfig(),
             new NoOpHttpContextAccessor());
 
     private sealed class NoOpOrderRoutingService : IOrderRoutingService
     {
         public Task RouteOrderAsync(Booking booking, Listing listing) => Task.CompletedTask;
-    }
-
-    private sealed class NoOpEmailSender : IEmailSender
-    {
-        public Task SendAsync(string to, string subject, string textBody, string? htmlBody = null)
-            => Task.CompletedTask;
     }
 
     private sealed class NoOpHttpContextAccessor : Microsoft.AspNetCore.Http.IHttpContextAccessor

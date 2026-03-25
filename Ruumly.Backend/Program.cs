@@ -16,6 +16,8 @@ using Ruumly.Backend.Services.Implementations;
 using Ruumly.Backend.Services.Interfaces;
 // BookingService, OrderRoutingService, IntegrationDispatchService are in same namespace
 using Ruumly.Backend.DTOs.Requests;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -111,6 +113,16 @@ builder.Services.AddCors(options =>
 // ─── FluentValidation ───
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+
+// ─── Hangfire ───
+builder.Services.AddHangfire(config => config
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UsePostgreSqlStorage(c => c.UseNpgsqlConnection(connectionString)));
+
+builder.Services.AddHangfireServer();
+builder.Services.AddScoped<BackgroundOrderDispatchService>();
 
 // ─── Application services ───
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -210,6 +222,11 @@ app.UseStaticFiles(new StaticFileOptions
     FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
         Path.GetFullPath(uploadsPath)),
     RequestPath = "/uploads",
+});
+
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = [new HangfireAdminAuthFilter()],
 });
 
 app.MapControllers();

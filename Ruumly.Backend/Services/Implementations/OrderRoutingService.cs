@@ -1,3 +1,4 @@
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.Models;
@@ -8,7 +9,6 @@ namespace Ruumly.Backend.Services.Implementations;
 
 public class OrderRoutingService(
     RuumlyDbContext db,
-    IIntegrationDispatchService dispatchService,
     INotificationService notificationService,
     ILogger<OrderRoutingService> logger) : IOrderRoutingService
 {
@@ -109,7 +109,8 @@ public class OrderRoutingService(
 
         if (autoDispatch)
         {
-            await dispatchService.DispatchAsync(order, supplier);
+            BackgroundJob.Enqueue<BackgroundOrderDispatchService>(
+                x => x.DispatchOrderAsync(order.Id));
         }
         else
         {

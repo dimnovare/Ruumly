@@ -1,6 +1,6 @@
+using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.DTOs.Responses;
@@ -14,9 +14,6 @@ namespace Ruumly.Backend.Services.Implementations;
 public class BookingService(
     RuumlyDbContext db,
     IOrderRoutingService orderRoutingService,
-    IEmailSender emailSender,
-    ILogger<BookingService> logger,
-    IConfiguration config,
     IHttpContextAccessor http) : IBookingService
 {
     private string Lang => http.HttpContext?.Request.GetLang() ?? "et";
@@ -204,43 +201,10 @@ public class BookingService(
         // 5. Route and dispatch the order
         await orderRoutingService.RouteOrderAsync(booking, listing);
 
-        // 5b. Send booking confirmation email to customer
-        if (!string.IsNullOrWhiteSpace(booking.ContactEmail))
-        {
-            try
-            {
-                var bookingUser = await db.Users.FindAsync(userId);
-                var lang        = bookingUser?.Language ?? "et";
-                var t           = EmailTranslations.For(lang);
-
-                var accountUrl  = $"{config["AppUrl"]}/account?tab=bookings";
-
-                var textBody =
-                    $"{t.BookingConfirmGreeting} {booking.ContactName},\n\n" +
-                    $"{t.BookingConfirmBody}\n\n" +
-                    $"{t.BookingConfirmService}: {listing.Title}\n" +
-                    $"{t.BookingConfirmStartDate}: {booking.StartDate:dd.MM.yyyy}\n" +
-                    $"{t.BookingConfirmPeriod}: {booking.Duration}\n" +
-                    $"{t.BookingConfirmTotal}: €{booking.Total:F2}" +
-                    (booking.VatAmount > 0
-                        ? $" ({t.BookingConfirmVat} €{booking.VatAmount:F2})"
-                        : "") +
-                    $"\n\n{t.BookingConfirmNext}\n{accountUrl}\n\n" +
-                    $"Ruumly\ninfo@ruumly.eu";
-
-                var confirmSubject =
-                    $"{t.BookingConfirmSubject} #{booking.Id.ToString()[..8].ToUpper()}";
-
-                await emailSender.SendAsync(booking.ContactEmail, confirmSubject, textBody);
-            }
-            catch (Exception ex)
-            {
-                // Don't fail the booking if email fails
-                logger.LogWarning(ex,
-                    "Failed to send booking confirmation email to {Email}",
-                    booking.ContactEmail);
-            }
-        }
+        // 5b. Enqueue confirmation email — runs in background so slow email
+        //     delivery never delays the booking response to the customer.
+        BackgroundJob.Enqueue<BackgroundOrderDispatchService>(
+            x => x.SendBookingConfirmationEmailAsync(booking.Id));
 
         // 6. Reload with all navigations for response
         var result = await db.Bookings
