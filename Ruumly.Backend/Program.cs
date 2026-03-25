@@ -197,7 +197,11 @@ builder.Services.AddHealthChecks()
     .AddNpgSql(
         connectionString!,
         name: "postgres",
-        tags: new[] { "db", "ready" });
+        tags: new[] { "db", "ready" })
+    .AddHangfire(options =>
+    {
+        options.MinimumAvailableServers = 1;
+    }, name: "hangfire", tags: new[] { "jobs", "ready" });
 
 builder.Services.AddHttpContextAccessor();
 
