@@ -23,6 +23,7 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<PlatformSetting> PlatformSettings => Set<PlatformSetting>();
     public DbSet<SupplierLocation> SupplierLocations => Set<SupplierLocation>();
+    public DbSet<Review> Reviews => Set<Review>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -204,6 +205,41 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
 
         model.Entity<Listing>()
             .HasIndex(l => l.LocationId);
+
+        // ─── Review: one review per booking (unique), indexed by listing/supplier ───
+        model.Entity<Review>()
+            .HasIndex(r => r.BookingId)
+            .IsUnique();
+
+        model.Entity<Review>()
+            .HasIndex(r => r.ListingId);
+
+        model.Entity<Review>()
+            .HasIndex(r => r.SupplierId);
+
+        model.Entity<Review>()
+            .HasOne(r => r.Booking)
+            .WithMany()
+            .HasForeignKey(r => r.BookingId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        model.Entity<Review>()
+            .HasOne(r => r.User)
+            .WithMany()
+            .HasForeignKey(r => r.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        model.Entity<Review>()
+            .HasOne(r => r.Listing)
+            .WithMany()
+            .HasForeignKey(r => r.ListingId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        model.Entity<Review>()
+            .HasOne(r => r.Supplier)
+            .WithMany()
+            .HasForeignKey(r => r.SupplierId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // ─── PlatformSetting primary key ───
         model.Entity<PlatformSetting>().HasKey(s => s.Key);
