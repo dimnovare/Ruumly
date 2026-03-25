@@ -38,5 +38,6 @@ public record BookingDto(
     decimal Total,
     string CreatedAt,
     List<BookingTimelineDto> Timeline,
-    OrderSummaryDto? Order
+    OrderSummaryDto? Order,
+    Guid? InvoiceId
 );

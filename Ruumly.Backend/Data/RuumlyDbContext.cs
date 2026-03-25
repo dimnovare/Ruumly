@@ -180,6 +180,13 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
         model.Entity<Listing>()
             .HasIndex(l => l.CreatedAt);
 
+        // ─── SupplierLocation indexes ───
+        model.Entity<SupplierLocation>()
+            .HasIndex(l => l.City);
+
+        model.Entity<SupplierLocation>()
+            .HasIndex(l => new { l.IsActive, l.City });
+
         // ─── SupplierLocation → Supplier (cascade) ───
         model.Entity<SupplierLocation>()
             .HasOne(e => e.Supplier)

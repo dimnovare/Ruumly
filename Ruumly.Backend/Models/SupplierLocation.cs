@@ -15,5 +15,17 @@ public class SupplierLocation
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+    public string ImagesJson { get; set; } = "[]";
+
+    [System.Text.Json.Serialization.JsonIgnore]
+    public List<string> Images
+    {
+        get => System.Text.Json.JsonSerializer.Deserialize<List<string>>(ImagesJson) ?? [];
+        set => ImagesJson = System.Text.Json.JsonSerializer.Serialize(value);
+    }
+
+    public string Description { get; set; } = string.Empty;
+    public string? OpeningHours { get; set; }
+
     public List<Listing> Listings { get; set; } = [];
 }

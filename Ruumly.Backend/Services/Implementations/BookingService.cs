@@ -48,7 +48,12 @@ public class BookingService(
             .OrderByDescending(b => b.CreatedAt)
             .ToListAsync();
 
-        return bookings.Select(MapToDto).ToList();
+        var bookingIds = bookings.Select(b => b.Id).ToList();
+        var invoiceIds = await db.Invoices
+            .Where(i => bookingIds.Contains(i.BookingId))
+            .ToDictionaryAsync(i => i.BookingId, i => (Guid?)i.Id);
+
+        return bookings.Select(b => MapToDto(b, invoiceIds.GetValueOrDefault(b.Id))).ToList();
     }
 
     public async Task<BookingDto?> GetByIdAsync(Guid id, Guid userId, UserRole role)
@@ -66,7 +71,12 @@ public class BookingService(
         if (role == UserRole.Customer && booking.UserId != userId)
             throw new ForbiddenException("You do not have access to this booking.");
 
-        return MapToDto(booking);
+        var invoiceId = await db.Invoices
+            .Where(i => i.BookingId == booking.Id)
+            .Select(i => (Guid?)i.Id)
+            .FirstOrDefaultAsync();
+
+        return MapToDto(booking, invoiceId);
     }
 
     public async Task<BookingDto> CreateAsync(CreateBookingRequest request, Guid userId)
@@ -219,12 +229,12 @@ public class BookingService(
             .Include(b => b.Order).ThenInclude(o => o!.Supplier)
             .FirstAsync(b => b.Id == booking.Id);
 
-        return MapToDto(result);
+        return MapToDto(result, null);
     }
 
     // ─── Mapping ──────────────────────────────────────────────────────────────
 
-    private static BookingDto MapToDto(Booking b) => new(
+    private static BookingDto MapToDto(Booking b, Guid? invoiceId) => new(
         Id:           b.Id,
         ListingId:    b.ListingId,
         ListingTitle: b.Listing?.Title ?? string.Empty,
@@ -249,7 +259,8 @@ public class BookingService(
                 Event:  t.Event,
                 Status: t.Status.ToString().ToLower()
             )).ToList(),
-        Order: b.Order is null ? null : MapOrderToDto(b.Order)
+        Order:     b.Order is null ? null : MapOrderToDto(b.Order),
+        InvoiceId: invoiceId
     );
 
     private static OrderSummaryDto MapOrderToDto(Order o) => new(
