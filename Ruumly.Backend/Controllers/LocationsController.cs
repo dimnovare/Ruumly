@@ -71,6 +71,23 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         if (supplier is null)
             return NotFound(Error("Supplier not found"));
 
+        // Check tier limit — count active locations, not individual unit listings.
+        var activeLocationCount = await db.SupplierLocations
+            .CountAsync(l => l.SupplierId == body.SupplierId && l.IsActive);
+
+        var maxAllowed = TierRules.MaxLocations(supplier.Tier);
+
+        if (activeLocationCount >= maxAllowed)
+        {
+            var tierName = supplier.Tier.ToString();
+            return BadRequest(new {
+                error =
+                    $"Teie {tierName} plaan lubab kuni " +
+                    $"{maxAllowed} aktiivset asukohta. " +
+                    "Uuendage plaani lisaasukohtade jaoks."
+            });
+        }
+
         var location = new SupplierLocation
         {
             Id         = Guid.NewGuid(),

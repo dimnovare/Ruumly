@@ -33,6 +33,7 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
         model.Entity<User>().Property(e => e.Status).HasConversion<string>();
         model.Entity<Supplier>().Property(e => e.IntegrationType).HasConversion<string>();
         model.Entity<Supplier>().Property(e => e.IntegrationHealth).HasConversion<string>();
+        model.Entity<Supplier>().Property(e => e.Tier).HasConversion<string>();
         model.Entity<IntegrationSettings>().Property(e => e.ApprovalMode).HasConversion<string>();
         model.Entity<IntegrationSettings>().Property(e => e.PostingMode).HasConversion<string>();
         model.Entity<IntegrationSettings>().Property(e => e.FallbackPostingMode).HasConversion<string>();

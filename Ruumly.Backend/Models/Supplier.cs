@@ -37,6 +37,10 @@ public class Supplier
     /// </summary>
     public string? BankName { get; set; }
 
+    public SupplierTier Tier { get; set; } = SupplierTier.Starter;
+    public decimal MonthlyFee { get; set; } = 0m;
+    public DateTime? SubscriptionEndsAt { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

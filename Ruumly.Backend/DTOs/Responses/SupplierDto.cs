@@ -23,5 +23,12 @@ public record SupplierDto(
     string  UpdatedAt,
     int     OrdersTotal,
     decimal Revenue,
-    IntegrationSettingsDto? IntegrationSettings
+    IntegrationSettingsDto? IntegrationSettings,
+    string    Tier,
+    decimal   CommissionRate,
+    decimal   MonthlyFee,
+    int       MaxLocations,
+    bool      HasFullAnalytics,
+    bool      CanHavePromotedBadge,
+    DateTime? SubscriptionEndsAt
 );

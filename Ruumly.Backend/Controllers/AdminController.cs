@@ -148,6 +148,39 @@ public class AdminController(
         return Ok(new { supplier.Id, supplier.IsActive });
     }
 
+    [HttpPatch("suppliers/{id:guid}/tier")]
+    public async Task<IActionResult> UpdateSupplierTier(
+        Guid id,
+        [FromBody] UpdateSupplierTierRequest request)
+    {
+        var supplier = await db.Suppliers.FindAsync(id);
+        if (supplier is null)
+            return NotFound(Error("Supplier not found."));
+
+        if (!Enum.TryParse<SupplierTier>(
+                request.Tier, ignoreCase: true,
+                out var tier))
+            return BadRequest(Error(
+                "Invalid tier. " +
+                "Use Starter, Standard, or Premium."));
+
+        supplier.Tier       = tier;
+        supplier.MonthlyFee = TierRules.MonthlyFee(tier);
+        supplier.SubscriptionEndsAt =
+            tier != SupplierTier.Starter
+                ? DateTime.UtcNow.AddMonths(1)
+                : null;
+        supplier.UpdatedAt = DateTime.UtcNow;
+
+        await db.SaveChangesAsync();
+
+        return Ok(new {
+            id     = supplier.Id,
+            tier   = supplier.Tier.ToString(),
+            endsAt = supplier.SubscriptionEndsAt,
+        });
+    }
+
     [HttpPost("suppliers/{id:guid}/test")]
     public async Task<IActionResult> TestSupplier(Guid id)
     {
@@ -798,7 +831,14 @@ public class AdminController(
         Revenue:             revenue,
         IntegrationSettings: includeSettings && s.IntegrationSettings is not null
             ? MapIntegrationSettings(s.IntegrationSettings)
-            : null);
+            : null,
+        Tier:                s.Tier.ToString(),
+        CommissionRate:      TierRules.CommissionRate(s.Tier),
+        MonthlyFee:          TierRules.MonthlyFee(s.Tier),
+        MaxLocations:        TierRules.MaxLocations(s.Tier),
+        HasFullAnalytics:    TierRules.HasFullAnalytics(s.Tier),
+        CanHavePromotedBadge: TierRules.CanHavePromotedBadge(s.Tier),
+        SubscriptionEndsAt:  s.SubscriptionEndsAt);
 
     private static IntegrationSettingsDto MapIntegrationSettings(Models.IntegrationSettings i) => new(
         Id:                  i.Id,
