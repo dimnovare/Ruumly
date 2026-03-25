@@ -1,3 +1,4 @@
+using Ruumly.Backend.DTOs;
 using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Models.Enums;
 
@@ -5,7 +6,7 @@ namespace Ruumly.Backend.Services.Interfaces;
 
 public interface INotificationService
 {
-    Task<List<NotificationDto>> GetAllAsync(Guid userId);
+    Task<PaginatedResult<NotificationDto>> GetAllAsync(Guid userId, int page = 1, int limit = 50);
     Task MarkReadAsync(Guid id, Guid userId);
     Task MarkAllReadAsync(Guid userId);
 

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
+using Ruumly.Backend.DTOs;
 using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
@@ -10,14 +11,22 @@ namespace Ruumly.Backend.Services.Implementations;
 
 public class NotificationService(RuumlyDbContext db) : INotificationService
 {
-    public async Task<List<NotificationDto>> GetAllAsync(Guid userId)
+    public async Task<PaginatedResult<NotificationDto>> GetAllAsync(Guid userId, int page = 1, int limit = 50)
     {
-        var notifications = await db.Notifications
-            .Where(n => n.UserId == userId)
+        page  = Math.Max(1, page);
+        limit = Math.Clamp(limit, 1, 100);
+
+        var baseQuery = db.Notifications.Where(n => n.UserId == userId);
+        var total     = await baseQuery.CountAsync();
+
+        var notifications = await baseQuery
             .OrderByDescending(n => n.CreatedAt)
+            .Skip((page - 1) * limit)
+            .Take(limit)
             .ToListAsync();
 
-        return notifications.Select(MapToDto).ToList();
+        var data = notifications.Select(MapToDto).ToList();
+        return new PaginatedResult<NotificationDto>(data, total, page, limit, (page - 1) * limit + data.Count < total);
     }
 
     public async Task MarkReadAsync(Guid id, Guid userId)

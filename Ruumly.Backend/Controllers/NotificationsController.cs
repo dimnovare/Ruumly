@@ -17,9 +17,9 @@ public class NotificationsController(INotificationService notificationService) :
     /// </summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int limit = 50)
     {
-        var result = await notificationService.GetAllAsync(User.GetUserId());
+        var result = await notificationService.GetAllAsync(User.GetUserId(), page, limit);
         return Ok(result);
     }
 

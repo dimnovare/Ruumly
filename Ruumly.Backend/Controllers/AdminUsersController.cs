@@ -2,6 +2,7 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
+using Ruumly.Backend.DTOs;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models.Enums;
@@ -13,12 +14,22 @@ namespace Ruumly.Backend.Controllers;
 public class AdminUsersController(RuumlyDbContext db) : AdminBaseController(db)
 {
     [HttpGet("users")]
-    public async Task<IActionResult> GetUsers()
+    public async Task<IActionResult> GetUsers([FromQuery] int page = 1, [FromQuery] int limit = 50)
     {
+        page  = Math.Max(1, page);
+        limit = Math.Clamp(limit, 1, 100);
+
+        var total = await Db.Users.CountAsync();
         var users = await Db.Users
             .OrderByDescending(u => u.RegisteredAt)
+            .Skip((page - 1) * limit)
+            .Take(limit)
             .ToListAsync();
-        return Ok(users.Select(AdminMappers.MapUser));
+
+        var data = users.Select(AdminMappers.MapUser).ToList();
+        return Ok(new PaginatedResult<DTOs.Responses.UserDto>(
+            data, total, page, limit,
+            (page - 1) * limit + data.Count < total));
     }
 
     [HttpGet("users/{id:guid}")]

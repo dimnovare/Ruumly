@@ -19,11 +19,11 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
     /// </summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int limit = 50)
     {
         var userId = User.GetUserId();
         var role   = User.GetUserRole();
-        var result = await bookingService.GetAllAsync(userId, role);
+        var result = await bookingService.GetAllAsync(userId, role, page, limit);
         return Ok(result);
     }
 

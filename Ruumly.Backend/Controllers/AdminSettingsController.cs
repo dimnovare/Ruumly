@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
+using Ruumly.Backend.DTOs;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Helpers;
@@ -177,7 +178,7 @@ public class AdminSettingsController(RuumlyDbContext db) : AdminBaseController(d
     // ══════════════════════════════════════════════════════════════════════════
 
     [HttpGet("audit-log")]
-    public async Task<IActionResult> GetAuditLog([FromQuery] int page = 1, [FromQuery] int limit = 50)
+    public async Task<IActionResult> GetAuditLog([FromQuery] int page = 1, [FromQuery] int limit = 100)
     {
         page  = Math.Max(1, page);
         limit = Math.Clamp(limit, 1, 200);
@@ -189,14 +190,10 @@ public class AdminSettingsController(RuumlyDbContext db) : AdminBaseController(d
             .Take(limit)
             .ToListAsync();
 
-        return Ok(new
-        {
-            data  = items.Select(AdminMappers.MapAuditLog),
-            total,
-            page,
-            limit,
-            hasMore = (page - 1) * limit + items.Count < total,
-        });
+        var data = items.Select(AdminMappers.MapAuditLog).ToList();
+        return Ok(new PaginatedResult<AuditLogDto>(
+            data, total, page, limit,
+            (page - 1) * limit + data.Count < total));
     }
 
     // ══════════════════════════════════════════════════════════════════════════

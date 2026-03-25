@@ -3,7 +3,9 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
+using Ruumly.Backend.DTOs;
 using Ruumly.Backend.DTOs.Requests;
+using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models.Enums;
 
@@ -18,14 +20,23 @@ public class AdminSuppliersController(
     TokenProtector tokenProtector) : AdminBaseController(db)
 {
     [HttpGet("suppliers")]
-    public async Task<IActionResult> GetSuppliers()
+    public async Task<IActionResult> GetSuppliers([FromQuery] int page = 1, [FromQuery] int limit = 50)
     {
+        page  = Math.Max(1, page);
+        limit = Math.Clamp(limit, 1, 100);
+
+        var total     = await Db.Suppliers.CountAsync();
         var suppliers = await Db.Suppliers
             .Include(s => s.IntegrationSettings)
             .OrderBy(s => s.Name)
+            .Skip((page - 1) * limit)
+            .Take(limit)
             .ToListAsync();
 
-        var orderStats = await Db.Orders
+        // Only fetch order stats for the current page of suppliers
+        var supplierIds = suppliers.Select(s => s.Id).ToList();
+        var orderStats  = await Db.Orders
+            .Where(o => supplierIds.Contains(o.SupplierId))
             .GroupBy(o => o.SupplierId)
             .Select(g => new
             {
@@ -37,11 +48,15 @@ public class AdminSuppliersController(
             })
             .ToDictionaryAsync(x => x.SupplierId);
 
-        return Ok(suppliers.Select(s =>
+        var data = suppliers.Select(s =>
         {
             orderStats.TryGetValue(s.Id, out var stats);
             return AdminMappers.MapSupplier(s, stats?.OrdersTotal ?? 0, stats?.Revenue ?? 0m, includeSettings: false);
-        }));
+        }).ToList();
+
+        return Ok(new PaginatedResult<SupplierDto>(
+            data, total, page, limit,
+            (page - 1) * limit + data.Count < total));
     }
 
     [HttpGet("suppliers/{id:guid}")]

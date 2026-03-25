@@ -2,6 +2,7 @@ using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
+using Ruumly.Backend.DTOs;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Helpers;
@@ -28,8 +29,11 @@ public class BookingService(
         ["forklift"]  = 25m,
     };
 
-    public async Task<List<BookingDto>> GetAllAsync(Guid userId, UserRole role)
+    public async Task<PaginatedResult<BookingDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 50)
     {
+        page  = Math.Max(1, page);
+        limit = Math.Clamp(limit, 1, 100);
+
         var query = db.Bookings
             .Include(b => b.Listing)
             .Include(b => b.Supplier)
@@ -43,19 +47,19 @@ public class BookingService(
         }
         else if (role == UserRole.Provider)
         {
-            // Provider only sees bookings for their
-            // own supplier — never other suppliers.
             var user = await db.Users.FindAsync(userId);
             if (user?.SupplierId is null)
-                return [];   // no supplier linked → no bookings
+                return new PaginatedResult<BookingDto>([], 0, page, limit, false);
 
-            query = query.Where(
-                b => b.SupplierId == user.SupplierId);
+            query = query.Where(b => b.SupplierId == user.SupplierId);
         }
         // Admin: no filter — sees everything
 
+        var total    = await query.CountAsync();
         var bookings = await query
             .OrderByDescending(b => b.CreatedAt)
+            .Skip((page - 1) * limit)
+            .Take(limit)
             .ToListAsync();
 
         var bookingIds = bookings.Select(b => b.Id).ToList();
@@ -63,7 +67,8 @@ public class BookingService(
             .Where(i => bookingIds.Contains(i.BookingId))
             .ToDictionaryAsync(i => i.BookingId, i => (Guid?)i.Id);
 
-        return bookings.Select(b => MapToDto(b, invoiceIds.GetValueOrDefault(b.Id))).ToList();
+        var data = bookings.Select(b => MapToDto(b, invoiceIds.GetValueOrDefault(b.Id))).ToList();
+        return new PaginatedResult<BookingDto>(data, total, page, limit, (page - 1) * limit + data.Count < total);
     }
 
     public async Task<BookingDto?> GetByIdAsync(Guid id, Guid userId, UserRole role)

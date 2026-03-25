@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
+using Ruumly.Backend.DTOs;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Helpers;
@@ -25,8 +26,11 @@ public class OrderService(
 
     // ─── Queries ──────────────────────────────────────────────────────────────
 
-    public async Task<List<OrderDto>> GetAllAsync(Guid userId, UserRole role)
+    public async Task<PaginatedResult<OrderDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 50)
     {
+        page  = Math.Max(1, page);
+        limit = Math.Clamp(limit, 1, 100);
+
         var query = db.Orders
             .Include(o => o.Supplier)
             .Include(o => o.FulfillmentEvents)
@@ -42,7 +46,6 @@ public class OrderService(
                 if (user.SupplierId.HasValue)
                     query = query.Where(o => o.SupplierId == user.SupplierId.Value);
                 else
-                    // Fallback to email match for legacy providers without SupplierId set
                     query = query.Where(o => o.Supplier.ContactEmail == user.Email);
             }
         }
@@ -52,8 +55,15 @@ public class OrderService(
         }
         // Admin: no filter
 
-        var orders = await query.OrderByDescending(o => o.CreatedAt).ToListAsync();
-        return orders.Select(MapToDto).ToList();
+        var total  = await query.CountAsync();
+        var orders = await query
+            .OrderByDescending(o => o.CreatedAt)
+            .Skip((page - 1) * limit)
+            .Take(limit)
+            .ToListAsync();
+
+        var data = orders.Select(MapToDto).ToList();
+        return new PaginatedResult<OrderDto>(data, total, page, limit, (page - 1) * limit + data.Count < total);
     }
 
     public async Task<OrderDto?> GetByIdAsync(Guid id)

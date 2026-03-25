@@ -223,12 +223,12 @@ public class BookingServiceTests
         var resultA = await service.GetAllAsync(userA.Id, UserRole.Customer);
         var resultB = await service.GetAllAsync(userB.Id, UserRole.Customer);
 
-        resultA.Should().HaveCount(1)
+        resultA.Data.Should().HaveCount(1)
             .And.OnlyContain(b => b.ListingId == listing.Id);
-        resultB.Should().HaveCount(1);
+        resultB.Data.Should().HaveCount(1);
 
         // UserA's result should not contain UserB's booking
-        resultA.Select(b => b.Id).Should().NotIntersectWith(resultB.Select(b => b.Id));
+        resultA.Data.Select(b => b.Id).Should().NotIntersectWith(resultB.Data.Select(b => b.Id));
     }
 
     [Fact]
@@ -258,7 +258,7 @@ public class BookingServiceTests
 
         var results = await service.GetAllAsync(providerA.Id, UserRole.Provider);
 
-        results.Should().HaveCount(1);
-        results.Single().Provider.Should().Be("A");
+        results.Data.Should().HaveCount(1);
+        results.Data.Single().Provider.Should().Be("A");
     }
 }
