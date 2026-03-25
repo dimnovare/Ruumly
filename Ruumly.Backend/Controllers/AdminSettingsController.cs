@@ -9,12 +9,13 @@ using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
+using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Controllers;
 
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/admin")]
-public class AdminSettingsController(RuumlyDbContext db) : AdminBaseController(db)
+public class AdminSettingsController(RuumlyDbContext db, IListingService listingService) : AdminBaseController(db)
 {
     // ══════════════════════════════════════════════════════════════════════════
     // STATS
@@ -332,6 +333,7 @@ public class AdminSettingsController(RuumlyDbContext db) : AdminBaseController(d
         Db.Listings.Add(listing);
         await Audit("listing.created", User.GetUserEmail(), listing.Title, null);
         await Db.SaveChangesAsync();
+        await listingService.InvalidateListingAsync(listing.Id);
 
         listing.Supplier = supplier;
         return CreatedAtAction(nameof(GetListing), new { id = listing.Id }, AdminMappers.MapListing(listing));
@@ -389,6 +391,7 @@ public class AdminSettingsController(RuumlyDbContext db) : AdminBaseController(d
         listing.UpdatedAt = DateTime.UtcNow;
         await Audit("listing.updated", User.GetUserEmail(), listing.Title, null);
         await Db.SaveChangesAsync();
+        await listingService.InvalidateListingAsync(id);
 
         return Ok(AdminMappers.MapListing(listing));
     }
@@ -405,6 +408,7 @@ public class AdminSettingsController(RuumlyDbContext db) : AdminBaseController(d
         listing.UpdatedAt  = DateTime.UtcNow;
         await Audit("listing.images_updated", User.GetUserEmail(), listing.Title, null);
         await Db.SaveChangesAsync();
+        await listingService.InvalidateListingAsync(id);
 
         return Ok(AdminMappers.MapListing(listing));
     }
@@ -418,6 +422,7 @@ public class AdminSettingsController(RuumlyDbContext db) : AdminBaseController(d
         Db.Listings.Remove(listing);
         await Audit("listing.deleted", User.GetUserEmail(), listing.Title, null);
         await Db.SaveChangesAsync();
+        await listingService.InvalidateListingAsync(id);
 
         return NoContent();
     }

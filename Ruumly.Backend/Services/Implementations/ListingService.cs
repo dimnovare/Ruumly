@@ -1,5 +1,8 @@
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs;
 using Ruumly.Backend.DTOs.Requests;
@@ -10,10 +13,21 @@ using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Services.Implementations;
 
-public class ListingService(RuumlyDbContext db) : IListingService
+public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IListingService
 {
+    private static readonly DistributedCacheEntryOptions SearchTtl =
+        new() { AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(60) };
+
+    private static readonly DistributedCacheEntryOptions FeaturedTtl =
+        new() { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) };
+
     public async Task<PaginatedResult<ListingDto>> SearchAsync(ListingSearchRequest f)
     {
+        var cacheKey = $"listings:search:{HashFilters(f)}";
+        var cached   = await cache.GetStringAsync(cacheKey);
+        if (cached is not null)
+            return JsonSerializer.Deserialize<PaginatedResult<ListingDto>>(cached)!;
+
         var query = db.Listings
             .Include(l => l.Supplier)
             .Where(l => l.IsActive)
@@ -57,45 +71,62 @@ public class ListingService(RuumlyDbContext db) : IListingService
             "cheapest" => query.OrderBy(l => l.PriceFrom),
             "rating"   => query.OrderByDescending(l => l.Rating),
             "newest"   => query.OrderByDescending(l => l.CreatedAt),
-            _          => query.OrderBy(l => l.CreatedAt),   // stable default
+            _          => query.OrderBy(l => l.CreatedAt),
         };
 
         // ── Pagination ────────────────────────────────────────────────────────
-        var total  = await query.CountAsync();
-        var page   = Math.Max(1, f.Page);
-        var limit  = Math.Clamp(f.Limit, 1, 100);
-        var items  = await query
+        var total = await query.CountAsync();
+        var page  = Math.Max(1, f.Page);
+        var limit = Math.Clamp(f.Limit, 1, 100);
+        var items = await query
             .Skip((page - 1) * limit)
             .Take(limit)
             .ToListAsync();
 
-        return new PaginatedResult<ListingDto>(
+        var result = new PaginatedResult<ListingDto>(
             items.Select(MapToDto).ToList(),
             total,
             page,
             limit,
             (page - 1) * limit + items.Count < total
         );
+
+        await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(result), SearchTtl);
+        return result;
     }
 
     public async Task<ListingDto?> GetByIdAsync(Guid id)
     {
+        var cacheKey = $"listing:{id}";
+        var cached   = await cache.GetStringAsync(cacheKey);
+        if (cached is not null)
+            return JsonSerializer.Deserialize<ListingDto>(cached);
+
         var listing = await db.Listings
             .Include(l => l.Supplier)
             .FirstOrDefaultAsync(l => l.Id == id && l.IsActive);
 
-        return listing is null ? null : MapToDto(listing);
+        if (listing is null) return null;
+
+        var dto = MapToDto(listing);
+        await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(dto), SearchTtl);
+        return dto;
     }
 
     public async Task<List<ListingDto>> GetFeaturedAsync()
     {
+        const string cacheKey = "listings:featured";
+        var cached = await cache.GetStringAsync(cacheKey);
+        if (cached is not null)
+            return JsonSerializer.Deserialize<List<ListingDto>>(cached)!;
+
         // Badge priority: Promoted(4) > BestValue(3) > Closest(2) > Cheapest(1)
         var listings = await db.Listings
             .Include(l => l.Supplier)
             .Where(l => l.Badge != null && l.IsActive)
             .ToListAsync();
 
-        return listings
+        var result = listings
             .OrderByDescending(l => l.Badge switch
             {
                 ListingBadge.Promoted  => 4,
@@ -107,6 +138,24 @@ public class ListingService(RuumlyDbContext db) : IListingService
             .Take(4)
             .Select(MapToDto)
             .ToList();
+
+        await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(result), FeaturedTtl);
+        return result;
+    }
+
+    public async Task InvalidateListingAsync(Guid id)
+    {
+        await cache.RemoveAsync($"listing:{id}");
+        await cache.RemoveAsync("listings:featured");
+    }
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    private static string HashFilters(ListingSearchRequest f)
+    {
+        var json  = JsonSerializer.Serialize(f);
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(json));
+        return Convert.ToHexString(bytes)[..16];
     }
 
     // ─── Mapping ──────────────────────────────────────────────────────────────

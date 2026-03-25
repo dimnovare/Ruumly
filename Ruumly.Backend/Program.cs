@@ -84,6 +84,21 @@ if (string.IsNullOrWhiteSpace(googleClientId))
         "Google login will be unavailable.");
 }
 
+// ─── Distributed cache (Redis in prod, in-memory fallback for dev) ───
+var redisConn = Environment.GetEnvironmentVariable("REDIS_URL") ?? "";
+if (!string.IsNullOrEmpty(redisConn))
+{
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = redisConn;
+        options.InstanceName  = "ruumly:";
+    });
+}
+else
+{
+    builder.Services.AddDistributedMemoryCache();
+}
+
 // ─── Rate limiting ───
 builder.Services.AddRateLimiter(options =>
 {

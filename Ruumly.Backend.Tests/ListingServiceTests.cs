@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.Models;
@@ -18,6 +19,21 @@ public class ListingServiceTests
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
         return new RuumlyDbContext(opts);
+    }
+
+    private static ListingService MakeService(RuumlyDbContext db) =>
+        new(db, new NoOpDistributedCache());
+
+    private sealed class NoOpDistributedCache : IDistributedCache
+    {
+        public byte[]? Get(string key) => null;
+        public Task<byte[]?> GetAsync(string key, CancellationToken token = default) => Task.FromResult<byte[]?>(null);
+        public void Refresh(string key) { }
+        public Task RefreshAsync(string key, CancellationToken token = default) => Task.CompletedTask;
+        public void Remove(string key) { }
+        public Task RemoveAsync(string key, CancellationToken token = default) => Task.CompletedTask;
+        public void Set(string key, byte[] value, DistributedCacheEntryOptions options) { }
+        public Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token = default) => Task.CompletedTask;
     }
 
     private static Supplier MakeSupplier(string suffix = "A") => new()
@@ -76,7 +92,7 @@ public class ListingServiceTests
             (ListingType.Warehouse, "Tallinn", true, 60m, null),
             (ListingType.Moving,    "Tallinn", true, 40m, null));
 
-        var service = new ListingService(db);
+        var service = MakeService(db);
 
         var result = await service.SearchAsync(new ListingSearchRequest { Type = "warehouse" });
 
@@ -92,7 +108,7 @@ public class ListingServiceTests
             (ListingType.Warehouse, "Tartu",   true, 50m, null),
             (ListingType.Warehouse, "tallinn", true, 50m, null)); // lowercase variant
 
-        var service = new ListingService(db);
+        var service = MakeService(db);
 
         var result = await service.SearchAsync(new ListingSearchRequest { City = "TALLINN" });
 
@@ -108,7 +124,7 @@ public class ListingServiceTests
             (ListingType.Warehouse, "Tallinn", false, 50m, null),  // inactive
             (ListingType.Warehouse, "Tallinn", false, 50m, null)); // inactive
 
-        var service = new ListingService(db);
+        var service = MakeService(db);
 
         var result = await service.SearchAsync(new ListingSearchRequest());
 
@@ -126,7 +142,7 @@ public class ListingServiceTests
             (ListingType.Warehouse, "Tallinn", true, 40m, null),
             (ListingType.Warehouse, "Tallinn", true, 50m, null));
 
-        var service = new ListingService(db);
+        var service = MakeService(db);
 
         var page1 = await service.SearchAsync(new ListingSearchRequest { Page = 1, Limit = 2 });
         var page2 = await service.SearchAsync(new ListingSearchRequest { Page = 2, Limit = 2 });
@@ -160,7 +176,7 @@ public class ListingServiceTests
             (ListingType.Warehouse, "Tallinn", true, 50m, ListingBadge.Promoted), // 5th badged
             (ListingType.Warehouse, "Tallinn", true, 60m, null));                 // no badge
 
-        var service = new ListingService(db);
+        var service = MakeService(db);
 
         var featured = await service.GetFeaturedAsync();
 
@@ -178,7 +194,7 @@ public class ListingServiceTests
             (ListingType.Warehouse, "Tallinn", true, 30m, ListingBadge.BestValue),
             (ListingType.Warehouse, "Tallinn", true, 40m, ListingBadge.Promoted));
 
-        var service  = new ListingService(db);
+        var service  = MakeService(db);
         var featured = await service.GetFeaturedAsync();
 
         featured.Should().HaveCount(4);
@@ -198,7 +214,7 @@ public class ListingServiceTests
         db.Listings.Add(listing);
         await db.SaveChangesAsync();
 
-        var service = new ListingService(db);
+        var service = MakeService(db);
 
         var result = await service.GetByIdAsync(listing.Id);
 
@@ -215,7 +231,7 @@ public class ListingServiceTests
         db.Listings.Add(listing);
         await db.SaveChangesAsync();
 
-        var service = new ListingService(db);
+        var service = MakeService(db);
 
         var result = await service.GetByIdAsync(listing.Id);
 
