@@ -144,6 +144,8 @@ builder.Services.AddHealthChecks()
         name: "postgres",
         tags: new[] { "db", "ready" });
 
+builder.Services.AddHttpContextAccessor();
+
 // ─── Controllers ───
 builder.Services.AddControllers()
     .AddJsonOptions(o =>

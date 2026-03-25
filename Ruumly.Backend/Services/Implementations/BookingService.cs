@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Ruumly.Backend.Data;
@@ -15,8 +16,12 @@ public class BookingService(
     IOrderRoutingService orderRoutingService,
     IEmailSender emailSender,
     ILogger<BookingService> logger,
-    IConfiguration config) : IBookingService
+    IConfiguration config,
+    IHttpContextAccessor http) : IBookingService
 {
+    private string Lang => http.HttpContext?.Request.GetLang() ?? "et";
+    private string Msg(string key) => ErrorMessages.Get(key, Lang);
+
     // Extra prices matching pricing.ts EXTRAS_PRICES
     private static readonly Dictionary<string, decimal> ExtrasPrices = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -70,7 +75,7 @@ public class BookingService(
         var listing = await db.Listings
             .Include(l => l.Supplier)
             .FirstOrDefaultAsync(l => l.Id == request.ListingId && l.IsActive)
-            ?? throw new NotFoundException($"Listing {request.ListingId} not found or inactive.");
+            ?? throw new NotFoundException(Msg("LISTING_NOT_FOUND"));
 
         // 1b. Check for overlapping confirmed/active bookings on this listing
         if (!string.IsNullOrEmpty(request.EndDate) &&
@@ -91,9 +96,7 @@ public class BookingService(
                     b.EndDate.Value > startUtc);
 
             if (bookedCount >= totalUnits)
-                throw new ArgumentException(
-                    "This listing is already booked for the selected dates. " +
-                    "Please choose different dates.");
+                throw new ArgumentException(Msg("NO_UNITS_AVAILABLE"));
         }
 
         // 2. Calculate pricing (mirrors pricing.ts formulas exactly)
@@ -118,13 +121,13 @@ public class BookingService(
         var total = listing.PricesIncludeVat ? subtotal : subtotal + vatAmount;
 
         if (!DateTime.TryParse(request.StartDate, out var startDate))
-            throw new ArgumentException("Invalid startDate format. Use yyyy-MM-dd.");
+            throw new ArgumentException(Msg("INVALID_DATE_FORMAT"));
 
         DateTime? endDate = null;
         if (!string.IsNullOrWhiteSpace(request.EndDate))
         {
             if (!DateTime.TryParse(request.EndDate, out var parsedEnd))
-                throw new ArgumentException("Invalid endDate format. Use yyyy-MM-dd.");
+                throw new ArgumentException(Msg("INVALID_DATE_FORMAT"));
             endDate = DateTime.SpecifyKind(parsedEnd, DateTimeKind.Utc);
         }
 

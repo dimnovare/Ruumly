@@ -50,7 +50,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
             .FirstOrDefaultAsync(l => l.Id == id);
 
         if (location is null)
-            return NotFound(Error("Location not found"));
+            return NotFound(new { error = ErrorMessages.Get("LOCATION_NOT_FOUND", Request.GetLang()) });
 
         if (!await CanAccess(location.SupplierId))
             return Forbid();
@@ -69,7 +69,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
 
         var supplier = await db.Suppliers.FindAsync(body.SupplierId);
         if (supplier is null)
-            return NotFound(Error("Supplier not found"));
+            return NotFound(new { error = ErrorMessages.Get("LISTING_NOT_FOUND", Request.GetLang()) });
 
         // Check tier limit — count active locations, not individual unit listings.
         var activeLocationCount = await db.SupplierLocations
@@ -79,13 +79,10 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
 
         if (activeLocationCount >= maxAllowed)
         {
-            var tierName = supplier.Tier.ToString();
-            return BadRequest(new {
-                error =
-                    $"Teie {tierName} plaan lubab kuni " +
-                    $"{maxAllowed} aktiivset asukohta. " +
-                    "Uuendage plaani lisaasukohtade jaoks."
-            });
+            var lang = Request.GetLang();
+            var raw  = ErrorMessages.Get("TIER_LOCATION_LIMIT", lang);
+            var msg  = string.Format(raw, maxAllowed);
+            return BadRequest(new { error = msg });
         }
 
         var location = new SupplierLocation
@@ -119,7 +116,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
             .FirstOrDefaultAsync(l => l.Id == id);
 
         if (location is null)
-            return NotFound(Error("Location not found"));
+            return NotFound(new { error = ErrorMessages.Get("LOCATION_NOT_FOUND", Request.GetLang()) });
 
         if (!await CanAccess(location.SupplierId))
             return Forbid();
@@ -144,7 +141,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
     {
         var location = await db.SupplierLocations.FindAsync(id);
         if (location is null)
-            return NotFound(Error("Location not found"));
+            return NotFound(new { error = ErrorMessages.Get("LOCATION_NOT_FOUND", Request.GetLang()) });
 
         db.SupplierLocations.Remove(location);
         await db.SaveChangesAsync();
@@ -163,7 +160,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
             .FirstOrDefaultAsync(l => l.Id == id);
 
         if (location is null)
-            return NotFound(Error("Location not found"));
+            return NotFound(new { error = ErrorMessages.Get("LOCATION_NOT_FOUND", Request.GetLang()) });
 
         if (!await CanAccess(location.SupplierId))
             return Forbid();

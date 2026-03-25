@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Http;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.DTOs.Responses;
@@ -17,8 +18,15 @@ using Google.Apis.Auth;
 
 namespace Ruumly.Backend.Services.Implementations;
 
-public class AuthService(RuumlyDbContext db, IConfiguration config, IEmailSender emailSender) : IAuthService
+public class AuthService(
+    RuumlyDbContext db,
+    IConfiguration config,
+    IEmailSender emailSender,
+    IHttpContextAccessor http) : IAuthService
 {
+    private string Lang => http.HttpContext?.Request.GetLang() ?? "et";
+    private string Msg(string key) => ErrorMessages.Get(key, Lang);
+
     // ─── Public methods ───────────────────────────────────────────────────────
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
@@ -34,23 +42,21 @@ public class AuthService(RuumlyDbContext db, IConfiguration config, IEmailSender
 
             var expected = validCode?.Value ?? "";
 
-            if (string.IsNullOrWhiteSpace(request.InviteCode) ||
-                !string.Equals(
+            if (string.IsNullOrWhiteSpace(request.InviteCode))
+                throw new ArgumentException(Msg("INVITE_CODE_REQUIRED"));
+
+            if (!string.Equals(
                     request.InviteCode.Trim(),
                     expected.Trim(),
                     StringComparison.OrdinalIgnoreCase))
-            {
-                throw new ArgumentException(
-                    "Vale kutse kood. Kui sul on kutse, " +
-                    "kontrolli koodi õigsust.");
-            }
+                throw new ArgumentException(Msg("INVALID_INVITE_CODE"));
         }
 
         var exists = await db.Users.AnyAsync(u =>
             u.Email.ToLower() == request.Email.ToLower());
 
         if (exists)
-            throw new ConflictException("Email already registered");
+            throw new ConflictException(Msg("EMAIL_ALREADY_REGISTERED"));
 
         var user = new User
         {
@@ -78,10 +84,10 @@ public class AuthService(RuumlyDbContext db, IConfiguration config, IEmailSender
         // Verify only when user exists; short-circuit still leaks timing but avoids BCrypt exception on null hash
         var passwordOk = user is not null && BC.Verify(request.Password, user.PasswordHash);
         if (!passwordOk || user is null)
-            throw new UnauthorizedAccessException("Invalid email or password");
+            throw new UnauthorizedAccessException(Msg("INVALID_CREDENTIALS"));
 
         if (user.Status == UserStatus.Blocked)
-            throw new ForbiddenException("Account is blocked");
+            throw new ForbiddenException(Msg("ACCOUNT_BLOCKED"));
 
         user.LastLoginAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
@@ -96,10 +102,10 @@ public class AuthService(RuumlyDbContext db, IConfiguration config, IEmailSender
         var stored = await db.RefreshTokens
             .Include(t => t.User)
             .FirstOrDefaultAsync(t => t.TokenHash == tokenHash)
-            ?? throw new UnauthorizedAccessException("Invalid refresh token");
+            ?? throw new UnauthorizedAccessException(Msg("INVALID_REFRESH_TOKEN"));
 
         if (stored.IsRevoked || stored.ExpiresAt < DateTime.UtcNow)
-            throw new UnauthorizedAccessException("Refresh token has expired or been revoked");
+            throw new UnauthorizedAccessException(Msg("INVALID_REFRESH_TOKEN"));
 
         stored.IsRevoked = true;
         await db.SaveChangesAsync();
@@ -123,7 +129,7 @@ public class AuthService(RuumlyDbContext db, IConfiguration config, IEmailSender
     public async Task<UserDto> GetMeAsync(Guid userId)
     {
         var user = await db.Users.FindAsync(userId)
-            ?? throw new KeyNotFoundException("User not found");
+            ?? throw new KeyNotFoundException(Msg("USER_NOT_FOUND"));
 
         return MapToDto(user);
     }
@@ -140,9 +146,9 @@ public class AuthService(RuumlyDbContext db, IConfiguration config, IEmailSender
             };
             payload = await GoogleJsonWebSignature.ValidateAsync(credential, settings);
         }
-        catch (InvalidJwtException ex)
+        catch (InvalidJwtException)
         {
-            throw new UnauthorizedAccessException($"Invalid Google token: {ex.Message}");
+            throw new UnauthorizedAccessException(Msg("INVALID_GOOGLE_TOKEN"));
         }
 
         // 2. Find existing user by Google ID first, then by email
@@ -170,9 +176,7 @@ public class AuthService(RuumlyDbContext db, IConfiguration config, IEmailSender
                     .FirstOrDefaultAsync(s => s.Key == "inviteCodeRequired");
 
                 if (inviteRequired?.Value == "true")
-                    throw new UnauthorizedAccessException(
-                        "Registreerimine on hetkel ainult kutsega. " +
-                        "Võtke meiega ühendust: info@ruumly.eu");
+                    throw new UnauthorizedAccessException(Msg("INVITE_CODE_REQUIRED"));
 
                 // Create brand new user
                 user = new User
@@ -195,8 +199,7 @@ public class AuthService(RuumlyDbContext db, IConfiguration config, IEmailSender
 
         // 3. Check account is not blocked
         if (user.Status == UserStatus.Blocked)
-            throw new UnauthorizedAccessException(
-                "Konto on blokeeritud. Võtke ühendust toega.");
+            throw new UnauthorizedAccessException(Msg("ACCOUNT_BLOCKED"));
 
         // 4. Update last login
         user.LastLoginAt = DateTime.UtcNow;
@@ -270,9 +273,7 @@ public class AuthService(RuumlyDbContext db, IConfiguration config, IEmailSender
 
         // Prevent reusing the same password
         if (BC.Verify(newPassword, user.PasswordHash))
-            throw new ArgumentException(
-                "Uus parool peab erinema praegusest paroolist. " +
-                "Palun valige erinev parool.");
+            throw new ArgumentException(Msg("PASSWORD_SAME_AS_OLD"));
 
         user.PasswordHash        = BC.HashPassword(newPassword, workFactor: 12);
         user.PasswordResetToken  = null;
@@ -353,10 +354,10 @@ public class AuthService(RuumlyDbContext db, IConfiguration config, IEmailSender
             throw new ArgumentException("Uus parool ja kinnitus ei ühti.");
 
         if (request.NewPassword.Length < 8)
-            throw new ArgumentException("Parool peab olema vähemalt 8 tähemärki pikk.");
+            throw new ArgumentException(Msg("PASSWORD_TOO_SHORT"));
 
         var user = await db.Users.FindAsync(userId)
-            ?? throw new NotFoundException("Kasutajat ei leitud.");
+            ?? throw new NotFoundException(Msg("USER_NOT_FOUND"));
 
         // For Google-only users who have no real password,
         // allow setting a new password without verifying old one
@@ -366,10 +367,10 @@ public class AuthService(RuumlyDbContext db, IConfiguration config, IEmailSender
         if (!isGoogleOnly)
         {
             if (string.IsNullOrWhiteSpace(request.CurrentPassword))
-                throw new ArgumentException("Praegune parool on kohustuslik.");
+                throw new ArgumentException(Msg("CURRENT_PASSWORD_REQUIRED"));
 
             if (!BC.Verify(request.CurrentPassword, user.PasswordHash))
-                throw new ArgumentException("Praegune parool on vale.");
+                throw new ArgumentException(Msg("CURRENT_PASSWORD_WRONG"));
         }
 
         user.PasswordHash = BC.HashPassword(request.NewPassword, workFactor: 12);
@@ -386,7 +387,7 @@ public class AuthService(RuumlyDbContext db, IConfiguration config, IEmailSender
     public async Task UpdateLanguageAsync(Guid userId, string language)
     {
         var user = await db.Users.FindAsync(userId)
-            ?? throw new NotFoundException("Kasutajat ei leitud.");
+            ?? throw new NotFoundException(Msg("USER_NOT_FOUND"));
         user.Language = language;
         await db.SaveChangesAsync();
     }

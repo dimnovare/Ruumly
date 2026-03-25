@@ -1,8 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Ruumly.Backend.Data;
+using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
 
@@ -12,7 +14,8 @@ public class MontonioPaymentService(
     RuumlyDbContext db,
     IConfiguration config,
     IHttpClientFactory httpFactory,
-    ILogger<MontonioPaymentService> logger)
+    ILogger<MontonioPaymentService> logger,
+    IHttpContextAccessor httpAccessor)
     : IPaymentService
 {
     private string AccessKey =>
@@ -105,7 +108,8 @@ public class MontonioPaymentService(
                 "Montonio order creation failed: {S}",
                 res.StatusCode);
             throw new InvalidOperationException(
-                "Makseteenus on hetkel kättesaamatu");
+                ErrorMessages.Get("PAYMENT_PROVIDER_UNAVAILABLE",
+                    httpAccessor.HttpContext?.Request.GetLang() ?? "et"));
         }
 
         var body = await res.Content

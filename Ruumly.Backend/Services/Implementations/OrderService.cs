@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
@@ -13,8 +14,12 @@ public class OrderService(
     RuumlyDbContext db,
     IIntegrationDispatchService dispatchService,
     INotificationService notificationService,
-    IInvoiceService invoiceService) : IOrderService
+    IInvoiceService invoiceService,
+    IHttpContextAccessor http) : IOrderService
 {
+    private string Lang => http.HttpContext?.Request.GetLang() ?? "et";
+    private string Msg(string key) => ErrorMessages.Get(key, Lang);
+
     // ─── Queries ──────────────────────────────────────────────────────────────
 
     public async Task<List<OrderDto>> GetAllAsync(Guid userId, UserRole role)
@@ -71,10 +76,10 @@ public class OrderService(
     public async Task<OrderDto> ApproveAsync(Guid id, Guid approvedByUserId)
     {
         var order = await LoadOrder(id)
-            ?? throw new NotFoundException($"Order {id} not found.");
+            ?? throw new NotFoundException(Msg("ORDER_NOT_FOUND"));
 
         if (order.Status != OrderStatus.Created && order.Status != OrderStatus.Sending)
-            throw new ArgumentException($"Order is in status '{order.Status}' and cannot be approved.");
+            throw new ArgumentException(Msg("ORDER_WRONG_STATUS"));
 
         var approver = await db.Users.FindAsync(approvedByUserId);
         var approverName = approver?.Name ?? approvedByUserId.ToString();
@@ -153,7 +158,7 @@ public class OrderService(
     public async Task<OrderDto> RejectAsync(Guid id, string reason, Guid rejectedByUserId)
     {
         var order = await LoadOrder(id)
-            ?? throw new NotFoundException($"Order {id} not found.");
+            ?? throw new NotFoundException(Msg("ORDER_NOT_FOUND"));
 
         var rejecter = await db.Users.FindAsync(rejectedByUserId);
         var rejecterName = rejecter?.Name ?? rejectedByUserId.ToString();
@@ -222,7 +227,7 @@ public class OrderService(
     public async Task<OrderDto> ConfirmAsync(Guid id, Guid confirmedByUserId)
     {
         var order = await LoadOrder(id)
-            ?? throw new NotFoundException($"Order {id} not found.");
+            ?? throw new NotFoundException(Msg("ORDER_NOT_FOUND"));
 
         var confirmer     = await db.Users.FindAsync(confirmedByUserId);
         var confirmerName = confirmer?.Name ?? "Partner";
@@ -294,10 +299,10 @@ public class OrderService(
     public async Task<OrderDto> UpdateStatusAsync(Guid id, UpdateOrderStatusRequest request)
     {
         var order = await LoadOrder(id)
-            ?? throw new NotFoundException($"Order {id} not found.");
+            ?? throw new NotFoundException(Msg("ORDER_NOT_FOUND"));
 
         if (!Enum.TryParse<OrderStatus>(request.Status, ignoreCase: true, out var newStatus))
-            throw new ArgumentException($"Invalid status '{request.Status}'.");
+            throw new ArgumentException(Msg("ORDER_WRONG_STATUS"));
 
         order.Status    = newStatus;
         order.UpdatedAt = DateTime.UtcNow;
