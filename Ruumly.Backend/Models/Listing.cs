@@ -59,6 +59,11 @@ public class Listing
         set => FeaturesJson = JsonSerializer.Serialize(value);
     }
 
+    public Guid? LocationId { get; set; }
+    public SupplierLocation? Location { get; set; }
+    public int? QuantityTotal { get; set; }
+    public decimal? SizeM2 { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

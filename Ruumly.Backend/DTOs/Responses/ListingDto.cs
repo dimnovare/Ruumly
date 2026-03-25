@@ -21,5 +21,9 @@ public record ListingDto(
     decimal?         PartnerDiscountRateOverride,
     decimal?         ClientDiscountRateOverride,
     decimal?         VatRate,
-    bool             PricesIncludeVat
+    bool             PricesIncludeVat,
+    Guid             SupplierId,
+    decimal?         SizeM2,
+    int?             QuantityTotal,
+    Guid?            LocationId
 );

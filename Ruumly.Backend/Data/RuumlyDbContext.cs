@@ -22,6 +22,7 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
     public DbSet<OrderRoutingRule> OrderRoutingRules => Set<OrderRoutingRule>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<PlatformSetting> PlatformSettings => Set<PlatformSetting>();
+    public DbSet<SupplierLocation> SupplierLocations => Set<SupplierLocation>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -177,6 +178,24 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
 
         model.Entity<Listing>()
             .HasIndex(l => l.CreatedAt);
+
+        // ─── SupplierLocation → Supplier (cascade) ───
+        model.Entity<SupplierLocation>()
+            .HasOne(e => e.Supplier)
+            .WithMany()
+            .HasForeignKey(e => e.SupplierId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // ─── Listing → SupplierLocation (optional FK, set null on delete) ───
+        model.Entity<Listing>()
+            .HasOne(e => e.Location)
+            .WithMany(e => e.Listings)
+            .HasForeignKey(e => e.LocationId)
+            .OnDelete(DeleteBehavior.SetNull)
+            .IsRequired(false);
+
+        model.Entity<Listing>()
+            .HasIndex(l => l.LocationId);
 
         // ─── PlatformSetting primary key ───
         model.Entity<PlatformSetting>().HasKey(s => s.Key);

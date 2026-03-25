@@ -132,7 +132,11 @@ public class ListingService(RuumlyDbContext db) : IListingService
         PartnerDiscountRateOverride: l.PartnerDiscountRateOverride,
         ClientDiscountRateOverride:  l.ClientDiscountRateOverride,
         VatRate:         l.VatRate,
-        PricesIncludeVat: l.PricesIncludeVat
+        PricesIncludeVat: l.PricesIncludeVat,
+        SupplierId:      l.SupplierId,
+        SizeM2:          l.SizeM2,
+        QuantityTotal:   l.QuantityTotal,
+        LocationId:      l.LocationId
     );
 
     private static string? BadgeToString(ListingBadge? badge) => badge switch

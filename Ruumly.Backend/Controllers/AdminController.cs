@@ -407,6 +407,9 @@ public class AdminController(
             ClientDiscountRateOverride  = body.ClientDiscountRateOverride,
             VatRate                     = body.VatRate,
             PricesIncludeVat            = body.PricesIncludeVat,
+            LocationId                  = body.LocationId,
+            QuantityTotal               = body.QuantityTotal,
+            SizeM2                      = body.SizeM2,
             CreatedAt                   = DateTime.UtcNow,
             UpdatedAt                   = DateTime.UtcNow,
         };
@@ -445,6 +448,9 @@ public class AdminController(
         if (body.ClientDiscountRateOverride.HasValue)  listing.ClientDiscountRateOverride  = body.ClientDiscountRateOverride;
         if (body.VatRate.HasValue)          listing.VatRate     = body.VatRate;
         if (body.PricesIncludeVat.HasValue) listing.PricesIncludeVat = body.PricesIncludeVat.Value;
+        if (body.LocationId.HasValue)       listing.LocationId      = body.LocationId;
+        if (body.QuantityTotal.HasValue)    listing.QuantityTotal   = body.QuantityTotal;
+        if (body.SizeM2.HasValue)           listing.SizeM2          = body.SizeM2;
 
         if (body.SupplierId.HasValue)
         {
@@ -859,5 +865,9 @@ public class AdminController(
         PartnerDiscountRateOverride: l.PartnerDiscountRateOverride,
         ClientDiscountRateOverride:  l.ClientDiscountRateOverride,
         VatRate:         l.VatRate,
-        PricesIncludeVat: l.PricesIncludeVat);
+        PricesIncludeVat: l.PricesIncludeVat,
+        SupplierId:      l.SupplierId,
+        SizeM2:          l.SizeM2,
+        QuantityTotal:   l.QuantityTotal,
+        LocationId:      l.LocationId);
 }

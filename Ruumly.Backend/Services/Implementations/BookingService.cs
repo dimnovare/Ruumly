@@ -80,8 +80,9 @@ public class BookingService(
             var startUtc = DateTime.SpecifyKind(startDateCheck, DateTimeKind.Utc);
             var endUtc   = DateTime.SpecifyKind(endDateCheck,   DateTimeKind.Utc);
 
-            var hasConflict = await db.Bookings
-                .AnyAsync(b =>
+            var totalUnits  = listing.QuantityTotal ?? 1;
+            var bookedCount = await db.Bookings
+                .CountAsync(b =>
                     b.ListingId == request.ListingId &&
                     (b.Status == BookingStatus.Confirmed ||
                      b.Status == BookingStatus.Active) &&
@@ -89,7 +90,7 @@ public class BookingService(
                     b.StartDate < endUtc &&
                     b.EndDate.Value > startUtc);
 
-            if (hasConflict)
+            if (bookedCount >= totalUnits)
                 throw new ArgumentException(
                     "This listing is already booked for the selected dates. " +
                     "Please choose different dates.");

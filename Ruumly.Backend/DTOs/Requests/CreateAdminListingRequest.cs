@@ -18,7 +18,10 @@ public record CreateAdminListingRequest(
     decimal?            PartnerDiscountRateOverride,
     decimal?            ClientDiscountRateOverride,
     decimal?            VatRate,
-    bool                PricesIncludeVat
+    bool                PricesIncludeVat,
+    Guid?               LocationId,
+    int?                QuantityTotal,
+    decimal?            SizeM2
 );
 
 public record PatchAdminListingRequest(
@@ -40,5 +43,8 @@ public record PatchAdminListingRequest(
     decimal?            PartnerDiscountRateOverride,
     decimal?            ClientDiscountRateOverride,
     decimal?            VatRate,
-    bool?               PricesIncludeVat
+    bool?               PricesIncludeVat,
+    Guid?               LocationId,
+    int?                QuantityTotal,
+    decimal?            SizeM2
 );
