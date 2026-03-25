@@ -17,13 +17,7 @@ public class AuthServiceTests
 {
     // ─── Test infrastructure ───────────────────────────────────────────────
 
-    private static RuumlyDbContext CreateDb()
-    {
-        var opts = new DbContextOptionsBuilder<RuumlyDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        return new RuumlyDbContext(opts);
-    }
+    private static RuumlyDbContext CreateDb() => TestDbContext.Create();
 
     private static IConfiguration MakeConfig() =>
         new ConfigurationBuilder()

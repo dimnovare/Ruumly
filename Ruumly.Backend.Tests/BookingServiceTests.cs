@@ -13,13 +13,7 @@ public class BookingServiceTests
 {
     // ─── Test infrastructure ───────────────────────────────────────────────
 
-    private static RuumlyDbContext CreateDb()
-    {
-        var opts = new DbContextOptionsBuilder<RuumlyDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        return new RuumlyDbContext(opts);
-    }
+    private static RuumlyDbContext CreateDb() => TestDbContext.Create();
 
     private static BookingService MakeService(RuumlyDbContext db) =>
         new(db,

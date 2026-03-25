@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
+using NpgsqlTypes;
 using Ruumly.Backend.Models.Enums;
 
 namespace Ruumly.Backend.Models;
@@ -63,6 +64,12 @@ public class Listing
     public SupplierLocation? Location { get; set; }
     public int? QuantityTotal { get; set; }
     public decimal? SizeM2 { get; set; }
+
+    /// <summary>
+    /// Maintained by the trg_listings_search trigger.
+    /// Never written by EF — always DB-generated.
+    /// </summary>
+    public NpgsqlTsVector? SearchVector { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

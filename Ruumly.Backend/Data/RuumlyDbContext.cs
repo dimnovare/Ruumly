@@ -165,6 +165,16 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
         model.Entity<User>()
             .HasIndex(u => u.SupplierId);
 
+        // ─── Listing full-text search vector ───
+        model.Entity<Listing>()
+            .Property(l => l.SearchVector)
+            .HasColumnType("tsvector")
+            .ValueGeneratedOnAddOrUpdate();   // populated by DB trigger, never by EF
+
+        model.Entity<Listing>()
+            .HasIndex(l => l.SearchVector)
+            .HasMethod("GIN");
+
         // ─── Listing search indexes ───
         model.Entity<Listing>()
             .HasIndex(l => l.IsActive);

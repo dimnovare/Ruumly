@@ -8,14 +8,7 @@ namespace Ruumly.Backend.Tests;
 
 public class BookingServiceAuthTests
 {
-    private static RuumlyDbContext CreateDb()
-    {
-        var opts = new DbContextOptionsBuilder<RuumlyDbContext>()
-            .UseInMemoryDatabase(
-                Guid.NewGuid().ToString())
-            .Options;
-        return new RuumlyDbContext(opts);
-    }
+    private static RuumlyDbContext CreateDb() => TestDbContext.Create();
 
     [Fact]
     public async Task Provider_CannotSeeOtherSupplierBookings()

@@ -55,14 +55,11 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
         if (f.AvailableNow == true)
             query = query.Where(l => l.AvailableNow);
 
-        // ── Full-text search (title, city, address) ───────────────────────────
+        // ── Full-text search via indexed tsvector column ──────────────────────
         if (!string.IsNullOrWhiteSpace(f.Q))
         {
-            var q = f.Q.ToLower();
-            query = query.Where(l =>
-                l.Title.ToLower().Contains(q) ||
-                l.City.ToLower().Contains(q)  ||
-                l.Address.ToLower().Contains(q));
+            var tsQuery = EF.Functions.PlainToTsQuery("simple", f.Q);
+            query = query.Where(l => l.SearchVector!.Matches(tsQuery));
         }
 
         // ── Sort ──────────────────────────────────────────────────────────────
