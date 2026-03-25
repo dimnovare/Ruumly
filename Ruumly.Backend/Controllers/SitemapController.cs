@@ -20,6 +20,11 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
             .Select(l => new { l.Id, l.Type, l.UpdatedAt })
             .ToListAsync();
 
+        var locations = await db.SupplierLocations
+            .Where(l => l.IsActive)
+            .Select(l => new { l.Id, l.UpdatedAt })
+            .ToListAsync();
+
         var sb = new StringBuilder();
         sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         sb.AppendLine("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\"");
@@ -65,6 +70,24 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
             sb.AppendLine($"    <lastmod>{lastMod}</lastmod>");
             sb.AppendLine("    <changefreq>weekly</changefreq>");
             sb.AppendLine("    <priority>0.8</priority>");
+
+            foreach (var lang in langs)
+                sb.AppendLine($"    <xhtml:link rel=\"alternate\" hreflang=\"{lang}\" href=\"{BaseUrl}{path}?lang={lang}\"/>");
+
+            sb.AppendLine($"    <xhtml:link rel=\"alternate\" hreflang=\"x-default\" href=\"{BaseUrl}{path}\"/>");
+            sb.AppendLine("  </url>");
+        }
+
+        foreach (var location in locations)
+        {
+            var path    = $"/location/{location.Id}";
+            var lastMod = location.UpdatedAt.ToString("yyyy-MM-dd");
+
+            sb.AppendLine("  <url>");
+            sb.AppendLine($"    <loc>{BaseUrl}{path}</loc>");
+            sb.AppendLine($"    <lastmod>{lastMod}</lastmod>");
+            sb.AppendLine("    <changefreq>weekly</changefreq>");
+            sb.AppendLine("    <priority>0.9</priority>");
 
             foreach (var lang in langs)
                 sb.AppendLine($"    <xhtml:link rel=\"alternate\" hreflang=\"{lang}\" href=\"{BaseUrl}{path}?lang={lang}\"/>");
