@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
@@ -18,6 +19,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
 
     // ── GET /api/locations ─────────────────────────────────────────────────────
     [HttpGet]
+    [EnableRateLimiting("search")]
     public async Task<IActionResult> GetAll(
         [FromQuery] string? city,
         [FromQuery] string? type)
@@ -59,6 +61,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
 
     // ── GET /api/locations/{id} ────────────────────────────────────────────────
     [HttpGet("{id:guid}")]
+    [EnableRateLimiting("search")]
     public async Task<IActionResult> GetById(Guid id)
     {
         var location = await db.SupplierLocations

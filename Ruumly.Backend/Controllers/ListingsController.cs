@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.Services.Interfaces;
 
@@ -13,6 +14,7 @@ public class ListingsController(IListingService listingService) : ControllerBase
     /// Public — no auth required.
     /// </summary>
     [HttpGet]
+    [EnableRateLimiting("search")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Search([FromQuery] ListingSearchRequest filters)
     {
@@ -25,6 +27,7 @@ public class ListingsController(IListingService listingService) : ControllerBase
     /// Public — no auth required.
     /// </summary>
     [HttpGet("featured")]
+    [EnableRateLimiting("search")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Featured()
     {
@@ -37,6 +40,7 @@ public class ListingsController(IListingService listingService) : ControllerBase
     /// Public — no auth required.
     /// </summary>
     [HttpGet("{id:guid}")]
+    [EnableRateLimiting("search")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)

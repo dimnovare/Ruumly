@@ -88,6 +88,12 @@ builder.Services.AddRateLimiter(options =>
         limiterOptions.QueueProcessingOrder  = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
         limiterOptions.QueueLimit            = 0;
     });
+    options.AddFixedWindowLimiter("search", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 60;
+        limiterOptions.Window      = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueLimit  = 0;
+    });
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
 
