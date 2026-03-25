@@ -162,6 +162,22 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
         model.Entity<User>()
             .HasIndex(u => u.SupplierId);
 
+        // ─── Listing search indexes ───
+        model.Entity<Listing>()
+            .HasIndex(l => l.IsActive);
+
+        model.Entity<Listing>()
+            .HasIndex(l => new { l.IsActive, l.Type });
+
+        model.Entity<Listing>()
+            .HasIndex(l => new { l.IsActive, l.City });
+
+        model.Entity<Listing>()
+            .HasIndex(l => l.PriceFrom);
+
+        model.Entity<Listing>()
+            .HasIndex(l => l.CreatedAt);
+
         // ─── PlatformSetting primary key ───
         model.Entity<PlatformSetting>().HasKey(s => s.Key);
 
