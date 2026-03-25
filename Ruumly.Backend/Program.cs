@@ -284,10 +284,10 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/uploads",
 });
 
-app.UseHangfireDashboard("/hangfire", new DashboardOptions
+if (app.Environment.IsDevelopment())
 {
-    Authorization = [new HangfireAdminAuthFilter()],
-});
+    app.UseHangfireDashboard("/hangfire");
+}
 
 app.MapControllers();
 
