@@ -251,6 +251,19 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         OpeningHours: l.OpeningHours,
         UnitCount:    l.Listings.Count(u => u.IsActive),
         PriceFrom:    l.Listings.Where(u => u.IsActive).Select(u => (decimal?)u.PriceFrom).Min(),
-        CreatedAt:    l.CreatedAt.ToString("yyyy-MM-dd")
+        CreatedAt:    l.CreatedAt.ToString("yyyy-MM-dd"),
+        Units:        l.Listings
+                       .Where(u => u.IsActive)
+                       .OrderBy(u => u.PriceFrom)
+                       .Select(u => new ListingDto(
+                           u.Id, u.Type.ToString().ToLower(), u.Title,
+                           l.Supplier?.Name ?? "", u.Address, u.City,
+                           u.Lat, u.Lng, u.PriceFrom, u.PriceUnit, u.AvailableNow,
+                           u.Badge?.ToString().ToLower(), u.Rating, u.ReviewCount,
+                           u.Description, u.Images, u.Features,
+                           u.PartnerDiscountRateOverride, u.ClientDiscountRateOverride,
+                           u.VatRate, u.PricesIncludeVat, u.SupplierId,
+                           u.SizeM2, u.QuantityTotal, u.LocationId))
+                       .ToList()
     );
 }

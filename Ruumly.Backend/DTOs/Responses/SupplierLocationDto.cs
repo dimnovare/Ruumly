@@ -12,7 +12,8 @@ public record SupplierLocationDto(
     List<string>  Images,
     string        Description,
     string?       OpeningHours,
-    int           UnitCount,
-    decimal?      PriceFrom,
-    string        CreatedAt
+    int               UnitCount,
+    decimal?          PriceFrom,
+    string            CreatedAt,
+    List<ListingDto>  Units
 );
