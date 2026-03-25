@@ -239,7 +239,7 @@ public class AuthService(
 
         var token  = Convert.ToHexString(
             System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
-        user.PasswordResetToken  = token;
+        user.PasswordResetToken  = HashToken(token);   // store hash, send raw token
         user.PasswordResetExpiry = DateTime.UtcNow.AddHours(2);
         await db.SaveChangesAsync();
 
@@ -264,9 +264,10 @@ public class AuthService(
     {
         if (newPassword.Length < 8) return false;
 
+        var tokenHash = HashToken(token);
         var user = await db.Users
             .FirstOrDefaultAsync(u =>
-                u.PasswordResetToken == token &&
+                u.PasswordResetToken == tokenHash &&
                 u.PasswordResetExpiry > DateTime.UtcNow);
 
         if (user is null) return false;
