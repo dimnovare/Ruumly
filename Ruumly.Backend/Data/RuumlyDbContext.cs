@@ -29,6 +29,10 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
     {
         base.OnModelCreating(model);
 
+        // ─── Soft-delete global query filters ───
+        model.Entity<Booking>().HasQueryFilter(b => !b.IsDeleted);
+        model.Entity<Order>().HasQueryFilter(o => !o.IsDeleted);
+
         // ─── Enums as strings ───
         model.Entity<User>().Property(e => e.Role).HasConversion<string>();
         model.Entity<User>().Property(e => e.Status).HasConversion<string>();

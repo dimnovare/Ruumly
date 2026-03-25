@@ -46,6 +46,23 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
     }
 
     /// <summary>
+    /// Cancels a booking and its linked order (soft-delete).
+    /// Customer can only cancel their own bookings.
+    /// </summary>
+    [HttpPatch("{id:guid}/cancel")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Cancel(Guid id)
+    {
+        var userId  = User.GetUserId();
+        var role    = User.GetUserRole();
+        var booking = await bookingService.CancelAsync(id, userId, role);
+        return Ok(booking);
+    }
+
+    /// <summary>
     /// Creates a new booking, routes an order, and dispatches to the supplier.
     /// </summary>
     [HttpPost]

@@ -48,6 +48,8 @@ public class Order
     public DateTime? SentAt { get; set; }
     public DateTime? ConfirmedAt { get; set; }
     public string Notes { get; set; } = string.Empty;
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

@@ -223,6 +223,65 @@ public class BookingService(
         return MapToDto(result, null);
     }
 
+    public async Task<BookingDto> CancelAsync(Guid id, Guid userId, UserRole role)
+    {
+        var booking = await db.Bookings
+            .Include(b => b.Listing)
+            .Include(b => b.Supplier)
+            .Include(b => b.Timeline)
+            .Include(b => b.Order).ThenInclude(o => o!.Supplier)
+            .FirstOrDefaultAsync(b => b.Id == id)
+            ?? throw new NotFoundException(Msg("BOOKING_NOT_FOUND"));
+
+        // Authorisation
+        if (role == UserRole.Customer && booking.UserId != userId)
+            throw new ForbiddenException(Msg("BOOKING_NOT_FOUND"));
+
+        if (role == UserRole.Provider)
+        {
+            var user = await db.Users.FindAsync(userId);
+            if (user?.SupplierId is null || booking.SupplierId != user.SupplierId)
+                throw new ForbiddenException(Msg("BOOKING_NOT_FOUND"));
+        }
+
+        if (booking.Status is BookingStatus.Cancelled or BookingStatus.Completed)
+            throw new ArgumentException("Booking is already finalised and cannot be cancelled.");
+
+        var now = DateTime.UtcNow;
+
+        booking.Status    = BookingStatus.Cancelled;
+        booking.IsDeleted = true;
+        booking.DeletedAt = now;
+        booking.UpdatedAt = now;
+
+        db.BookingTimelines.Add(new BookingTimeline
+        {
+            Id        = Guid.NewGuid(),
+            BookingId = booking.Id,
+            Event     = "Broneering tühistatud",
+            Status    = BookingStatus.Cancelled,
+            CreatedAt = now,
+        });
+
+        // Soft-delete the linked order if present
+        if (booking.Order is not null)
+        {
+            booking.Order.Status    = OrderStatus.Cancelled;
+            booking.Order.IsDeleted = true;
+            booking.Order.DeletedAt = now;
+            booking.Order.UpdatedAt = now;
+        }
+
+        await db.SaveChangesAsync();
+
+        var invoiceId = await db.Invoices
+            .Where(i => i.BookingId == booking.Id)
+            .Select(i => (Guid?)i.Id)
+            .FirstOrDefaultAsync();
+
+        return MapToDto(booking, invoiceId);
+    }
+
     // ─── Mapping ──────────────────────────────────────────────────────────────
 
     private static BookingDto MapToDto(Booking b, Guid? invoiceId) => new(

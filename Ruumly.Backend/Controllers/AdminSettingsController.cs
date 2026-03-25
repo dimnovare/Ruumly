@@ -262,6 +262,46 @@ public class AdminSettingsController(RuumlyDbContext db, IListingService listing
     }
 
     // ══════════════════════════════════════════════════════════════════════════
+    // ARCHIVED BOOKINGS (soft-deleted)
+    // ══════════════════════════════════════════════════════════════════════════
+
+    [HttpGet("bookings/archived")]
+    public async Task<IActionResult> GetArchivedBookings([FromQuery] int page = 1, [FromQuery] int limit = 50)
+    {
+        page  = Math.Max(1, page);
+        limit = Math.Clamp(limit, 1, 100);
+
+        var baseQuery = Db.Bookings
+            .IgnoreQueryFilters()
+            .Where(b => b.IsDeleted)
+            .Include(b => b.Listing)
+            .Include(b => b.Supplier)
+            .Include(b => b.User);
+
+        var total = await baseQuery.CountAsync();
+        var items = await baseQuery
+            .OrderByDescending(b => b.DeletedAt)
+            .Skip((page - 1) * limit)
+            .Take(limit)
+            .ToListAsync();
+
+        var data = items.Select(b => new
+        {
+            id           = b.Id,
+            listingTitle = b.Listing?.Title ?? string.Empty,
+            supplier     = b.Supplier?.Name ?? string.Empty,
+            customer     = b.User?.Email ?? string.Empty,
+            status       = b.Status.ToString().ToLower(),
+            total        = b.Total,
+            createdAt    = b.CreatedAt.ToString("yyyy-MM-dd"),
+            deletedAt    = b.DeletedAt?.ToString("yyyy-MM-dd HH:mm"),
+        }).ToList();
+
+        return Ok(new PaginatedResult<object>(data.Cast<object>().ToList(), total, page, limit,
+            (page - 1) * limit + data.Count < total));
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
     // LISTINGS
     // ══════════════════════════════════════════════════════════════════════════
 
