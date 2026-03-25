@@ -24,7 +24,17 @@ public static class EmailTranslations
         string BookingConfirmVat,
         string BookingConfirmNext,
         string BookingConfirmViewButton,
-        string BookingConfirmFooter
+        string BookingConfirmFooter,
+        // Booking status update emails
+        string BookingStatusConfirmedSubject,
+        string BookingStatusConfirmedBody,
+        string BookingStatusRejectedSubject,
+        string BookingStatusRejectedBody,
+        string BookingStatusCompletedSubject,
+        string BookingStatusCompletedBody,
+        string BookingStatusCancelledSubject,
+        string BookingStatusCancelledBody,
+        string BookingStatusViewLink
     );
 
     private static readonly EmailStrings Et = new(
@@ -54,7 +64,16 @@ public static class EmailTranslations
             "Partner võtab teiega ühendust kinnitamisel. Broneeringu staatust " +
             "saate jälgida oma kontol.",
         BookingConfirmViewButton:   "Vaata broneeringut",
-        BookingConfirmFooter:       "See on automaatne e-kiri. Palun ärge vastake sellele."
+        BookingConfirmFooter:       "See on automaatne e-kiri. Palun ärge vastake sellele.",
+        BookingStatusConfirmedSubject: "Ruumly — broneering kinnitatud",
+        BookingStatusConfirmedBody:    "Teie broneering #{id} on kinnitatud!",
+        BookingStatusRejectedSubject:  "Ruumly — broneering tagasi lükatud",
+        BookingStatusRejectedBody:     "Teie broneering #{id} on kahjuks tagasi lükatud",
+        BookingStatusCompletedSubject: "Ruumly — broneering lõpetatud",
+        BookingStatusCompletedBody:    "Teie broneering #{id} on lõpetatud",
+        BookingStatusCancelledSubject: "Ruumly — broneering tühistatud",
+        BookingStatusCancelledBody:    "Teie broneering #{id} on tühistatud",
+        BookingStatusViewLink:         "Vaata broneeringut"
     );
 
     private static readonly EmailStrings En = new(
@@ -84,7 +103,16 @@ public static class EmailTranslations
             "The partner will contact you upon confirmation. You can track your " +
             "booking status in your account.",
         BookingConfirmViewButton:   "View booking",
-        BookingConfirmFooter:       "This is an automated email. Please do not reply."
+        BookingConfirmFooter:       "This is an automated email. Please do not reply.",
+        BookingStatusConfirmedSubject: "Ruumly — booking confirmed",
+        BookingStatusConfirmedBody:    "Your booking #{id} has been confirmed!",
+        BookingStatusRejectedSubject:  "Ruumly — booking rejected",
+        BookingStatusRejectedBody:     "Unfortunately, your booking #{id} has been rejected",
+        BookingStatusCompletedSubject: "Ruumly — booking completed",
+        BookingStatusCompletedBody:    "Your booking #{id} has been completed",
+        BookingStatusCancelledSubject: "Ruumly — booking cancelled",
+        BookingStatusCancelledBody:    "Your booking #{id} has been cancelled",
+        BookingStatusViewLink:         "View booking"
     );
 
     private static readonly EmailStrings Ru = new(
@@ -113,7 +141,16 @@ public static class EmailTranslations
             "Партнёр свяжется с вами при подтверждении. Статус бронирования " +
             "можно отслеживать в личном кабинете.",
         BookingConfirmViewButton:   "Посмотреть бронирование",
-        BookingConfirmFooter:       "Это автоматическое письмо. Пожалуйста, не отвечайте на него."
+        BookingConfirmFooter:       "Это автоматическое письмо. Пожалуйста, не отвечайте на него.",
+        BookingStatusConfirmedSubject: "Ruumly — бронирование подтверждено",
+        BookingStatusConfirmedBody:    "Ваше бронирование #{id} подтверждено!",
+        BookingStatusRejectedSubject:  "Ruumly — бронирование отклонено",
+        BookingStatusRejectedBody:     "К сожалению, ваше бронирование #{id} было отклонено",
+        BookingStatusCompletedSubject: "Ruumly — бронирование завершено",
+        BookingStatusCompletedBody:    "Ваше бронирование #{id} завершено",
+        BookingStatusCancelledSubject: "Ruumly — бронирование отменено",
+        BookingStatusCancelledBody:    "Ваше бронирование #{id} отменено",
+        BookingStatusViewLink:         "Посмотреть бронирование"
     );
 
     public static EmailStrings For(string? lang) =>

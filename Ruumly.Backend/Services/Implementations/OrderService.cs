@@ -15,6 +15,9 @@ public class OrderService(
     IIntegrationDispatchService dispatchService,
     INotificationService notificationService,
     IInvoiceService invoiceService,
+    IEmailSender emailSender,
+    IConfiguration config,
+    ILogger<OrderService> logger,
     IHttpContextAccessor http) : IOrderService
 {
     private string Lang => http.HttpContext?.Request.GetLang() ?? "et";
@@ -136,14 +139,15 @@ public class OrderService(
                 CreatedAt = DateTime.UtcNow,
             });
 
-            await notificationService.CreateAsync(
-                booking.UserId,
-                NotificationType.Booking,
-                "Broneering kinnitatud",
-                $"{booking.Listing?.Title ?? order.ListingTitle} on kinnitatud",
-                actionUrl:  "/account?tab=bookings",
-                entityId:   booking.Id.ToString(),
-                entityType: "Booking");
+            var tApprove = EmailTranslations.For(
+                (await db.Users.FindAsync(booking.UserId))?.Language);
+
+            await NotifyBookingStatusAsync(
+                booking,
+                notificationTitle: "Broneering kinnitatud",
+                notificationBody:  $"{booking.Listing?.Title ?? order.ListingTitle} on kinnitatud",
+                emailSubject:      tApprove.BookingStatusConfirmedSubject,
+                emailBody:         tApprove.BookingStatusConfirmedBody);
 
             await db.SaveChangesAsync();
         }
@@ -206,14 +210,15 @@ public class OrderService(
                 CreatedAt = DateTime.UtcNow,
             });
 
-            await notificationService.CreateAsync(
-                booking.UserId,
-                NotificationType.Booking,
-                "Broneering tagasi lükatud",
-                string.IsNullOrWhiteSpace(reason) ? "Teie broneering lükati tagasi" : reason,
-                actionUrl:  "/account?tab=bookings",
-                entityId:   booking.Id.ToString(),
-                entityType: "Booking");
+            var tReject = EmailTranslations.For(
+                (await db.Users.FindAsync(booking.UserId))?.Language);
+
+            await NotifyBookingStatusAsync(
+                booking,
+                notificationTitle: "Broneering tagasi lükatud",
+                notificationBody:  string.IsNullOrWhiteSpace(reason) ? "Teie broneering lükati tagasi" : reason,
+                emailSubject:      tReject.BookingStatusRejectedSubject,
+                emailBody:         tReject.BookingStatusRejectedBody);
         }
 
         await db.SaveChangesAsync();
@@ -275,14 +280,15 @@ public class OrderService(
                 CreatedAt = DateTime.UtcNow,
             });
 
-            await notificationService.CreateAsync(
-                booking.UserId,
-                NotificationType.Booking,
-                "Broneering kinnitatud",
-                $"{booking.Listing?.Title ?? "Teenus"} on kinnitatud — teenus on aktiivne",
-                actionUrl:  "/account?tab=bookings",
-                entityId:   booking.Id.ToString(),
-                entityType: "booking");
+            var tConfirm = EmailTranslations.For(
+                (await db.Users.FindAsync(booking.UserId))?.Language);
+
+            await NotifyBookingStatusAsync(
+                booking,
+                notificationTitle: "Broneering kinnitatud",
+                notificationBody:  $"{booking.Listing?.Title ?? "Teenus"} on kinnitatud — teenus on aktiivne",
+                emailSubject:      tConfirm.BookingStatusConfirmedSubject,
+                emailBody:         tConfirm.BookingStatusConfirmedBody);
 
             // Auto-generate invoice (idempotent — skips if already exists)
             await invoiceService.GenerateAsync(booking.Id);
@@ -326,10 +332,103 @@ public class OrderService(
             CreatedAt = DateTime.UtcNow,
         });
 
+        // Sync booking status and notify customer for terminal transitions
+        if (newStatus is OrderStatus.Completed or OrderStatus.Cancelled)
+        {
+            var booking = await db.Bookings
+                .Include(b => b.Listing)
+                .FirstOrDefaultAsync(b => b.Id == order.BookingId);
+
+            if (booking is not null)
+            {
+                booking.Status    = newStatus == OrderStatus.Completed
+                    ? BookingStatus.Completed
+                    : BookingStatus.Cancelled;
+                booking.UpdatedAt = DateTime.UtcNow;
+
+                db.BookingTimelines.Add(new BookingTimeline
+                {
+                    Id        = Guid.NewGuid(),
+                    BookingId = booking.Id,
+                    Event     = newStatus == OrderStatus.Completed
+                        ? "Teenus lõpetatud"
+                        : "Broneering tühistatud",
+                    Status    = booking.Status,
+                    CreatedAt = DateTime.UtcNow,
+                });
+
+                var tUpdate = EmailTranslations.For(
+                    (await db.Users.FindAsync(booking.UserId))?.Language);
+
+                var (notifTitle, notifBody, emailSubject, emailBody) = newStatus == OrderStatus.Completed
+                    ? ("Teenus lõpetatud",
+                       $"{booking.Listing?.Title ?? order.ListingTitle} on lõpetatud",
+                       tUpdate.BookingStatusCompletedSubject,
+                       tUpdate.BookingStatusCompletedBody)
+                    : ("Broneering tühistatud",
+                       $"{booking.Listing?.Title ?? order.ListingTitle} on tühistatud",
+                       tUpdate.BookingStatusCancelledSubject,
+                       tUpdate.BookingStatusCancelledBody);
+
+                await NotifyBookingStatusAsync(
+                    booking,
+                    notifTitle, notifBody, emailSubject, emailBody);
+            }
+        }
+
         await db.SaveChangesAsync();
 
         var fresh = await LoadOrder(id);
         return MapToDto(fresh!);
+    }
+
+    // ─── Booking status notification + email ─────────────────────────────────
+
+    private async Task NotifyBookingStatusAsync(
+        Booking booking,
+        string notificationTitle,
+        string notificationBody,
+        string emailSubject,
+        string emailBody)
+    {
+        var shortId = booking.Id.ToString()[..8].ToUpper();
+        var subject = emailSubject.Replace("{id}", $"#{shortId}");
+        var body    = emailBody.Replace("{id}", $"#{shortId}");
+
+        // In-app notification
+        await notificationService.CreateAsync(
+            booking.UserId,
+            NotificationType.Booking,
+            notificationTitle,
+            notificationBody,
+            actionUrl:  "/account?tab=bookings",
+            entityId:   booking.Id.ToString(),
+            entityType: "Booking");
+
+        // Email to contact address — never let failure break the status transition
+        if (!string.IsNullOrWhiteSpace(booking.ContactEmail))
+        {
+            try
+            {
+                var accountUrl = $"{config["AppUrl"]}/account?tab=bookings";
+                var user = await db.Users.FindAsync(booking.UserId);
+                var t    = EmailTranslations.For(user?.Language);
+
+                var textBody =
+                    $"Tere {booking.ContactName},\n\n" +
+                    $"{body}\n\n" +
+                    $"{t.BookingStatusViewLink}: {accountUrl}\n\n" +
+                    $"Ruumly\ninfo@ruumly.eu";
+
+                await emailSender.SendAsync(booking.ContactEmail, subject, textBody);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex,
+                    "Failed to send booking status email to {Email} for booking {Id}",
+                    booking.ContactEmail, booking.Id);
+            }
+        }
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
