@@ -2,8 +2,12 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
+using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.Helpers;
+using Ruumly.Backend.Models;
+using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Controllers;
@@ -11,7 +15,10 @@ namespace Ruumly.Backend.Controllers;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/auth")]
-public class AuthController(IAuthService authService) : ControllerBase
+public class AuthController(
+    IAuthService authService,
+    RuumlyDbContext db,
+    INotificationService notificationService) : ControllerBase
 {
     [HttpPost("register")]
     [EnableRateLimiting("auth")]
@@ -116,6 +123,102 @@ public class AuthController(IAuthService authService) : ControllerBase
     {
         var response = await authService.GoogleLoginAsync(request.Credential);
         return Ok(response);
+    }
+
+    [HttpPost("apply-provider")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> ApplyProvider([FromBody] SupplierApplicationRequest request)
+    {
+        var userId = User.GetUserId();
+        var user   = await db.Users.FindAsync(userId)
+            ?? throw new KeyNotFoundException("User not found.");
+
+        if (user.Role == UserRole.Provider || user.SupplierId.HasValue)
+            return Conflict(new { message = "User is already a provider." });
+
+        var supplier = new Supplier
+        {
+            Id            = Guid.NewGuid(),
+            Name          = request.CompanyName,
+            RegistryCode  = request.RegistryCode,
+            ContactName   = request.ContactName,
+            ContactEmail  = request.ContactEmail,
+            ContactPhone  = request.ContactPhone,
+            Notes         = BuildNotes(request),
+            IsActive      = false,
+            CreatedAt     = DateTime.UtcNow,
+            UpdatedAt     = DateTime.UtcNow,
+        };
+
+        var integrationSettings = new IntegrationSettings
+        {
+            Id           = Guid.NewGuid(),
+            SupplierId   = supplier.Id,
+            ApprovalMode = ApprovalMode.Auto,
+            PostingMode  = PostingMode.Email,
+            IsActive     = false,
+            UpdatedAt    = DateTime.UtcNow,
+        };
+
+        user.Role       = UserRole.Provider;
+        user.SupplierId = supplier.Id;
+
+        db.Suppliers.Add(supplier);
+        db.IntegrationSettings.Add(integrationSettings);
+
+        db.AuditLogs.Add(new AuditLog
+        {
+            Id        = Guid.NewGuid(),
+            Action    = "supplier.application_submitted",
+            Actor     = user.Email,
+            Target    = supplier.Name,
+            Detail    = $"RegistryCode: {supplier.RegistryCode}",
+            CreatedAt = DateTime.UtcNow,
+        });
+
+        await db.SaveChangesAsync();
+
+        // Notify all admins
+        var adminIds = await db.Users
+            .Where(u => u.Role == UserRole.Admin)
+            .Select(u => u.Id)
+            .ToListAsync();
+
+        foreach (var adminId in adminIds)
+        {
+            await notificationService.CreateAsync(
+                userId:     adminId,
+                type:       NotificationType.Alert,
+                title:      "Uus partneriavaldus",
+                desc:       $"Uus partneriavaldus: {supplier.Name}",
+                actionUrl:  $"/admin/suppliers/{supplier.Id}",
+                entityId:   supplier.Id.ToString(),
+                entityType: "supplier");
+        }
+
+        return StatusCode(StatusCodes.Status201Created, new
+        {
+            supplierId = supplier.Id,
+            name       = supplier.Name,
+            isActive   = supplier.IsActive,
+            message    = "Avaldus esitatud. Admin vaatab selle läbi.",
+        });
+    }
+
+    private static string BuildNotes(SupplierApplicationRequest r)
+    {
+        var parts = new List<string>();
+        parts.Add($"BusinessType: {r.BusinessType}");
+        if (r.ServiceTypes.Length > 0)
+            parts.Add($"ServiceTypes: {string.Join(", ", r.ServiceTypes)}");
+        if (r.ServiceAreas.Length > 0)
+            parts.Add($"ServiceAreas: {string.Join(", ", r.ServiceAreas)}");
+        if (!string.IsNullOrWhiteSpace(r.Notes))
+            parts.Add(r.Notes);
+        return string.Join("\n", parts);
     }
 }
 

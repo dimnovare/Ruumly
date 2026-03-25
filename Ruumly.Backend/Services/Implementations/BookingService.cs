@@ -15,7 +15,8 @@ namespace Ruumly.Backend.Services.Implementations;
 public class BookingService(
     RuumlyDbContext db,
     IOrderRoutingService orderRoutingService,
-    IHttpContextAccessor http) : IBookingService
+    IHttpContextAccessor http,
+    IBackgroundJobClient? backgroundJobs = null) : IBookingService
 {
     private string Lang => http.HttpContext?.Request.GetLang() ?? "et";
     private string Msg(string key) => ErrorMessages.Get(key, Lang);
@@ -208,7 +209,7 @@ public class BookingService(
 
         // 5b. Enqueue confirmation email — runs in background so slow email
         //     delivery never delays the booking response to the customer.
-        BackgroundJob.Enqueue<BackgroundOrderDispatchService>(
+        backgroundJobs?.Enqueue<BackgroundOrderDispatchService>(
             x => x.SendBookingConfirmationEmailAsync(booking.Id));
 
         // 6. Reload with all navigations for response
