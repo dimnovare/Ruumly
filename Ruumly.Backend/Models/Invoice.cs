@@ -12,5 +12,7 @@ public class Invoice
     public DateTime IssuedAt { get; set; } = DateTime.UtcNow;
     public DateTime? PaidAt { get; set; }
     public string Description { get; set; } = string.Empty;
+    public string? PaymentOrderId { get; set; }
+    public string? PaymentMethod { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

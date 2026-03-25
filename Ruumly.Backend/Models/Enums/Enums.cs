@@ -9,7 +9,7 @@ public enum PostingMode { Api, Email, Manual }
 public enum BookingStatus { Pending, Confirmed, Active, Completed, Cancelled }
 public enum OrderStatus { Created, Sending, Sent, Confirmed, Rejected, Active, Completed, Cancelled }
 public enum FulfillmentStatus { AwaitingApproval, Approved, Rejected, Posting, Posted, Confirmed, Failed, Completed }
-public enum InvoiceStatus { Pending, Paid, Overdue }
+public enum InvoiceStatus { Pending, AwaitingPayment, Paid, Overdue }
 public enum ListingType { Warehouse, Moving, Trailer }
 public enum MessageSender { Customer, Provider, Admin }
 public enum NotificationType { Booking, Alert, System, Order, Review, Payment }
