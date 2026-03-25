@@ -23,6 +23,7 @@ public class SecurityHeadersMiddleware(RequestDelegate next)
                 "https://api.montonio.com " +
                 "https://accounts.google.com " +
                 "https://*.ingest.sentry.io " +
+                "https://*.ingest.de.sentry.io " +
                 "https://*.google-analytics.com " +
                 "https://*.analytics.google.com " +
                 "https://www.googletagmanager.com; " +
