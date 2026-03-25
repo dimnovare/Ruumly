@@ -511,6 +511,22 @@ public class AdminController(
         return Ok(MapListing(listing));
     }
 
+    [HttpPatch("listings/{id:guid}/images")]
+    public async Task<IActionResult> PatchListingImages(Guid id, [FromBody] UpdateImagesRequest body)
+    {
+        var listing = await db.Listings
+            .Include(l => l.Supplier)
+            .FirstOrDefaultAsync(l => l.Id == id);
+        if (listing is null) return NotFound(Error("Listing not found"));
+
+        listing.ImagesJson = System.Text.Json.JsonSerializer.Serialize(body.Images);
+        listing.UpdatedAt  = DateTime.UtcNow;
+        await Audit("listing.images_updated", User.GetUserEmail(), listing.Title, null);
+        await db.SaveChangesAsync();
+
+        return Ok(MapListing(listing));
+    }
+
     [HttpDelete("listings/{id:guid}")]
     public async Task<IActionResult> DeleteListing(Guid id)
     {

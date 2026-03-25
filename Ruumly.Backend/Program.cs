@@ -201,6 +201,17 @@ app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
+
+// ─── Static file serving for uploaded images ───
+var uploadsPath = app.Configuration["Storage:BasePath"] ?? "/app/uploads";
+Directory.CreateDirectory(uploadsPath);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+        Path.GetFullPath(uploadsPath)),
+    RequestPath = "/uploads",
+});
+
 app.MapControllers();
 
 app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions

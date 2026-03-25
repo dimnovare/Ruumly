@@ -24,6 +24,8 @@ public record CreateAdminListingRequest(
     decimal?            SizeM2
 );
 
+public record UpdateImagesRequest(List<string> Images);
+
 public record PatchAdminListingRequest(
     string?             Type,
     string?             Title,
