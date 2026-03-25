@@ -10,6 +10,22 @@ public class SecurityHeadersMiddleware(RequestDelegate next)
         context.Response.Headers["Referrer-Policy"]        = "strict-origin-when-cross-origin";
         context.Response.Headers["Permissions-Policy"]     = "camera=(), microphone=(), geolocation=()";
 
+        context.Response.Headers["Content-Security-Policy"] =
+            "default-src 'self'; " +
+            "script-src 'self' 'unsafe-inline' " +
+                "https://accounts.google.com; " +
+            "style-src 'self' 'unsafe-inline'; " +
+            "img-src 'self' data: https: blob:; " +
+            "font-src 'self' data:; " +
+            "connect-src 'self' " +
+                "https://api.ruumly.eu " +
+                "https://api.montonio.com " +
+                "https://accounts.google.com; " +
+            "frame-src https://accounts.google.com; " +
+            "object-src 'none'; " +
+            "base-uri 'self'; " +
+            "form-action 'self';";
+
         if (!context.Request.IsHttps && context.Request.Host.Host != "localhost")
             context.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
 

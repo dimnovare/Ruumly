@@ -41,8 +41,21 @@ public class BookingService(
             .AsQueryable();
 
         if (role == UserRole.Customer)
+        {
             query = query.Where(b => b.UserId == userId);
-        // Admin and Provider see all bookings
+        }
+        else if (role == UserRole.Provider)
+        {
+            // Provider only sees bookings for their
+            // own supplier — never other suppliers.
+            var user = await db.Users.FindAsync(userId);
+            if (user?.SupplierId is null)
+                return [];   // no supplier linked → no bookings
+
+            query = query.Where(
+                b => b.SupplierId == user.SupplierId);
+        }
+        // Admin: no filter — sees everything
 
         var bookings = await query
             .OrderByDescending(b => b.CreatedAt)
@@ -69,7 +82,15 @@ public class BookingService(
             return null;
 
         if (role == UserRole.Customer && booking.UserId != userId)
-            throw new ForbiddenException("You do not have access to this booking.");
+            throw new ForbiddenException(Msg("BOOKING_NOT_FOUND"));  // don't reveal existence
+
+        if (role == UserRole.Provider)
+        {
+            var user = await db.Users.FindAsync(userId);
+            if (user?.SupplierId is null ||
+                booking.SupplierId != user.SupplierId)
+                throw new ForbiddenException(Msg("BOOKING_NOT_FOUND"));
+        }
 
         var invoiceId = await db.Invoices
             .Where(i => i.BookingId == booking.Id)

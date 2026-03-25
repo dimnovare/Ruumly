@@ -1,5 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Ruumly.Backend.Data;
+using Ruumly.Backend.Helpers;
+using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Controllers;
@@ -8,7 +12,9 @@ namespace Ruumly.Backend.Controllers;
 [Route("api/payments")]
 public class PaymentsController(
     IPaymentService paymentService,
-    ILogger<PaymentsController> logger)
+    ILogger<PaymentsController> logger,
+    RuumlyDbContext db,
+    IHttpContextAccessor http)
     : ControllerBase
 {
     /// <summary>
@@ -21,6 +27,23 @@ public class PaymentsController(
     public async Task<IActionResult> Initiate(
         [FromBody] InitiatePaymentRequest request)
     {
+        // Verify the caller owns this invoice.
+        // Customers can only pay invoices linked to
+        // their own bookings. Admins can initiate for any.
+        var userId = http.HttpContext!.User.GetUserId();
+        var role   = http.HttpContext!.User.GetUserRole();
+
+        var invoice = await db.Invoices
+            .Include(i => i.Booking)
+            .FirstOrDefaultAsync(i => i.Id == request.InvoiceId);
+
+        if (invoice is null)
+            return NotFound(new { error = "Invoice not found" });
+
+        if (role != UserRole.Admin &&
+            invoice.Booking.UserId != userId)
+            return Forbid();
+
         var paymentUrl =
             await paymentService.CreatePaymentOrderAsync(
                 request.InvoiceId,
