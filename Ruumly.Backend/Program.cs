@@ -217,6 +217,17 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// ─── Sentry ───
+builder.WebHost.UseSentry(options =>
+{
+    options.Dsn                = builder.Configuration["Sentry:Dsn"] ?? "";
+    options.TracesSampleRate   = 0.1;   // capture 10 % of transactions for performance monitoring
+    options.MinimumEventLevel  = LogLevel.Error;
+    options.Environment        = builder.Environment.EnvironmentName;
+    // Silence Sentry when no DSN is configured (local dev without a project)
+    options.InitializeSdk      = !string.IsNullOrWhiteSpace(builder.Configuration["Sentry:Dsn"]);
+});
+
 // ─── Build ───
 var app = builder.Build();
 
@@ -241,8 +252,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("Frontend");
+app.UseSentryTracing();
 app.UseAuthentication();
 app.UseAuthorization();
+// Attach user id/email/role to Sentry scope after auth resolves the principal
+app.UseMiddleware<SentryUserContextMiddleware>();
 app.UseRateLimiter();
 
 // ─── Static file serving for uploaded images ───

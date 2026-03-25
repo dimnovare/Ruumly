@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using Ruumly.Backend.Helpers;
+using Sentry;
 
 namespace Ruumly.Backend.Middleware;
 
@@ -30,6 +31,12 @@ public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddlewa
                 context.Request.Path,
                 statusCodeForLog,
                 ex.Message);
+
+            // Only send unexpected server errors to Sentry — skip known 4xx exceptions
+            // to keep the error budget focused on genuine bugs.
+            if (statusCodeForLog == 500)
+                SentrySdk.CaptureException(ex);
+
             await HandleExceptionAsync(context, ex);
         }
     }
