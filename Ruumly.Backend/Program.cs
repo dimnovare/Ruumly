@@ -16,9 +16,13 @@ using Ruumly.Backend.Services.Implementations;
 using Ruumly.Backend.Services.Interfaces;
 // BookingService, OrderRoutingService, IntegrationDispatchService are in same namespace
 using Ruumly.Backend.DTOs.Requests;
+using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
 using Hangfire;
 using Hangfire.PostgreSql;
+using Microsoft.Extensions.Options;
 using Serilog;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console(outputTemplate:
@@ -114,6 +118,24 @@ builder.Services.AddCors(options =>
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
+// ─── API Versioning ───
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion                   = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions                   = true;
+    options.ApiVersionReader                    = ApiVersionReader.Combine(
+        new UrlSegmentApiVersionReader(),
+        new HeaderApiVersionReader("X-Api-Version"));
+})
+.AddApiExplorer(options =>
+{
+    options.GroupNameFormat           = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
+});
+
+builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
+
 // ─── Hangfire ───
 builder.Services.AddHangfire(config => config
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
@@ -176,8 +198,7 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Ruumly API", Version = "v1" });
-
+    // Per-version docs are added by ConfigureSwaggerOptions (runs after IApiVersionDescriptionProvider is ready).
     var jwtScheme = new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -202,11 +223,21 @@ var app = builder.Build();
 // ─── Middleware pipeline ───
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseMiddleware<SecurityHeadersMiddleware>();
+app.UseMiddleware<ApiVersionRewriteMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ruumly API v1"));
+    app.UseSwaggerUI(options =>
+    {
+        var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+        foreach (var desc in provider.ApiVersionDescriptions)
+        {
+            options.SwaggerEndpoint(
+                $"/swagger/{desc.GroupName}/swagger.json",
+                $"Ruumly API {desc.GroupName.ToUpperInvariant()}");
+        }
+    });
 }
 
 app.UseCors("Frontend");

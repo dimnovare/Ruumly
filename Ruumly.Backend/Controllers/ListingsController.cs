@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Ruumly.Backend.DTOs.Requests;
@@ -6,7 +7,8 @@ using Ruumly.Backend.Services.Interfaces;
 namespace Ruumly.Backend.Controllers;
 
 [ApiController]
-[Route("api/listings")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/listings")]
 public class ListingsController(IListingService listingService) : ControllerBase
 {
     /// <summary>

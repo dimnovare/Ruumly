@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +11,8 @@ using Ruumly.Backend.Models.Enums;
 
 namespace Ruumly.Backend.Controllers;
 
-[Route("api/admin")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/admin")]
 public class AdminSettingsController(RuumlyDbContext db) : AdminBaseController(db)
 {
     // ══════════════════════════════════════════════════════════════════════════

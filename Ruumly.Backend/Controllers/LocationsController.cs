@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -12,7 +13,8 @@ using Ruumly.Backend.Models.Enums;
 namespace Ruumly.Backend.Controllers;
 
 [ApiController]
-[Route("api/locations")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/locations")]
 public class LocationsController(RuumlyDbContext db) : ControllerBase
 {
     private static object Error(string msg) => new { error = msg };

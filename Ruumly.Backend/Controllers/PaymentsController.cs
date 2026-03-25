@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +10,8 @@ using Ruumly.Backend.Services.Interfaces;
 namespace Ruumly.Backend.Controllers;
 
 [ApiController]
-[Route("api/payments")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/payments")]
 public class PaymentsController(
     IPaymentService paymentService,
     ILogger<PaymentsController> logger,

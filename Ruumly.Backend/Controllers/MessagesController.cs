@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ruumly.Backend.DTOs.Requests;
@@ -7,7 +8,8 @@ using Ruumly.Backend.Services.Interfaces;
 namespace Ruumly.Backend.Controllers;
 
 [ApiController]
-[Route("api/messages")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/messages")]
 [Authorize]
 public class MessagesController(IMessageService messageService) : ControllerBase
 {

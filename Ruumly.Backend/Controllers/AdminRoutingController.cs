@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
@@ -8,7 +9,8 @@ using Ruumly.Backend.Models.Enums;
 
 namespace Ruumly.Backend.Controllers;
 
-[Route("api/admin")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/admin")]
 public class AdminRoutingController(RuumlyDbContext db) : AdminBaseController(db)
 {
     [HttpGet("routing-rules")]

@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.FileProviders;
@@ -5,7 +6,8 @@ using Microsoft.Extensions.FileProviders;
 namespace Ruumly.Backend.Controllers;
 
 [ApiController]
-[Route("api/images")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/images")]
 [Authorize(Roles = "Admin,Provider")]
 public class ImageController(
     IConfiguration config,

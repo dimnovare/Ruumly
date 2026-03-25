@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ruumly.Backend.Helpers;
@@ -6,7 +7,8 @@ using Ruumly.Backend.Services.Interfaces;
 namespace Ruumly.Backend.Controllers;
 
 [ApiController]
-[Route("api/invoices")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/invoices")]
 [Authorize]
 public class InvoicesController(IInvoiceService invoiceService) : ControllerBase
 {
