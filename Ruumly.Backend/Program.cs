@@ -253,7 +253,6 @@ var app = builder.Build();
 // ─── Middleware pipeline ───
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseMiddleware<SecurityHeadersMiddleware>();
-app.UseMiddleware<ApiVersionRewriteMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
