@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Ruumly.Backend.Services.Interfaces;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Webp;
@@ -25,6 +26,7 @@ public class ImageController(
     private const int  WebpQuality        = 80;
 
     [HttpPost("upload")]
+    [EnableRateLimiting("upload")]
     public async Task<IActionResult> Upload([FromForm] IFormFileCollection files)
     {
         if (files.Count == 0)

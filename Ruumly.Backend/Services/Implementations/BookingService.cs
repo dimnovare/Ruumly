@@ -1,6 +1,8 @@
+using System.Text.Json;
 using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs;
 using Ruumly.Backend.DTOs.Requests;
@@ -16,6 +18,7 @@ public class BookingService(
     RuumlyDbContext db,
     IOrderRoutingService orderRoutingService,
     IHttpContextAccessor http,
+    IDistributedCache cache,
     IBackgroundJobClient? backgroundJobs = null) : IBookingService
 {
     private string Lang => http.HttpContext?.Request.GetLang() ?? "et";
@@ -34,6 +37,11 @@ public class BookingService(
 
     public async Task<BookingStatsDto> GetStatsAsync()
     {
+        const string cacheKey = "platform:booking-stats";
+        var cached = await cache.GetStringAsync(cacheKey);
+        if (cached is not null)
+            return JsonSerializer.Deserialize<BookingStatsDto>(cached)!;
+
         var totalBookings = await db.Bookings
             .Where(b => b.Status != BookingStatus.Cancelled && !b.IsDeleted)
             .CountAsync();
@@ -42,7 +50,14 @@ public class BookingService(
             ? Math.Round((decimal)await db.Reviews.AverageAsync(r => (double)r.Rating), 1)
             : 0m;
 
-        return new BookingStatsDto(totalBookings, avgRating);
+        var result = new BookingStatsDto(totalBookings, avgRating);
+
+        await cache.SetStringAsync(cacheKey,
+            JsonSerializer.Serialize(result),
+            new DistributedCacheEntryOptions
+            { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10) });
+
+        return result;
     }
 
     public async Task<PaginatedResult<BookingDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 50)

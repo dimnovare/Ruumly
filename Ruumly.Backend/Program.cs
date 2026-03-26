@@ -24,19 +24,28 @@ using Microsoft.Extensions.Options;
 using Serilog;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-Log.Logger = new LoggerConfiguration()
+var logConfig = new LoggerConfiguration()
     .WriteTo.Console(outputTemplate:
         "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
-    .WriteTo.File("logs/ruumly-.log",
+    .MinimumLevel.Information()
+    .MinimumLevel.Override(
+        "Microsoft.EntityFrameworkCore.Database.Command",
+        Serilog.Events.LogEventLevel.Warning)
+    .Enrich.FromLogContext();
+
+// Only write to file in development — Railway containers are ephemeral
+if (!Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
+        ?.Equals("Production", StringComparison.OrdinalIgnoreCase) ?? true)
+{
+    logConfig = logConfig.WriteTo.File(
+        "logs/ruumly-.log",
         rollingInterval: RollingInterval.Day,
         retainedFileCountLimit: 14,
         outputTemplate:
-            "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
-    .MinimumLevel.Information()
-    .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command",
-        Serilog.Events.LogEventLevel.Warning)
-    .Enrich.FromLogContext()
-    .CreateLogger();
+            "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}");
+}
+
+Log.Logger = logConfig.CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -121,6 +130,12 @@ builder.Services.AddRateLimiter(options =>
         limiterOptions.PermitLimit = 60;
         limiterOptions.Window      = TimeSpan.FromMinutes(1);
         limiterOptions.QueueLimit  = 0;
+    });
+    options.AddFixedWindowLimiter("upload", limiterOptions =>
+    {
+        limiterOptions.PermitLimit  = 20;   // 20 uploads per window
+        limiterOptions.Window       = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueLimit   = 0;
     });
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
