@@ -339,10 +339,14 @@ if (app.Environment.IsDevelopment())
     app.UseHangfireDashboard("/hangfire");
 }
 
-RecurringJob.AddOrUpdate<BackgroundCleanupService>(
-    "cleanup-tokens",
-    x => x.CleanupStaleRefreshTokensAsync(),
-    Cron.Daily);
+using (var scope = app.Services.CreateScope())
+{
+    var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+    recurringJobManager.AddOrUpdate<BackgroundCleanupService>(
+        "cleanup-tokens",
+        x => x.CleanupStaleRefreshTokensAsync(),
+        Cron.Daily);
+}
 
 app.MapControllers();
 
