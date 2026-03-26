@@ -33,6 +33,15 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
         model.Entity<Booking>().HasQueryFilter(b => !b.IsDeleted);
         model.Entity<Order>().HasQueryFilter(o => !o.IsDeleted);
 
+        // Silence EF Core warnings about query filter / required relationship mismatch.
+        // These filters are always true — they just tell EF the relationship is filter-aware.
+        model.Entity<Message>().HasQueryFilter(m => true);
+        model.Entity<BookingTimeline>().HasQueryFilter(bt => true);
+        model.Entity<Invoice>().HasQueryFilter(i => true);
+        model.Entity<Review>().HasQueryFilter(r => true);
+        model.Entity<OrderTimeline>().HasQueryFilter(ot => true);
+        model.Entity<FulfillmentEvent>().HasQueryFilter(fe => true);
+
         // ─── Enums as strings ───
         model.Entity<User>().Property(e => e.Role).HasConversion<string>();
         model.Entity<User>().Property(e => e.Status).HasConversion<string>();
