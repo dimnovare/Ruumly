@@ -7,8 +7,7 @@ using Ruumly.Backend.Services.Interfaces;
 namespace Ruumly.Backend.Controllers;
 
 [ApiController]
-[ApiVersion("1.0")]
-[Route("api/v{version:apiVersion}/notifications")]
+[Route("api/notifications")]
 [Authorize]
 public class NotificationsController(INotificationService notificationService) : ControllerBase
 {

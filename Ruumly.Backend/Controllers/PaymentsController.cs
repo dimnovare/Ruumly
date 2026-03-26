@@ -10,8 +10,7 @@ using Ruumly.Backend.Services.Interfaces;
 namespace Ruumly.Backend.Controllers;
 
 [ApiController]
-[ApiVersion("1.0")]
-[Route("api/v{version:apiVersion}/payments")]
+[Route("api/payments")]
 public class PaymentsController(
     IPaymentService paymentService,
     ILogger<PaymentsController> logger,

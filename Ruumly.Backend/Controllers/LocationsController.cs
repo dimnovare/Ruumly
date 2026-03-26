@@ -13,8 +13,7 @@ using Ruumly.Backend.Models.Enums;
 namespace Ruumly.Backend.Controllers;
 
 [ApiController]
-[ApiVersion("1.0")]
-[Route("api/v{version:apiVersion}/locations")]
+[Route("api/locations")]
 public class LocationsController(RuumlyDbContext db) : ControllerBase
 {
     private static object Error(string msg) => new { error = msg };

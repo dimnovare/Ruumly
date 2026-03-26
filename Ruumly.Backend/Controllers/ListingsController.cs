@@ -7,8 +7,7 @@ using Ruumly.Backend.Services.Interfaces;
 namespace Ruumly.Backend.Controllers;
 
 [ApiController]
-[ApiVersion("1.0")]
-[Route("api/v{version:apiVersion}/listings")]
+[Route("api/listings")]
 public class ListingsController(IListingService listingService) : ControllerBase
 {
     /// <summary>

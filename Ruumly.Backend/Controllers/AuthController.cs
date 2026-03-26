@@ -13,8 +13,7 @@ using Ruumly.Backend.Services.Interfaces;
 namespace Ruumly.Backend.Controllers;
 
 [ApiController]
-[ApiVersion("1.0")]
-[Route("api/v{version:apiVersion}/auth")]
+[Route("api/auth")]
 public class AuthController(
     IAuthService authService,
     RuumlyDbContext db,
