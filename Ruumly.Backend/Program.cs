@@ -123,10 +123,22 @@ var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<stri
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
-        policy.WithOrigins(allowedOrigins)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials());
+        policy.SetIsOriginAllowed(origin =>
+        {
+            // Always allow configured origins (ruumly.eu, www.ruumly.eu, localhost)
+            if (allowedOrigins.Contains(origin)) return true;
+
+            // Allow Vercel preview deployments
+            if (Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+            {
+                return uri.Host.EndsWith(".vercel.app");
+            }
+
+            return false;
+        })
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials());
 });
 
 // ─── FluentValidation ───
