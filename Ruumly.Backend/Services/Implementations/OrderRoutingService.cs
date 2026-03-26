@@ -1,6 +1,7 @@
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
+using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
@@ -37,7 +38,8 @@ public class OrderRoutingService(
         }
 
         // 4. Calculate supplier price and margin
-        var supplierPrice = Math.Round(booking.BasePrice * 0.85m);
+        var commissionRate = TierRules.CommissionRate(supplier.Tier);
+        var supplierPrice  = Math.Round(booking.BasePrice * (1m - commissionRate / 100m));
         var margin        = booking.Total - supplierPrice - booking.ExtrasTotal;
 
         // 5. Determine posting channel
