@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ruumly.Backend.Services.Interfaces;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Webp;
+using SixLabors.ImageSharp.Processing;
 
 namespace Ruumly.Backend.Controllers;
 
@@ -17,6 +20,9 @@ public class ImageController(
 
     private const long MaxFileSizeBytes   = 5 * 1024 * 1024; // 5 MB
     private const int  MaxFilesPerRequest = 10;
+    private const int  MaxFullWidth       = 1200;
+    private const int  MaxThumbWidth      = 400;
+    private const int  WebpQuality        = 80;
 
     [HttpPost("upload")]
     public async Task<IActionResult> Upload([FromForm] IFormFileCollection files)
@@ -36,20 +42,53 @@ public class ImageController(
                 return BadRequest(new { error = $"Content type '{file.ContentType}' is not allowed" });
         }
 
-        var urls = new List<string>();
+        var results = new List<object>();
+        var encoder = new WebpEncoder { Quality = WebpQuality };
 
         foreach (var file in files)
         {
-            var ext      = Path.GetExtension(file.FileName).ToLowerInvariant();
-            var fileName = $"{Guid.NewGuid()}{ext}";
+            var baseName = Guid.NewGuid().ToString();
+            var fullName  = $"{baseName}.webp";
+            var thumbName = $"thumb_{baseName}.webp";
 
-            await using var stream = file.OpenReadStream();
-            var url = await storage.UploadAsync(stream, fileName, file.ContentType);
-            urls.Add(url);
-            logger.LogInformation("Image uploaded: {Url}", url);
+            Image image;
+            try
+            {
+                await using var input = file.OpenReadStream();
+                image = await Image.LoadAsync(input);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to decode image '{FileName}'", file.FileName);
+                return BadRequest(new { error = $"File '{file.FileName}' is not a valid image." });
+            }
+
+            using (image)
+            {
+                // ── full-size ──────────────────────────────────────────────
+                if (image.Width > MaxFullWidth)
+                    image.Mutate(x => x.Resize(MaxFullWidth, 0));
+
+                var fullStream = new MemoryStream();
+                await image.SaveAsync(fullStream, encoder);
+                fullStream.Position = 0;
+                var fullUrl = await storage.UploadAsync(fullStream, fullName, "image/webp");
+
+                // ── thumbnail ──────────────────────────────────────────────
+                if (image.Width > MaxThumbWidth)
+                    image.Mutate(x => x.Resize(MaxThumbWidth, 0));
+
+                var thumbStream = new MemoryStream();
+                await image.SaveAsync(thumbStream, encoder);
+                thumbStream.Position = 0;
+                var thumbUrl = await storage.UploadAsync(thumbStream, thumbName, "image/webp");
+
+                logger.LogInformation("Uploaded image full={Full} thumb={Thumb}", fullUrl, thumbUrl);
+                results.Add(new { full = fullUrl, thumb = thumbUrl });
+            }
         }
 
-        return Ok(urls);
+        return Ok(results);
     }
 
     // Fallback serving for local dev only.
