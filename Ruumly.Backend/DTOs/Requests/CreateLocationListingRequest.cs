@@ -3,9 +3,9 @@ using Ruumly.Backend.Models.Enums;
 namespace Ruumly.Backend.DTOs.Requests;
 
 /// <summary>
-/// Creates a new listing unit within a specific location.
+/// Creates a new listing within a specific supplier location.
 /// </summary>
-public record CreateUnitRequest(
+public record CreateLocationListingRequest(
     string      Title,
     ListingType Type,
     decimal     PriceFrom,

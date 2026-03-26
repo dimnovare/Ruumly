@@ -12,4 +12,5 @@ public interface IBookingService
     Task<BookingDto>       CreateAsync(CreateBookingRequest request, Guid userId);
     Task<BookingDto>       CancelAsync(Guid id, Guid userId, UserRole role);
     IReadOnlyDictionary<string, decimal> GetExtrasPrices();
+    Task<BookingStatsDto> GetStatsAsync();
 }

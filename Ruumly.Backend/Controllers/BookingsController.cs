@@ -62,6 +62,17 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
     }
 
     /// <summary>
+    /// Returns platform-wide booking stats. Public — no auth required.
+    /// </summary>
+    [HttpGet("stats")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetStats()
+    {
+        var stats = await bookingService.GetStatsAsync();
+        return Ok(stats);
+    }
+
+    /// <summary>
     /// Returns the extras price configuration. Public — no auth required.
     /// Frontend uses this as the single source of truth for extras pricing.
     /// </summary>

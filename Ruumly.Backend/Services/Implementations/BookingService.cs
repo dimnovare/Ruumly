@@ -32,6 +32,19 @@ public class BookingService(
 
     public IReadOnlyDictionary<string, decimal> GetExtrasPrices() => ExtrasPrices;
 
+    public async Task<BookingStatsDto> GetStatsAsync()
+    {
+        var totalBookings = await db.Bookings
+            .Where(b => b.Status != BookingStatus.Cancelled && !b.IsDeleted)
+            .CountAsync();
+
+        var avgRating = await db.Reviews.AnyAsync()
+            ? Math.Round((decimal)await db.Reviews.AverageAsync(r => (double)r.Rating), 1)
+            : 0m;
+
+        return new BookingStatsDto(totalBookings, avgRating);
+    }
+
     public async Task<PaginatedResult<BookingDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 50)
     {
         page  = Math.Max(1, page);

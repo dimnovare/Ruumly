@@ -183,7 +183,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
     // ── POST /api/locations/{id}/units ─────────────────────────────────────────
     [HttpPost("{id:guid}/units")]
     [Authorize(Roles = "Admin,Provider")]
-    public async Task<IActionResult> CreateUnit(Guid id, [FromBody] CreateUnitRequest body)
+    public async Task<IActionResult> CreateUnit(Guid id, [FromBody] CreateLocationListingRequest body)
     {
         var location = await db.SupplierLocations
             .Include(l => l.Supplier)

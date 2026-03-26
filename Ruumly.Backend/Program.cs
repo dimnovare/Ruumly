@@ -54,6 +54,13 @@ builder.Services.AddDbContext<RuumlyDbContext>(options =>
 // ─── JWT Authentication ───
 var jwtSection = builder.Configuration.GetSection("Jwt");
 var jwtSecret = jwtSection["Secret"]!;
+
+if (string.IsNullOrWhiteSpace(jwtSecret))
+    throw new InvalidOperationException(
+        "[Ruumly] FATAL: Jwt:Secret is not configured. " +
+        "Set it via the JWT__SECRET environment variable in Railway. " +
+        "The app cannot start safely without a signing key.");
+
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -131,7 +138,10 @@ builder.Services.AddCors(options =>
             // Allow Vercel preview deployments
             if (Uri.TryCreate(origin, UriKind.Absolute, out var uri))
             {
-                return uri.Host.EndsWith(".vercel.app");
+                // Only allow Ruumly's own Vercel deployments, not any vercel.app subdomain
+                return uri.Host.EndsWith(".vercel.app") &&
+                       (uri.Host.StartsWith("ruumly-") ||
+                        uri.Host.StartsWith("estonia-space-hub"));
             }
 
             return false;

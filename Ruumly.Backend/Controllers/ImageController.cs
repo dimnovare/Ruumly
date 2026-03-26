@@ -64,8 +64,9 @@ public class ImageController(
             }
 
             using (image)
+            using (var thumb = image.Clone(_ => {}))
             {
-                // ── full-size ──────────────────────────────────────────────
+                // ── full-size (resize original) ────────────────────────────
                 if (image.Width > MaxFullWidth)
                     image.Mutate(x => x.Resize(MaxFullWidth, 0));
 
@@ -74,12 +75,12 @@ public class ImageController(
                 fullStream.Position = 0;
                 var fullUrl = await storage.UploadAsync(fullStream, fullName, "image/webp");
 
-                // ── thumbnail ──────────────────────────────────────────────
-                if (image.Width > MaxThumbWidth)
-                    image.Mutate(x => x.Resize(MaxThumbWidth, 0));
+                // ── thumbnail (resize clone independently) ─────────────────
+                if (thumb.Width > MaxThumbWidth)
+                    thumb.Mutate(x => x.Resize(MaxThumbWidth, 0));
 
                 var thumbStream = new MemoryStream();
-                await image.SaveAsync(thumbStream, encoder);
+                await thumb.SaveAsync(thumbStream, encoder);
                 thumbStream.Position = 0;
                 var thumbUrl = await storage.UploadAsync(thumbStream, thumbName, "image/webp");
 
