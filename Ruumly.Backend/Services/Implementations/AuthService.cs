@@ -63,20 +63,44 @@ public class AuthService(
         if (exists)
             throw new ConflictException(Msg("EMAIL_ALREADY_REGISTERED"));
 
+        var verifyToken  = Convert.ToHexString(
+            System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
+
         var user = new User
         {
-            Id           = Guid.NewGuid(),
-            Name         = request.Name.Trim(),
-            Email        = request.Email.ToLower().Trim(),
-            PasswordHash = BC.HashPassword(request.Password, workFactor: 12),
-            Role         = UserRole.Customer,
-            Status       = UserStatus.Active,
-            Language     = request.Language is "en" or "ru" ? request.Language : "et",
-            RegisteredAt = DateTime.UtcNow,
+            Id                        = Guid.NewGuid(),
+            Name                      = request.Name.Trim(),
+            Email                     = request.Email.ToLower().Trim(),
+            PasswordHash              = BC.HashPassword(request.Password, workFactor: 12),
+            Role                      = UserRole.Customer,
+            Status                    = UserStatus.Active,
+            Language                  = request.Language is "en" or "ru" ? request.Language : "et",
+            RegisteredAt              = DateTime.UtcNow,
+            EmailVerified             = false,
+            EmailVerificationToken    = HashToken(verifyToken),
+            EmailVerificationExpiry   = DateTime.UtcNow.AddHours(24),
         };
 
         db.Users.Add(user);
         await db.SaveChangesAsync();
+
+        // Send verification email (fire-and-forget — don't block registration)
+        try
+        {
+            var verifyUrl = $"{config["AppUrl"]}/verify?token={verifyToken}";
+            var t         = EmailTranslations.For(user.Language);
+            var body      =
+                $"{t.EmailVerifyGreeting}\n\n" +
+                $"{t.EmailVerifyBody}\n\n" +
+                $"{verifyUrl}\n\n" +
+                $"{t.EmailVerifyExpiry}\n\n" +
+                $"Ruumly\ninfo@ruumly.eu";
+            await emailSender.SendAsync(user.Email, t.EmailVerifySubject, body);
+        }
+        catch
+        {
+            // Don't fail registration if email sending fails
+        }
 
         return await GenerateAuthResponseAsync(user);
     }
@@ -172,7 +196,8 @@ public class AuthService(
             if (user is not null)
             {
                 // Link Google ID to existing email account
-                user.GoogleId = payload.Subject;
+                user.GoogleId     = payload.Subject;
+                user.EmailVerified = true;   // Google has already verified this email
                 if (string.IsNullOrWhiteSpace(user.Avatar) &&
                     !string.IsNullOrWhiteSpace(payload.Picture))
                     user.Avatar = payload.Picture;
@@ -186,18 +211,19 @@ public class AuthService(
                 if (inviteRequired?.Value == "true")
                     throw new UnauthorizedAccessException(Msg("INVITE_CODE_REQUIRED"));
 
-                // Create brand new user
+                // Create brand new user — Google has already verified the email
                 user = new User
                 {
-                    Id           = Guid.NewGuid(),
-                    Name         = payload.Name ?? payload.Email,
-                    Email        = payload.Email.ToLower(),
-                    PasswordHash = BC.HashPassword(Guid.NewGuid().ToString(), workFactor: 4),
-                    Role         = UserRole.Customer,
-                    Status       = UserStatus.Active,
-                    GoogleId     = payload.Subject,
-                    Avatar       = payload.Picture,
-                    RegisteredAt = DateTime.UtcNow,
+                    Id            = Guid.NewGuid(),
+                    Name          = payload.Name ?? payload.Email,
+                    Email         = payload.Email.ToLower(),
+                    PasswordHash  = BC.HashPassword(Guid.NewGuid().ToString(), workFactor: 4),
+                    Role          = UserRole.Customer,
+                    Status        = UserStatus.Active,
+                    GoogleId      = payload.Subject,
+                    Avatar        = payload.Picture,
+                    RegisteredAt  = DateTime.UtcNow,
+                    EmailVerified = true,
                 };
                 db.Users.Add(user);
             }
@@ -399,6 +425,23 @@ public class AuthService(
             ?? throw new NotFoundException(Msg("USER_NOT_FOUND"));
         user.Language = language;
         await db.SaveChangesAsync();
+    }
+
+    public async Task<bool> VerifyEmailAsync(string token)
+    {
+        var tokenHash = HashToken(token);
+        var user = await db.Users
+            .FirstOrDefaultAsync(u =>
+                u.EmailVerificationToken == tokenHash &&
+                u.EmailVerificationExpiry > DateTime.UtcNow);
+
+        if (user is null) return false;
+
+        user.EmailVerified           = true;
+        user.EmailVerificationToken  = null;
+        user.EmailVerificationExpiry = null;
+        await db.SaveChangesAsync();
+        return true;
     }
 
     private static UserDto MapToDto(User user) => new(

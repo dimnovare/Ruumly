@@ -114,6 +114,18 @@ public class AuthController(
         return NoContent();
     }
 
+    [HttpPost("verify-email")]
+    [EnableRateLimiting("auth")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request)
+    {
+        var success = await authService.VerifyEmailAsync(request.Token);
+        if (!success)
+            return BadRequest(new { message = "Invalid or expired verification token." });
+        return Ok(new { message = "Email verified successfully." });
+    }
+
     [HttpPost("google")]
     [EnableRateLimiting("auth")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -221,5 +233,6 @@ public class AuthController(
     }
 }
 
-// Inline request DTO for refresh/logout — too small to warrant its own file
+// Inline request DTOs — too small to warrant their own files
 public record RefreshTokenRequest(string RefreshToken);
+public record VerifyEmailRequest(string Token);

@@ -135,6 +135,11 @@ public class BookingService(
 
     public async Task<BookingDto> CreateAsync(CreateBookingRequest request, Guid userId)
     {
+        // 0. Require verified email before booking
+        var bookingUser = await db.Users.FindAsync(userId);
+        if (bookingUser?.EmailVerified != true)
+            throw new ForbiddenException(Msg("EMAIL_NOT_VERIFIED"));
+
         await using var transaction = await db.Database.BeginTransactionAsync();
         try
         {

@@ -26,6 +26,10 @@ public class User
     public string? PasswordResetToken { get; set; }
     public DateTime? PasswordResetExpiry { get; set; }
 
+    public bool EmailVerified { get; set; } = false;
+    public string? EmailVerificationToken { get; set; }
+    public DateTime? EmailVerificationExpiry { get; set; }
+
     /// <summary>
     /// Google's stable subject identifier (sub claim).
     /// Null for email/password users. A user can have both if they
