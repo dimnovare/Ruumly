@@ -150,7 +150,9 @@ public class BookingService(
                 ?? throw new NotFoundException(Msg("LISTING_NOT_FOUND"));
 
             // 1b. Check for overlapping confirmed/active bookings on this listing
-            if (!string.IsNullOrEmpty(request.EndDate) &&
+            // Moving-type listings are one-time services with no date range — skip overlap check.
+            if (listing.Type != ListingType.Moving &&
+                !string.IsNullOrEmpty(request.EndDate) &&
                 DateTime.TryParse(request.EndDate, out var endDateCheck) &&
                 DateTime.TryParse(request.StartDate, out var startDateCheck))
             {
