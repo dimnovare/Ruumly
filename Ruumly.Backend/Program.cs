@@ -197,6 +197,7 @@ builder.Services.AddHangfire(config => config
 
 builder.Services.AddHangfireServer();
 builder.Services.AddScoped<BackgroundOrderDispatchService>();
+builder.Services.AddScoped<BackgroundCleanupService>();
 
 // ─── Application services ───
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -337,6 +338,11 @@ if (app.Environment.IsDevelopment())
 {
     app.UseHangfireDashboard("/hangfire");
 }
+
+RecurringJob.AddOrUpdate<BackgroundCleanupService>(
+    "cleanup-tokens",
+    x => x.CleanupStaleRefreshTokensAsync(),
+    Cron.Daily);
 
 app.MapControllers();
 

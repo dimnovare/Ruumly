@@ -97,6 +97,12 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
         model.Entity<Booking>()
             .HasIndex(e => e.UserId);
 
+        model.Entity<Booking>()
+            .HasIndex(b => b.CreatedAt);
+
+        model.Entity<RefreshToken>()
+            .HasIndex(t => new { t.TokenHash, t.IsRevoked });
+
         model.Entity<Order>()
             .HasIndex(e => e.BookingId)
             .IsUnique();

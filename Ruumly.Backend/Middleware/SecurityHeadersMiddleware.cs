@@ -1,6 +1,6 @@
 namespace Ruumly.Backend.Middleware;
 
-public class SecurityHeadersMiddleware(RequestDelegate next)
+public class SecurityHeadersMiddleware(RequestDelegate next, IWebHostEnvironment env)
 {
     public async Task InvokeAsync(HttpContext context)
     {
@@ -32,7 +32,8 @@ public class SecurityHeadersMiddleware(RequestDelegate next)
             "base-uri 'self'; " +
             "form-action 'self';";
 
-        if (!context.Request.IsHttps && context.Request.Host.Host != "localhost")
+        // IsHttps is unreliable behind Railway's reverse proxy — use IWebHostEnvironment instead.
+        if (env.IsProduction())
             context.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
 
         await next(context);

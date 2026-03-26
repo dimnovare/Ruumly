@@ -57,10 +57,15 @@ public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddlewa
         context.Response.ContentType = "application/json";
         context.Response.StatusCode  = (int)statusCode;
 
+        // Never expose internal exception details to clients on 500s — they are already logged.
+        var message = (int)statusCode >= 500
+            ? "An unexpected error occurred. Please try again later."
+            : exception.Message;
+
         var payload = JsonSerializer.Serialize(new
         {
             error,
-            message    = exception.Message,
+            message,
             statusCode = (int)statusCode
         }, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 

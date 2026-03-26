@@ -27,6 +27,11 @@ public class AuthService(
     private string Lang => http.HttpContext?.Request.GetLang() ?? "et";
     private string Msg(string key) => ErrorMessages.Get(key, Lang);
 
+    // Pre-computed dummy hash used in LoginAsync to prevent timing-based email enumeration.
+    // BC.Verify is called against this hash when no user is found, consuming the same time
+    // as a real verification so attackers cannot distinguish "no such user" from "wrong password".
+    private static readonly string DummyHash = BC.HashPassword("dummy", workFactor: 12);
+
     // ─── Public methods ───────────────────────────────────────────────────────
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
@@ -81,12 +86,15 @@ public class AuthService(
         var user = await db.Users
             .FirstOrDefaultAsync(u => u.Email.ToLower() == request.Email.ToLower());
 
-        // Verify only when user exists; short-circuit still leaks timing but avoids BCrypt exception on null hash
-        var passwordOk = user is not null && BC.Verify(request.Password, user.PasswordHash);
-        if (!passwordOk || user is null)
+        // Always run a BCrypt verification to prevent timing-based email enumeration.
+        // If the user does not exist, verify against DummyHash (result is always false)
+        // so the response time is indistinguishable from a real wrong-password attempt.
+        var hashToVerify = user?.PasswordHash ?? DummyHash;
+        var passwordOk   = BC.Verify(request.Password, hashToVerify) && user is not null;
+        if (!passwordOk)
             throw new UnauthorizedAccessException(Msg("INVALID_CREDENTIALS"));
 
-        if (user.Status == UserStatus.Blocked)
+        if (user!.Status == UserStatus.Blocked)
             throw new ForbiddenException(Msg("ACCOUNT_BLOCKED"));
 
         user.LastLoginAt = DateTime.UtcNow;
