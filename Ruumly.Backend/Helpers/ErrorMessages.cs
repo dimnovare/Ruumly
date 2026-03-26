@@ -47,6 +47,8 @@ public static class ErrorMessages
         ["INVOICE_NOT_FOUND"]           = "Arvet ei leitud.",
         ["INVALID_DATE_FORMAT"]         = "Vale kuupäeva formaat. Kasutage yyyy-MM-dd.",
         ["EMAIL_NOT_VERIFIED"]          = "Palun kinnitage oma e-posti aadress enne broneeringu tegemist.",
+        ["NO_INVOICE_FOR_BOOKING"]      = "Sellel broneeringul pole arvet.",
+        ["REFUND_REQUIRES_PAID_INVOICE"]= "Tagastus on võimalik ainult tasutud arvetel.",
     };
 
     private static readonly Dictionary<string, string> En = new()
@@ -74,6 +76,8 @@ public static class ErrorMessages
         ["INVOICE_NOT_FOUND"]           = "Invoice not found.",
         ["INVALID_DATE_FORMAT"]         = "Invalid date format. Use yyyy-MM-dd.",
         ["EMAIL_NOT_VERIFIED"]          = "Please verify your email address before making a booking.",
+        ["NO_INVOICE_FOR_BOOKING"]      = "This booking has no invoice.",
+        ["REFUND_REQUIRES_PAID_INVOICE"]= "Refund is only possible on paid invoices.",
     };
 
     private static readonly Dictionary<string, string> Ru = new()
@@ -101,5 +105,7 @@ public static class ErrorMessages
         ["INVOICE_NOT_FOUND"]           = "Счёт не найден.",
         ["INVALID_DATE_FORMAT"]         = "Неверный формат даты. Используйте yyyy-MM-dd.",
         ["EMAIL_NOT_VERIFIED"]          = "Пожалуйста, подтвердите адрес электронной почты перед бронированием.",
+        ["NO_INVOICE_FOR_BOOKING"]      = "У этого бронирования нет счёта.",
+        ["REFUND_REQUIRES_PAID_INVOICE"]= "Возврат возможен только для оплаченных счетов.",
     };
 }

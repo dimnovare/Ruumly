@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
+using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
@@ -10,8 +11,12 @@ namespace Ruumly.Backend.Controllers;
 [Route("api/admin/bookings")]
 public class AdminRefundsController(
     RuumlyDbContext db,
+    IHttpContextAccessor http,
     INotificationService notificationService) : AdminBaseController(db)
 {
+    private string Lang => http.HttpContext?.Request.GetLang() ?? "et";
+    private string Msg(string key) => ErrorMessages.Get(key, Lang);
+
     // ── POST /api/admin/bookings/{id}/refund ───────────────────────────────────
     /// <summary>
     /// MVP refund: marks the invoice as PendingRefund and records a timeline
@@ -26,15 +31,15 @@ public class AdminRefundsController(
             .FirstOrDefaultAsync(b => b.Id == id);
 
         if (booking is null)
-            return NotFound(new { error = "Broneeringut ei leitud." });
+            return NotFound(new { error = Msg("BOOKING_NOT_FOUND") });
 
         var invoice = booking.Invoice;
 
         if (invoice is null)
-            return BadRequest(new { error = "Sellel broneeringul pole arvet." });
+            return BadRequest(new { error = Msg("NO_INVOICE_FOR_BOOKING") });
 
         if (invoice.Status != InvoiceStatus.Paid)
-            return BadRequest(new { error = $"Tagastus on võimalik ainult tasutud arvetel. Praegune staatus: {invoice.Status}." });
+            return BadRequest(new { error = Msg("REFUND_REQUIRES_PAID_INVOICE") });
 
         // Mark invoice as pending refund — manual bank transfer follows
         invoice.Status = InvoiceStatus.PendingRefund;
