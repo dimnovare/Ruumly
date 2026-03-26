@@ -12,8 +12,7 @@ using Ruumly.Backend.Models.Enums;
 namespace Ruumly.Backend.Controllers;
 
 [ApiController]
-[ApiVersion("1.0")]
-[Route("api/v{version:apiVersion}/reviews")]
+[Route("api/reviews")]
 public class ReviewsController(RuumlyDbContext db) : ControllerBase
 {
     // ──────────────────────────────────────────────────────────────────────────

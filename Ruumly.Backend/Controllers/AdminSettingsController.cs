@@ -13,8 +13,7 @@ using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Controllers;
 
-[ApiVersion("1.0")]
-[Route("api/v{version:apiVersion}/admin")]
+[Route("api/admin")]
 public class AdminSettingsController(RuumlyDbContext db, IListingService listingService) : AdminBaseController(db)
 {
     // ══════════════════════════════════════════════════════════════════════════

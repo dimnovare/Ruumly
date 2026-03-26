@@ -6,8 +6,7 @@ using Microsoft.Extensions.FileProviders;
 namespace Ruumly.Backend.Controllers;
 
 [ApiController]
-[ApiVersion("1.0")]
-[Route("api/v{version:apiVersion}/images")]
+[Route("api/images")]
 [Authorize(Roles = "Admin,Provider")]
 public class ImageController(
     IConfiguration config,

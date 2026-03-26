@@ -9,8 +9,7 @@ using Ruumly.Backend.Models.Enums;
 
 namespace Ruumly.Backend.Controllers;
 
-[ApiVersion("1.0")]
-[Route("api/v{version:apiVersion}/admin")]
+[Route("api/admin")]
 public class AdminRoutingController(RuumlyDbContext db) : AdminBaseController(db)
 {
     [HttpGet("routing-rules")]
