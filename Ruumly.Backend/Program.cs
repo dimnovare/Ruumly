@@ -200,7 +200,7 @@ builder.Services.AddHealthChecks()
         tags: new[] { "db", "ready" })
     .AddHangfire(options =>
     {
-        options.MinimumAvailableServers = 1;
+        options.MinimumAvailableServers = 0;
     }, name: "hangfire", tags: new[] { "jobs", "ready" });
 
 builder.Services.AddHttpContextAccessor();
