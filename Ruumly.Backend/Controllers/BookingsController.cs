@@ -62,6 +62,15 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
     }
 
     /// <summary>
+    /// Returns the extras price configuration. Public — no auth required.
+    /// Frontend uses this as the single source of truth for extras pricing.
+    /// </summary>
+    [HttpGet("extras-config")]
+    [AllowAnonymous]
+    public IActionResult GetExtrasConfig() =>
+        Ok(bookingService.GetExtrasPrices());
+
+    /// <summary>
     /// Creates a new booking, routes an order, and dispatches to the supplier.
     /// </summary>
     [HttpPost]

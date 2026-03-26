@@ -30,6 +30,8 @@ public class BookingService(
         ["forklift"]  = 25m,
     };
 
+    public IReadOnlyDictionary<string, decimal> GetExtrasPrices() => ExtrasPrices;
+
     public async Task<PaginatedResult<BookingDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 50)
     {
         page  = Math.Max(1, page);
