@@ -186,6 +186,12 @@ builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IPaymentService, MontonioPaymentService>();
 builder.Services.AddHttpClient();
 
+// ─── Storage service ───
+if (builder.Environment.IsProduction())
+    builder.Services.AddScoped<IStorageService, CloudflareR2StorageService>();
+else
+    builder.Services.AddScoped<IStorageService, LocalDiskStorageService>();
+
 if (builder.Environment.IsProduction())
 {
     builder.Services.AddOptions();
@@ -290,14 +296,17 @@ app.UseMiddleware<SentryUserContextMiddleware>();
 app.UseRateLimiter();
 
 // ─── Static file serving for uploaded images ───
-var uploadsPath = app.Configuration["Storage:BasePath"] ?? "/app/uploads";
-Directory.CreateDirectory(uploadsPath);
-app.UseStaticFiles(new StaticFileOptions
+if (app.Environment.IsDevelopment())
 {
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
-        Path.GetFullPath(uploadsPath)),
-    RequestPath = "/uploads",
-});
+    var uploadsPath = app.Configuration["Storage:BasePath"] ?? "/app/uploads";
+    Directory.CreateDirectory(uploadsPath);
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+            Path.GetFullPath(uploadsPath)),
+        RequestPath = "/uploads",
+    });
+}
 
 if (app.Environment.IsDevelopment())
 {
