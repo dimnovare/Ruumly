@@ -8,6 +8,7 @@ using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models.Enums;
+using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Controllers;
 
@@ -16,7 +17,8 @@ public class AdminSuppliersController(
     RuumlyDbContext db,
     IHttpClientFactory httpClientFactory,
     ILogger<AdminSuppliersController> logger,
-    TokenProtector tokenProtector) : AdminBaseController(db)
+    TokenProtector tokenProtector,
+    IPricingConfigService pricingConfigService) : AdminBaseController(db)
 {
     [HttpGet("suppliers")]
     public async Task<IActionResult> GetSuppliers([FromQuery] int page = 1, [FromQuery] int limit = 50)
@@ -47,10 +49,12 @@ public class AdminSuppliersController(
             })
             .ToDictionaryAsync(x => x.SupplierId);
 
+        var pricingConfig = await pricingConfigService.GetAsync();
         var data = suppliers.Select(s =>
         {
             orderStats.TryGetValue(s.Id, out var stats);
-            return AdminMappers.MapSupplier(s, stats?.OrdersTotal ?? 0, stats?.Revenue ?? 0m, includeSettings: false);
+            return AdminMappers.MapSupplier(s, stats?.OrdersTotal ?? 0, stats?.Revenue ?? 0m,
+                includeSettings: false, pricingConfig: pricingConfig);
         }).ToList();
 
         return Ok(new PaginatedResult<SupplierDto>(
@@ -78,7 +82,9 @@ public class AdminSuppliersController(
             })
             .FirstOrDefaultAsync();
 
-        return Ok(AdminMappers.MapSupplier(supplier, stats?.OrdersTotal ?? 0, stats?.Revenue ?? 0m, includeSettings: true));
+        var pricingConfig = await pricingConfigService.GetAsync();
+        return Ok(AdminMappers.MapSupplier(supplier, stats?.OrdersTotal ?? 0, stats?.Revenue ?? 0m,
+            includeSettings: true, pricingConfig: pricingConfig));
     }
 
     [HttpPatch("suppliers/{id:guid}/status")]
@@ -106,8 +112,9 @@ public class AdminSuppliersController(
         if (!Enum.TryParse<SupplierTier>(request.Tier, ignoreCase: true, out var tier))
             return BadRequest(Error("Invalid tier. Use Starter, Standard, or Premium."));
 
+        var config = await pricingConfigService.GetAsync();
         supplier.Tier       = tier;
-        supplier.MonthlyFee = TierRules.MonthlyFee(tier);
+        supplier.MonthlyFee = config.ForTier(tier).MonthlyFee;
         supplier.SubscriptionEndsAt =
             tier != SupplierTier.Starter
                 ? DateTime.UtcNow.AddMonths(1)

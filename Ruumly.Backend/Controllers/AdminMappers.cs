@@ -1,6 +1,7 @@
 using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models.Enums;
+using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Controllers;
 
@@ -19,7 +20,8 @@ internal static class AdminMappers
         HasGoogleAccount: u.GoogleId is not null);
 
     internal static SupplierDto MapSupplier(
-        Models.Supplier s, int ordersTotal, decimal revenue, bool includeSettings) => new(
+        Models.Supplier s, int ordersTotal, decimal revenue, bool includeSettings,
+        PricingConfig? pricingConfig = null) => new(
         Id:                  s.Id,
         Name:                s.Name,
         RegistryCode:        s.RegistryCode,
@@ -46,11 +48,16 @@ internal static class AdminMappers
             ? MapIntegrationSettings(s.IntegrationSettings)
             : null,
         Tier:                s.Tier.ToString(),
-        CommissionRate:      TierRules.CustomerDiscountRate(s.Tier),
-        MonthlyFee:          TierRules.MonthlyFee(s.Tier),
-        MaxLocations:        TierRules.MaxLocations(s.Tier),
-        HasFullAnalytics:    TierRules.HasFullAnalytics(s.Tier),
-        CanHavePromotedBadge: TierRules.CanHavePromotedBadge(s.Tier),
+        CommissionRate:      pricingConfig?.ForTier(s.Tier).CustomerDiscountRate
+                             ?? TierRules.CustomerDiscountRate(s.Tier),
+        MonthlyFee:          pricingConfig?.ForTier(s.Tier).MonthlyFee
+                             ?? TierRules.MonthlyFee(s.Tier),
+        MaxLocations:        pricingConfig?.ForTier(s.Tier).MaxLocations
+                             ?? TierRules.MaxLocations(s.Tier),
+        HasFullAnalytics:    pricingConfig?.ForTier(s.Tier).HasFullAnalytics
+                             ?? TierRules.HasFullAnalytics(s.Tier),
+        CanHavePromotedBadge: pricingConfig?.ForTier(s.Tier).CanHavePromotedBadge
+                             ?? TierRules.CanHavePromotedBadge(s.Tier),
         SubscriptionEndsAt:  s.SubscriptionEndsAt);
 
     internal static IntegrationSettingsDto MapIntegrationSettings(Models.IntegrationSettings i) => new(

@@ -9,12 +9,13 @@ using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
+using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Controllers;
 
 [ApiController]
 [Route("api/locations")]
-public class LocationsController(RuumlyDbContext db) : ControllerBase
+public class LocationsController(RuumlyDbContext db, IPricingConfigService pricingConfigService) : ControllerBase
 {
     private static object Error(string msg) => new { error = msg };
 
@@ -99,7 +100,8 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         var activeLocationCount = await db.SupplierLocations
             .CountAsync(l => l.SupplierId == body.SupplierId && l.IsActive);
 
-        var maxAllowed = TierRules.MaxLocations(supplier.Tier);
+        var config     = await pricingConfigService.GetAsync();
+        var maxAllowed = config.ForTier(supplier.Tier).MaxLocations;
 
         if (activeLocationCount >= maxAllowed)
         {
