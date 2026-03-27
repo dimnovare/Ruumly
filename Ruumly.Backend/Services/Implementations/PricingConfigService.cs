@@ -29,6 +29,7 @@ public class PricingConfigService(RuumlyDbContext db, IDistributedCache cache) :
             DefaultPartnerDiscountRate: D("defaultPartnerDiscount", 15m),
             DefaultVatRate:             D("defaultVatRate",          24m),
             ExtrasMarginRate:           D("extrasMarginRate",        20m),
+            RuumlyMinMarginRate:        D("ruumlyMinMargin",          8m),
             Starter: new TierConfig(
                 CustomerDiscountRate:  D("tier.starter.customerDiscount", 5m),
                 MonthlyFee:            D("tier.starter.monthlyFee",       0m),

@@ -166,14 +166,31 @@ public class BookingService(
             // 2. Load pricing config
             var pricingConfig = await pricingConfigService.GetAsync();
             var supplier      = listing.Supplier;
-            var tierConfig    = pricingConfig.ForTier(supplier.Tier);
+            var basePrice     = listing.PriceFrom;  // supplier's PUBLIC price
 
-            // 3. Calculate base pricing — partner model
-            var basePrice = listing.PriceFrom;  // supplier's PUBLIC price
+            // 3. Calculate base pricing — Option C: per-supplier customer discount
+            // Partner discount: per-listing override → per-supplier rate → platform default
+            var partnerDiscountRate = listing.PartnerDiscountRateOverride
+                                      ?? supplier.PartnerDiscountRate;
+            if (partnerDiscountRate == 0)
+                partnerDiscountRate = pricingConfig.DefaultPartnerDiscountRate;
 
-            // What the customer pays (tier-based discount off public)
-            var customerDiscountRate = tierConfig.CustomerDiscountRate;
-            var platformPrice        = Math.Round(basePrice * (1m - customerDiscountRate / 100m));
+            // Customer discount = partnerDiscount - ruumlyMinMargin
+            // This guarantees Ruumly always keeps at least ruumlyMinMargin
+            var ruumlyMinMargin      = pricingConfig.RuumlyMinMarginRate;
+            var customerDiscountRate = Math.Max(0, partnerDiscountRate - ruumlyMinMargin);
+
+            // What the customer pays
+            var platformPrice = Math.Round(basePrice * (1m - customerDiscountRate / 100m));
+
+            // Safety check: ensure margin is never negative
+            var supplierPrice = Math.Round(basePrice * (1m - partnerDiscountRate / 100m));
+            if (platformPrice < supplierPrice)
+            {
+                // If somehow the math fails, charge full price
+                platformPrice        = basePrice;
+                customerDiscountRate = 0;
+            }
 
             // 4. Calculate extras from listing's own extras (not hardcoded)
             var listingExtras = await db.ListingExtras

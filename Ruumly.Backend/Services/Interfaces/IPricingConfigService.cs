@@ -20,6 +20,7 @@ public record PricingConfig(
     decimal DefaultPartnerDiscountRate,
     decimal DefaultVatRate,
     decimal ExtrasMarginRate,
+    decimal RuumlyMinMarginRate,
     TierConfig Starter,
     TierConfig Standard,
     TierConfig Premium)

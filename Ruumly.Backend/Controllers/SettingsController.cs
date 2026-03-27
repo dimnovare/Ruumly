@@ -69,6 +69,7 @@ public class SettingsController(RuumlyDbContext db) : ControllerBase
         return Ok(new
         {
             defaultPartnerDiscount = c.DefaultPartnerDiscountRate,
+            ruumlyMinMarginRate    = c.RuumlyMinMarginRate,
             extrasMarginRate       = c.ExtrasMarginRate,
             defaultVatRate         = c.DefaultVatRate,
             tiers = new

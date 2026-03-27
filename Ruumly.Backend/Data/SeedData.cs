@@ -892,6 +892,7 @@ public static class SeedData
             ["currency"]            = ("EUR",            "Currency code"),
             ["commissionRate"]      = ("5",              "Platform commission % on base price"),
             ["extrasMarginRate"]    = ("20",             "Ruumly margin % on supplier extras prices (used by IPricingConfigService)"),
+            ["ruumlyMinMargin"]     = ("8",              "Minimum % Ruumly keeps on every booking (customerDiscount = partnerDiscount - ruumlyMinMargin)"),
             ["warehouseMarginRate"] = ("5",              "Platform savings % shown to customer for warehouse"),
             ["movingMarginRate"]    = ("5",              "Platform savings % shown to customer for moving"),
             ["trailerMarginRate"]   = ("5",              "Platform savings % shown to customer for trailer"),
