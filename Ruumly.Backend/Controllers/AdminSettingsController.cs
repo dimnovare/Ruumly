@@ -14,7 +14,10 @@ using Ruumly.Backend.Services.Interfaces;
 namespace Ruumly.Backend.Controllers;
 
 [Route("api/admin")]
-public class AdminSettingsController(RuumlyDbContext db, IListingService listingService) : AdminBaseController(db)
+public class AdminSettingsController(
+    RuumlyDbContext db,
+    IListingService listingService,
+    IPricingConfigService pricingConfigService) : AdminBaseController(db)
 {
     // ══════════════════════════════════════════════════════════════════════════
     // STATS
@@ -169,6 +172,7 @@ public class AdminSettingsController(RuumlyDbContext db, IListingService listing
         await Audit("settings.updated", actor,
             string.Join(", ", updates.Keys), null);
         await Db.SaveChangesAsync();
+        await pricingConfigService.InvalidateCacheAsync();
 
         return Ok(new { updated = updates.Count });
     }
