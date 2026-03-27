@@ -127,13 +127,16 @@ public class ListingExtrasController(
             extra.PublicPrice = body.PublicPrice.Value;
 
         if (body.PartnerDiscountRate.HasValue)
-            extra.PartnerDiscountRate = body.PartnerDiscountRate.Value == 0
-                ? null   // 0 means "use supplier default"
-                : body.PartnerDiscountRate.Value;
+        {
+            if (body.PartnerDiscountRate.Value < 0)
+                extra.PartnerDiscountRate = null;   // negative = reset to supplier default
+            else
+                extra.PartnerDiscountRate = body.PartnerDiscountRate.Value;  // 0 = no discount
+        }
 
         if (body.CustomerPriceOverride.HasValue)
-            extra.CustomerPriceOverride = body.CustomerPriceOverride.Value == 0
-                ? null   // 0 means "clear override, use auto"
+            extra.CustomerPriceOverride = body.CustomerPriceOverride.Value < 0
+                ? null   // negative = clear override, use auto
                 : body.CustomerPriceOverride.Value;
 
         // Recalculate derived prices whenever anything changes
