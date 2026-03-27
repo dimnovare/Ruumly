@@ -18,6 +18,7 @@ public class BookingService(
     RuumlyDbContext db,
     IOrderRoutingService orderRoutingService,
     IPricingConfigService pricingConfigService,
+    IInvoiceService invoiceService,
     IHttpContextAccessor http,
     IDistributedCache cache,
     IBackgroundJobClient? backgroundJobs = null) : IBookingService
@@ -270,6 +271,9 @@ public class BookingService(
 
             // 8. Route and dispatch the order
             await orderRoutingService.RouteOrderAsync(booking, listing);
+
+            // 9. Auto-generate invoice for payment
+            await invoiceService.GenerateAsync(booking.Id);
 
             await transaction.CommitAsync();
 

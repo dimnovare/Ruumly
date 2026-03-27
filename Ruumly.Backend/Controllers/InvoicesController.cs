@@ -1,7 +1,10 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Ruumly.Backend.Data;
 using Ruumly.Backend.Helpers;
+using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Controllers;
@@ -9,7 +12,7 @@ namespace Ruumly.Backend.Controllers;
 [ApiController]
 [Route("api/invoices")]
 [Authorize]
-public class InvoicesController(IInvoiceService invoiceService) : ControllerBase
+public class InvoicesController(IInvoiceService invoiceService, RuumlyDbContext db) : ControllerBase
 {
     /// <summary>
     /// Returns invoices for the current user (filtered by role).
@@ -34,6 +37,26 @@ public class InvoicesController(IInvoiceService invoiceService) : ControllerBase
         var invoice = await invoiceService.GetByBookingIdAsync(bookingId, User.GetUserId(), User.GetUserRole());
         if (invoice is null)
             return NotFound(new { error = "Not Found", message = "Invoice not found for this booking", statusCode = 404 });
+        return Ok(invoice);
+    }
+
+    /// <summary>
+    /// Manually generates (or returns existing) invoice for a booking.
+    /// Useful for edge cases where auto-generation failed.
+    /// </summary>
+    [HttpPost("generate/{bookingId:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Generate(Guid bookingId)
+    {
+        var userId  = User.GetUserId();
+        var role    = User.GetUserRole();
+        var booking = await db.Bookings.FindAsync(bookingId);
+        if (booking is null) return NotFound();
+        if (role != UserRole.Admin && booking.UserId != userId) return Forbid();
+
+        var invoice = await invoiceService.GenerateAsync(bookingId);
         return Ok(invoice);
     }
 
