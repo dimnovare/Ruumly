@@ -1,5 +1,6 @@
 using System.Text;
 using FluentValidation;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.RateLimiting;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -88,7 +89,10 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
-builder.Services.AddDataProtection();
+var keysDir = "/app/uploads/dp-keys";
+Directory.CreateDirectory(keysDir);
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(keysDir));
 builder.Services.AddSingleton<TokenProtector>();
 
 // ─── Google OAuth config validation ───
