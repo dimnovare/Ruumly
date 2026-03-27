@@ -9,6 +9,12 @@ namespace Ruumly.Backend.Helpers;
 /// and by legacy code paths (AdminMappers, LocationsController) that
 /// have not yet been wired to IPricingConfigService.
 /// </summary>
+/// <remarks>
+/// NOTE: In Option C model, customer discount is NOT per-tier.
+/// It is calculated as: partnerDiscount - ruumlyMinMargin.
+/// These CustomerDiscountRate values are only used as emergency
+/// fallbacks if PricingConfigService is unavailable.
+/// </remarks>
 public static class TierRules
 {
     public static decimal CustomerDiscountRate(SupplierTier tier)

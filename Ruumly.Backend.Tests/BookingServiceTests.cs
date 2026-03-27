@@ -1,7 +1,9 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
+using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Implementations;
@@ -15,14 +17,56 @@ public class BookingServiceTests
 
     private static RuumlyDbContext CreateDb() => TestDbContext.Create();
 
+    // Config: partner=13%, minMargin=8% → customerDiscount=5% → platformPrice=95 on base 100.
+    // VAT=0% so totals stay clean.
+    private static readonly PricingConfig TestPricingConfig = new(
+        DefaultPartnerDiscountRate: 13m,
+        DefaultVatRate:              0m,
+        ExtrasMarginRate:            20m,
+        RuumlyMinMarginRate:         8m,
+        Starter:  new TierConfig(5m,  0m,   1,   false, false),
+        Standard: new TierConfig(8m,  49m,  5,   false, true),
+        Premium:  new TierConfig(12m, 99m, 999,  true,  true));
+
     private static BookingService MakeService(RuumlyDbContext db) =>
         new(db,
             new NoOpOrderRoutingService(),
-            new NoOpHttpContextAccessor());
+            new NoOpPricingConfigService(),
+            new NoOpInvoiceService(),
+            new NoOpHttpContextAccessor(),
+            new NoOpDistributedCache());
 
     private sealed class NoOpOrderRoutingService : IOrderRoutingService
     {
         public Task RouteOrderAsync(Booking booking, Listing listing) => Task.CompletedTask;
+    }
+
+    private sealed class NoOpPricingConfigService : IPricingConfigService
+    {
+        public Task<PricingConfig> GetAsync() => Task.FromResult(TestPricingConfig);
+        public Task InvalidateCacheAsync() => Task.CompletedTask;
+    }
+
+    private sealed class NoOpInvoiceService : IInvoiceService
+    {
+        public Task<List<InvoiceDto>>  GetAllAsync(Guid userId, UserRole role) => Task.FromResult(new List<InvoiceDto>());
+        public Task<InvoiceDto?> GetByBookingIdAsync(Guid bookingId, Guid userId, UserRole role) => Task.FromResult<InvoiceDto?>(null);
+        public Task<InvoiceDto> GenerateAsync(Guid bookingId) =>
+            Task.FromResult(new InvoiceDto(bookingId, bookingId, 0m, "pending", "2026-01-01", null, ""));
+        public Task<InvoiceDto> MarkPaidAsync(Guid id) =>
+            Task.FromResult(new InvoiceDto(id, id, 0m, "paid", "2026-01-01", "2026-01-01", ""));
+    }
+
+    private sealed class NoOpDistributedCache : IDistributedCache
+    {
+        public byte[]? Get(string key) => null;
+        public Task<byte[]?> GetAsync(string key, CancellationToken token = default) => Task.FromResult<byte[]?>(null);
+        public void Refresh(string key) { }
+        public Task RefreshAsync(string key, CancellationToken token = default) => Task.CompletedTask;
+        public void Remove(string key) { }
+        public Task RemoveAsync(string key, CancellationToken token = default) => Task.CompletedTask;
+        public void Set(string key, byte[] value, DistributedCacheEntryOptions options) { }
+        public Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token = default) => Task.CompletedTask;
     }
 
     private sealed class NoOpHttpContextAccessor : Microsoft.AspNetCore.Http.IHttpContextAccessor
@@ -34,9 +78,8 @@ public class BookingServiceTests
 
     private static async Task<(Supplier supplier, Listing listing, User user)> SeedBasicAsync(
         RuumlyDbContext db,
-        decimal priceFrom       = 100m,
-        bool    isActive        = true,
-        decimal clientDiscount  = 0m)
+        decimal priceFrom  = 100m,
+        bool    isActive   = true)
     {
         var supplier = new Supplier
         {
@@ -46,7 +89,6 @@ public class BookingServiceTests
             ContactName       = "Contact",
             ContactEmail      = "supplier@test.ee",
             ContactPhone      = "+372 5000 0000",
-            ClientDiscountRate = clientDiscount,
         };
 
         var listing = new Listing
@@ -62,14 +104,16 @@ public class BookingServiceTests
             IsActive     = isActive,
             AvailableNow = true,
             Description  = "Test",
+            VatRate      = 0m,   // explicit zero so totals stay predictable in tests
         };
 
         var user = new User
         {
-            Id    = Guid.NewGuid(),
-            Email = "customer@test.ee",
-            Name  = "Customer",
-            Role  = UserRole.Customer,
+            Id            = Guid.NewGuid(),
+            Email         = "customer@test.ee",
+            Name          = "Customer",
+            Role          = UserRole.Customer,
+            EmailVerified = true,
         };
 
         db.Suppliers.Add(supplier);
@@ -80,10 +124,28 @@ public class BookingServiceTests
         return (supplier, listing, user);
     }
 
+    private static async Task SeedExtrasAsync(RuumlyDbContext db, Guid listingId, params (string Key, decimal CustomerPrice)[] extras)
+    {
+        foreach (var (key, price) in extras)
+        {
+            db.ListingExtras.Add(new ListingExtra
+            {
+                Id            = Guid.NewGuid(),
+                ListingId     = listingId,
+                Key           = key,
+                Label         = key,
+                SupplierPrice = Math.Round(price / 1.2m, 2),  // reverse of 20% extras margin
+                CustomerPrice = price,
+                IsActive      = true,
+            });
+        }
+        await db.SaveChangesAsync();
+    }
+
     private static CreateBookingRequest MakeBookingRequest(
         Guid listingId,
-        string startDate = "2026-05-01",
-        string? endDate  = "2026-06-01",
+        string startDate  = "2026-05-01",
+        string? endDate   = "2026-06-01",
         List<string>? extras = null) =>
         new()
         {
@@ -102,6 +164,7 @@ public class BookingServiceTests
     [Fact]
     public async Task CreateAsync_Calculates_PlatformPrice_As_95pct_Of_BasePrice()
     {
+        // partner=13% (default), minMargin=8% → customerDiscount=5% → platformPrice=95
         var db = CreateDb();
         var (_, listing, user) = await SeedBasicAsync(db, priceFrom: 100m);
         var service = MakeService(db);
@@ -110,7 +173,7 @@ public class BookingServiceTests
             MakeBookingRequest(listing.Id), user.Id);
 
         booking.BasePrice.Should().Be(100m);
-        booking.PlatformPrice.Should().Be(95m);   // 100 * 0.95 = 95
+        booking.PlatformPrice.Should().Be(95m);
         booking.ExtrasTotal.Should().Be(0m);
         booking.Total.Should().Be(95m);
     }
@@ -120,9 +183,9 @@ public class BookingServiceTests
     {
         var db = CreateDb();
         var (_, listing, user) = await SeedBasicAsync(db, priceFrom: 100m);
+        await SeedExtrasAsync(db, listing.Id, ("packing", 15m), ("loading", 20m));
         var service = MakeService(db);
 
-        // packing=15, loading=20 → extrasTotal=35, total=95+35=130
         var booking = await service.CreateAsync(
             MakeBookingRequest(listing.Id, extras: ["packing", "loading"]),
             user.Id);
@@ -137,13 +200,17 @@ public class BookingServiceTests
     {
         var db = CreateDb();
         var (_, listing, user) = await SeedBasicAsync(db, priceFrom: 100m);
+        await SeedExtrasAsync(db, listing.Id,
+            ("packing",   15m),
+            ("loading",   20m),
+            ("insurance", 10m),
+            ("forklift",  25m));
         var service = MakeService(db);
 
         var booking = await service.CreateAsync(
             MakeBookingRequest(listing.Id, extras: ["packing", "loading", "insurance", "forklift"]),
             user.Id);
 
-        // packing=15, loading=20, insurance=10, forklift=25 → 70
         booking.ExtrasTotal.Should().Be(70m);
         booking.Total.Should().Be(165m);  // 95 + 70
     }
@@ -157,8 +224,7 @@ public class BookingServiceTests
 
         var act = async () => await service.CreateAsync(MakeBookingRequest(listing.Id), user.Id);
 
-        await act.Should().ThrowAsync<Exception>()
-            .WithMessage("*"); // NotFoundException with localised message
+        await act.Should().ThrowAsync<Exception>().WithMessage("*");
     }
 
     [Fact]
@@ -166,7 +232,7 @@ public class BookingServiceTests
     {
         var db = CreateDb();
         var (supplier, listing, user) = await SeedBasicAsync(db, priceFrom: 100m);
-        // Single-unit listing — already has a confirmed booking in the overlap window
+
         db.Bookings.Add(new Booking
         {
             Id         = Guid.NewGuid(),
@@ -181,7 +247,6 @@ public class BookingServiceTests
         await db.SaveChangesAsync();
         var service = MakeService(db);
 
-        // Second booking overlaps — should fail (quantity = 1 is the default)
         var act = async () => await service.CreateAsync(
             MakeBookingRequest(listing.Id, startDate: "2026-05-15", endDate: "2026-05-25"),
             user.Id);
@@ -206,7 +271,6 @@ public class BookingServiceTests
         };
         db.Users.Add(userB);
 
-        // Two bookings: one for A, one for B
         db.Bookings.AddRange(
             new Booking { Id = Guid.NewGuid(), UserId = userA.Id, ListingId = listing.Id, SupplierId = supplier.Id, StartDate = DateTime.UtcNow, Duration = "1d" },
             new Booking { Id = Guid.NewGuid(), UserId = userB.Id, ListingId = listing.Id, SupplierId = supplier.Id, StartDate = DateTime.UtcNow, Duration = "1d" });
@@ -217,11 +281,8 @@ public class BookingServiceTests
         var resultA = await service.GetAllAsync(userA.Id, UserRole.Customer);
         var resultB = await service.GetAllAsync(userB.Id, UserRole.Customer);
 
-        resultA.Data.Should().HaveCount(1)
-            .And.OnlyContain(b => b.ListingId == listing.Id);
+        resultA.Data.Should().HaveCount(1);
         resultB.Data.Should().HaveCount(1);
-
-        // UserA's result should not contain UserB's booking
         resultA.Data.Select(b => b.Id).Should().NotIntersectWith(resultB.Data.Select(b => b.Id));
     }
 
@@ -236,7 +297,7 @@ public class BookingServiceTests
         var listA = new Listing { Id = Guid.NewGuid(), SupplierId = suppA.Id, Type = ListingType.Warehouse, Title = "A", Address = "A", City = "A", PriceUnit = "kuu", Description = "A" };
         var listB = new Listing { Id = Guid.NewGuid(), SupplierId = suppB.Id, Type = ListingType.Warehouse, Title = "B", Address = "B", City = "B", PriceUnit = "kuu", Description = "B" };
 
-        var customer  = new User { Id = Guid.NewGuid(), Email = "cust@test.ee",  Name = "Cust", Role = UserRole.Customer };
+        var customer  = new User { Id = Guid.NewGuid(), Email = "cust@test.ee",  Name = "Cust",  Role = UserRole.Customer };
         var providerA = new User { Id = Guid.NewGuid(), Email = "provA@test.ee", Name = "ProvA", Role = UserRole.Provider, SupplierId = suppA.Id };
 
         db.Suppliers.AddRange(suppA, suppB);

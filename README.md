@@ -44,7 +44,7 @@ Ruumly.Backend.Tests/     # 43 unit tests (xUnit + FluentAssertions)
 
 ## Key Features
 
-- **Tier-based pricing** — Starter (8% commission, free), Standard (5%, €29/mo), Premium (3%, €79/mo). Commission rates are enforced in OrderRoutingService via TierRules.
+- **Tier-based pricing** — Starter (free), Standard (€49/mo), Premium (€99/mo). Per-supplier customer discount derived from negotiated partner rate. All rates configurable via admin panel (PlatformSettings).
 - **Order routing** — bookings create orders that are dispatched to suppliers via API, email, or manual channel with automatic fallback (API fails → email → manual + admin notification).
 - **Email verification** — registration sends a verification email; unverified users cannot book. Google OAuth auto-verifies.
 - **Refund flow** — admin can initiate refunds (marks invoice as PendingRefund, notifies customer, audit logged).

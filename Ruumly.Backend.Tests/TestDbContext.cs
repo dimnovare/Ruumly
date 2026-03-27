@@ -20,5 +20,6 @@ internal sealed class TestDbContext(DbContextOptions<RuumlyDbContext> options)
     public static TestDbContext Create() =>
         new(new DbContextOptionsBuilder<RuumlyDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning))
             .Options);
 }

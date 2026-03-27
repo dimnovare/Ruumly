@@ -922,7 +922,7 @@ public static class SeedData
             ["tier.starter.maxLocations"]      = ("1",   "Starter tier: max active locations"),
             ["tier.standard.customerDiscount"] = ("8",   "Standard tier: customer discount %"),
             ["tier.standard.monthlyFee"]       = ("49",  "Standard tier: monthly subscription fee (EUR)"),
-            ["tier.standard.maxLocations"]     = ("5",   "Standard tier: max active locations"),
+            ["tier.standard.maxLocations"]     = ("5",   "Max locations for Standard tier"),
             ["tier.premium.customerDiscount"]  = ("12",  "Premium tier: customer discount %"),
             ["tier.premium.monthlyFee"]        = ("99",  "Premium tier: monthly subscription fee (EUR)"),
             ["tier.premium.maxLocations"]      = ("999", "Premium tier: max active locations (effectively unlimited)"),
