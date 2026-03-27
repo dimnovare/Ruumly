@@ -84,6 +84,7 @@ public class OrderRoutingService(
             EndDate         = booking.EndDate,
             Duration        = booking.Duration,
             ExtrasSnapshot  = booking.ExtrasSnapshot,
+            PartnerDiscountRate = partnerDiscountRate,
             IntegrationType = supplier.IntegrationType,
             CustomerName    = booking.ContactName ?? string.Empty,
             CustomerEmail   = booking.ContactEmail ?? string.Empty,

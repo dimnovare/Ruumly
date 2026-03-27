@@ -41,6 +41,7 @@ public class Order
     public string CustomerName { get; set; } = string.Empty;
     public string CustomerEmail { get; set; } = string.Empty;
     public string CustomerPhone { get; set; } = string.Empty;
+    public decimal PartnerDiscountRate { get; set; }
     public decimal BasePrice { get; set; }
     public decimal PlatformPrice { get; set; }
     public decimal SupplierPrice { get; set; }

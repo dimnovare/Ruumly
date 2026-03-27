@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
@@ -80,5 +81,36 @@ public class AdminRefundsController(
             status    = invoice.Status.ToString().ToLower(),
             message   = "Tagastus algatatud. Arve on märgitud ootel tagastuseks.",
         });
+    }
+
+    // ── POST /api/admin/bookings/{id}/mark-refunded ────────────────────────────
+    /// <summary>
+    /// Confirms the refund was completed (bank transfer done).
+    /// Transitions invoice PendingRefund → Refunded and cancels the payout entry.
+    /// </summary>
+    [HttpPost("{id:guid}/mark-refunded")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> MarkRefunded(Guid id)
+    {
+        var invoice = await Db.Invoices.FindAsync(id);
+        if (invoice is null) return NotFound();
+
+        if (invoice.Status != InvoiceStatus.PendingRefund)
+            return BadRequest(Error("Invoice must be in PendingRefund status"));
+
+        invoice.Status = InvoiceStatus.Refunded;
+        await Db.SaveChangesAsync();
+
+        // Cancel the payout entry so the supplier is not paid for a refunded order
+        var payout = await Db.PayoutEntries
+            .FirstOrDefaultAsync(p => p.Order.BookingId == invoice.BookingId
+                                   && p.Status == PayoutStatus.Pending);
+        if (payout is not null)
+        {
+            payout.Status = PayoutStatus.Cancelled;
+            await Db.SaveChangesAsync();
+        }
+
+        return Ok(new { invoice.Id, status = "refunded" });
     }
 }

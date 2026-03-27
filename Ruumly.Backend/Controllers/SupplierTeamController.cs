@@ -14,7 +14,10 @@ namespace Ruumly.Backend.Controllers;
 [ApiController]
 [Route("api/supplier")]
 [Authorize(Roles = "Provider,Admin")]
-public class SupplierTeamController(RuumlyDbContext db, IAuthService authService) : ControllerBase
+public class SupplierTeamController(
+    RuumlyDbContext db,
+    IAuthService authService,
+    IPricingConfigService pricingConfigService) : ControllerBase
 {
     // GET /api/supplier/team
     [HttpGet("team")]
@@ -137,13 +140,15 @@ public class SupplierTeamController(RuumlyDbContext db, IAuthService authService
         if (user?.Supplier is null)
             return NotFound(new { message = "No supplier profile linked to this account." });
 
-        var s      = user.Supplier;
-        var orders = await db.Orders.Where(o => o.SupplierId == s.Id).ToListAsync();
-        var dto    = AdminMappers.MapSupplier(
+        var s             = user.Supplier;
+        var orders        = await db.Orders.Where(o => o.SupplierId == s.Id).ToListAsync();
+        var pricingConfig = await pricingConfigService.GetAsync();
+        var dto           = AdminMappers.MapSupplier(
             s,
-            ordersTotal: orders.Count,
-            revenue:     orders.Sum(o => o.Total),
-            includeSettings: true);
+            ordersTotal:     orders.Count,
+            revenue:         orders.Sum(o => o.Total),
+            includeSettings: true,
+            pricingConfig:   pricingConfig);
 
         return Ok(dto);
     }
