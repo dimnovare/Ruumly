@@ -1,7 +1,6 @@
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
-using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
@@ -11,6 +10,7 @@ namespace Ruumly.Backend.Services.Implementations;
 public class OrderRoutingService(
     RuumlyDbContext db,
     INotificationService notificationService,
+    IPricingConfigService pricingConfigService,
     ILogger<OrderRoutingService> logger) : IOrderRoutingService
 {
     public async Task RouteOrderAsync(Booking booking, Listing listing)
@@ -38,9 +38,31 @@ public class OrderRoutingService(
         }
 
         // 4. Calculate supplier price and margin
-        var customerDiscountRate = TierRules.CustomerDiscountRate(supplier.Tier);
-        var supplierPrice        = Math.Round(booking.BasePrice * (1m - customerDiscountRate / 100m));
-        var margin        = booking.Total - supplierPrice - booking.ExtrasTotal;
+        // Supplier price = base price minus negotiated partner discount
+        var partnerDiscountRate = supplier.PartnerDiscountRate;
+        if (partnerDiscountRate == 0)
+        {
+            var config = await pricingConfigService.GetAsync();
+            partnerDiscountRate = config.DefaultPartnerDiscountRate;
+        }
+        var supplierPrice = Math.Round(booking.BasePrice * (1m - partnerDiscountRate / 100m));
+
+        // Extras supplier total (from the snapshot stored on the booking)
+        var extrasSupplierTotal = booking.ExtrasSnapshot.Sum(e => e.SupplierPrice);
+        var extrasCustomerTotal = booking.ExtrasTotal;  // what customer paid for extras
+
+        // Margin = (what customer paid for base) - (what supplier gets for base)
+        //        + (what customer paid for extras) - (what supplier gets for extras)
+        var baseMargin   = booking.PlatformPrice - supplierPrice;
+        var extrasMargin = extrasCustomerTotal - extrasSupplierTotal;
+        var margin       = baseMargin + extrasMargin;
+
+        if (margin < 0)
+            logger.LogWarning(
+                "Negative margin on booking {BookingId}: base margin {BaseMargin}, " +
+                "extras margin {ExtrasMargin}. PartnerDiscount={PD}%, CustomerDiscount={CD}%",
+                booking.Id, baseMargin, extrasMargin,
+                partnerDiscountRate, booking.PlatformPrice / booking.BasePrice * 100);
 
         // 5. Determine posting channel
         var postingChannel = matchedRule?.PostingChannel
@@ -69,7 +91,7 @@ public class OrderRoutingService(
             BasePrice       = booking.BasePrice,
             PlatformPrice   = booking.PlatformPrice,
             SupplierPrice   = supplierPrice,
-            ExtrasTotal     = booking.ExtrasTotal,
+            ExtrasTotal     = extrasCustomerTotal,  // customer-facing total
             Total           = booking.Total,
             Margin          = margin,
             ApprovalMode    = approvalMode,

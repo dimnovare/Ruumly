@@ -300,17 +300,28 @@ public class IntegrationDispatchService(
         if (order.EndDate.HasValue)
             sb.AppendLine($"Lõppkuupäev:     {order.EndDate:yyyy-MM-dd}");
         sb.AppendLine($"Periood:         {order.Duration}");
-        if (order.ExtrasKeys.Count > 0)
-            sb.AppendLine($"Lisateenused:    {string.Join(", ", order.ExtrasKeys)}");
+        if (order.ExtrasSnapshot.Count > 0)
+        {
+            sb.AppendLine("Lisateenused:");
+            foreach (var extra in order.ExtrasSnapshot)
+                sb.AppendLine($"  • {extra.Label,-20} €{extra.SupplierPrice:F2}");
+        }
         sb.AppendLine();
         sb.AppendLine("═══════════════════════════════════");
         sb.AppendLine("HIND");
         sb.AppendLine("═══════════════════════════════════");
         sb.AppendLine();
-        sb.AppendLine($"Partneri hind:   €{order.SupplierPrice}");
-        if (order.ExtrasTotal > 0)
-            sb.AppendLine($"Lisateenused:    €{order.ExtrasTotal}");
-        sb.AppendLine($"Kokku partnerile: €{order.SupplierPrice + order.ExtrasTotal}");
+        sb.AppendLine($"Partneri hind:    €{order.SupplierPrice:F2}");
+        if (order.ExtrasSnapshot.Count > 0)
+        {
+            var extrasSupplierTotal = order.ExtrasSnapshot.Sum(e => e.SupplierPrice);
+            sb.AppendLine($"Lisateenused:     €{extrasSupplierTotal:F2}");
+            sb.AppendLine($"Kokku partnerile: €{order.SupplierPrice + extrasSupplierTotal:F2}");
+        }
+        else
+        {
+            sb.AppendLine($"Kokku partnerile: €{order.SupplierPrice:F2}");
+        }
 
         if (!string.IsNullOrWhiteSpace(order.Notes))
         {
