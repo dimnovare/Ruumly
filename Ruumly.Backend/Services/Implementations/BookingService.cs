@@ -17,23 +17,13 @@ namespace Ruumly.Backend.Services.Implementations;
 public class BookingService(
     RuumlyDbContext db,
     IOrderRoutingService orderRoutingService,
+    IPricingConfigService pricingConfigService,
     IHttpContextAccessor http,
     IDistributedCache cache,
     IBackgroundJobClient? backgroundJobs = null) : IBookingService
 {
     private string Lang => http.HttpContext?.Request.GetLang() ?? "et";
     private string Msg(string key) => ErrorMessages.Get(key, Lang);
-
-    // Extra prices matching pricing.ts EXTRAS_PRICES
-    private static readonly Dictionary<string, decimal> ExtrasPrices = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["packing"]   = 15m,
-        ["loading"]   = 20m,
-        ["insurance"] = 10m,
-        ["forklift"]  = 25m,
-    };
-
-    public IReadOnlyDictionary<string, decimal> GetExtrasPrices() => ExtrasPrices;
 
     public async Task<BookingStatsDto> GetStatsAsync()
     {
@@ -173,22 +163,39 @@ public class BookingService(
                     throw new ArgumentException(Msg("NO_UNITS_AVAILABLE"));
             }
 
-            // 2. Calculate pricing (mirrors pricing.ts formulas exactly)
-            var basePrice = listing.PriceFrom;
+            // 2. Load pricing config
+            var pricingConfig = await pricingConfigService.GetAsync();
+            var supplier      = listing.Supplier;
+            var tierConfig    = pricingConfig.ForTier(supplier.Tier);
 
-            // Effective client discount: listing override takes precedence over supplier default
-            var supplier           = listing.Supplier;
-            var clientDiscountRate = listing.ClientDiscountRateOverride ?? supplier.ClientDiscountRate;
-            var discountMultiplier = 1m - (clientDiscountRate / 100m);
-            var discountedBase     = basePrice * discountMultiplier;
-            var platformPrice      = Math.Round(discountedBase * 0.95m);
+            // 3. Calculate base pricing — partner model
+            var basePrice = listing.PriceFrom;  // supplier's PUBLIC price
 
-            var extrasTotal = request.Extras
-                .Sum(e => ExtrasPrices.TryGetValue(e, out var p) ? p : 0m);
+            // What the customer pays (tier-based discount off public)
+            var customerDiscountRate = tierConfig.CustomerDiscountRate;
+            var platformPrice        = Math.Round(basePrice * (1m - customerDiscountRate / 100m));
 
-            // VAT calculation
+            // 4. Calculate extras from listing's own extras (not hardcoded)
+            var listingExtras = await db.ListingExtras
+                .Where(e => e.ListingId == listing.Id && e.IsActive)
+                .ToDictionaryAsync(e => e.Key);
+
+            var extrasSnapshots    = new List<BookingExtraSnapshot>();
+            decimal extrasCustomerTotal = 0m;
+
+            foreach (var extraKey in request.Extras)
+            {
+                if (listingExtras.TryGetValue(extraKey, out var extra))
+                {
+                    extrasSnapshots.Add(new BookingExtraSnapshot(
+                        extra.Key, extra.Label, extra.SupplierPrice, extra.CustomerPrice));
+                    extrasCustomerTotal += extra.CustomerPrice;
+                }
+            }
+
+            // 5. VAT calculation
             var vatRate   = listing.VatRate ?? 0m;
-            var subtotal  = platformPrice + extrasTotal;
+            var subtotal  = platformPrice + extrasCustomerTotal;
             var vatAmount = listing.PricesIncludeVat
                 ? Math.Round(subtotal * vatRate / (100m + vatRate), 2)
                 : Math.Round(subtotal * vatRate / 100m, 2);
@@ -205,39 +212,35 @@ public class BookingService(
                 endDate = DateTime.SpecifyKind(parsedEnd, DateTimeKind.Utc);
             }
 
-            // 3. Create Booking entity
+            // 6. Create Booking entity
             var booking = new Booking
             {
-                Id            = Guid.NewGuid(),
-                UserId        = userId,
-                ListingId     = listing.Id,
-                SupplierId    = listing.SupplierId,
-                StartDate     = DateTime.SpecifyKind(startDate, DateTimeKind.Utc),
-                EndDate       = endDate,
-                Duration      = request.Duration,
-                ExtrasSnapshot = request.Extras
-                    .Select(k => new BookingExtraSnapshot(k, k,
-                        ExtrasPrices.TryGetValue(k, out var sp) ? Math.Round(sp * 0.8m, 2) : 0m,
-                        ExtrasPrices.TryGetValue(k, out var cp) ? cp : 0m))
-                    .ToList(),
-                BasePrice     = basePrice,
-                PlatformPrice = platformPrice,
-                ExtrasTotal   = extrasTotal,
-                VatAmount     = vatAmount,
-                Total         = total,
-                ContactName   = request.ContactName,
-                ContactEmail  = request.ContactEmail,
-                ContactPhone  = request.ContactPhone,
-                Notes         = request.Notes,
-                Status        = BookingStatus.Pending,
-                CreatedAt     = DateTime.UtcNow,
-                UpdatedAt     = DateTime.UtcNow,
+                Id             = Guid.NewGuid(),
+                UserId         = userId,
+                ListingId      = listing.Id,
+                SupplierId     = listing.SupplierId,
+                StartDate      = DateTime.SpecifyKind(startDate, DateTimeKind.Utc),
+                EndDate        = endDate,
+                Duration       = request.Duration,
+                ExtrasSnapshot = extrasSnapshots,
+                BasePrice      = basePrice,
+                PlatformPrice  = platformPrice,
+                ExtrasTotal    = extrasCustomerTotal,
+                VatAmount      = vatAmount,
+                Total          = total,
+                ContactName    = request.ContactName,
+                ContactEmail   = request.ContactEmail,
+                ContactPhone   = request.ContactPhone,
+                Notes          = request.Notes,
+                Status         = BookingStatus.Pending,
+                CreatedAt      = DateTime.UtcNow,
+                UpdatedAt      = DateTime.UtcNow,
             };
 
             db.Bookings.Add(booking);
             await db.SaveChangesAsync();
 
-            // 4. Initial timeline entry
+            // 7. Initial timeline entry
             db.BookingTimelines.Add(new BookingTimeline
             {
                 Id        = Guid.NewGuid(),
@@ -248,16 +251,16 @@ public class BookingService(
             });
             await db.SaveChangesAsync();
 
-            // 5. Route and dispatch the order
+            // 8. Route and dispatch the order
             await orderRoutingService.RouteOrderAsync(booking, listing);
 
             await transaction.CommitAsync();
 
-            // 5b. Enqueue confirmation email — outside transaction; Hangfire has its own store.
+            // 8b. Enqueue confirmation email — outside transaction; Hangfire has its own store.
             backgroundJobs?.Enqueue<BackgroundOrderDispatchService>(
                 x => x.SendBookingConfirmationEmailAsync(booking.Id));
 
-            // 6. Reload with all navigations for response
+            // 9. Reload with all navigations for response
             var result = await db.Bookings
                 .Include(b => b.Listing)
                 .Include(b => b.Supplier)
