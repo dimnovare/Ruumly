@@ -21,14 +21,21 @@ public class Order
     public DateTime? EndDate { get; set; }
     public string Duration { get; set; } = string.Empty;
 
+    /// <summary>
+    /// JSON array of { key, label, supplierPrice, customerPrice } objects.
+    /// Snapshot copied from Booking at order creation time.
+    /// </summary>
     public string ExtrasJson { get; set; } = "[]";
 
     [NotMapped]
-    public List<string> Extras
+    public List<BookingExtraSnapshot> ExtrasSnapshot
     {
-        get => JsonSerializer.Deserialize<List<string>>(ExtrasJson) ?? [];
+        get => JsonSerializer.Deserialize<List<BookingExtraSnapshot>>(ExtrasJson) ?? [];
         set => ExtrasJson = JsonSerializer.Serialize(value);
     }
+
+    [NotMapped]
+    public List<string> ExtrasKeys => ExtrasSnapshot.Select(e => e.Key).ToList();
 
     public IntegrationType IntegrationType { get; set; }
     public string CustomerName { get; set; } = string.Empty;

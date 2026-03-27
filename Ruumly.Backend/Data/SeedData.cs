@@ -24,6 +24,7 @@ public static class SeedData
             await SeedSuppliersAsync(db);
             await SeedIntegrationSettingsAsync(db);
             await SeedListingsAsync(db);
+            await SeedListingExtrasAsync(db);
             await SeedUsersAsync(db);
             await SeedRoutingRulesAsync(db);
             await SeedPlatformSettingsAsync(db);
@@ -629,6 +630,30 @@ public static class SeedData
 
         await db.SaveChangesAsync();
         Console.WriteLine("[Seed] Listings done.");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // LISTING EXTRAS
+    // ─────────────────────────────────────────────────────────────────────────
+    private static async Task SeedListingExtrasAsync(RuumlyDbContext db)
+    {
+        if (await db.ListingExtras.AnyAsync()) return;
+
+        var listing1 = await db.Listings.FirstAsync();
+        db.ListingExtras.AddRange(
+            new ListingExtra { Id = Guid.NewGuid(), ListingId = listing1.Id,
+                Key = "packing", Label = "Pakkimisabi", SupplierPrice = 12m,
+                CustomerPrice = 15m, SortOrder = 1 },
+            new ListingExtra { Id = Guid.NewGuid(), ListingId = listing1.Id,
+                Key = "loading", Label = "Laadimisabi", SupplierPrice = 16m,
+                CustomerPrice = 20m, SortOrder = 2 },
+            new ListingExtra { Id = Guid.NewGuid(), ListingId = listing1.Id,
+                Key = "insurance", Label = "Kindlustus", Description = "Kuutasu",
+                SupplierPrice = 8m, CustomerPrice = 10m, SortOrder = 3 }
+        );
+
+        await db.SaveChangesAsync();
+        Console.WriteLine("[Seed] ListingExtras done.");
     }
 
     // ─────────────────────────────────────────────────────────────────────────

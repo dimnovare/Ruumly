@@ -4,6 +4,9 @@ using Ruumly.Backend.Models.Enums;
 
 namespace Ruumly.Backend.Models;
 
+public record BookingExtraSnapshot(
+    string Key, string Label, decimal SupplierPrice, decimal CustomerPrice);
+
 public class Booking
 {
     public Guid Id { get; set; }
@@ -17,14 +20,22 @@ public class Booking
     public DateTime? EndDate { get; set; }
     public string Duration { get; set; } = string.Empty;
 
+    /// <summary>
+    /// JSON array of { key, label, supplierPrice, customerPrice } objects.
+    /// Snapshot at booking time — immune to later price changes.
+    /// </summary>
     public string ExtrasJson { get; set; } = "[]";
 
     [NotMapped]
-    public List<string> Extras
+    public List<BookingExtraSnapshot> ExtrasSnapshot
     {
-        get => JsonSerializer.Deserialize<List<string>>(ExtrasJson) ?? [];
+        get => JsonSerializer.Deserialize<List<BookingExtraSnapshot>>(ExtrasJson) ?? [];
         set => ExtrasJson = JsonSerializer.Serialize(value);
     }
+
+    // Keep backward compat: plain string list for order dispatch
+    [NotMapped]
+    public List<string> ExtrasKeys => ExtrasSnapshot.Select(e => e.Key).ToList();
 
     public decimal BasePrice { get; set; }
     public decimal PlatformPrice { get; set; }

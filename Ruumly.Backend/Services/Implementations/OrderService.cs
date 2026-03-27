@@ -467,7 +467,7 @@ public class OrderService(
         StartDate:        o.StartDate.ToString("yyyy-MM-dd"),
         EndDate:          o.EndDate?.ToString("yyyy-MM-dd"),
         Duration:         o.Duration,
-        Extras:           o.Extras,
+        Extras:           o.ExtrasKeys,
         BasePrice:        o.BasePrice,
         PlatformPrice:    o.PlatformPrice,
         SupplierPrice:    o.SupplierPrice,

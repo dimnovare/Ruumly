@@ -75,4 +75,5 @@ public class Listing
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     public List<Booking> Bookings { get; set; } = [];
+    public List<ListingExtra> Extras { get; set; } = [];
 }

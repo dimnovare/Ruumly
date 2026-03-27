@@ -24,6 +24,7 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
     public DbSet<PlatformSetting> PlatformSettings => Set<PlatformSetting>();
     public DbSet<SupplierLocation> SupplierLocations => Set<SupplierLocation>();
     public DbSet<Review> Reviews => Set<Review>();
+    public DbSet<ListingExtra> ListingExtras => Set<ListingExtra>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -269,6 +270,17 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
             .WithMany()
             .HasForeignKey(r => r.SupplierId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // ─── ListingExtra → Listing (cascade) ───
+        model.Entity<ListingExtra>()
+            .HasOne(e => e.Listing)
+            .WithMany(l => l.Extras)
+            .HasForeignKey(e => e.ListingId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        model.Entity<ListingExtra>()
+            .HasIndex(e => new { e.ListingId, e.Key })
+            .IsUnique();
 
         // ─── PlatformSetting primary key ───
         model.Entity<PlatformSetting>().HasKey(s => s.Key);

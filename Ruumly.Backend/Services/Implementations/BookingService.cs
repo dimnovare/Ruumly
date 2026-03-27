@@ -215,7 +215,11 @@ public class BookingService(
                 StartDate     = DateTime.SpecifyKind(startDate, DateTimeKind.Utc),
                 EndDate       = endDate,
                 Duration      = request.Duration,
-                Extras        = request.Extras,
+                ExtrasSnapshot = request.Extras
+                    .Select(k => new BookingExtraSnapshot(k, k,
+                        ExtrasPrices.TryGetValue(k, out var sp) ? Math.Round(sp * 0.8m, 2) : 0m,
+                        ExtrasPrices.TryGetValue(k, out var cp) ? cp : 0m))
+                    .ToList(),
                 BasePrice     = basePrice,
                 PlatformPrice = platformPrice,
                 ExtrasTotal   = extrasTotal,
@@ -342,7 +346,7 @@ public class BookingService(
         EndDate:      b.EndDate?.ToString("yyyy-MM-dd"),
         Duration:     b.Duration,
         Status:       b.Status.ToString().ToLower(),
-        Extras:       b.Extras,
+        Extras:       b.ExtrasKeys,
         BasePrice:    b.BasePrice,
         PlatformPrice: b.PlatformPrice,
         ExtrasTotal:  b.ExtrasTotal,

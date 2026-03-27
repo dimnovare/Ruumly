@@ -67,7 +67,7 @@ public class IntegrationDispatchService(
             startDate     = order.StartDate.ToString("yyyy-MM-dd"),
             endDate       = order.EndDate?.ToString("yyyy-MM-dd"),
             duration      = order.Duration,
-            extras        = order.Extras,
+            extras        = order.ExtrasKeys,
             customerName  = order.CustomerName,
             customerEmail = order.CustomerEmail,
             customerPhone = order.CustomerPhone,
@@ -300,8 +300,8 @@ public class IntegrationDispatchService(
         if (order.EndDate.HasValue)
             sb.AppendLine($"Lõppkuupäev:     {order.EndDate:yyyy-MM-dd}");
         sb.AppendLine($"Periood:         {order.Duration}");
-        if (order.Extras.Count > 0)
-            sb.AppendLine($"Lisateenused:    {string.Join(", ", order.Extras)}");
+        if (order.ExtrasKeys.Count > 0)
+            sb.AppendLine($"Lisateenused:    {string.Join(", ", order.ExtrasKeys)}");
         sb.AppendLine();
         sb.AppendLine("═══════════════════════════════════");
         sb.AppendLine("HIND");
