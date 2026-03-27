@@ -206,7 +206,8 @@ public class BookingService(
                 if (listingExtras.TryGetValue(extraKey, out var extra))
                 {
                     extrasSnapshots.Add(new BookingExtraSnapshot(
-                        extra.Key, extra.Label, extra.SupplierPrice, extra.CustomerPrice));
+                        extra.Key, extra.Label,
+                        extra.PublicPrice, extra.SupplierPrice, extra.CustomerPrice));
                     extrasCustomerTotal += extra.CustomerPrice;
                 }
             }

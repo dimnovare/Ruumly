@@ -641,15 +641,24 @@ public static class SeedData
 
         var listing1 = await db.Listings.FirstAsync();
         db.ListingExtras.AddRange(
+            // PublicPrice=18, partner=15% → supplierPrice=15.30, customerDiscount=7% → customerPrice=16.74
             new ListingExtra { Id = Guid.NewGuid(), ListingId = listing1.Id,
-                Key = "packing", Label = "Pakkimisabi", SupplierPrice = 12m,
-                CustomerPrice = 15m, SortOrder = 1 },
+                Key = "packing", Label = "Pakkimisabi",
+                PublicPrice = 18m, PartnerDiscountRate = null,
+                SupplierPrice = 15.30m, CustomerPrice = 16.74m,
+                CustomerPriceOverride = null, SortOrder = 1 },
+            // PublicPrice=24, partner=15% → supplierPrice=20.40, customerPrice=22.32
             new ListingExtra { Id = Guid.NewGuid(), ListingId = listing1.Id,
-                Key = "loading", Label = "Laadimisabi", SupplierPrice = 16m,
-                CustomerPrice = 20m, SortOrder = 2 },
+                Key = "loading", Label = "Laadimisabi",
+                PublicPrice = 24m, PartnerDiscountRate = null,
+                SupplierPrice = 20.40m, CustomerPrice = 22.32m,
+                CustomerPriceOverride = null, SortOrder = 2 },
+            // PublicPrice=12, partner=15% → supplierPrice=10.20, customerPrice=11.16
             new ListingExtra { Id = Guid.NewGuid(), ListingId = listing1.Id,
                 Key = "insurance", Label = "Kindlustus", Description = "Kuutasu",
-                SupplierPrice = 8m, CustomerPrice = 10m, SortOrder = 3 }
+                PublicPrice = 12m, PartnerDiscountRate = null,
+                SupplierPrice = 10.20m, CustomerPrice = 11.16m,
+                CustomerPriceOverride = null, SortOrder = 3 }
         );
 
         await db.SaveChangesAsync();

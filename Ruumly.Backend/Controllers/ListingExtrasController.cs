@@ -28,7 +28,9 @@ public class ListingExtrasController(
                 e.Key,
                 e.Label,
                 e.Description,
-                price = e.CustomerPrice,  // customer sees customer price
+                price       = e.CustomerPrice,                   // what customer pays
+                publicPrice = e.PublicPrice,                     // supplier's normal price
+                savings     = e.PublicPrice - e.CustomerPrice,   // visible savings
             })
             .ToListAsync();
 
@@ -47,20 +49,43 @@ public class ListingExtrasController(
         if (!await CanAccess(listing.SupplierId))
             return Forbid();
 
-        var config        = await pricingConfigService.GetAsync();
-        var customerPrice = Math.Round(body.SupplierPrice * (1m + config.ExtrasMarginRate / 100m), 2);
+        var config   = await pricingConfigService.GetAsync();
+        var supplier = await db.Suppliers.FindAsync(listing.SupplierId);
+
+        var effectivePartnerDiscount = body.PartnerDiscountRate
+            ?? supplier?.PartnerDiscountRate
+            ?? config.DefaultPartnerDiscountRate;
+
+        var supplierPrice = Math.Round(
+            body.PublicPrice * (1m - effectivePartnerDiscount / 100m), 2);
+
+        decimal customerPrice;
+        if (body.CustomerPriceOverride.HasValue)
+        {
+            customerPrice = body.CustomerPriceOverride.Value;
+        }
+        else
+        {
+            var customerDiscount = Math.Max(0,
+                effectivePartnerDiscount - config.RuumlyMinMarginRate);
+            customerPrice = Math.Round(
+                body.PublicPrice * (1m - customerDiscount / 100m), 2);
+        }
 
         var extra = new ListingExtra
         {
-            Id            = Guid.NewGuid(),
-            ListingId     = listingId,
-            Key           = body.Key.Trim().ToLower().Replace(" ", "-"),
-            Label         = body.Label.Trim(),
-            Description   = body.Description,
-            SupplierPrice = body.SupplierPrice,
-            CustomerPrice = customerPrice,
-            SortOrder     = body.SortOrder ?? 0,
-            CreatedAt     = DateTime.UtcNow,
+            Id                    = Guid.NewGuid(),
+            ListingId             = listingId,
+            Key                   = body.Key.Trim().ToLower().Replace(" ", "-"),
+            Label                 = body.Label.Trim(),
+            Description           = body.Description,
+            PublicPrice           = body.PublicPrice,
+            PartnerDiscountRate   = body.PartnerDiscountRate,
+            SupplierPrice         = supplierPrice,
+            CustomerPrice         = customerPrice,
+            CustomerPriceOverride = body.CustomerPriceOverride,
+            SortOrder             = body.SortOrder ?? 0,
+            CreatedAt             = DateTime.UtcNow,
         };
 
         db.ListingExtras.Add(extra);
@@ -71,8 +96,10 @@ public class ListingExtrasController(
             extra.Id,
             extra.Key,
             extra.Label,
+            extra.PublicPrice,
             extra.SupplierPrice,
             extra.CustomerPrice,
+            extra.CustomerPriceOverride,
         });
     }
 
@@ -96,12 +123,40 @@ public class ListingExtrasController(
         if (body.IsActive.HasValue)       extra.IsActive    = body.IsActive.Value;
         if (body.SortOrder.HasValue)      extra.SortOrder   = body.SortOrder.Value;
 
-        if (body.SupplierPrice.HasValue)
+        if (body.PublicPrice.HasValue)
+            extra.PublicPrice = body.PublicPrice.Value;
+
+        if (body.PartnerDiscountRate.HasValue)
+            extra.PartnerDiscountRate = body.PartnerDiscountRate.Value == 0
+                ? null   // 0 means "use supplier default"
+                : body.PartnerDiscountRate.Value;
+
+        if (body.CustomerPriceOverride.HasValue)
+            extra.CustomerPriceOverride = body.CustomerPriceOverride.Value == 0
+                ? null   // 0 means "clear override, use auto"
+                : body.CustomerPriceOverride.Value;
+
+        // Recalculate derived prices whenever anything changes
+        var config   = await pricingConfigService.GetAsync();
+        var supplier = await db.Suppliers.FindAsync(extra.Listing.SupplierId);
+
+        var effectiveDiscount = extra.PartnerDiscountRate
+            ?? supplier?.PartnerDiscountRate
+            ?? config.DefaultPartnerDiscountRate;
+
+        extra.SupplierPrice = Math.Round(
+            extra.PublicPrice * (1m - effectiveDiscount / 100m), 2);
+
+        if (extra.CustomerPriceOverride.HasValue)
         {
-            extra.SupplierPrice = body.SupplierPrice.Value;
-            var config = await pricingConfigService.GetAsync();
+            extra.CustomerPrice = extra.CustomerPriceOverride.Value;
+        }
+        else
+        {
+            var custDiscount = Math.Max(0,
+                effectiveDiscount - config.RuumlyMinMarginRate);
             extra.CustomerPrice = Math.Round(
-                body.SupplierPrice.Value * (1m + config.ExtrasMarginRate / 100m), 2);
+                extra.PublicPrice * (1m - custDiscount / 100m), 2);
         }
 
         await db.SaveChangesAsync();
@@ -111,8 +166,10 @@ public class ListingExtrasController(
             extra.Id,
             extra.Key,
             extra.Label,
+            extra.PublicPrice,
             extra.SupplierPrice,
             extra.CustomerPrice,
+            extra.CustomerPriceOverride,
             extra.IsActive,
         });
     }

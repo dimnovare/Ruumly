@@ -15,11 +15,33 @@ public class ListingExtra
     /// <summary>Optional description</summary>
     public string? Description { get; set; }
 
-    /// <summary>Supplier's price for this extra service (what they charge)</summary>
+    /// <summary>Supplier's public price for this service (what they charge walk-in customers)</summary>
+    public decimal PublicPrice { get; set; }
+
+    /// <summary>
+    /// Negotiated partner discount % on this specific extra.
+    /// Null = use supplier's base PartnerDiscountRate.
+    /// </summary>
+    public decimal? PartnerDiscountRate { get; set; }
+
+    /// <summary>
+    /// What Ruumly pays the supplier.
+    /// Auto-calculated: PublicPrice × (1 - effectivePartnerDiscount/100)
+    /// </summary>
     public decimal SupplierPrice { get; set; }
 
-    /// <summary>Price shown to customer (supplierPrice + Ruumly margin)</summary>
+    /// <summary>
+    /// What the customer pays. Auto-calculated from partner discount
+    /// minus ruumlyMinMargin, unless CustomerPriceOverride is set.
+    /// </summary>
     public decimal CustomerPrice { get; set; }
+
+    /// <summary>
+    /// If set, this value is used as CustomerPrice instead of auto-calculation.
+    /// Allows admin to manually control the customer-facing price per extra.
+    /// Null = auto-calculate using formula.
+    /// </summary>
+    public decimal? CustomerPriceOverride { get; set; }
 
     /// <summary>Whether this extra is currently available for booking</summary>
     public bool IsActive { get; set; } = true;

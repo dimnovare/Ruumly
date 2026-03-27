@@ -134,7 +134,8 @@ public class BookingServiceTests
                 ListingId     = listingId,
                 Key           = key,
                 Label         = key,
-                SupplierPrice = Math.Round(price / 1.2m, 2),  // reverse of 20% extras margin
+                PublicPrice   = price,
+                SupplierPrice = Math.Round(price * 0.85m, 2),
                 CustomerPrice = price,
                 IsActive      = true,
             });
