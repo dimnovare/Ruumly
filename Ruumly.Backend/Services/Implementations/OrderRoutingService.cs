@@ -104,6 +104,16 @@ public class OrderRoutingService(
 
         db.Orders.Add(order);
 
+        db.PayoutEntries.Add(new PayoutEntry
+        {
+            Id             = Guid.NewGuid(),
+            SupplierId     = supplier.Id,
+            OrderId        = order.Id,
+            SupplierAmount = supplierPrice + extrasSupplierTotal,
+            PlatformMargin = margin,
+            Status         = PayoutStatus.Pending,
+        });
+
         // 7. Initial fulfillment event
         db.FulfillmentEvents.Add(new FulfillmentEvent
         {

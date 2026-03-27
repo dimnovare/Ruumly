@@ -16,3 +16,4 @@ public enum NotificationType { Booking, Alert, System, Order, Review, Payment }
 public enum ListingBadge { Cheapest, Closest, BestValue, Promoted }
 public enum NotificationChannel { InApp, Email }
 public enum SupplierTier { Starter = 0, Standard = 1, Premium = 2 }
+public enum PayoutStatus { Pending, Paid, Disputed, Cancelled }

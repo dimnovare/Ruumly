@@ -25,6 +25,7 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
     public DbSet<SupplierLocation> SupplierLocations => Set<SupplierLocation>();
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<ListingExtra> ListingExtras => Set<ListingExtra>();
+    public DbSet<PayoutEntry> PayoutEntries => Set<PayoutEntry>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -42,6 +43,7 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
         model.Entity<Review>().HasQueryFilter(r => true);
         model.Entity<OrderTimeline>().HasQueryFilter(ot => true);
         model.Entity<FulfillmentEvent>().HasQueryFilter(fe => true);
+        model.Entity<PayoutEntry>().HasQueryFilter(pe => true);
 
         // ─── Enums as strings ───
         model.Entity<User>().Property(e => e.Role).HasConversion<string>();
@@ -281,6 +283,13 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
         model.Entity<ListingExtra>()
             .HasIndex(e => new { e.ListingId, e.Key })
             .IsUnique();
+
+        // ─── PayoutEntry ───
+        model.Entity<PayoutEntry>()
+            .HasIndex(p => new { p.SupplierId, p.Status });
+
+        model.Entity<PayoutEntry>()
+            .Property(e => e.Status).HasConversion<string>();
 
         // ─── PlatformSetting primary key ───
         model.Entity<PlatformSetting>().HasKey(s => s.Key);
