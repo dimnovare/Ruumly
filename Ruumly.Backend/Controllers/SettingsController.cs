@@ -1,6 +1,8 @@
 using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ruumly.Backend.Data;
+using Ruumly.Backend.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace Ruumly.Backend.Controllers;
@@ -55,6 +57,26 @@ public class SettingsController(RuumlyDbContext db) : ControllerBase
             showProviderCta      = settings.GetValueOrDefault("showProviderCta",      "true")  == "true",
             showFaq              = settings.GetValueOrDefault("showFaq",              "true")  == "true",
             showMap              = settings.GetValueOrDefault("showMap",              "true")  == "true",
+        });
+    }
+
+    [HttpGet("pricing")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetPricingConfig(
+        [FromServices] IPricingConfigService pricing)
+    {
+        var c = await pricing.GetAsync();
+        return Ok(new
+        {
+            defaultPartnerDiscount = c.DefaultPartnerDiscountRate,
+            extrasMarginRate       = c.ExtrasMarginRate,
+            defaultVatRate         = c.DefaultVatRate,
+            tiers = new
+            {
+                starter  = new { c.Starter.CustomerDiscountRate,  c.Starter.MonthlyFee,  c.Starter.MaxLocations },
+                standard = new { c.Standard.CustomerDiscountRate, c.Standard.MonthlyFee, c.Standard.MaxLocations },
+                premium  = new { c.Premium.CustomerDiscountRate,  c.Premium.MonthlyFee,  c.Premium.MaxLocations },
+            },
         });
     }
 }

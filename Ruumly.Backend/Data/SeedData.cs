@@ -891,7 +891,7 @@ public static class SeedData
             ["defaultLanguage"]     = ("et",             "Default UI language"),
             ["currency"]            = ("EUR",            "Currency code"),
             ["commissionRate"]      = ("5",              "Platform commission % on base price"),
-            ["extrasMarginRate"]    = ("0",              "Platform margin % on extras (0 = pass-through)"),
+            ["extrasMarginRate"]    = ("20",             "Ruumly margin % on supplier extras prices (used by IPricingConfigService)"),
             ["warehouseMarginRate"] = ("5",              "Platform savings % shown to customer for warehouse"),
             ["movingMarginRate"]    = ("5",              "Platform savings % shown to customer for moving"),
             ["trailerMarginRate"]   = ("5",              "Platform savings % shown to customer for trailer"),
@@ -914,6 +914,17 @@ public static class SeedData
             ["showMap"]              = ("true",       "Show interactive map on homepage"),
             ["heroSubtitle"]         = ("Üks platvorm — laopinnad, kolimine ja haagised. Leia asukoht, vali sobiv ühik, broneeri.", "Homepage hero subtitle — supports {discount} placeholder"),
             ["heroDiscount"]         = ("10",         "Discount percentage shown on homepage"),
+            // ── Pricing config (read by IPricingConfigService) ──────────────
+            ["defaultPartnerDiscount"]         = ("15",  "Default partner discount % shown to customer"),
+            ["tier.starter.customerDiscount"]  = ("5",   "Starter tier: customer discount %"),
+            ["tier.starter.monthlyFee"]        = ("0",   "Starter tier: monthly subscription fee (EUR)"),
+            ["tier.starter.maxLocations"]      = ("1",   "Starter tier: max active locations"),
+            ["tier.standard.customerDiscount"] = ("8",   "Standard tier: customer discount %"),
+            ["tier.standard.monthlyFee"]       = ("49",  "Standard tier: monthly subscription fee (EUR)"),
+            ["tier.standard.maxLocations"]     = ("5",   "Standard tier: max active locations"),
+            ["tier.premium.customerDiscount"]  = ("12",  "Premium tier: customer discount %"),
+            ["tier.premium.monthlyFee"]        = ("99",  "Premium tier: monthly subscription fee (EUR)"),
+            ["tier.premium.maxLocations"]      = ("999", "Premium tier: max active locations (effectively unlimited)"),
         };
 
         db.PlatformSettings.AddRange(defaults.Select(kv => new PlatformSetting

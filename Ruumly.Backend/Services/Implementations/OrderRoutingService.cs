@@ -38,8 +38,8 @@ public class OrderRoutingService(
         }
 
         // 4. Calculate supplier price and margin
-        var commissionRate = TierRules.CommissionRate(supplier.Tier);
-        var supplierPrice  = Math.Round(booking.BasePrice * (1m - commissionRate / 100m));
+        var customerDiscountRate = TierRules.CustomerDiscountRate(supplier.Tier);
+        var supplierPrice        = Math.Round(booking.BasePrice * (1m - customerDiscountRate / 100m));
         var margin        = booking.Total - supplierPrice - booking.ExtrasTotal;
 
         // 5. Determine posting channel

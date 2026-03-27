@@ -2,50 +2,42 @@ using Ruumly.Backend.Models.Enums;
 
 namespace Ruumly.Backend.Helpers;
 
+/// <summary>
+/// Static fallback values only — the live pricing engine reads from
+/// IPricingConfigService (which sources from PlatformSettings).
+/// These are used as defaults when the DB/cache is unavailable,
+/// and by legacy code paths (AdminMappers, LocationsController) that
+/// have not yet been wired to IPricingConfigService.
+/// </summary>
 public static class TierRules
 {
-    /// <summary>
-    /// Maximum number of active LOCATIONS per tier.
-    /// Unit types within a location are unlimited
-    /// on all tiers — only locations are counted.
-    /// </summary>
-    public static int MaxLocations(SupplierTier tier)
+    public static decimal CustomerDiscountRate(SupplierTier tier)
         => tier switch
         {
-            SupplierTier.Premium  => int.MaxValue,
-            SupplierTier.Standard => 5,
-            _                     => 1,   // Starter
+            SupplierTier.Premium  => 12m,
+            SupplierTier.Standard => 8m,
+            _                     => 5m,
         };
 
-    /// <summary>Commission % deducted per booking.</summary>
-    public static decimal CommissionRate(SupplierTier tier)
-        => tier switch
-        {
-            SupplierTier.Premium  => 3m,
-            SupplierTier.Standard => 5m,
-            _                     => 8m,
-        };
-
-    /// <summary>Monthly subscription fee in EUR.</summary>
     public static decimal MonthlyFee(SupplierTier tier)
         => tier switch
         {
-            SupplierTier.Premium  => 79m,
-            SupplierTier.Standard => 29m,
+            SupplierTier.Premium  => 99m,
+            SupplierTier.Standard => 49m,
             _                     => 0m,
         };
 
-    /// <summary>
-    /// Premium tier can have the "Soovitatud"
-    /// (Promoted) badge on their listings.
-    /// </summary>
+    public static int MaxLocations(SupplierTier tier)
+        => tier switch
+        {
+            SupplierTier.Premium  => 999,
+            SupplierTier.Standard => 5,
+            _                     => 1,
+        };
+
     public static bool CanHavePromotedBadge(SupplierTier tier)
         => tier == SupplierTier.Premium;
 
-    /// <summary>
-    /// Standard and Premium see full analytics
-    /// in the provider dashboard.
-    /// </summary>
     public static bool HasFullAnalytics(SupplierTier tier)
         => tier >= SupplierTier.Standard;
 }

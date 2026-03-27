@@ -46,7 +46,7 @@ internal static class AdminMappers
             ? MapIntegrationSettings(s.IntegrationSettings)
             : null,
         Tier:                s.Tier.ToString(),
-        CommissionRate:      TierRules.CommissionRate(s.Tier),
+        CommissionRate:      TierRules.CustomerDiscountRate(s.Tier),
         MonthlyFee:          TierRules.MonthlyFee(s.Tier),
         MaxLocations:        TierRules.MaxLocations(s.Tier),
         HasFullAnalytics:    TierRules.HasFullAnalytics(s.Tier),
