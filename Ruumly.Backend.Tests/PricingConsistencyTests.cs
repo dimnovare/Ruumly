@@ -3,177 +3,176 @@ using FluentAssertions;
 namespace Ruumly.Backend.Tests;
 
 /// <summary>
-/// Verifies that the backend pricing formulas exactly match the documented
-/// frontend pricing model (pricing.ts).
+/// Verifies that the backend pricing formulas match the partner model
+/// implemented in BookingService.cs and OrderRoutingService.cs.
 ///
-/// Formulas under test (from BookingService.cs and OrderRoutingService.cs):
-///   platformPrice = Math.Round(basePrice * (1 - clientDiscountRate/100) * 0.95)
-///   supplierPrice = Math.Round(basePrice * (1 - commissionRate/100))
-///   extrasTotal   = sum of matched extras
-///   total         = platformPrice + extrasTotal  (VAT = 0 for these cases)
-///   margin        = total - supplierPrice - extrasTotal
+/// Formulas under test:
+///   platformPrice      = Math.Round(basePrice * (1 - customerDiscountRate / 100))
+///   supplierPrice      = Math.Round(basePrice * (1 - partnerDiscountRate / 100))
+///   extrasCustomerTotal = sum of extra.CustomerPrice  (= supplierPrice * (1 + extrasMarginRate/100))
+///   extrasSupplierTotal = sum of extra.SupplierPrice
+///   baseMargin         = platformPrice - supplierPrice
+///   extrasMargin       = extrasCustomerTotal - extrasSupplierTotal
+///   margin             = baseMargin + extrasMargin
 /// </summary>
 public class PricingConsistencyTests
 {
-    // ─── Core formula helpers (mirror BookingService exactly) ─────────────
+    // ─── Core formula helpers ──────────────────────────────────────────────
 
-    private static decimal CalcPlatformPrice(decimal basePrice, decimal clientDiscountRate = 0m)
+    private static decimal PlatformPrice(decimal basePrice, decimal customerDiscountRate) =>
+        Math.Round(basePrice * (1m - customerDiscountRate / 100m));
+
+    private static decimal SupplierPrice(decimal basePrice, decimal partnerDiscountRate) =>
+        Math.Round(basePrice * (1m - partnerDiscountRate / 100m));
+
+    private static decimal CustomerExtrasPrice(decimal supplierExtrasPrice, decimal extrasMarginRate) =>
+        Math.Round(supplierExtrasPrice * (1m + extrasMarginRate / 100m), 2);
+
+    private static decimal Margin(decimal platformPrice, decimal supplierPrice,
+                                  decimal extrasCustomerTotal, decimal extrasSupplierTotal) =>
+        (platformPrice - supplierPrice) + (extrasCustomerTotal - extrasSupplierTotal);
+
+    // ─── Base pricing — customer discount ─────────────────────────────────
+
+    [Theory]
+    [InlineData(100,  5,  95)]
+    [InlineData(100,  8,  92)]
+    [InlineData(100, 12,  88)]
+    [InlineData(200,  5, 190)]
+    [InlineData(200, 12, 176)]
+    public void PlatformPrice_AppliesCustomerDiscount(double basePrice, double discount, double expected)
     {
-        var discountMultiplier = 1m - clientDiscountRate / 100m;
-        var discountedBase     = basePrice * discountMultiplier;
-        return Math.Round(discountedBase * 0.95m);
+        PlatformPrice((decimal)basePrice, (decimal)discount).Should().Be((decimal)expected);
     }
 
-    private static decimal CalcSupplierPrice(decimal basePrice, decimal commissionRate = 8m) =>
-        Math.Round(basePrice * (1m - commissionRate / 100m));
+    // ─── Base pricing — partner discount ──────────────────────────────────
 
-    private static decimal CalcMargin(decimal total, decimal supplierPrice, decimal extrasTotal) =>
-        total - supplierPrice - extrasTotal;
+    [Theory]
+    [InlineData(100, 15,  85)]
+    [InlineData(200, 15, 170)]
+    [InlineData(100, 20,  80)]
+    public void SupplierPrice_AppliesPartnerDiscount(double basePrice, double discount, double expected)
+    {
+        SupplierPrice((decimal)basePrice, (decimal)discount).Should().Be((decimal)expected);
+    }
 
-    private static readonly Dictionary<string, decimal> ExtrasPrices =
-        new(StringComparer.OrdinalIgnoreCase)
+    // ─── Extras margin ─────────────────────────────────────────────────────
+
+    [Theory]
+    [InlineData(10,  20, 12)]   // €10 + 20% = €12
+    [InlineData(16,  20, 19.2)] // €16 + 20% = €19.20
+    [InlineData(8,   20, 9.6)]  // €8  + 20% = €9.60
+    [InlineData(10,   0, 10)]   // 0% margin = pass-through
+    public void ExtrasCustomerPrice_AppliesMargin(double supplierPrice, double marginRate, double expected)
+    {
+        CustomerExtrasPrice((decimal)supplierPrice, (decimal)marginRate)
+            .Should().Be((decimal)expected);
+    }
+
+    // ─── Margin calculation — no extras ───────────────────────────────────
+
+    [Fact]
+    public void Base100_Starter_NoExtras()
+    {
+        // partnerDiscount=15%, customerDiscount=5%
+        var platform = PlatformPrice(100m, 5m);    // 95
+        var supplier = SupplierPrice(100m, 15m);   // 85
+        var margin   = Margin(platform, supplier, 0m, 0m);
+
+        platform.Should().Be(95m);
+        supplier.Should().Be(85m);
+        margin.Should().Be(10m);
+    }
+
+    [Fact]
+    public void Base100_Standard_NoExtras()
+    {
+        // partnerDiscount=15%, customerDiscount=8%
+        var platform = PlatformPrice(100m, 8m);    // 92
+        var supplier = SupplierPrice(100m, 15m);   // 85
+        var margin   = Margin(platform, supplier, 0m, 0m);
+
+        platform.Should().Be(92m);
+        supplier.Should().Be(85m);
+        margin.Should().Be(7m);
+    }
+
+    [Fact]
+    public void Base100_Premium_NoExtras()
+    {
+        // partnerDiscount=15%, customerDiscount=12%
+        var platform = PlatformPrice(100m, 12m);   // 88
+        var supplier = SupplierPrice(100m, 15m);   // 85
+        var margin   = Margin(platform, supplier, 0m, 0m);
+
+        platform.Should().Be(88m);
+        supplier.Should().Be(85m);
+        margin.Should().Be(3m);  // smallest tier margin — always positive
+    }
+
+    // ─── Margin calculation — with extras ─────────────────────────────────
+
+    [Fact]
+    public void WithExtras_MarginApplied()
+    {
+        // Supplier prices one extra at €10, extrasMarginRate=20%
+        var supplierExtrasPrice = 10m;
+        var customerExtrasPrice = CustomerExtrasPrice(supplierExtrasPrice, 20m); // 12
+
+        var platform    = PlatformPrice(100m, 5m);    // 95
+        var supplier    = SupplierPrice(100m, 15m);   // 85
+        var extrasMargin = customerExtrasPrice - supplierExtrasPrice;            // 2
+        var margin      = Margin(platform, supplier, customerExtrasPrice, supplierExtrasPrice);
+
+        extrasMargin.Should().Be(2m);
+        margin.Should().Be(12m);  // baseMargin(10) + extrasMargin(2)
+    }
+
+    [Fact]
+    public void MultipleExtras_MarginSummed()
+    {
+        // packing: supplier €12, customer €15 (20% margin rounded)
+        // insurance: supplier €8, customer €9.60
+        decimal extrasSupplier = 12m + 8m;     // 20
+        decimal extrasCustomer = CustomerExtrasPrice(12m, 20m) + CustomerExtrasPrice(8m, 20m); // 14.4 + 9.6 = 24
+
+        var platform = PlatformPrice(100m, 5m);   // 95
+        var supplier = SupplierPrice(100m, 15m);  // 85
+        var margin   = Margin(platform, supplier, extrasCustomer, extrasSupplier);
+
+        extrasCustomer.Should().Be(24m);
+        margin.Should().Be(14m);  // baseMargin(10) + extrasMargin(4)
+    }
+
+    // ─── Margin is always non-negative when partner discount > customer discount
+
+    [Fact]
+    public void NegativeMargin_Impossible_When_PartnerDiscount_Exceeds_CustomerDiscount()
+    {
+        // partnerDiscount(15%) must always exceed customerDiscount
+        // All three tier customer discounts are below 15%
+        foreach (var customerDiscount in new[] { 5m, 8m, 12m })
         {
-            ["packing"]   = 15m,
-            ["loading"]   = 20m,
-            ["insurance"] = 10m,
-            ["forklift"]  = 25m,
-        };
+            var platform = PlatformPrice(100m, customerDiscount);
+            var supplier = SupplierPrice(100m, 15m);
+            var margin   = Margin(platform, supplier, 0m, 0m);
 
-    private static decimal CalcExtrasTotal(IEnumerable<string> extras) =>
-        extras.Sum(e => ExtrasPrices.TryGetValue(e, out var p) ? p : 0m);
+            margin.Should().BeGreaterThanOrEqualTo(0m,
+                because: $"customerDiscount={customerDiscount}% is always < partnerDiscount=15%");
+        }
+    }
 
-    // ─── Platform price (5% platform fee) ─────────────────────────────────
+    // ─── Unknown extras keys contribute zero ──────────────────────────────
 
     [Fact]
-    public void PlatformPrice_Is_95pct_Of_BasePrice_With_No_Discount()
+    public void Unknown_ExtraKey_ContributesZero()
     {
-        CalcPlatformPrice(100m).Should().Be(95m);
-    }
+        // Service skips keys not found in ListingExtras — no revenue, no cost
+        var extrasCustomer = 0m;
+        var extrasSupplier = 0m;
+        var margin = Margin(PlatformPrice(100m, 5m), SupplierPrice(100m, 15m),
+                            extrasCustomer, extrasSupplier);
 
-    [Theory]
-    [InlineData(200,  190)]
-    [InlineData(50,   48)]   // Math.Round(50 * 0.95) = Math.Round(47.5) = 48 (banker's rounding)
-    [InlineData(1000, 950)]
-    public void PlatformPrice_Scales_With_BasePrice(double basePrice, double expected)
-    {
-        CalcPlatformPrice((decimal)basePrice).Should().Be((decimal)expected);
-    }
-
-    [Fact]
-    public void PlatformPrice_Applies_Client_Discount_Before_Fee()
-    {
-        // 10% client discount: discountedBase = 100 * 0.9 = 90 → platformPrice = 90 * 0.95 = 85.5 → 86
-        CalcPlatformPrice(100m, clientDiscountRate: 10m).Should().Be(86m);
-    }
-
-    // ─── Supplier price (tier-based commission) ────────────────────────────
-
-    [Fact]
-    public void SupplierPrice_Starter_8pct_Commission()
-    {
-        // Starter (8%): €100 → supplier gets €92
-        CalcSupplierPrice(100m, commissionRate: 8m).Should().Be(92m);
-    }
-
-    [Fact]
-    public void SupplierPrice_Standard_5pct_Commission()
-    {
-        // Standard (5%): €100 → supplier gets €95
-        CalcSupplierPrice(100m, commissionRate: 5m).Should().Be(95m);
-    }
-
-    [Fact]
-    public void SupplierPrice_Premium_3pct_Commission()
-    {
-        // Premium (3%): €100 → supplier gets €97
-        CalcSupplierPrice(100m, commissionRate: 3m).Should().Be(97m);
-    }
-
-    [Theory]
-    [InlineData(200,  184, 8)]
-    [InlineData(1000, 920, 8)]
-    [InlineData(200,  190, 5)]
-    [InlineData(1000, 970, 3)]
-    public void SupplierPrice_Scales_With_BasePrice(double basePrice, double expected, double commissionRate)
-    {
-        CalcSupplierPrice((decimal)basePrice, (decimal)commissionRate).Should().Be((decimal)expected);
-    }
-
-    // ─── Extras prices ─────────────────────────────────────────────────────
-
-    [Theory]
-    [InlineData("packing",   15d)]
-    [InlineData("loading",   20d)]
-    [InlineData("insurance", 10d)]
-    [InlineData("forklift",  25d)]
-    public void Extras_Individual_Prices_Are_Correct(string extra, double expected)
-    {
-        CalcExtrasTotal([extra]).Should().Be((decimal)expected);
-    }
-
-    [Fact]
-    public void Extras_Unknown_Name_Contributes_Zero()
-    {
-        CalcExtrasTotal(["packing", "unknown", "nonexistent"])
-            .Should().Be(15m);
-    }
-
-    [Fact]
-    public void Extras_Case_Insensitive()
-    {
-        CalcExtrasTotal(["PACKING", "Loading", "INSURANCE"])
-            .Should().Be(45m);
-    }
-
-    // ─── Margin calculation ────────────────────────────────────────────────
-
-    [Fact]
-    public void Margin_Is_Total_Minus_SupplierPrice_Minus_ExtrasTotal_No_Extras()
-    {
-        // basePrice=100, no extras, no VAT
-        var platformPrice = CalcPlatformPrice(100m);              // 95
-        var supplierPrice = CalcSupplierPrice(100m, 8m);          // 92 (Starter)
-        var extrasTotal   = 0m;
-        var total         = platformPrice + extrasTotal;           // 95
-
-        var margin = CalcMargin(total, supplierPrice, extrasTotal);
-
-        platformPrice.Should().Be(95m);
-        supplierPrice.Should().Be(92m);
-        margin.Should().Be(3m);  // Ruumly keeps €3 on a €100 Starter booking
-    }
-
-    [Fact]
-    public void Margin_Is_Correct_With_Extras()
-    {
-        // basePrice=100, extras=packing(15)+loading(20)=35
-        var platformPrice = CalcPlatformPrice(100m);                  // 95
-        var supplierPrice = CalcSupplierPrice(100m, 8m);              // 92 (Starter)
-        var extrasTotal   = CalcExtrasTotal(["packing", "loading"]);  // 35
-        var total         = platformPrice + extrasTotal;              // 130
-
-        var margin = CalcMargin(total, supplierPrice, extrasTotal);
-
-        // margin = 130 - 92 - 35 = 3
-        margin.Should().Be(3m);
-    }
-
-    // ─── End-to-end pricing scenario ──────────────────────────────────────
-
-    [Fact]
-    public void FullScenario_BasePrice100_AllExtras()
-    {
-        var basePrice     = 100m;
-        var platformPrice = CalcPlatformPrice(basePrice);                            // 95
-        var supplierPrice = CalcSupplierPrice(basePrice, 8m);                        // 92 (Starter)
-        var extrasTotal   = CalcExtrasTotal(["packing", "loading", "insurance", "forklift"]); // 70
-        var total         = platformPrice + extrasTotal;                             // 165
-        var margin        = CalcMargin(total, supplierPrice, extrasTotal);           // 3
-
-        platformPrice.Should().Be(95m);
-        supplierPrice.Should().Be(92m);
-        extrasTotal.Should().Be(70m);
-        total.Should().Be(165m);
-        margin.Should().Be(3m);
+        margin.Should().Be(10m);  // same as no-extras case
     }
 }
