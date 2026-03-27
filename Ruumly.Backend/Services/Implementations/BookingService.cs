@@ -212,7 +212,7 @@ public class BookingService(
             }
 
             // 5. VAT calculation
-            var vatRate   = listing.VatRate ?? 0m;
+            var vatRate   = listing.VatRate ?? pricingConfig.DefaultVatRate;
             var subtotal  = platformPrice + extrasCustomerTotal;
             var vatAmount = listing.PricesIncludeVat
                 ? Math.Round(subtotal * vatRate / (100m + vatRate), 2)
