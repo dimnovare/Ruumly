@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -167,6 +168,33 @@ public class MontonioPaymentService(
             logger.LogInformation(
                 "Invoice {Id} paid via Montonio",
                 invoice.Id);
+
+            // Payment confirmed — now dispatch order to supplier
+            var order = await db.Orders
+                .FirstOrDefaultAsync(o => o.BookingId == invoice.BookingId);
+
+            if (order is not null && order.AutoDispatch
+                && order.Status == OrderStatus.Created)
+            {
+                order.Status    = OrderStatus.Sending;
+                order.UpdatedAt = DateTime.UtcNow;
+                await db.SaveChangesAsync();
+
+                BackgroundJob.Enqueue<BackgroundOrderDispatchService>(
+                    x => x.DispatchOrderAsync(order.Id));
+
+                logger.LogInformation(
+                    "Payment confirmed for booking {BookingId} — dispatching order {OrderId}",
+                    invoice.BookingId, order.Id);
+            }
+            else if (order is not null && !order.AutoDispatch)
+            {
+                // Needs manual approval — admins were already notified at booking creation
+                logger.LogInformation(
+                    "Payment confirmed for booking {BookingId} — order {OrderId} awaits admin approval",
+                    invoice.BookingId, order.Id);
+            }
+
             return true;
         }
         catch (Exception ex)

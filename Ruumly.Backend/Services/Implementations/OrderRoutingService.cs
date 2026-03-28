@@ -38,8 +38,10 @@ public class OrderRoutingService(
         }
 
         // 4. Calculate supplier price and margin
-        // Supplier price = base price minus negotiated partner discount
-        var partnerDiscountRate = supplier.PartnerDiscountRate;
+        // Use the SAME discount cascade as BookingService:
+        // listing override → supplier rate → platform default
+        var partnerDiscountRate = listing.PartnerDiscountRateOverride
+                                  ?? supplier.PartnerDiscountRate;
         if (partnerDiscountRate == 0)
         {
             var config = await pricingConfigService.GetAsync();
@@ -85,6 +87,7 @@ public class OrderRoutingService(
             Duration        = booking.Duration,
             ExtrasSnapshot  = booking.ExtrasSnapshot,
             PartnerDiscountRate = partnerDiscountRate,
+            AutoDispatch    = !matchedRule?.RequiresApproval == true || approvalMode == ApprovalMode.Auto,
             IntegrationType = supplier.IntegrationType,
             CustomerName    = booking.ContactName ?? string.Empty,
             CustomerEmail   = booking.ContactEmail ?? string.Empty,
@@ -139,17 +142,12 @@ public class OrderRoutingService(
 
         await db.SaveChangesAsync();
 
-        // 9. Dispatch or queue for approval
-        bool autoDispatch = !matchedRule?.RequiresApproval == true || approvalMode == ApprovalMode.Auto;
+        // Dispatch is triggered by payment webhook, not at booking creation.
+        // See MontonioPaymentService.HandleWebhookAsync for the dispatch trigger.
 
-        if (autoDispatch)
+        // Notify admins if manual approval is needed before dispatch
+        if (!order.AutoDispatch)
         {
-            BackgroundJob.Enqueue<BackgroundOrderDispatchService>(
-                x => x.DispatchOrderAsync(order.Id));
-        }
-        else
-        {
-            // Notify admins that approval is needed
             var admins = await db.Users
                 .Where(u => u.Role == UserRole.Admin)
                 .ToListAsync();
@@ -166,15 +164,12 @@ public class OrderRoutingService(
                     entityType: "Order");
             }
 
-            order.Status    = OrderStatus.Sending;
-            order.UpdatedAt = DateTime.UtcNow;
-
             db.OrderTimelines.Add(new OrderTimeline
             {
                 Id        = Guid.NewGuid(),
                 OrderId   = order.Id,
                 Event     = "Ootame kinnitust",
-                Status    = OrderStatus.Sending,
+                Status    = OrderStatus.Created,
                 Detail    = "Tellimus vajab käsitsi kinnitust enne saatmist",
                 CreatedAt = DateTime.UtcNow,
             });

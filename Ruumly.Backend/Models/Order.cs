@@ -37,6 +37,13 @@ public class Order
     [NotMapped]
     public List<string> ExtrasKeys => ExtrasSnapshot.Select(e => e.Key).ToList();
 
+    /// <summary>
+    /// True if this order should be dispatched automatically after payment.
+    /// False = needs admin approval before dispatch.
+    /// Snapshotted at routing time so rule changes don't affect in-flight orders.
+    /// </summary>
+    public bool AutoDispatch { get; set; }
+
     public IntegrationType IntegrationType { get; set; }
     public string CustomerName { get; set; } = string.Empty;
     public string CustomerEmail { get; set; } = string.Empty;

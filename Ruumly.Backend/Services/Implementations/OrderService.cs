@@ -94,6 +94,12 @@ public class OrderService(
         if (order.Status != OrderStatus.Created && order.Status != OrderStatus.Sending)
             throw new ArgumentException(Msg("ORDER_WRONG_STATUS"));
 
+        // Gate: invoice must be paid before dispatching to supplier
+        var invoice = await db.Invoices
+            .FirstOrDefaultAsync(i => i.BookingId == order.BookingId);
+        if (invoice?.Status != InvoiceStatus.Paid)
+            throw new ArgumentException("Cannot dispatch — invoice not paid yet.");
+
         var approver = await db.Users.FindAsync(approvedByUserId);
         var approverName = approver?.Name ?? approvedByUserId.ToString();
 
