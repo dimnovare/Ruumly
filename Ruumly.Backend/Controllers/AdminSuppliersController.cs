@@ -7,6 +7,7 @@ using Ruumly.Backend.DTOs;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Helpers;
+using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
 
@@ -85,6 +86,87 @@ public class AdminSuppliersController(
         var pricingConfig = await pricingConfigService.GetAsync();
         return Ok(AdminMappers.MapSupplier(supplier, stats?.OrdersTotal ?? 0, stats?.Revenue ?? 0m,
             includeSettings: true, pricingConfig: pricingConfig));
+    }
+
+    [HttpPost("suppliers")]
+    public async Task<IActionResult> CreateSupplier([FromBody] CreateSupplierRequest body)
+    {
+        var supplier = new Supplier
+        {
+            Id                  = Guid.NewGuid(),
+            Name                = body.Name,
+            RegistryCode        = body.RegistryCode ?? "",
+            ContactName         = body.ContactName ?? "",
+            ContactEmail        = body.ContactEmail ?? "",
+            ContactPhone        = body.ContactPhone ?? "",
+            IntegrationType     = Enum.TryParse<IntegrationType>(body.IntegrationType, true, out var it)
+                                  ? it : IntegrationType.Manual,
+            RecipientEmail      = body.RecipientEmail,
+            ApiEndpoint         = body.ApiEndpoint,
+            ApiAuthType         = body.ApiAuthType,
+            PartnerDiscountRate = body.PartnerDiscountRate ?? 0,
+            ClientDiscountRate  = body.ClientDiscountRate ?? 0,
+            Notes               = body.Notes,
+            Iban                = body.Iban,
+            BankAccountName     = body.BankAccountName,
+            BankName            = body.BankName,
+            IsActive            = true,
+            CreatedAt           = DateTime.UtcNow,
+            UpdatedAt           = DateTime.UtcNow,
+        };
+
+        Db.Suppliers.Add(supplier);
+        await Audit("supplier.created", User.GetUserEmail(), supplier.Name, null);
+        await Db.SaveChangesAsync();
+
+        var pricingConfig = await pricingConfigService.GetAsync();
+        return Ok(AdminMappers.MapSupplier(supplier, 0, 0m, false, pricingConfig));
+    }
+
+    [HttpPatch("suppliers/{id:guid}")]
+    public async Task<IActionResult> UpdateSupplier(Guid id, [FromBody] UpdateSupplierRequest body)
+    {
+        var supplier = await Db.Suppliers.FindAsync(id);
+        if (supplier is null) return NotFound(Error("Supplier not found."));
+
+        if (body.Name is not null)             supplier.Name = body.Name;
+        if (body.RegistryCode is not null)     supplier.RegistryCode = body.RegistryCode;
+        if (body.ContactName is not null)      supplier.ContactName = body.ContactName;
+        if (body.ContactEmail is not null)     supplier.ContactEmail = body.ContactEmail;
+        if (body.ContactPhone is not null)     supplier.ContactPhone = body.ContactPhone;
+        if (body.IntegrationType is not null &&
+            Enum.TryParse<IntegrationType>(body.IntegrationType, true, out var it2))
+            supplier.IntegrationType = it2;
+        if (body.RecipientEmail is not null)   supplier.RecipientEmail = body.RecipientEmail;
+        if (body.ApiEndpoint is not null)      supplier.ApiEndpoint = body.ApiEndpoint;
+        if (body.ApiAuthType is not null)      supplier.ApiAuthType = body.ApiAuthType;
+        if (body.PartnerDiscountRate.HasValue) supplier.PartnerDiscountRate = body.PartnerDiscountRate.Value;
+        if (body.ClientDiscountRate.HasValue)  supplier.ClientDiscountRate = body.ClientDiscountRate.Value;
+        if (body.Notes is not null)            supplier.Notes = body.Notes;
+        if (body.Iban is not null)             supplier.Iban = body.Iban;
+        if (body.BankAccountName is not null)  supplier.BankAccountName = body.BankAccountName;
+        if (body.BankName is not null)         supplier.BankName = body.BankName;
+
+        supplier.UpdatedAt = DateTime.UtcNow;
+        await Audit("supplier.updated", User.GetUserEmail(), supplier.Name, null);
+        await Db.SaveChangesAsync();
+
+        var pricingConfig = await pricingConfigService.GetAsync();
+        return Ok(AdminMappers.MapSupplier(supplier, 0, 0m, false, pricingConfig));
+    }
+
+    [HttpDelete("suppliers/{id:guid}")]
+    public async Task<IActionResult> DeleteSupplier(Guid id)
+    {
+        var supplier = await Db.Suppliers.FindAsync(id);
+        if (supplier is null) return NotFound(Error("Supplier not found."));
+
+        supplier.IsActive  = false;
+        supplier.UpdatedAt = DateTime.UtcNow;
+        await Audit("supplier.deleted", User.GetUserEmail(), supplier.Name, null);
+        await Db.SaveChangesAsync();
+
+        return NoContent();
     }
 
     [HttpPatch("suppliers/{id:guid}/status")]
