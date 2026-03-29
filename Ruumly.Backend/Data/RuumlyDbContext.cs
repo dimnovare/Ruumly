@@ -26,6 +26,7 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<ListingExtra> ListingExtras => Set<ListingExtra>();
     public DbSet<PayoutEntry> PayoutEntries => Set<PayoutEntry>();
+    public DbSet<RebateInvoice> RebateInvoices => Set<RebateInvoice>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -51,6 +52,7 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
         model.Entity<Supplier>().Property(e => e.IntegrationType).HasConversion<string>();
         model.Entity<Supplier>().Property(e => e.IntegrationHealth).HasConversion<string>();
         model.Entity<Supplier>().Property(e => e.Tier).HasConversion<string>();
+        model.Entity<Supplier>().Property(e => e.BillingModel).HasConversion<string>();
         model.Entity<IntegrationSettings>().Property(e => e.ApprovalMode).HasConversion<string>();
         model.Entity<IntegrationSettings>().Property(e => e.PostingMode).HasConversion<string>();
         model.Entity<IntegrationSettings>().Property(e => e.FallbackPostingMode).HasConversion<string>();
@@ -290,6 +292,22 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
 
         model.Entity<PayoutEntry>()
             .Property(e => e.Status).HasConversion<string>();
+
+        // ─── RebateInvoice ───
+        model.Entity<RebateInvoice>()
+            .HasIndex(r => new { r.SupplierId, r.Period })
+            .IsUnique();
+
+        model.Entity<RebateInvoice>()
+            .Property(e => e.Status).HasConversion<string>();
+
+        model.Entity<RebateInvoice>()
+            .HasOne(r => r.Supplier)
+            .WithMany()
+            .HasForeignKey(r => r.SupplierId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        model.Entity<RebateInvoice>().HasQueryFilter(r => true);
 
         // ─── PlatformSetting primary key ───
         model.Entity<PlatformSetting>().HasKey(s => s.Key);

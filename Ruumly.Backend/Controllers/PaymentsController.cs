@@ -35,7 +35,7 @@ public class PaymentsController(
         var role   = http.HttpContext!.User.GetUserRole();
 
         var invoice = await db.Invoices
-            .Include(i => i.Booking)
+            .Include(i => i.Booking).ThenInclude(b => b.Supplier)
             .FirstOrDefaultAsync(i => i.Id == request.InvoiceId);
 
         if (invoice is null)
@@ -44,6 +44,10 @@ public class PaymentsController(
         if (role != UserRole.Admin &&
             invoice.Booking.UserId != userId)
             return Forbid();
+
+        // Rebate suppliers are paid directly — Ruumly does not collect payment on their behalf.
+        if (invoice.Booking.Supplier?.BillingModel == BillingModel.Rebate)
+            return BadRequest(new { error = "Payment is not processed through Ruumly for this supplier." });
 
         var paymentUrl =
             await paymentService.CreatePaymentOrderAsync(

@@ -273,8 +273,12 @@ public class BookingService(
             // 8. Route and dispatch the order
             await orderRoutingService.RouteOrderAsync(booking, listing);
 
-            // 9. Auto-generate invoice for payment
-            await invoiceService.GenerateAsync(booking.Id);
+            // 9. Auto-generate invoice for payment (marketplace model only)
+            // Rebate model: customer pays provider directly — no Ruumly invoice needed
+            if (supplier.BillingModel == BillingModel.Marketplace)
+            {
+                await invoiceService.GenerateAsync(booking.Id);
+            }
 
             await transaction.CommitAsync();
 

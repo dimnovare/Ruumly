@@ -24,6 +24,7 @@ public record SupplierDto(
     int     OrdersTotal,
     decimal Revenue,
     IntegrationSettingsDto? IntegrationSettings,
+    string    BillingModel,
     string    Tier,
     decimal   CommissionRate,
     decimal   MonthlyFee,

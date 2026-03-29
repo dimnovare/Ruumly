@@ -2,6 +2,7 @@ namespace Ruumly.Backend.DTOs.Requests;
 
 public record CreateSupplierRequest(
     string Name,
+    string? BillingModel,
     string? RegistryCode,
     string? ContactName,
     string? ContactEmail,
@@ -19,6 +20,7 @@ public record CreateSupplierRequest(
 
 public record UpdateSupplierRequest(
     string? Name,
+    string? BillingModel,
     string? RegistryCode,
     string? ContactName,
     string? ContactEmail,

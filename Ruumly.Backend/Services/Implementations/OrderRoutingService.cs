@@ -142,8 +142,13 @@ public class OrderRoutingService(
 
         await db.SaveChangesAsync();
 
-        // Dispatch is triggered by payment webhook, not at booking creation.
-        // See MontonioPaymentService.HandleWebhookAsync for the dispatch trigger.
+        // For rebate model: dispatch immediately (no payment through Ruumly)
+        // For marketplace model: dispatch is triggered by payment webhook
+        if (supplier.BillingModel == BillingModel.Rebate && order.AutoDispatch)
+        {
+            BackgroundJob.Enqueue<BackgroundOrderDispatchService>(
+                x => x.DispatchOrderAsync(order.Id));
+        }
 
         // Notify admins if manual approval is needed before dispatch
         if (!order.AutoDispatch)

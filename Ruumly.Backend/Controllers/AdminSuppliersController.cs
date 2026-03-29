@@ -99,6 +99,8 @@ public class AdminSuppliersController(
             ContactName         = body.ContactName ?? "",
             ContactEmail        = body.ContactEmail ?? "",
             ContactPhone        = body.ContactPhone ?? "",
+            BillingModel        = Enum.TryParse<BillingModel>(body.BillingModel, true, out var bm)
+                                  ? bm : BillingModel.Marketplace,
             IntegrationType     = Enum.TryParse<IntegrationType>(body.IntegrationType, true, out var it)
                                   ? it : IntegrationType.Manual,
             RecipientEmail      = body.RecipientEmail,
@@ -134,6 +136,9 @@ public class AdminSuppliersController(
         if (body.ContactName is not null)      supplier.ContactName = body.ContactName;
         if (body.ContactEmail is not null)     supplier.ContactEmail = body.ContactEmail;
         if (body.ContactPhone is not null)     supplier.ContactPhone = body.ContactPhone;
+        if (body.BillingModel is not null &&
+            Enum.TryParse<BillingModel>(body.BillingModel, true, out var bm2))
+            supplier.BillingModel = bm2;
         if (body.IntegrationType is not null &&
             Enum.TryParse<IntegrationType>(body.IntegrationType, true, out var it2))
             supplier.IntegrationType = it2;

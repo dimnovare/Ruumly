@@ -47,6 +47,7 @@ internal static class AdminMappers
         IntegrationSettings: includeSettings && s.IntegrationSettings is not null
             ? MapIntegrationSettings(s.IntegrationSettings)
             : null,
+        BillingModel:        s.BillingModel.ToString().ToLower(),
         Tier:                s.Tier.ToString(),
         CommissionRate:      pricingConfig?.ForTier(s.Tier).CustomerDiscountRate
                              ?? TierRules.CustomerDiscountRate(s.Tier),

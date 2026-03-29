@@ -40,6 +40,8 @@ public class Supplier
     public decimal Rating { get; set; }
     public int ReviewCount { get; set; }
 
+    public BillingModel BillingModel { get; set; } = BillingModel.Marketplace;
+
     public SupplierTier Tier { get; set; } = SupplierTier.Starter;
     public decimal MonthlyFee { get; set; } = 0m;
     public DateTime? SubscriptionEndsAt { get; set; }
