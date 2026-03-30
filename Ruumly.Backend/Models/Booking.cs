@@ -4,8 +4,27 @@ using Ruumly.Backend.Models.Enums;
 
 namespace Ruumly.Backend.Models;
 
-public record BookingExtraSnapshot(
-    string Key, string Label, decimal PublicPrice, decimal SupplierPrice, decimal CustomerPrice);
+public class BookingExtraSnapshot
+{
+    public string Key { get; set; } = string.Empty;
+    public string Label { get; set; } = string.Empty;
+    public decimal PublicPrice { get; set; }
+    public decimal SupplierPrice { get; set; }
+    public decimal CustomerPrice { get; set; }
+
+    public BookingExtraSnapshot() { }
+
+    public BookingExtraSnapshot(
+        string key, string label, decimal publicPrice,
+        decimal supplierPrice, decimal customerPrice)
+    {
+        Key = key;
+        Label = label;
+        PublicPrice = publicPrice;
+        SupplierPrice = supplierPrice;
+        CustomerPrice = customerPrice;
+    }
+}
 
 public class Booking
 {
