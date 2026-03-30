@@ -277,6 +277,90 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
         return NoContent();
     }
 
+    // ── GET /api/locations/{id}/blocked-dates ──────────────────────────────────
+    [HttpGet("{id:guid}/blocked-dates")]
+    [Authorize(Roles = "Admin,Provider")]
+    public async Task<IActionResult> GetBlockedDates(
+        Guid id,
+        [FromQuery] string? from = null,
+        [FromQuery] string? to   = null)
+    {
+        var location = await db.SupplierLocations.FindAsync(id);
+        if (location is null)
+            return NotFound(new { error = ErrorMessages.Get("LOCATION_NOT_FOUND", Request.GetLang()) });
+
+        if (!await CanAccess(location.SupplierId))
+            return Forbid();
+
+        var query = db.BlockedDates.Where(b => b.LocationId == id);
+
+        if (DateOnly.TryParse(from, out var fromDate))
+            query = query.Where(b => b.Date >= fromDate);
+
+        if (DateOnly.TryParse(to, out var toDate))
+            query = query.Where(b => b.Date <= toDate);
+
+        var dates = await query
+            .OrderBy(b => b.Date)
+            .Select(b => new { b.Id, b.LocationId, date = b.Date.ToString("yyyy-MM-dd"), b.Reason })
+            .ToListAsync();
+
+        return Ok(dates);
+    }
+
+    // ── POST /api/locations/{id}/blocked-dates ─────────────────────────────────
+    [HttpPost("{id:guid}/blocked-dates")]
+    [Authorize(Roles = "Admin,Provider")]
+    public async Task<IActionResult> AddBlockedDate(Guid id, [FromBody] BlockDateRequest body)
+    {
+        var location = await db.SupplierLocations.FindAsync(id);
+        if (location is null)
+            return NotFound(new { error = ErrorMessages.Get("LOCATION_NOT_FOUND", Request.GetLang()) });
+
+        if (!await CanAccess(location.SupplierId))
+            return Forbid();
+
+        if (!DateOnly.TryParse(body.Date, out var date))
+            return BadRequest(new { error = "Invalid date format. Use yyyy-MM-dd." });
+
+        var exists = await db.BlockedDates.AnyAsync(b => b.LocationId == id && b.Date == date);
+        if (exists)
+            return Conflict(new { error = "This date is already blocked." });
+
+        var blocked = new BlockedDate
+        {
+            Id         = Guid.NewGuid(),
+            LocationId = id,
+            Date       = date,
+            Reason     = body.Reason,
+            CreatedAt  = DateTime.UtcNow,
+        };
+
+        db.BlockedDates.Add(blocked);
+        await db.SaveChangesAsync();
+
+        return StatusCode(201, new { blocked.Id, blocked.LocationId, date = blocked.Date.ToString("yyyy-MM-dd"), blocked.Reason });
+    }
+
+    // ── DELETE /api/locations/{id}/blocked-dates/{dateId} ─────────────────────
+    [HttpDelete("{id:guid}/blocked-dates/{dateId:guid}")]
+    [Authorize(Roles = "Admin,Provider")]
+    public async Task<IActionResult> DeleteBlockedDate(Guid id, Guid dateId)
+    {
+        var blocked = await db.BlockedDates
+            .Include(b => b.Location)
+            .FirstOrDefaultAsync(b => b.Id == dateId && b.LocationId == id);
+
+        if (blocked is null) return NotFound();
+
+        if (!await CanAccess(blocked.Location.SupplierId))
+            return Forbid();
+
+        db.BlockedDates.Remove(blocked);
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     private async Task<bool> CanAccess(Guid supplierId)

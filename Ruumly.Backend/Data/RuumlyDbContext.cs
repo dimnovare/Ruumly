@@ -27,6 +27,7 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
     public DbSet<ListingExtra> ListingExtras => Set<ListingExtra>();
     public DbSet<PayoutEntry> PayoutEntries => Set<PayoutEntry>();
     public DbSet<RebateInvoice> RebateInvoices => Set<RebateInvoice>();
+    public DbSet<BlockedDate> BlockedDates => Set<BlockedDate>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -308,6 +309,11 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbCont
             .OnDelete(DeleteBehavior.Restrict);
 
         model.Entity<RebateInvoice>().HasQueryFilter(r => true);
+
+        // ─── BlockedDate ───
+        model.Entity<BlockedDate>()
+            .HasIndex(b => new { b.LocationId, b.Date })
+            .IsUnique();
 
         // ─── PlatformSetting primary key ───
         model.Entity<PlatformSetting>().HasKey(s => s.Key);
