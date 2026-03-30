@@ -285,4 +285,33 @@ public class AdminSuppliersController(
 
         return Ok(new { success, latencyMs });
     }
+
+    [HttpPost("suppliers/{id}/approve-application")]
+    public async Task<IActionResult> ApproveApplication(Guid id, [FromQuery] Guid userId)
+    {
+        var supplier = await Db.Suppliers.FindAsync(id);
+        if (supplier is null) return NotFound(Error("Supplier not found"));
+
+        var user = await Db.Users.FindAsync(userId);
+        if (user is null) return NotFound(Error("User not found"));
+
+        if (user.SupplierId.HasValue)
+            return BadRequest(Error("User is already linked to a supplier"));
+
+        supplier.IsActive  = true;
+        supplier.UpdatedAt = DateTime.UtcNow;
+        user.SupplierId    = supplier.Id;
+        user.Role          = UserRole.Provider;
+
+        await Db.SaveChangesAsync();
+
+        var actorName = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "admin";
+        await Audit(
+            "approve_supplier_application",
+            actorName,
+            $"Supplier:{supplier.Id}",
+            $"Linked to user {user.Email}");
+
+        return Ok(new { message = "Supplier approved and user linked as provider." });
+    }
 }
