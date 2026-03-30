@@ -232,6 +232,17 @@ public class AuthController(
         return string.Join("\n", parts);
     }
 
+    [HttpPost("resend-verification")]
+    [EnableRateLimiting("auth")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> ResendVerification()
+    {
+        var userId = User.GetUserId();
+        await authService.ResendVerificationEmailAsync(userId);
+        return Ok(new { message = "Kinnitusmeil on uuesti saadetud." });
+    }
+
     [HttpPost("notify-interest")]
     [AllowAnonymous]
     public IActionResult NotifyInterest([FromBody] NotifyInterestRequest body)

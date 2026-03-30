@@ -53,6 +53,32 @@ namespace Ruumly.Backend.Migrations
                     b.ToTable("AuditLogs");
                 });
 
+            modelBuilder.Entity("Ruumly.Backend.Models.BlockedDate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("LocationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LocationId", "Date")
+                        .IsUnique();
+
+                    b.ToTable("BlockedDates");
+                });
+
             modelBuilder.Entity("Ruumly.Backend.Models.Booking", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1193,6 +1219,17 @@ namespace Ruumly.Backend.Migrations
                     b.HasIndex("SupplierId");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Ruumly.Backend.Models.BlockedDate", b =>
+                {
+                    b.HasOne("Ruumly.Backend.Models.SupplierLocation", "Location")
+                        .WithMany()
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Location");
                 });
 
             modelBuilder.Entity("Ruumly.Backend.Models.Booking", b =>

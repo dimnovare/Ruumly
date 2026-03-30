@@ -40,21 +40,21 @@ public class AdminSuppliersController(
         var orderStats  = await Db.Orders
             .Where(o => supplierIds.Contains(o.SupplierId))
             .GroupBy(o => o.SupplierId)
-            .Select(g => new
-            {
-                SupplierId  = g.Key,
-                OrdersTotal = g.Count(),
-                Revenue     = g.Where(o => o.Status == OrderStatus.Confirmed
-                                        || o.Status == OrderStatus.Completed)
-                               .Sum(o => (decimal?)o.Total) ?? 0m,
-            })
+            .Select(g => new { SupplierId = g.Key, OrdersTotal = g.Count() })
             .ToDictionaryAsync(x => x.SupplierId);
+
+        var revenues = await Db.PayoutEntries
+            .Where(p => supplierIds.Contains(p.SupplierId) && p.Status == PayoutStatus.Paid)
+            .GroupBy(p => p.SupplierId)
+            .Select(g => new { SupplierId = g.Key, Total = g.Sum(p => p.SupplierAmount) })
+            .ToDictionaryAsync(x => x.SupplierId, x => x.Total);
 
         var pricingConfig = await pricingConfigService.GetAsync();
         var data = suppliers.Select(s =>
         {
             orderStats.TryGetValue(s.Id, out var stats);
-            return AdminMappers.MapSupplier(s, stats?.OrdersTotal ?? 0, stats?.Revenue ?? 0m,
+            return AdminMappers.MapSupplier(s, stats?.OrdersTotal ?? 0,
+                revenues.GetValueOrDefault(s.Id, 0m),
                 includeSettings: false, pricingConfig: pricingConfig);
         }).ToList();
 
@@ -74,17 +74,15 @@ public class AdminSuppliersController(
         var stats = await Db.Orders
             .Where(o => o.SupplierId == id)
             .GroupBy(o => o.SupplierId)
-            .Select(g => new
-            {
-                OrdersTotal = g.Count(),
-                Revenue     = g.Where(o => o.Status == OrderStatus.Confirmed
-                                        || o.Status == OrderStatus.Completed)
-                               .Sum(o => (decimal?)o.Total) ?? 0m,
-            })
+            .Select(g => new { OrdersTotal = g.Count() })
             .FirstOrDefaultAsync();
 
+        var revenue = await Db.PayoutEntries
+            .Where(p => p.SupplierId == id && p.Status == PayoutStatus.Paid)
+            .SumAsync(p => (decimal?)p.SupplierAmount) ?? 0m;
+
         var pricingConfig = await pricingConfigService.GetAsync();
-        return Ok(AdminMappers.MapSupplier(supplier, stats?.OrdersTotal ?? 0, stats?.Revenue ?? 0m,
+        return Ok(AdminMappers.MapSupplier(supplier, stats?.OrdersTotal ?? 0, revenue,
             includeSettings: true, pricingConfig: pricingConfig));
     }
 

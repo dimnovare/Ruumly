@@ -444,6 +444,44 @@ public class AuthService(
         return true;
     }
 
+    public async Task ResendVerificationEmailAsync(Guid userId)
+    {
+        var user = await db.Users.FindAsync(userId)
+            ?? throw new NotFoundException(Msg("USER_NOT_FOUND"));
+
+        if (user.EmailVerified) return;
+
+        // Throttle: only allow resend if the existing expiry is ≤ 23h58m in the future
+        var throttleUntil = DateTime.UtcNow.AddHours(24).AddMinutes(-2);
+        if (user.EmailVerificationExpiry.HasValue &&
+            user.EmailVerificationExpiry.Value > throttleUntil)
+        {
+            throw new ArgumentException("Palun oota 2 minutit enne uuesti saatmist.");
+        }
+
+        var verifyToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        user.EmailVerificationToken  = HashToken(verifyToken);
+        user.EmailVerificationExpiry = DateTime.UtcNow.AddHours(24);
+        await db.SaveChangesAsync();
+
+        try
+        {
+            var verifyUrl = $"{config["AppUrl"]}/verify?token={verifyToken}";
+            var t         = EmailTranslations.For(user.Language);
+            var body      =
+                $"{t.EmailVerifyGreeting}\n\n" +
+                $"{t.EmailVerifyBody}\n\n" +
+                $"{verifyUrl}\n\n" +
+                $"{t.EmailVerifyExpiry}\n\n" +
+                $"Ruumly\ninfo@ruumly.eu";
+            await emailSender.SendAsync(user.Email, t.EmailVerifySubject, body);
+        }
+        catch
+        {
+            // Don't fail the request if email sending fails
+        }
+    }
+
     private static UserDto MapToDto(User user) => new(
         user.Id,
         user.Name,

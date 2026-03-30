@@ -22,4 +22,5 @@ public interface IAuthService
     Task ChangePasswordAsync(Guid userId, ChangePasswordRequest request);
     Task UpdateLanguageAsync(Guid userId, string language);
     Task<bool> VerifyEmailAsync(string token);
+    Task ResendVerificationEmailAsync(Guid userId);
 }
