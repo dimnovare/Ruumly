@@ -125,6 +125,7 @@ internal static class AdminMappers
         Features:    System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(l.FeaturesJson) ?? [],
         PartnerDiscountRateOverride: l.PartnerDiscountRateOverride,
         ClientDiscountRateOverride:  l.ClientDiscountRateOverride,
+        ClientDiscountRate:          l.Supplier?.ClientDiscountRate,
         VatRate:         l.VatRate,
         PricesIncludeVat: l.PricesIncludeVat,
         SupplierId:      l.SupplierId,

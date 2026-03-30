@@ -177,6 +177,7 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
         Features:    DeserializeDict(l.FeaturesJson),
         PartnerDiscountRateOverride: l.PartnerDiscountRateOverride,
         ClientDiscountRateOverride:  l.ClientDiscountRateOverride,
+        ClientDiscountRate:          l.Supplier?.ClientDiscountRate,
         VatRate:         l.VatRate,
         PricesIncludeVat: l.PricesIncludeVat,
         SupplierId:      l.SupplierId,

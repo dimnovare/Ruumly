@@ -20,6 +20,7 @@ public record ListingDto(
     Dictionary<string, object> Features,
     decimal?         PartnerDiscountRateOverride,
     decimal?         ClientDiscountRateOverride,
+    decimal?         ClientDiscountRate,
     decimal?         VatRate,
     bool             PricesIncludeVat,
     Guid             SupplierId,
