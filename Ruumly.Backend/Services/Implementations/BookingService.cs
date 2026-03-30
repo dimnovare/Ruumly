@@ -294,7 +294,12 @@ public class BookingService(
                 .Include(b => b.Order).ThenInclude(o => o!.Supplier)
                 .FirstAsync(b => b.Id == booking.Id);
 
-            return MapToDto(result, null);
+            var generatedInvoiceId = await db.Invoices
+                .Where(i => i.BookingId == booking.Id)
+                .Select(i => (Guid?)i.Id)
+                .FirstOrDefaultAsync();
+
+            return MapToDto(result, generatedInvoiceId);
         }
         catch
         {
