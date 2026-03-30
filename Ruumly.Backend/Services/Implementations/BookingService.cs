@@ -150,6 +150,10 @@ public class BookingService(
                 var startUtc = DateTime.SpecifyKind(startDateCheck, DateTimeKind.Utc);
                 var endUtc   = DateTime.SpecifyKind(endDateCheck,   DateTimeKind.Utc);
 
+                var listingIdLong = (long)(listing.Id.GetHashCode() & 0x7FFFFFFF);
+                await db.Database.ExecuteSqlRawAsync(
+                    "SELECT pg_advisory_xact_lock({0})", listingIdLong);
+
                 var totalUnits  = listing.QuantityTotal ?? 1;
                 var bookedCount = await db.Bookings
                     .CountAsync(b =>
@@ -257,7 +261,6 @@ public class BookingService(
             };
 
             db.Bookings.Add(booking);
-            await db.SaveChangesAsync();
 
             // 7. Initial timeline entry
             db.BookingTimelines.Add(new BookingTimeline

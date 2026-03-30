@@ -34,6 +34,17 @@ public class CreateBookingRequestValidator : AbstractValidator<CreateBookingRequ
             .NotEmpty().WithMessage("Contact phone is required")
             .MaximumLength(20);
 
+        RuleFor(x => x.EndDate)
+            .Must((req, endDate) =>
+            {
+                if (string.IsNullOrEmpty(endDate)) return true;
+                if (!DateTime.TryParse(req.StartDate, out var start)) return true;
+                if (!DateTime.TryParse(endDate, out var end)) return true;
+                return end > start;
+            })
+            .WithMessage("Lõppkuupäev peab olema alguskuupäevast hiljem.")
+            .When(x => !string.IsNullOrEmpty(x.EndDate));
+
         RuleFor(x => x.Notes)
             .MaximumLength(1000).When(x => x.Notes != null);
 
