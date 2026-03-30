@@ -30,11 +30,12 @@ public class CloudflareR2StorageService(
 
         var request = new PutObjectRequest
         {
-            BucketName  = bucket,
-            Key         = key,
-            InputStream = stream,
-            ContentType = contentType,
-            CannedACL   = S3CannedACL.PublicRead,
+            BucketName              = bucket,
+            Key                     = key,
+            InputStream             = stream,
+            ContentType             = contentType,
+            DisablePayloadSigning   = true,
+            DisableDefaultChecksums = true,
         };
 
         await _s3.PutObjectAsync(request);
