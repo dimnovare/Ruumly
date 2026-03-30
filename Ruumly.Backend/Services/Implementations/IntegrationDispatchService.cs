@@ -48,8 +48,21 @@ public class IntegrationDispatchService(
 
         var client = httpClientFactory.CreateClient();
 
-        // Unprotect stored token before use in HTTP header
-        var plainToken = tokenProtector.Unprotect(supplier.ApiAuthToken);
+        // Decrypt stored token before use in HTTP header
+        string? plainToken = null;
+        if (!string.IsNullOrWhiteSpace(supplier.ApiAuthToken))
+        {
+            try
+            {
+                plainToken = tokenProtector.Unprotect(supplier.ApiAuthToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex,
+                    "Failed to decrypt ApiAuthToken for supplier {SupplierId}. Token may be plain-text legacy value.",
+                    supplier.Id);
+            }
+        }
         if (!string.IsNullOrWhiteSpace(plainToken))
         {
             if (string.Equals(supplier.ApiAuthType, "bearer", StringComparison.OrdinalIgnoreCase))

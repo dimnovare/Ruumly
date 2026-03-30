@@ -32,6 +32,7 @@ internal static class AdminMappers
         IntegrationType:     s.IntegrationType.ToString().ToLower(),
         ApiEndpoint:         s.ApiEndpoint,
         ApiAuthType:         s.ApiAuthType,
+        ApiAuthToken:        s.ApiAuthToken is not null ? "••••••••" : null,
         RecipientEmail:      s.RecipientEmail,
         IsActive:            s.IsActive,
         IntegrationHealth:   s.IntegrationHealth.ToString().ToLower(),

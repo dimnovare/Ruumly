@@ -10,6 +10,7 @@ public record SupplierDto(
     string  IntegrationType,
     string? ApiEndpoint,
     string? ApiAuthType,
+    string? ApiAuthToken,
     string? RecipientEmail,
     bool    IsActive,
     string  IntegrationHealth,

@@ -106,6 +106,9 @@ public class AdminSuppliersController(
             RecipientEmail      = body.RecipientEmail,
             ApiEndpoint         = body.ApiEndpoint,
             ApiAuthType         = body.ApiAuthType,
+            ApiAuthToken        = !string.IsNullOrWhiteSpace(body.ApiAuthToken)
+                                  ? tokenProtector.Protect(body.ApiAuthToken)
+                                  : null,
             PartnerDiscountRate = body.PartnerDiscountRate ?? 0,
             ClientDiscountRate  = body.ClientDiscountRate ?? 0,
             Notes               = body.Notes,
@@ -155,6 +158,8 @@ public class AdminSuppliersController(
         if (body.RecipientEmail is not null)   supplier.RecipientEmail = body.RecipientEmail;
         if (body.ApiEndpoint is not null)      supplier.ApiEndpoint = body.ApiEndpoint;
         if (body.ApiAuthType is not null)      supplier.ApiAuthType = body.ApiAuthType;
+        if (!string.IsNullOrWhiteSpace(body.ApiAuthToken))
+            supplier.ApiAuthToken = tokenProtector.Protect(body.ApiAuthToken);
         if (body.PartnerDiscountRate.HasValue) supplier.PartnerDiscountRate = body.PartnerDiscountRate.Value;
         if (body.ClientDiscountRate.HasValue)  supplier.ClientDiscountRate = body.ClientDiscountRate.Value;
         if (body.Notes is not null)            supplier.Notes = body.Notes;
