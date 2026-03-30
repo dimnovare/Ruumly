@@ -144,11 +144,21 @@ public class BookingService(
             // Moving-type listings are one-time services with no date range — skip overlap check.
             if (listing.Type != ListingType.Moving &&
                 !string.IsNullOrEmpty(request.EndDate) &&
-                DateTime.TryParse(request.EndDate, out var endDateCheck) &&
-                DateTime.TryParse(request.StartDate, out var startDateCheck))
+                DateTime.TryParseExact(
+                    request.EndDate, "yyyy-MM-dd",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.AssumeUniversal |
+                    System.Globalization.DateTimeStyles.AdjustToUniversal,
+                    out var endDateCheck) &&
+                DateTime.TryParseExact(
+                    request.StartDate, "yyyy-MM-dd",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.AssumeUniversal |
+                    System.Globalization.DateTimeStyles.AdjustToUniversal,
+                    out var startDateCheck))
             {
-                var startUtc = DateTime.SpecifyKind(startDateCheck, DateTimeKind.Utc);
-                var endUtc   = DateTime.SpecifyKind(endDateCheck,   DateTimeKind.Utc);
+                var startUtc = startDateCheck;
+                var endUtc   = endDateCheck;
 
                 var listingIdLong = (long)(listing.Id.GetHashCode() & 0x7FFFFFFF);
                 await db.Database.ExecuteSqlRawAsync(
@@ -224,15 +234,29 @@ public class BookingService(
                 : Math.Round(subtotal * vatRate / 100m, 2);
             var total = listing.PricesIncludeVat ? subtotal : subtotal + vatAmount;
 
-            if (!DateTime.TryParse(request.StartDate, out var startDate))
+            if (!DateTime.TryParseExact(
+                    request.StartDate, "yyyy-MM-dd",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.AssumeUniversal |
+                    System.Globalization.DateTimeStyles.AdjustToUniversal,
+                    out var startDate))
                 throw new ArgumentException(Msg("INVALID_DATE_FORMAT"));
 
             DateTime? endDate = null;
             if (!string.IsNullOrWhiteSpace(request.EndDate))
             {
-                if (!DateTime.TryParse(request.EndDate, out var parsedEnd))
+                if (!DateTime.TryParseExact(
+                        request.EndDate, "yyyy-MM-dd",
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        System.Globalization.DateTimeStyles.AssumeUniversal |
+                        System.Globalization.DateTimeStyles.AdjustToUniversal,
+                        out var parsedEnd))
                     throw new ArgumentException(Msg("INVALID_DATE_FORMAT"));
-                endDate = DateTime.SpecifyKind(parsedEnd, DateTimeKind.Utc);
+
+                if (parsedEnd <= startDate)
+                    throw new ArgumentException("Lõppkuupäev peab olema alguskuupäevast hiljem.");
+
+                endDate = parsedEnd;
             }
 
             // 6. Create Booking entity
@@ -242,7 +266,7 @@ public class BookingService(
                 UserId         = userId,
                 ListingId      = listing.Id,
                 SupplierId     = listing.SupplierId,
-                StartDate      = DateTime.SpecifyKind(startDate, DateTimeKind.Utc),
+                StartDate      = startDate,
                 EndDate        = endDate,
                 Duration       = request.Duration,
                 ExtrasSnapshot = extrasSnapshots,
