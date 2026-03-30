@@ -301,6 +301,7 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
                            u.Badge?.ToString().ToLower(), u.Rating, u.ReviewCount,
                            u.Description, u.Images, u.Features,
                            u.PartnerDiscountRateOverride, u.ClientDiscountRateOverride,
+                           l.Supplier?.ClientDiscountRate,
                            u.VatRate, u.PricesIncludeVat, u.SupplierId,
                            u.SizeM2, u.QuantityTotal, u.LocationId))
                        .ToList()
