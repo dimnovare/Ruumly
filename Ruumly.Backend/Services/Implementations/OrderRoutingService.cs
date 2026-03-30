@@ -87,7 +87,9 @@ public class OrderRoutingService(
             Duration        = booking.Duration,
             ExtrasSnapshot  = booking.ExtrasSnapshot,
             PartnerDiscountRate = partnerDiscountRate,
-            AutoDispatch    = !matchedRule?.RequiresApproval == true || approvalMode == ApprovalMode.Auto,
+            AutoDispatch    = approvalMode == ApprovalMode.Auto
+                              || matchedRule == null
+                              || !matchedRule.RequiresApproval,
             IntegrationType = supplier.IntegrationType,
             CustomerName    = booking.ContactName ?? string.Empty,
             CustomerEmail   = booking.ContactEmail ?? string.Empty,
