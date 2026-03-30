@@ -139,6 +139,16 @@ public class AdminSuppliersController(
         if (body.BillingModel is not null &&
             Enum.TryParse<BillingModel>(body.BillingModel, true, out var bm2))
             supplier.BillingModel = bm2;
+        if (body.Tier is not null &&
+            Enum.TryParse<SupplierTier>(body.Tier, true, out var tier))
+        {
+            var config = await pricingConfigService.GetAsync();
+            supplier.Tier       = tier;
+            supplier.MonthlyFee = config.ForTier(tier).MonthlyFee;
+            supplier.SubscriptionEndsAt = tier != SupplierTier.Starter
+                ? DateTime.UtcNow.AddMonths(1)
+                : null;
+        }
         if (body.IntegrationType is not null &&
             Enum.TryParse<IntegrationType>(body.IntegrationType, true, out var it2))
             supplier.IntegrationType = it2;

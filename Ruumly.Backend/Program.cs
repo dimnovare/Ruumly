@@ -1,4 +1,5 @@
 using System.Text;
+using Microsoft.AspNetCore.Mvc;
 using FluentValidation;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.RateLimiting;
@@ -173,6 +174,34 @@ builder.Services.AddCors(options =>
 // ─── FluentValidation ───
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(e => e.Value?.Errors.Count > 0)
+            .SelectMany(e => e.Value!.Errors.Select(err => err.ErrorMessage))
+            .ToList();
+
+        var message = errors.Count > 0
+            ? string.Join(" ", errors)
+            : "Validation failed.";
+
+        return new BadRequestObjectResult(new
+        {
+            error            = "Bad Request",
+            message,
+            statusCode       = 400,
+            validationErrors = context.ModelState
+                .Where(e => e.Value?.Errors.Count > 0)
+                .ToDictionary(
+                    e => e.Key,
+                    e => e.Value!.Errors.Select(err => err.ErrorMessage).ToArray()
+                )
+        });
+    };
+});
 
 // ─── API Versioning ───
 builder.Services.AddApiVersioning(options =>

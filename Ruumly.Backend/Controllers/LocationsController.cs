@@ -169,12 +169,23 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
 
     // ── DELETE /api/locations/{id} ─────────────────────────────────────────────
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Provider")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var location = await db.SupplierLocations.FindAsync(id);
         if (location is null)
             return NotFound(new { error = ErrorMessages.Get("LOCATION_NOT_FOUND", Request.GetLang()) });
+
+        if (!await CanAccess(location.SupplierId))
+            return Forbid();
+
+        var hasActiveBookings = await db.Bookings
+            .AnyAsync(b => b.Listing.LocationId == id
+                        && b.Status != BookingStatus.Cancelled
+                        && b.Status != BookingStatus.Completed);
+
+        if (hasActiveBookings)
+            return BadRequest(new { error = "Asukohta ei saa kustutada, kuna sellel on aktiivseid broneeringuid." });
 
         db.SupplierLocations.Remove(location);
         await db.SaveChangesAsync();

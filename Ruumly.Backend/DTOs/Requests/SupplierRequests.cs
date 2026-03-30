@@ -21,6 +21,7 @@ public record CreateSupplierRequest(
 public record UpdateSupplierRequest(
     string? Name,
     string? BillingModel,
+    string? Tier,
     string? RegistryCode,
     string? ContactName,
     string? ContactEmail,
