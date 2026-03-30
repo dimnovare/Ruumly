@@ -227,6 +227,31 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
         return StatusCode(201, new { listing.Id, listing.Title, listing.LocationId });
     }
 
+    // ── DELETE /api/locations/{locationId}/units/{listingId} ───────────────────
+    [HttpDelete("{locationId:guid}/units/{listingId:guid}")]
+    [Authorize(Roles = "Admin,Provider")]
+    public async Task<IActionResult> DeleteUnit(Guid locationId, Guid listingId)
+    {
+        var listing = await db.Listings
+            .FirstOrDefaultAsync(l => l.Id == listingId && l.LocationId == locationId);
+
+        if (listing is null) return NotFound();
+        if (!await CanAccess(listing.SupplierId)) return Forbid();
+
+        // Check if there are active bookings
+        var hasBookings = await db.Bookings
+            .AnyAsync(b => b.ListingId == listingId
+                        && b.Status != BookingStatus.Cancelled
+                        && b.Status != BookingStatus.Completed);
+
+        if (hasBookings)
+            return BadRequest(new { error = "Cannot delete unit with active bookings. Deactivate it instead." });
+
+        db.Listings.Remove(listing);
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     private async Task<bool> CanAccess(Guid supplierId)
