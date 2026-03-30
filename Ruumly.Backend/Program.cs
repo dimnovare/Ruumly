@@ -90,10 +90,9 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
-var keysDir = "/app/uploads/dp-keys";
-Directory.CreateDirectory(keysDir);
 builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo(keysDir));
+    .PersistKeysToDbContext<RuumlyDbContext>()
+    .SetApplicationName("ruumly");
 builder.Services.AddSingleton<TokenProtector>();
 
 // ─── Google OAuth config validation ───

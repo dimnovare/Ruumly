@@ -1,11 +1,14 @@
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 
 namespace Ruumly.Backend.Data;
 
-public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options) : DbContext(options)
+public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
+    : DbContext(options), IDataProtectionKeyContext
 {
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
     public DbSet<User> Users => Set<User>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Supplier> Suppliers => Set<Supplier>();
