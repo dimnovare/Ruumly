@@ -23,15 +23,10 @@ public class InvoiceService(RuumlyDbContext db) : IInvoiceService
         else if (role == UserRole.Provider)
         {
             var user = await db.Users.FindAsync(userId);
-            if (user is not null)
-            {
-                var supplier = await db.Suppliers
-                    .FirstOrDefaultAsync(s => s.ContactEmail == user.Email);
-                if (supplier is not null)
-                    query = query.Where(i => i.Booking.SupplierId == supplier.Id);
-                else
-                    return [];
-            }
+            if (user?.SupplierId is not null)
+                query = query.Where(i => i.Booking.SupplierId == user.SupplierId.Value);
+            else
+                return [];
         }
         // Admin: no filter
 
@@ -55,11 +50,8 @@ public class InvoiceService(RuumlyDbContext db) : IInvoiceService
 
         if (role == UserRole.Provider)
         {
-            var user     = await db.Users.FindAsync(userId);
-            var supplier = user is not null
-                ? await db.Suppliers.FirstOrDefaultAsync(s => s.ContactEmail == user.Email)
-                : null;
-            if (supplier is null || invoice.Booking.SupplierId != supplier.Id)
+            var user = await db.Users.FindAsync(userId);
+            if (user?.SupplierId is null || invoice.Booking.SupplierId != user.SupplierId.Value)
                 throw new ForbiddenException("You do not have access to this invoice.");
         }
 
