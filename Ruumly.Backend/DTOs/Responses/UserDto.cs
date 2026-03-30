@@ -14,5 +14,6 @@ public record UserDto(
     DateTime RegisteredAt,
     DateTime? LastLoginAt,
     int BookingsCount,
-    bool HasGoogleAccount
+    bool HasGoogleAccount,
+    Guid? SupplierId
 );

@@ -1,7 +1,7 @@
 namespace Ruumly.Backend.DTOs.Requests;
 
 public record CreateLocationRequest(
-    Guid          SupplierId,
+    Guid?         SupplierId,
     string        Name,
     string        Address,
     string        City,

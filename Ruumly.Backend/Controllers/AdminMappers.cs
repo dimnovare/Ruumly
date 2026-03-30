@@ -17,7 +17,8 @@ internal static class AdminMappers
         u.Id, u.Name, u.Email, u.Role, u.Status,
         u.Company, u.Phone, u.Avatar,
         u.RegisteredAt, u.LastLoginAt, u.BookingsCount,
-        HasGoogleAccount: u.GoogleId is not null);
+        HasGoogleAccount: u.GoogleId is not null,
+        SupplierId: u.SupplierId);
 
     internal static SupplierDto MapSupplier(
         Models.Supplier s, int ordersTotal, decimal revenue, bool includeSettings,

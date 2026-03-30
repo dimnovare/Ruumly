@@ -88,17 +88,31 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
     [Authorize(Roles = "Admin,Provider")]
     public async Task<IActionResult> Create([FromBody] CreateLocationRequest body)
     {
-        // Provider can only create for their own supplier
-        if (!await CanAccess(body.SupplierId))
+        // Resolve supplierId: admin passes it explicitly, provider auto-resolves from their account
+        Guid supplierId;
+        if (body.SupplierId.HasValue && body.SupplierId.Value != Guid.Empty)
+        {
+            supplierId = body.SupplierId.Value;
+        }
+        else
+        {
+            var userId      = User.GetUserId();
+            var currentUser = await db.Users.FindAsync(userId);
+            if (currentUser?.SupplierId is null)
+                return BadRequest(new { error = "No supplier linked to your account." });
+            supplierId = currentUser.SupplierId.Value;
+        }
+
+        if (!await CanAccess(supplierId))
             return Forbid();
 
-        var supplier = await db.Suppliers.FindAsync(body.SupplierId);
+        var supplier = await db.Suppliers.FindAsync(supplierId);
         if (supplier is null)
             return NotFound(new { error = ErrorMessages.Get("LISTING_NOT_FOUND", Request.GetLang()) });
 
         // Check tier limit — count active locations, not individual unit listings.
         var activeLocationCount = await db.SupplierLocations
-            .CountAsync(l => l.SupplierId == body.SupplierId && l.IsActive);
+            .CountAsync(l => l.SupplierId == supplierId && l.IsActive);
 
         var config     = await pricingConfigService.GetAsync();
         var maxAllowed = config.ForTier(supplier.Tier).MaxLocations;
@@ -114,7 +128,7 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
         var location = new SupplierLocation
         {
             Id           = Guid.NewGuid(),
-            SupplierId   = body.SupplierId,
+            SupplierId   = supplierId,
             Name         = body.Name,
             Address      = body.Address,
             City         = body.City,

@@ -456,7 +456,8 @@ public class AuthService(
         user.RegisteredAt,
         user.LastLoginAt,
         user.BookingsCount,
-        HasGoogleAccount: user.GoogleId is not null
+        HasGoogleAccount: user.GoogleId is not null,
+        SupplierId: user.SupplierId
     );
 
     private static string BuildPasswordResetHtml(
