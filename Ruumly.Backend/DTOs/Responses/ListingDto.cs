@@ -26,5 +26,6 @@ public record ListingDto(
     Guid             SupplierId,
     decimal?         SizeM2,
     int?             QuantityTotal,
-    Guid?            LocationId
+    Guid?            LocationId,
+    int              ViewCount
 );

@@ -24,6 +24,7 @@ public class Listing
     public ListingBadge? Badge { get; set; }
     public decimal Rating { get; set; }
     public int ReviewCount { get; set; }
+    public int ViewCount { get; set; } = 0;
     public decimal? PartnerDiscountRateOverride { get; set; }
     public decimal? ClientDiscountRateOverride { get; set; }
     public decimal? VatRate { get; set; }

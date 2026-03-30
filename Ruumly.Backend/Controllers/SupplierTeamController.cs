@@ -141,16 +141,55 @@ public class SupplierTeamController(
             return NotFound(new { message = "No supplier profile linked to this account." });
 
         var s             = user.Supplier;
-        var orders        = await db.Orders.Where(o => o.SupplierId == s.Id).ToListAsync();
+        var ordersTotal = await db.Orders
+            .Where(o => o.SupplierId == s.Id)
+            .CountAsync();
+
+        var revenue = await db.PayoutEntries
+            .Where(p => p.SupplierId == s.Id && p.Status == PayoutStatus.Paid)
+            .SumAsync(p => (decimal?)p.SupplierAmount) ?? 0m;
+
         var pricingConfig = await pricingConfigService.GetAsync();
         var dto           = AdminMappers.MapSupplier(
             s,
-            ordersTotal:     orders.Count,
-            revenue:         orders.Sum(o => o.Total),
+            ordersTotal:     ordersTotal,
+            revenue:         revenue,
             includeSettings: true,
             pricingConfig:   pricingConfig);
 
         return Ok(dto);
+    }
+
+    [HttpGet("analytics")]
+    public async Task<IActionResult> GetAnalytics()
+    {
+        var userId = User.GetUserId();
+        var supplierId = await GetSupplierIdAsync(userId);
+        if (supplierId is null)
+            return NotFound(new { message = "No supplier linked." });
+
+        var sixMonthsAgo = DateTime.UtcNow.AddMonths(-6);
+
+        // Monthly bookings + revenue for the last 6 months
+        var monthly = await db.Orders
+            .Where(o => o.SupplierId == supplierId && o.CreatedAt >= sixMonthsAgo)
+            .GroupBy(o => new { o.CreatedAt.Year, o.CreatedAt.Month })
+            .Select(g => new
+            {
+                Year     = g.Key.Year,
+                Month    = g.Key.Month,
+                Bookings = g.Count(),
+                Revenue  = g.Sum(o => o.Total),
+            })
+            .OrderBy(x => x.Year).ThenBy(x => x.Month)
+            .ToListAsync();
+
+        // Total views across all active listings for this supplier
+        var totalViews = await db.Listings
+            .Where(l => l.SupplierId == supplierId && l.IsActive)
+            .SumAsync(l => (int?)l.ViewCount) ?? 0;
+
+        return Ok(new { monthly, totalViews });
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────

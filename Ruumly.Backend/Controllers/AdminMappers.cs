@@ -133,5 +133,6 @@ internal static class AdminMappers
         SupplierId:      l.SupplierId,
         SizeM2:          l.SizeM2,
         QuantityTotal:   l.QuantityTotal,
-        LocationId:      l.LocationId);
+        LocationId:      l.LocationId,
+        ViewCount:       l.ViewCount);
 }

@@ -401,7 +401,7 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
                            u.PartnerDiscountRateOverride, u.ClientDiscountRateOverride,
                            l.Supplier?.ClientDiscountRate,
                            u.VatRate, u.PricesIncludeVat, u.SupplierId,
-                           u.SizeM2, u.QuantityTotal, u.LocationId))
+                           u.SizeM2, u.QuantityTotal, u.LocationId, u.ViewCount))
                        .ToList()
     );
 }

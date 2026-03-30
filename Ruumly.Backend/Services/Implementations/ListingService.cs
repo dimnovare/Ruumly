@@ -105,6 +105,10 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
 
         if (listing is null) return null;
 
+        await db.Listings
+            .Where(l => l.Id == id)
+            .ExecuteUpdateAsync(s => s.SetProperty(l => l.ViewCount, l => l.ViewCount + 1));
+
         var dto = MapToDto(listing);
         await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(dto), SearchTtl);
         return dto;
@@ -183,7 +187,8 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
         SupplierId:      l.SupplierId,
         SizeM2:          l.SizeM2,
         QuantityTotal:   l.QuantityTotal,
-        LocationId:      l.LocationId
+        LocationId:      l.LocationId,
+        ViewCount:       l.ViewCount
     );
 
     private static string? BadgeToString(ListingBadge? badge) => badge switch
