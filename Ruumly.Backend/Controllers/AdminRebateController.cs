@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
+using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 
@@ -127,6 +129,7 @@ public class AdminRebateController(RuumlyDbContext db) : AdminBaseController(db)
 
     /// <summary>Mark a rebate invoice as Sent (emailed to supplier).</summary>
     [HttpPatch("rebate-invoices/{id:guid}/mark-sent")]
+    [HttpPatch("rebate-invoices/{id:guid}/sent")]
     public async Task<IActionResult> MarkSent(Guid id)
     {
         var invoice = await Db.RebateInvoices.FindAsync(id);
@@ -142,6 +145,7 @@ public class AdminRebateController(RuumlyDbContext db) : AdminBaseController(db)
 
     /// <summary>Mark a rebate invoice as Paid (supplier settled).</summary>
     [HttpPatch("rebate-invoices/{id:guid}/mark-paid")]
+    [HttpPatch("rebate-invoices/{id:guid}/paid")]
     public async Task<IActionResult> MarkPaid(Guid id, [FromBody] MarkRebatePaidRequest request)
     {
         var invoice = await Db.RebateInvoices.FindAsync(id);
@@ -154,6 +158,30 @@ public class AdminRebateController(RuumlyDbContext db) : AdminBaseController(db)
         await Db.SaveChangesAsync();
 
         return Ok(new { invoice.Id, status = "paid" });
+    }
+
+    /// <summary>Provider's own rebate invoices.</summary>
+    [HttpGet("/api/supplier/rebate-invoices")]
+    [Authorize(Roles = "Provider")]
+    public async Task<IActionResult> GetSupplierRebates()
+    {
+        var userId = User.GetUserId();
+        var user   = await Db.Users.FindAsync(userId);
+        if (user?.SupplierId is null) return Ok(Array.Empty<object>());
+
+        var invoices = await Db.RebateInvoices
+            .Where(r => r.SupplierId == user.SupplierId.Value)
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync();
+
+        return Ok(invoices.Select(r => new {
+            r.Id,
+            r.SupplierId,
+            period    = r.Period.ToString("yyyy-MM"),
+            amount    = r.TotalMargin,
+            status    = r.Status.ToString().ToLower(),
+            createdAt = r.CreatedAt.ToString("yyyy-MM-dd"),
+        }));
     }
 }
 

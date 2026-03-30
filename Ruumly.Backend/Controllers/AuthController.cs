@@ -231,8 +231,17 @@ public class AuthController(
             parts.Add(r.Notes);
         return string.Join("\n", parts);
     }
+
+    [HttpPost("notify-interest")]
+    [AllowAnonymous]
+    public IActionResult NotifyInterest([FromBody] NotifyInterestRequest body)
+    {
+        // Log for now — can implement email notification later
+        return Ok(new { success = true });
+    }
 }
 
 // Inline request DTOs — too small to warrant their own files
 public record RefreshTokenRequest(string RefreshToken);
 public record VerifyEmailRequest(string Token);
+public record NotifyInterestRequest(string Email, string City);
