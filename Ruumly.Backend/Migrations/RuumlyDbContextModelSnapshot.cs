@@ -826,6 +826,51 @@ namespace Ruumly.Backend.Migrations
                     b.ToTable("PlatformSettings");
                 });
 
+            modelBuilder.Entity("Ruumly.Backend.Models.RebateInvoice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<int>("OrderCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("Period")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("TotalMargin")
+                        .HasColumnType("numeric(18,4)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SupplierId", "Period")
+                        .IsUnique();
+
+                    b.ToTable("RebateInvoices");
+                });
+
             modelBuilder.Entity("Ruumly.Backend.Models.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -920,6 +965,10 @@ namespace Ruumly.Backend.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("BankName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BillingModel")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<decimal>("ClientDiscountRate")
@@ -1320,6 +1369,17 @@ namespace Ruumly.Backend.Migrations
                         .IsRequired();
 
                     b.Navigation("Order");
+
+                    b.Navigation("Supplier");
+                });
+
+            modelBuilder.Entity("Ruumly.Backend.Models.RebateInvoice", b =>
+                {
+                    b.HasOne("Ruumly.Backend.Models.Supplier", "Supplier")
+                        .WithMany()
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Supplier");
                 });
