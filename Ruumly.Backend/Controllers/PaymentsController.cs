@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.Helpers;
@@ -25,6 +26,7 @@ public class PaymentsController(
     /// </summary>
     [HttpPost("initiate")]
     [Authorize]
+    [EnableRateLimiting("payment")]
     public async Task<IActionResult> Initiate(
         [FromBody] InitiatePaymentRequest request)
     {

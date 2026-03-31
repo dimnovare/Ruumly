@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
@@ -21,6 +22,7 @@ public class ReviewsController(RuumlyDbContext db) : ControllerBase
 
     [HttpPost]
     [Authorize]
+    [EnableRateLimiting("booking")]
     public async Task<IActionResult> CreateReview([FromBody] CreateReviewRequest req)
     {
         // 1. Validate rating range
