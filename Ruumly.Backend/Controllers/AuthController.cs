@@ -18,7 +18,8 @@ public class AuthController(
     IAuthService authService,
     RuumlyDbContext db,
     INotificationService notificationService,
-    IConfiguration config) : ControllerBase
+    IConfiguration config,
+    IWebHostEnvironment env) : ControllerBase
 {
     // Sets the HttpOnly refresh-token cookie on every successful auth response.
     // SameSite=None because the frontend (ruumly.eu) and API (Railway) are on different origins.
@@ -26,11 +27,12 @@ public class AuthController(
     // (b) the paired CsrfToken returned in the JSON body must be sent as X-CSRF-Token on /refresh.
     private void SetRefreshCookie(string refreshToken, int expiryDays)
     {
+        var isDev = env.IsDevelopment();
         Response.Cookies.Append("ruumly-refresh", refreshToken, new CookieOptions
         {
             HttpOnly = true,
-            Secure   = true,
-            SameSite = SameSiteMode.None,
+            Secure   = !isDev,
+            SameSite = isDev ? SameSiteMode.Lax : SameSiteMode.None,
             Path     = "/api/auth",
             MaxAge   = TimeSpan.FromDays(expiryDays),
         });
@@ -100,8 +102,8 @@ public class AuthController(
         Response.Cookies.Delete("ruumly-refresh", new CookieOptions
         {
             Path     = "/api/auth",
-            Secure   = true,
-            SameSite = SameSiteMode.None,
+            Secure   = !env.IsDevelopment(),
+            SameSite = env.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.None,
         });
         return Ok(new { message = "Logged out successfully" });
     }
