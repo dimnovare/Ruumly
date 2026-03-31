@@ -19,17 +19,21 @@ public class IntegrationDispatchService(
 {
     public async Task DispatchAsync(Order order, Supplier supplier)
     {
-        switch (supplier.IntegrationType)
+        // Honor order-level posting channel (set by routing service from IntegrationSettings)
+        // Fall back to supplier's base integration type if PostingChannel is null
+        var channel = order.PostingChannel ?? (PostingMode)(int)supplier.IntegrationType;
+
+        switch (channel)
         {
-            case IntegrationType.Api:
+            case PostingMode.Api:
                 await DispatchApiAsync(order, supplier);
                 break;
 
-            case IntegrationType.Email:
+            case PostingMode.Email:
                 await DispatchEmailAsync(order, supplier);
                 break;
 
-            case IntegrationType.Manual:
+            case PostingMode.Manual:
                 await DispatchManualAsync(order);
                 break;
         }
@@ -39,10 +43,17 @@ public class IntegrationDispatchService(
 
     private async Task DispatchApiAsync(Order order, Supplier supplier)
     {
+        var settings = await db.IntegrationSettings
+            .FirstOrDefaultAsync(s => s.SupplierId == supplier.Id);
+        var fallback = settings?.FallbackPostingMode ?? PostingMode.Email;
+
         if (string.IsNullOrWhiteSpace(supplier.ApiEndpoint))
         {
-            logger.LogWarning("Supplier {SupplierId} has no API endpoint. Falling back to email.", supplier.Id);
-            await DispatchEmailAsync(order, supplier);
+            logger.LogWarning("Supplier {SupplierId} has no API endpoint. Falling back to {Fallback}.", supplier.Id, fallback);
+            if (fallback == PostingMode.Email)
+                await DispatchEmailAsync(order, supplier);
+            else
+                await DispatchManualAsync(order);
             return;
         }
 
@@ -130,7 +141,7 @@ public class IntegrationDispatchService(
             }
             else
             {
-                logger.LogWarning("API dispatch failed for order {OrderId}: {StatusCode}. Falling back to email.", order.Id, statusCode);
+                logger.LogWarning("API dispatch failed for order {OrderId}: {StatusCode}. Falling back to {Fallback}.", order.Id, statusCode, fallback);
 
                 db.FulfillmentEvents.Add(new FulfillmentEvent
                 {
@@ -140,18 +151,21 @@ public class IntegrationDispatchService(
                     Actor     = "system",
                     ActorRole = UserRole.Admin,
                     Channel   = PostingMode.Api,
-                    Detail    = $"POST {supplier.ApiEndpoint} → {statusCode} (failed, falling back to email)",
+                    Detail    = $"POST {supplier.ApiEndpoint} → {statusCode} (failed, falling back to {fallback})",
                     CreatedAt = DateTime.UtcNow,
                 });
 
                 await db.SaveChangesAsync();
-                await DispatchEmailAsync(order, supplier);
+                if (fallback == PostingMode.Email)
+                    await DispatchEmailAsync(order, supplier);
+                else
+                    await DispatchManualAsync(order);
                 return;
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "API dispatch exception for order {OrderId}. Falling back to email.", order.Id);
+            logger.LogError(ex, "API dispatch exception for order {OrderId}. Falling back to {Fallback}.", order.Id, fallback);
 
             db.FulfillmentEvents.Add(new FulfillmentEvent
             {
@@ -161,12 +175,15 @@ public class IntegrationDispatchService(
                 Actor     = "system",
                 ActorRole = UserRole.Admin,
                 Channel   = PostingMode.Api,
-                Detail    = $"Exception: {ex.Message} — falling back to email",
+                Detail    = $"Exception: {ex.Message} — falling back to {fallback}",
                 CreatedAt = DateTime.UtcNow,
             });
 
             await db.SaveChangesAsync();
-            await DispatchEmailAsync(order, supplier);
+            if (fallback == PostingMode.Email)
+                await DispatchEmailAsync(order, supplier);
+            else
+                await DispatchManualAsync(order);
             return;
         }
 

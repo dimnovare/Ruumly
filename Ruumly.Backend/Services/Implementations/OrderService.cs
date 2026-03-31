@@ -105,6 +105,8 @@ public class OrderService(
         var approver = await db.Users.FindAsync(approvedByUserId);
         var approverName = approver?.Name ?? approvedByUserId.ToString();
 
+        var tl = EmailTranslations.For((await db.Users.FindAsync(order.Booking?.UserId))?.Language);
+
         order.Status     = OrderStatus.Sent;
         order.ApprovedBy = approverName;
         order.ApprovedAt = DateTime.UtcNow;
@@ -125,7 +127,7 @@ public class OrderService(
         {
             Id        = Guid.NewGuid(),
             OrderId   = order.Id,
-            Event     = "Tellimus kinnitatud",
+            Event     = tl.TimelineOrderApproved,
             Status    = OrderStatus.Sent,
             Detail    = $"Kinnitaja: {approverName}",
             CreatedAt = DateTime.UtcNow,
@@ -152,20 +154,17 @@ public class OrderService(
             {
                 Id        = Guid.NewGuid(),
                 BookingId = booking.Id,
-                Event     = "Partner kinnitas",
+                Event     = tl.TimelinePartnerConfirmed,
                 Status    = BookingStatus.Confirmed,
                 CreatedAt = DateTime.UtcNow,
             });
 
-            var tApprove = EmailTranslations.For(
-                (await db.Users.FindAsync(booking.UserId))?.Language);
-
             await NotifyBookingStatusAsync(
                 booking,
-                notificationTitle: "Broneering kinnitatud",
+                notificationTitle: tl.NotifBookingConfirmed,
                 notificationBody:  $"{booking.Listing?.Title ?? order.ListingTitle} on kinnitatud",
-                emailSubject:      tApprove.BookingStatusConfirmedSubject,
-                emailBody:         tApprove.BookingStatusConfirmedBody);
+                emailSubject:      tl.BookingStatusConfirmedSubject,
+                emailBody:         tl.BookingStatusConfirmedBody);
 
             await db.SaveChangesAsync();
         }
@@ -184,6 +183,8 @@ public class OrderService(
 
         var rejecter = await db.Users.FindAsync(rejectedByUserId);
         var rejecterName = rejecter?.Name ?? rejectedByUserId.ToString();
+
+        var tl = EmailTranslations.For((await db.Users.FindAsync(order.Booking?.UserId))?.Language);
 
         order.Status    = OrderStatus.Rejected;
         order.Notes     = string.IsNullOrWhiteSpace(reason) ? order.Notes : reason;
@@ -204,7 +205,7 @@ public class OrderService(
         {
             Id        = Guid.NewGuid(),
             OrderId   = order.Id,
-            Event     = "Tellimus tagasi lükatud",
+            Event     = tl.TimelineOrderRejected,
             Status    = OrderStatus.Rejected,
             Detail    = reason,
             CreatedAt = DateTime.UtcNow,
@@ -223,20 +224,17 @@ public class OrderService(
             {
                 Id        = Guid.NewGuid(),
                 BookingId = booking.Id,
-                Event     = "Broneering tühistatud",
+                Event     = tl.TimelineBookingCancelled,
                 Status    = BookingStatus.Cancelled,
                 CreatedAt = DateTime.UtcNow,
             });
 
-            var tReject = EmailTranslations.For(
-                (await db.Users.FindAsync(booking.UserId))?.Language);
-
             await NotifyBookingStatusAsync(
                 booking,
-                notificationTitle: "Broneering tagasi lükatud",
+                notificationTitle: tl.NotifBookingRejected,
                 notificationBody:  string.IsNullOrWhiteSpace(reason) ? "Teie broneering lükati tagasi" : reason,
-                emailSubject:      tReject.BookingStatusRejectedSubject,
-                emailBody:         tReject.BookingStatusRejectedBody);
+                emailSubject:      tl.BookingStatusRejectedSubject,
+                emailBody:         tl.BookingStatusRejectedBody);
         }
 
         await db.SaveChangesAsync();
@@ -254,6 +252,8 @@ public class OrderService(
 
         var confirmer     = await db.Users.FindAsync(confirmedByUserId);
         var confirmerName = confirmer?.Name ?? "Partner";
+
+        var tl = EmailTranslations.For((await db.Users.FindAsync(order.Booking?.UserId))?.Language);
 
         order.Status      = OrderStatus.Confirmed;
         order.ConfirmedAt = DateTime.UtcNow;
@@ -274,7 +274,7 @@ public class OrderService(
         {
             Id        = Guid.NewGuid(),
             OrderId   = order.Id,
-            Event     = "Partner kinnitas tellimuse",
+            Event     = tl.TimelinePartnerConfirmed,
             Status    = OrderStatus.Confirmed,
             Detail    = $"Kinnitas: {confirmerName}",
             CreatedAt = DateTime.UtcNow,
@@ -293,20 +293,17 @@ public class OrderService(
             {
                 Id        = Guid.NewGuid(),
                 BookingId = booking.Id,
-                Event     = "Teenus on aktiivne",
+                Event     = tl.TimelineServiceActive,
                 Status    = BookingStatus.Active,
                 CreatedAt = DateTime.UtcNow,
             });
 
-            var tConfirm = EmailTranslations.For(
-                (await db.Users.FindAsync(booking.UserId))?.Language);
-
             await NotifyBookingStatusAsync(
                 booking,
-                notificationTitle: "Broneering kinnitatud",
+                notificationTitle: tl.NotifBookingConfirmed,
                 notificationBody:  $"{booking.Listing?.Title ?? "Teenus"} on kinnitatud — teenus on aktiivne",
-                emailSubject:      tConfirm.BookingStatusConfirmedSubject,
-                emailBody:         tConfirm.BookingStatusConfirmedBody);
+                emailSubject:      tl.BookingStatusConfirmedSubject,
+                emailBody:         tl.BookingStatusConfirmedBody);
 
             // Auto-generate invoice (idempotent — skips if already exists)
             await invoiceService.GenerateAsync(booking.Id);
@@ -328,6 +325,8 @@ public class OrderService(
         if (!Enum.TryParse<OrderStatus>(request.Status, ignoreCase: true, out var newStatus))
             throw new ArgumentException(Msg("ORDER_WRONG_STATUS"));
 
+        var tl = EmailTranslations.For((await db.Users.FindAsync(order.Booking?.UserId))?.Language);
+
         order.Status    = newStatus;
         order.UpdatedAt = DateTime.UtcNow;
 
@@ -344,7 +343,7 @@ public class OrderService(
         {
             Id        = Guid.NewGuid(),
             OrderId   = order.Id,
-            Event     = $"Staatus muudetud: {newStatus}",
+            Event     = $"{tl.TimelineStatusChanged}: {newStatus}",
             Status    = newStatus,
             Detail    = request.Notes,
             CreatedAt = DateTime.UtcNow,
@@ -369,24 +368,21 @@ public class OrderService(
                     Id        = Guid.NewGuid(),
                     BookingId = booking.Id,
                     Event     = newStatus == OrderStatus.Completed
-                        ? "Teenus lõpetatud"
-                        : "Broneering tühistatud",
+                        ? tl.TimelineServiceCompleted
+                        : tl.TimelineBookingCancelled,
                     Status    = booking.Status,
                     CreatedAt = DateTime.UtcNow,
                 });
 
-                var tUpdate = EmailTranslations.For(
-                    (await db.Users.FindAsync(booking.UserId))?.Language);
-
                 var (notifTitle, notifBody, emailSubject, emailBody) = newStatus == OrderStatus.Completed
-                    ? ("Teenus lõpetatud",
+                    ? (tl.TimelineServiceCompleted,
                        $"{booking.Listing?.Title ?? order.ListingTitle} on lõpetatud",
-                       tUpdate.BookingStatusCompletedSubject,
-                       tUpdate.BookingStatusCompletedBody)
-                    : ("Broneering tühistatud",
+                       tl.BookingStatusCompletedSubject,
+                       tl.BookingStatusCompletedBody)
+                    : (tl.TimelineBookingCancelled,
                        $"{booking.Listing?.Title ?? order.ListingTitle} on tühistatud",
-                       tUpdate.BookingStatusCancelledSubject,
-                       tUpdate.BookingStatusCancelledBody);
+                       tl.BookingStatusCancelledSubject,
+                       tl.BookingStatusCancelledBody);
 
                 await NotifyBookingStatusAsync(
                     booking,

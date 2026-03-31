@@ -131,6 +131,8 @@ public class BookingService(
         if (bookingUser?.EmailVerified != true)
             throw new ForbiddenException(Msg("EMAIL_NOT_VERIFIED"));
 
+        var tl = EmailTranslations.For(bookingUser?.Language);
+
         await using var transaction = await db.Database.BeginTransactionAsync();
         try
         {
@@ -291,7 +293,7 @@ public class BookingService(
             {
                 Id        = Guid.NewGuid(),
                 BookingId = booking.Id,
-                Event     = "Broneering loodud",
+                Event     = tl.TimelineBookingCreated,
                 Status    = BookingStatus.Pending,
                 CreatedAt = DateTime.UtcNow,
             });
@@ -359,6 +361,7 @@ public class BookingService(
         if (booking.Status is BookingStatus.Cancelled or BookingStatus.Completed)
             throw new ArgumentException("Booking is already finalised and cannot be cancelled.");
 
+        var tl  = EmailTranslations.For((await db.Users.FindAsync(booking.UserId))?.Language);
         var now = DateTime.UtcNow;
 
         booking.Status    = BookingStatus.Cancelled;
@@ -370,7 +373,7 @@ public class BookingService(
         {
             Id        = Guid.NewGuid(),
             BookingId = booking.Id,
-            Event     = "Broneering tühistatud",
+            Event     = tl.TimelineBookingCancelled,
             Status    = BookingStatus.Cancelled,
             CreatedAt = now,
         });

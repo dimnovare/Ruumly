@@ -41,7 +41,19 @@ public static class EmailTranslations
         string BookingStatusCompletedBody,
         string BookingStatusCancelledSubject,
         string BookingStatusCancelledBody,
-        string BookingStatusViewLink
+        string BookingStatusViewLink,
+        // Timeline events
+        string TimelineBookingCreated,
+        string TimelineBookingCancelled,
+        string TimelineOrderApproved,
+        string TimelinePartnerConfirmed,
+        string TimelineOrderRejected,
+        string TimelineServiceActive,
+        string TimelineServiceCompleted,
+        string TimelineStatusChanged,
+        // Notification titles
+        string NotifBookingConfirmed,
+        string NotifBookingRejected
     );
 
     private static readonly EmailStrings Et = new(
@@ -86,7 +98,17 @@ public static class EmailTranslations
         BookingStatusCompletedBody:    "Teie broneering #{id} on lõpetatud",
         BookingStatusCancelledSubject: "Ruumly — broneering tühistatud",
         BookingStatusCancelledBody:    "Teie broneering #{id} on tühistatud",
-        BookingStatusViewLink:         "Vaata broneeringut"
+        BookingStatusViewLink:         "Vaata broneeringut",
+        TimelineBookingCreated:        "Broneering loodud",
+        TimelineBookingCancelled:      "Broneering tühistatud",
+        TimelineOrderApproved:         "Tellimus kinnitatud",
+        TimelinePartnerConfirmed:      "Partner kinnitas",
+        TimelineOrderRejected:         "Tellimus tagasi lükatud",
+        TimelineServiceActive:         "Teenus on aktiivne",
+        TimelineServiceCompleted:      "Teenus lõpetatud",
+        TimelineStatusChanged:         "Staatus muudetud",
+        NotifBookingConfirmed:         "Broneering kinnitatud",
+        NotifBookingRejected:          "Broneering tagasi lükatud"
     );
 
     private static readonly EmailStrings En = new(
@@ -131,7 +153,17 @@ public static class EmailTranslations
         BookingStatusCompletedBody:    "Your booking #{id} has been completed",
         BookingStatusCancelledSubject: "Ruumly — booking cancelled",
         BookingStatusCancelledBody:    "Your booking #{id} has been cancelled",
-        BookingStatusViewLink:         "View booking"
+        BookingStatusViewLink:         "View booking",
+        TimelineBookingCreated:        "Booking created",
+        TimelineBookingCancelled:      "Booking cancelled",
+        TimelineOrderApproved:         "Order approved",
+        TimelinePartnerConfirmed:      "Partner confirmed",
+        TimelineOrderRejected:         "Order rejected",
+        TimelineServiceActive:         "Service active",
+        TimelineServiceCompleted:      "Service completed",
+        TimelineStatusChanged:         "Status changed",
+        NotifBookingConfirmed:         "Booking confirmed",
+        NotifBookingRejected:          "Booking rejected"
     );
 
     private static readonly EmailStrings Ru = new(
@@ -175,7 +207,17 @@ public static class EmailTranslations
         BookingStatusCompletedBody:    "Ваше бронирование #{id} завершено",
         BookingStatusCancelledSubject: "Ruumly — бронирование отменено",
         BookingStatusCancelledBody:    "Ваше бронирование #{id} отменено",
-        BookingStatusViewLink:         "Посмотреть бронирование"
+        BookingStatusViewLink:         "Посмотреть бронирование",
+        TimelineBookingCreated:        "Бронирование создано",
+        TimelineBookingCancelled:      "Бронирование отменено",
+        TimelineOrderApproved:         "Заказ подтверждён",
+        TimelinePartnerConfirmed:      "Партнёр подтвердил",
+        TimelineOrderRejected:         "Заказ отклонён",
+        TimelineServiceActive:         "Услуга активна",
+        TimelineServiceCompleted:      "Услуга завершена",
+        TimelineStatusChanged:         "Статус изменён",
+        NotifBookingConfirmed:         "Бронирование подтверждено",
+        NotifBookingRejected:          "Бронирование отклонено"
     );
 
     public static EmailStrings For(string? lang) =>
