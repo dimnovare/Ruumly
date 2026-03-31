@@ -105,9 +105,15 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
 
         if (listing is null) return null;
 
-        await db.Listings
-            .Where(l => l.Id == id)
-            .ExecuteUpdateAsync(s => s.SetProperty(l => l.ViewCount, l => l.ViewCount + 1));
+        if (db.Database.IsRelational())
+            await db.Listings
+                .Where(l => l.Id == id)
+                .ExecuteUpdateAsync(s => s.SetProperty(l => l.ViewCount, l => l.ViewCount + 1));
+        else
+        {
+            listing.ViewCount++;
+            await db.SaveChangesAsync();
+        }
 
         var dto = MapToDto(listing);
         await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(dto), SearchTtl);

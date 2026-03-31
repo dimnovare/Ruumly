@@ -181,9 +181,14 @@ public class BookingService(
                 var startUtc = startDateCheck;
                 var endUtc   = endDateCheck;
 
-                var listingIdLong = (long)(listing.Id.GetHashCode() & 0x7FFFFFFF);
-                await db.Database.ExecuteSqlRawAsync(
-                    "SELECT pg_advisory_xact_lock({0})", listingIdLong);
+                // Advisory lock prevents concurrent overlap-check races on PostgreSQL.
+                // Skipped on InMemory (tests) where row-level contention cannot occur.
+                if (db.Database.IsRelational())
+                {
+                    var listingIdLong = (long)(listing.Id.GetHashCode() & 0x7FFFFFFF);
+                    await db.Database.ExecuteSqlRawAsync(
+                        "SELECT pg_advisory_xact_lock({0})", listingIdLong);
+                }
 
                 var totalUnits  = listing.QuantityTotal ?? 1;
                 var bookedCount = await db.Bookings
