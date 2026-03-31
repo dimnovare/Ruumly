@@ -133,6 +133,25 @@ public class BookingService(
 
         var tl = EmailTranslations.For(bookingUser?.Language);
 
+        // Idempotency check — return existing booking if this key was already used
+        if (!string.IsNullOrEmpty(request.IdempotencyKey))
+        {
+            var existing = await db.Bookings
+                .Include(b => b.Listing)
+                .Include(b => b.Supplier)
+                .Include(b => b.Timeline)
+                .Include(b => b.Order).ThenInclude(o => o!.Supplier)
+                .FirstOrDefaultAsync(b => b.IdempotencyKey == request.IdempotencyKey);
+            if (existing is not null)
+            {
+                var existingInvoiceId = await db.Invoices
+                    .Where(i => i.BookingId == existing.Id)
+                    .Select(i => (Guid?)i.Id)
+                    .FirstOrDefaultAsync();
+                return MapToDto(existing, existingInvoiceId);
+            }
+        }
+
         await using var transaction = await db.Database.BeginTransactionAsync();
         try
         {
@@ -281,6 +300,7 @@ public class BookingService(
                 ContactEmail   = request.ContactEmail,
                 ContactPhone   = request.ContactPhone,
                 Notes          = request.Notes,
+                IdempotencyKey = request.IdempotencyKey,
                 Status         = BookingStatus.Pending,
                 CreatedAt      = DateTime.UtcNow,
                 UpdatedAt      = DateTime.UtcNow,

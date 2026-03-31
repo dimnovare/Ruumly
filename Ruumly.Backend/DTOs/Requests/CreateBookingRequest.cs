@@ -12,4 +12,5 @@ public record CreateBookingRequest
     public string ContactPhone { get; init; } = string.Empty;
     public string? Notes { get; init; }
     public string PaymentMethod { get; init; } = string.Empty;
+    public string? IdempotencyKey { get; init; }
 }

@@ -109,6 +109,11 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
         model.Entity<Booking>()
             .HasIndex(b => b.CreatedAt);
 
+        model.Entity<Booking>()
+            .HasIndex(b => b.IdempotencyKey)
+            .IsUnique()
+            .HasFilter("\"IdempotencyKey\" IS NOT NULL");
+
         model.Entity<RefreshToken>()
             .HasIndex(t => new { t.TokenHash, t.IsRevoked });
 
