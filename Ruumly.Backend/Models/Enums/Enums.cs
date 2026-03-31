@@ -1,7 +1,7 @@
 namespace Ruumly.Backend.Models.Enums;
 
 public enum UserRole { Guest, Customer, Provider, Admin }
-public enum UserStatus { Active, Blocked }
+public enum UserStatus { Active, Blocked, Deleted }
 public enum IntegrationType { Api, Email, Manual }
 public enum IntegrationHealth { Healthy, Degraded, Offline }
 public enum ApprovalMode { Auto, Admin, Provider }

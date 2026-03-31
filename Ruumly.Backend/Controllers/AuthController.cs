@@ -243,6 +243,143 @@ public class AuthController(
         return Ok(new { message = "Kinnitusmeil on uuesti saadetud." });
     }
 
+    [HttpDelete("account")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> DeleteAccount()
+    {
+        var userId = User.GetUserId();
+
+        var user = await db.Users.FindAsync(userId);
+        if (user is null) return NotFound();
+
+        var hasActiveBookings = await db.Bookings.AnyAsync(b =>
+            b.UserId == userId &&
+            b.Status != BookingStatus.Cancelled &&
+            b.Status != BookingStatus.Completed);
+
+        if (hasActiveBookings)
+            return BadRequest(new { message = "Cancel active bookings before deleting your account." });
+
+        // Anonymize PII — keep rows for financial record integrity
+        user.Name         = "Deleted User";
+        user.Email        = $"deleted-{user.Id}@ruumly.eu";
+        user.Phone        = null;
+        user.Company      = null;
+        user.Avatar       = null;
+        user.GoogleId     = null;
+        user.PasswordHash = "";
+        user.Status       = UserStatus.Deleted;
+        user.DeletedAt    = DateTime.UtcNow;
+
+        // Revoke all refresh tokens
+        await db.RefreshTokens
+            .Where(t => t.UserId == userId && !t.IsRevoked)
+            .ExecuteUpdateAsync(s => s.SetProperty(t => t.IsRevoked, true));
+
+        db.AuditLogs.Add(new AuditLog
+        {
+            Id        = Guid.NewGuid(),
+            Action    = "account.deleted",
+            Actor     = userId.ToString(),
+            Target    = userId.ToString(),
+            Detail    = "User requested account deletion — PII anonymized",
+            CreatedAt = DateTime.UtcNow,
+        });
+
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [HttpGet("account/export")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> ExportData()
+    {
+        var userId = User.GetUserId();
+
+        var user = await db.Users.FindAsync(userId);
+        if (user is null) return NotFound();
+
+        var bookings = await db.Bookings
+            .Include(b => b.Timeline)
+            .Where(b => b.UserId == userId)
+            .ToListAsync();
+
+        var bookingIds = bookings.Select(b => b.Id).ToList();
+
+        var invoices = await db.Invoices
+            .Where(i => bookingIds.Contains(i.BookingId))
+            .ToListAsync();
+
+        var messages = await db.Messages
+            .Where(m => m.UserId == userId)
+            .ToListAsync();
+
+        var reviews = await db.Reviews
+            .Where(r => r.UserId == userId)
+            .ToListAsync();
+
+        var export = new
+        {
+            exportedAt = DateTime.UtcNow,
+            profile = new
+            {
+                name         = user.Name,
+                email        = user.Email,
+                phone        = user.Phone,
+                company      = user.Company,
+                registeredAt = user.RegisteredAt,
+            },
+            bookings = bookings.Select(b => new
+            {
+                b.Id,
+                listingId  = b.ListingId,
+                status     = b.Status.ToString().ToLower(),
+                startDate  = b.StartDate.ToString("yyyy-MM-dd"),
+                endDate    = b.EndDate?.ToString("yyyy-MM-dd"),
+                total      = b.Total,
+                createdAt  = b.CreatedAt,
+                timeline   = b.Timeline.OrderBy(t => t.CreatedAt).Select(t => new
+                {
+                    date   = t.CreatedAt.ToString("yyyy-MM-dd"),
+                    @event = t.Event,
+                    status = t.Status.ToString().ToLower(),
+                }),
+            }),
+            invoices = invoices.Select(i => new
+            {
+                i.Id,
+                bookingId     = i.BookingId,
+                amount        = i.Amount,
+                status        = i.Status.ToString().ToLower(),
+                issuedAt      = i.IssuedAt,
+                paidAt        = i.PaidAt,
+                paymentMethod = i.PaymentMethod,
+            }),
+            messages = messages.Select(m => new
+            {
+                m.Id,
+                bookingId  = m.BookingId,
+                from       = m.From.ToString().ToLower(),
+                text       = m.Text,
+                createdAt  = m.CreatedAt,
+            }),
+            reviews = reviews.Select(r => new
+            {
+                r.Id,
+                listingId = r.ListingId,
+                rating    = r.Rating,
+                comment   = r.Comment,
+                createdAt = r.CreatedAt,
+            }),
+        };
+
+        Response.Headers.Append("Content-Disposition", "attachment; filename=\"ruumly-data-export.json\"");
+        return new JsonResult(export);
+    }
+
     [HttpPost("notify-interest")]
     [AllowAnonymous]
     public IActionResult NotifyInterest([FromBody] NotifyInterestRequest body)

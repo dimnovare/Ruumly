@@ -44,6 +44,8 @@ public class User
     public Guid? SupplierId { get; set; }
     public Supplier? Supplier { get; set; }
 
+    public DateTime? DeletedAt { get; set; }
+
     public List<Booking> Bookings { get; set; } = [];
     public List<Message> Messages { get; set; } = [];
     public List<Notification> Notifications { get; set; } = [];
