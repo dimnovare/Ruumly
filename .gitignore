@@ -365,3 +365,6 @@ FodyWeavers.xsd
 # Uploaded images (local disk storage — not committed to source control)
 /app/uploads/
 uploads/
+
+# Local developer overrides — never commit these
+appsettings.Development.json
