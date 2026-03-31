@@ -23,4 +23,11 @@ public interface IAuthService
     Task UpdateLanguageAsync(Guid userId, string language);
     Task<bool> VerifyEmailAsync(string token);
     Task ResendVerificationEmailAsync(Guid userId);
+
+    /// <summary>
+    /// Computes an HMAC-SHA256 of the raw refresh token using the JWT secret.
+    /// Used to generate and validate the CSRF token that pairs with each refresh token.
+    /// Deterministic — no DB storage needed.
+    /// </summary>
+    string ComputeCsrfToken(string rawRefreshToken);
 }

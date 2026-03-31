@@ -17,8 +17,28 @@ namespace Ruumly.Backend.Controllers;
 public class AuthController(
     IAuthService authService,
     RuumlyDbContext db,
-    INotificationService notificationService) : ControllerBase
+    INotificationService notificationService,
+    IConfiguration config) : ControllerBase
 {
+    // Sets the HttpOnly refresh-token cookie on every successful auth response.
+    // SameSite=None because the frontend (ruumly.eu) and API (Railway) are on different origins.
+    // CSRF is mitigated by: (a) CORS policy restricts allowed origins, and
+    // (b) the paired CsrfToken returned in the JSON body must be sent as X-CSRF-Token on /refresh.
+    private void SetRefreshCookie(string refreshToken, int expiryDays)
+    {
+        Response.Cookies.Append("ruumly-refresh", refreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure   = true,
+            SameSite = SameSiteMode.None,
+            Path     = "/api/auth",
+            MaxAge   = TimeSpan.FromDays(expiryDays),
+        });
+    }
+
+    private int RefreshTokenExpiryDays =>
+        int.Parse(config["Jwt:RefreshTokenExpiryDays"] ?? "7");
+
     [HttpPost("register")]
     [EnableRateLimiting("auth")]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -27,6 +47,7 @@ public class AuthController(
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
         var response = await authService.RegisterAsync(request);
+        SetRefreshCookie(response.RefreshToken, RefreshTokenExpiryDays);
         return StatusCode(StatusCodes.Status201Created, response);
     }
 
@@ -37,24 +58,51 @@ public class AuthController(
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         var response = await authService.LoginAsync(request);
+        SetRefreshCookie(response.RefreshToken, RefreshTokenExpiryDays);
         return Ok(response);
     }
 
     [HttpPost("refresh")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
+    public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest? body)
     {
-        var response = await authService.RefreshAsync(request.RefreshToken);
+        // Cookie-first (new flow), body fallback (backward compat for 2-week migration window)
+        var refreshToken = Request.Cookies["ruumly-refresh"] ?? body?.RefreshToken;
+        if (string.IsNullOrEmpty(refreshToken))
+            return Unauthorized();
+
+        // Validate CSRF token when present. During the 2-week migration window old clients
+        // don't send it — skip validation then. After the window, make it required.
+        var csrfHeader = Request.Headers["X-CSRF-Token"].FirstOrDefault();
+        if (csrfHeader is not null)
+        {
+            var expected = authService.ComputeCsrfToken(refreshToken);
+            if (!string.Equals(csrfHeader, expected, StringComparison.Ordinal))
+                return Unauthorized(new { message = "Invalid CSRF token." });
+        }
+
+        var response = await authService.RefreshAsync(refreshToken);
+        SetRefreshCookie(response.RefreshToken, RefreshTokenExpiryDays);
         return Ok(response);
     }
 
     [HttpPost("logout")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> Logout([FromBody] RefreshTokenRequest request)
+    public async Task<IActionResult> Logout([FromBody] RefreshTokenRequest? request)
     {
-        await authService.LogoutAsync(request.RefreshToken);
+        // Accept token from cookie (new flow) or body (backward compat)
+        var refreshToken = Request.Cookies["ruumly-refresh"] ?? request?.RefreshToken;
+        if (!string.IsNullOrEmpty(refreshToken))
+            await authService.LogoutAsync(refreshToken);
+
+        Response.Cookies.Delete("ruumly-refresh", new CookieOptions
+        {
+            Path     = "/api/auth",
+            Secure   = true,
+            SameSite = SameSiteMode.None,
+        });
         return Ok(new { message = "Logged out successfully" });
     }
 
@@ -133,6 +181,7 @@ public class AuthController(
     public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
     {
         var response = await authService.GoogleLoginAsync(request.Credential);
+        SetRefreshCookie(response.RefreshToken, RefreshTokenExpiryDays);
         return Ok(response);
     }
 
@@ -390,6 +439,7 @@ public class AuthController(
 }
 
 // Inline request DTOs — too small to warrant their own files
-public record RefreshTokenRequest(string RefreshToken);
+// RefreshToken is optional: cookie-based refresh sends no body
+public record RefreshTokenRequest(string? RefreshToken = null);
 public record VerifyEmailRequest(string Token);
 public record NotifyInterestRequest(string Email, string City);

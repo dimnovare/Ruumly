@@ -238,29 +238,8 @@ public class AuthService(
         // 4. Update last login
         user.LastLoginAt = DateTime.UtcNow;
 
-        // 5. Issue Ruumly JWT pair (same as email login)
-        var accessToken  = GenerateJwt(user);
-        var refreshToken = GenerateRawRefreshToken();
-        var tokenHash    = HashToken(refreshToken);
-
-        db.RefreshTokens.Add(new RefreshToken
-        {
-            Id        = Guid.NewGuid(),
-            UserId    = user.Id,
-            TokenHash = tokenHash,
-            ExpiresAt = DateTime.UtcNow.AddDays(
-                int.Parse(config["Jwt:RefreshTokenExpiryDays"] ?? "7")),
-            IsRevoked = false,
-            CreatedAt = DateTime.UtcNow,
-        });
-
-        await db.SaveChangesAsync();
-
-        return new AuthResponse(
-            User:         MapToDto(user),
-            AccessToken:  accessToken,
-            RefreshToken: refreshToken
-        );
+        // 5. Issue Ruumly JWT pair (same as email/password login)
+        return await GenerateAuthResponseAsync(user);
     }
 
     public async Task RequestPasswordResetAsync(string email)
@@ -344,7 +323,16 @@ public class AuthService(
 
         await db.SaveChangesAsync();
 
-        return new AuthResponse(MapToDto(user), accessToken, refreshToken);
+        var csrfToken = ComputeCsrfToken(refreshToken);
+        return new AuthResponse(MapToDto(user), accessToken, refreshToken, csrfToken);
+    }
+
+    public string ComputeCsrfToken(string rawRefreshToken)
+    {
+        var key  = Encoding.UTF8.GetBytes(config["Jwt:Secret"]!);
+        var data = Encoding.UTF8.GetBytes(rawRefreshToken);
+        using var hmac = new System.Security.Cryptography.HMACSHA256(key);
+        return Convert.ToHexString(hmac.ComputeHash(data)).ToLower();
     }
 
     private string GenerateJwt(User user)
