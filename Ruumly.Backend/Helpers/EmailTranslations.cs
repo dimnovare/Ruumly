@@ -53,7 +53,8 @@ public static class EmailTranslations
         string TimelineStatusChanged,
         // Notification titles
         string NotifBookingConfirmed,
-        string NotifBookingRejected
+        string NotifBookingRejected,
+        string NotifBookingCancelled
     );
 
     private static readonly EmailStrings Et = new(
@@ -108,7 +109,8 @@ public static class EmailTranslations
         TimelineServiceCompleted:      "Teenus lõpetatud",
         TimelineStatusChanged:         "Staatus muudetud",
         NotifBookingConfirmed:         "Broneering kinnitatud",
-        NotifBookingRejected:          "Broneering tagasi lükatud"
+        NotifBookingRejected:          "Broneering tagasi lükatud",
+        NotifBookingCancelled:         "Broneering tühistatud"
     );
 
     private static readonly EmailStrings En = new(
@@ -163,7 +165,8 @@ public static class EmailTranslations
         TimelineServiceCompleted:      "Service completed",
         TimelineStatusChanged:         "Status changed",
         NotifBookingConfirmed:         "Booking confirmed",
-        NotifBookingRejected:          "Booking rejected"
+        NotifBookingRejected:          "Booking rejected",
+        NotifBookingCancelled:         "Booking cancelled"
     );
 
     private static readonly EmailStrings Ru = new(
@@ -217,7 +220,8 @@ public static class EmailTranslations
         TimelineServiceCompleted:      "Услуга завершена",
         TimelineStatusChanged:         "Статус изменён",
         NotifBookingConfirmed:         "Бронирование подтверждено",
-        NotifBookingRejected:          "Бронирование отклонено"
+        NotifBookingRejected:          "Бронирование отклонено",
+        NotifBookingCancelled:         "Бронирование отменено"
     );
 
     public static EmailStrings For(string? lang) =>

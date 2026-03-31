@@ -379,7 +379,7 @@ public class OrderService(
                        $"{booking.Listing?.Title ?? order.ListingTitle} on lõpetatud",
                        tl.BookingStatusCompletedSubject,
                        tl.BookingStatusCompletedBody)
-                    : (tl.TimelineBookingCancelled,
+                    : (tl.NotifBookingCancelled,
                        $"{booking.Listing?.Title ?? order.ListingTitle} on tühistatud",
                        tl.BookingStatusCancelledSubject,
                        tl.BookingStatusCancelledBody);
