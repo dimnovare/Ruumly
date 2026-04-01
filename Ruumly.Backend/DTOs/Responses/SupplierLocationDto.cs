@@ -13,6 +13,8 @@ public record SupplierLocationDto(
     string        Description,
     string?       OpeningHours,
     int               UnitCount,
+    int               AvailableUnits,
+    bool              FullyBooked,
     decimal?          PriceFrom,
     string            CreatedAt,
     List<ListingDto>  Units
