@@ -66,23 +66,28 @@ public class MessageService(RuumlyDbContext db, INotificationService notificatio
                     .FirstOrDefaultAsync(u => u.Email == booking.Supplier.ContactEmail);
 
             if (providerUser is not null)
+            {
+                var tProv = EmailTranslations.For(providerUser.Language);
                 await notificationService.CreateAsync(
                     providerUser.Id,
                     NotificationType.Booking,
-                    "Uus sõnum broneeringus",
+                    tProv.NotifNewMessage,
                     $"{senderName}: {TruncateText(request.Text, 80)}",
-                    actionUrl:  $"/bookings/{bookingId}",
+                    actionUrl:  "/provider?ptab=orders",
                     entityId:   bookingId.ToString(),
                     entityType: "Message");
+            }
         }
         else
         {
+            var bookingUser = await db.Users.FindAsync(booking.UserId);
+            var tCust = EmailTranslations.For(bookingUser?.Language);
             await notificationService.CreateAsync(
                 booking.UserId,
                 NotificationType.Booking,
-                "Uus sõnum broneeringus",
+                tCust.NotifNewMessage,
                 $"{senderName}: {TruncateText(request.Text, 80)}",
-                actionUrl:  "/account?tab=bookings",
+                actionUrl:  "/account?tab=messages",
                 entityId:   bookingId.ToString(),
                 entityType: "Message");
         }
