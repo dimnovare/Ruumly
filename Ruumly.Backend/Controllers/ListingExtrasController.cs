@@ -20,6 +20,35 @@ public class ListingExtrasController(
     [AllowAnonymous]
     public async Task<IActionResult> GetListingExtras(Guid id)
     {
+        var isProviderOrAdmin = User.Identity?.IsAuthenticated == true &&
+            (User.GetUserRole() == UserRole.Provider || User.GetUserRole() == UserRole.Admin);
+
+        if (isProviderOrAdmin)
+        {
+            // Providers/Admins get full objects including Id, isActive, sortOrder
+            var fullExtras = await db.ListingExtras
+                .Where(e => e.ListingId == id)
+                .OrderBy(e => e.SortOrder)
+                .Select(e => new
+                {
+                    e.Id,
+                    listingId = e.ListingId,
+                    e.Key,
+                    e.Label,
+                    e.Description,
+                    e.PublicPrice,
+                    price = e.CustomerPrice,
+                    savings = e.PublicPrice - e.CustomerPrice,
+                    e.IsActive,
+                    e.SortOrder,
+                    e.PartnerDiscountRate,
+                    e.CustomerPriceOverride,
+                })
+                .ToListAsync();
+            return Ok(fullExtras);
+        }
+
+        // Public/Customer: only active extras, no internal fields
         var extras = await db.ListingExtras
             .Where(e => e.ListingId == id && e.IsActive)
             .OrderBy(e => e.SortOrder)
@@ -28,9 +57,9 @@ public class ListingExtrasController(
                 e.Key,
                 e.Label,
                 e.Description,
-                price       = e.CustomerPrice,                   // what customer pays
-                publicPrice = e.PublicPrice,                     // supplier's normal price
-                savings     = e.PublicPrice - e.CustomerPrice,   // visible savings
+                price       = e.CustomerPrice,
+                publicPrice = e.PublicPrice,
+                savings     = e.PublicPrice - e.CustomerPrice,
             })
             .ToListAsync();
 

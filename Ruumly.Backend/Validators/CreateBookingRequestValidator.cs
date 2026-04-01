@@ -5,9 +5,6 @@ namespace Ruumly.Backend.Validators;
 
 public class CreateBookingRequestValidator : AbstractValidator<CreateBookingRequest>
 {
-    private static readonly string[] ValidExtras =
-        ["packing", "loading", "insurance", "forklift"];
-
     public CreateBookingRequestValidator()
     {
         RuleFor(x => x.ListingId)
@@ -53,7 +50,9 @@ public class CreateBookingRequestValidator : AbstractValidator<CreateBookingRequ
             .WithMessage("Maximum 10 extras allowed");
 
         RuleForEach(x => x.Extras)
-            .Must(e => ValidExtras.Contains(e))
-            .WithMessage("Invalid extra: {PropertyValue}");
+            .NotEmpty()
+            .MaximumLength(50)
+            .Matches(@"^[a-z0-9-]+$")
+            .WithMessage("Extra key must be lowercase alphanumeric with hyphens only: {PropertyValue}");
     }
 }
