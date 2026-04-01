@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.Helpers;
+using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Controllers;
@@ -16,14 +17,21 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
     /// <summary>
     /// Returns bookings for the current user (filtered by role).
     /// Customer sees own bookings; Admin/Provider see all.
+    /// Pass personal=true to always filter by UserId regardless of role
+    /// (e.g. a Provider viewing their own /account page, not the supplier dashboard).
     /// </summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int limit = 50)
+    public async Task<IActionResult> GetAll(
+        [FromQuery] int page = 1,
+        [FromQuery] int limit = 50,
+        [FromQuery] bool personal = false)
     {
         var userId = User.GetUserId();
         var role   = User.GetUserRole();
-        var result = await bookingService.GetAllAsync(userId, role, page, limit);
+        // When personal=true, always filter by UserId regardless of role
+        var effectiveRole = personal ? UserRole.Customer : role;
+        var result = await bookingService.GetAllAsync(userId, effectiveRole, page, limit);
         return Ok(result);
     }
 
