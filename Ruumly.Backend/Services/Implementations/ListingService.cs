@@ -30,7 +30,9 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
 
         var query = db.Listings
             .Include(l => l.Supplier)
+            .Include(l => l.Location)
             .Where(l => l.IsActive)
+            .Where(l => l.LocationId == null)  // Units inside locations are accessed via the location page
             .AsQueryable();
 
         // ── Type filter ───────────────────────────────────────────────────────
@@ -101,6 +103,7 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
 
         var listing = await db.Listings
             .Include(l => l.Supplier)
+            .Include(l => l.Location)
             .FirstOrDefaultAsync(l => l.Id == id && l.IsActive);
 
         if (listing is null) return null;
@@ -183,7 +186,11 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
         Rating:      l.Rating,
         ReviewCount: l.ReviewCount,
         Description: l.Description,
-        Images:      DeserializeList(l.ImagesJson),
+        Images:      DeserializeList(l.ImagesJson) is { Count: > 0 } imgs
+                         ? imgs
+                         : l.Location != null
+                             ? DeserializeList(l.Location.ImagesJson)
+                             : [],
         Features:    DeserializeDict(l.FeaturesJson),
         PartnerDiscountRateOverride: l.PartnerDiscountRateOverride,
         ClientDiscountRateOverride:  l.ClientDiscountRateOverride,

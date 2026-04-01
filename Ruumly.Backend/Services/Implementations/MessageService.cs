@@ -87,7 +87,7 @@ public class MessageService(RuumlyDbContext db, INotificationService notificatio
                 NotificationType.Booking,
                 tCust.NotifNewMessage,
                 $"{senderName}: {TruncateText(request.Text, 80)}",
-                actionUrl:  "/account?tab=messages",
+                actionUrl:  $"/account?tab=messages&bookingId={bookingId}",
                 entityId:   bookingId.ToString(),
                 entityType: "Message");
         }
