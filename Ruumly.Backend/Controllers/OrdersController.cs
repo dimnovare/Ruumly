@@ -18,9 +18,12 @@ public class OrdersController(IOrderService orderService) : ControllerBase
     [HttpGet]
     [Authorize(Roles = "Admin,Provider,Customer")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int limit = 50)
+    public async Task<IActionResult> GetAll(
+        [FromQuery] int   page       = 1,
+        [FromQuery] int   limit      = 50,
+        [FromQuery] Guid? supplierId = null)
     {
-        var result = await orderService.GetAllAsync(User.GetUserId(), User.GetUserRole(), page, limit);
+        var result = await orderService.GetAllAsync(User.GetUserId(), User.GetUserRole(), page, limit, supplierId);
         return Ok(result);
     }
 

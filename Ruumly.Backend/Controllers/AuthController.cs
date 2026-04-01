@@ -438,6 +438,47 @@ public class AuthController(
         // Log for now — can implement email notification later
         return Ok(new { success = true });
     }
+
+    [HttpPatch("/api/supplier/tier")]
+    [Authorize(Roles = "Provider,Admin")]
+    public async Task<IActionResult> ChangeTier([FromBody] ChangeTierRequest body)
+    {
+        var userId = User.GetUserId();
+        var user   = await db.Users.FindAsync(userId);
+
+        Guid supplierId;
+        if (body.SupplierId.HasValue && User.GetUserRole() == UserRole.Admin)
+            supplierId = body.SupplierId.Value;
+        else if (user?.SupplierId is not null)
+            supplierId = user.SupplierId.Value;
+        else
+            return BadRequest(new { error = "No supplier linked." });
+
+        var supplier = await db.Suppliers.FindAsync(supplierId);
+        if (supplier is null) return NotFound();
+
+        if (!Enum.TryParse<SupplierTier>(body.Tier, ignoreCase: true, out var newTier))
+            return BadRequest(new { error = "Invalid tier. Use: Starter, Standard, Premium" });
+
+        var oldTier = supplier.Tier;
+        supplier.Tier = newTier;
+        supplier.MonthlyFee = newTier switch
+        {
+            SupplierTier.Starter  => 19m,
+            SupplierTier.Standard => 49m,
+            SupplierTier.Premium  => 99m,
+            _                     => 19m,
+        };
+        supplier.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        return Ok(new
+        {
+            oldTier    = oldTier.ToString(),
+            newTier    = supplier.Tier.ToString(),
+            monthlyFee = supplier.MonthlyFee,
+        });
+    }
 }
 
 // Inline request DTOs — too small to warrant their own files

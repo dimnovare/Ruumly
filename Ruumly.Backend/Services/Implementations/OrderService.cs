@@ -26,7 +26,7 @@ public class OrderService(
 
     // ─── Queries ──────────────────────────────────────────────────────────────
 
-    public async Task<PaginatedResult<OrderDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 50)
+    public async Task<PaginatedResult<OrderDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 50, Guid? supplierId = null)
     {
         page  = Math.Max(1, page);
         limit = Math.Clamp(limit, 1, 100);
@@ -53,7 +53,10 @@ public class OrderService(
         {
             query = query.Where(o => o.Booking.UserId == userId);
         }
-        // Admin: no filter
+        else if (role == UserRole.Admin && supplierId.HasValue)
+        {
+            query = query.Where(o => o.SupplierId == supplierId.Value);
+        }
 
         var total  = await query.CountAsync();
         var orders = await query
