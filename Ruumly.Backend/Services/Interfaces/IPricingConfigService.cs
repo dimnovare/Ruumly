@@ -12,9 +12,14 @@ public interface IPricingConfigService
 public record TierConfig(
     decimal CustomerDiscountRate,
     decimal MonthlyFee,
-    int MaxLocations,
-    bool CanHavePromotedBadge,
-    bool HasFullAnalytics);
+    int     MaxLocations,
+    int     MaxActiveUnits,
+    int     MaxExtras,
+    bool    CanHavePromotedBadge,
+    bool    HasFullAnalytics,
+    bool    HasCalendarSync,
+    string  SearchPlacement,
+    string  SupportLevel);
 
 public record PricingConfig(
     decimal DefaultPartnerDiscountRate,

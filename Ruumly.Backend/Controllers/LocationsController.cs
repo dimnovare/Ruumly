@@ -24,7 +24,8 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
     [EnableRateLimiting("search")]
     public async Task<IActionResult> GetAll(
         [FromQuery] string? city,
-        [FromQuery] string? type)
+        [FromQuery] string? type,
+        [FromQuery] Guid?   supplierId = null)
     {
         var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
 
@@ -45,6 +46,10 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
             if (user?.SupplierId is not null)
                 query = query.Where(l => l.SupplierId == user.SupplierId);
         }
+
+        // Admin can filter by supplier
+        if (supplierId.HasValue && isAuthenticated && User.GetUserRole() == UserRole.Admin)
+            query = query.Where(l => l.SupplierId == supplierId.Value);
 
         if (!string.IsNullOrWhiteSpace(city))
             query = query.Where(l => l.City.ToLower().Contains(city.ToLower()));
@@ -231,6 +236,18 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
         if (!await CanAccess(location.SupplierId))
             return Forbid();
 
+        // Enforce MaxActiveUnits tier limit (skipped during trial)
+        var supplier = location.Supplier;
+        if (!supplier.IsOnTrial)
+        {
+            var pricingCfg = await pricingConfigService.GetAsync();
+            var tierConfig = pricingCfg.ForTier(supplier.Tier);
+            var totalActiveUnits = await db.Listings
+                .CountAsync(l => l.SupplierId == location.SupplierId && l.IsActive);
+            if (totalActiveUnits >= tierConfig.MaxActiveUnits)
+                return BadRequest(new { error = $"Your plan allows up to {tierConfig.MaxActiveUnits} active units. Upgrade your plan to add more." });
+        }
+
         var listing = new Listing
         {
             Id               = Guid.NewGuid(),
@@ -259,6 +276,37 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
         await db.SaveChangesAsync();
 
         return StatusCode(201, new { listing.Id, listing.Title, listing.LocationId });
+    }
+
+    // ── PATCH /api/locations/{locationId}/units/{listingId} ────────────────────
+    [HttpPatch("{locationId:guid}/units/{listingId:guid}")]
+    [Authorize(Roles = "Admin,Provider")]
+    public async Task<IActionResult> UpdateUnit(Guid locationId, Guid listingId, [FromBody] PatchListingRequest body)
+    {
+        var listing = await db.Listings
+            .Include(l => l.Supplier)
+            .FirstOrDefaultAsync(l => l.Id == listingId && l.LocationId == locationId);
+
+        if (listing is null)
+            return NotFound(new { error = "Unit not found" });
+
+        if (!await CanAccess(listing.SupplierId))
+            return Forbid();
+
+        if (body.Title is not null)          listing.Title         = body.Title;
+        if (body.Description is not null)    listing.Description   = body.Description;
+        if (body.PriceFrom.HasValue)         listing.PriceFrom     = body.PriceFrom.Value;
+        if (body.PriceUnit is not null)      listing.PriceUnit     = body.PriceUnit;
+        if (body.SizeM2.HasValue)            listing.SizeM2        = body.SizeM2.Value;
+        if (body.QuantityTotal.HasValue)     listing.QuantityTotal = body.QuantityTotal.Value;
+        if (body.VatRate.HasValue)           listing.VatRate       = body.VatRate.Value;
+        if (body.IsActive.HasValue)          listing.IsActive      = body.IsActive.Value;
+        if (body.Images is not null)         listing.Images        = body.Images;
+
+        listing.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        return Ok(new { listing.Id, listing.Title, listing.PriceFrom });
     }
 
     // ── DELETE /api/locations/{locationId}/units/{listingId} ───────────────────

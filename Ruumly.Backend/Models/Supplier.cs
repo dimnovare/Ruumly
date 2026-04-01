@@ -45,6 +45,8 @@ public class Supplier
     public SupplierTier Tier { get; set; } = SupplierTier.Starter;
     public decimal MonthlyFee { get; set; } = 0m;
     public DateTime? SubscriptionEndsAt { get; set; }
+    public DateTime? TrialEndsAt { get; set; }
+    public bool IsOnTrial => TrialEndsAt.HasValue && TrialEndsAt.Value > DateTime.UtcNow;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

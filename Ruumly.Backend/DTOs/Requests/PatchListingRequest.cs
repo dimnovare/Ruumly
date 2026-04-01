@@ -1,0 +1,13 @@
+namespace Ruumly.Backend.DTOs.Requests;
+
+public record PatchListingRequest(
+    string?       Title,
+    string?       Description,
+    decimal?      PriceFrom,
+    string?       PriceUnit,
+    decimal?      SizeM2,
+    int?          QuantityTotal,
+    decimal?      VatRate,
+    bool?         IsActive,
+    List<string>? Images
+);
