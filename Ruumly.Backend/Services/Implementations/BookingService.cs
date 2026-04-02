@@ -207,7 +207,18 @@ public class BookingService(
             // 2. Load pricing config
             var pricingConfig = await pricingConfigService.GetAsync();
             var supplier      = listing.Supplier;
-            var basePrice     = listing.PriceFrom;  // supplier's PUBLIC price
+            // Calculate base price scaled by booking duration and listing's price unit
+            decimal basePrice;
+            if (DateTime.TryParse(request.StartDate, out var durationStart) &&
+                DateTime.TryParse(request.EndDate, out var durationEnd) &&
+                durationEnd > durationStart)
+            {
+                basePrice = CalculateDurationPrice(listing.PriceFrom, listing.PriceUnit, durationStart, durationEnd);
+            }
+            else
+            {
+                basePrice = listing.PriceFrom;
+            }
 
             // 3. Calculate base pricing — Option C: per-supplier customer discount
             // Partner discount: per-listing override → per-supplier rate → platform default
@@ -465,4 +476,19 @@ public class BookingService(
         CreatedAt:       o.CreatedAt.ToString("yyyy-MM-dd HH:mm"),
         SentAt:          o.SentAt?.ToString("yyyy-MM-dd HH:mm")
     );
+
+    private static decimal CalculateDurationPrice(decimal priceFrom, string priceUnit, DateTime startDate, DateTime endDate)
+    {
+        var days = Math.Max(1, (endDate - startDate).Days);
+        var unit = (priceUnit ?? "").ToLower().Replace("€", "").Trim().TrimStart('/');
+
+        return unit switch
+        {
+            "day" or "päev" or "день"      => Math.Round(priceFrom * days, 2),
+            "week" or "nädal" or "неделя"  => Math.Round(priceFrom * days / 7m, 2),
+            "hour" or "tund" or "час"      => priceFrom,
+            "time" or "kord" or "раз"      => priceFrom,
+            _                              => Math.Round(priceFrom * days / 30m, 2),
+        };
+    }
 }
