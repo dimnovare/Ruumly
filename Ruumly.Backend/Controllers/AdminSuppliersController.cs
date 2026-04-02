@@ -286,6 +286,24 @@ public class AdminSuppliersController(
         return Ok(new { success, latencyMs });
     }
 
+    [HttpPost("suppliers/{id:guid}/reset-trial")]
+    public async Task<IActionResult> ResetTrial(Guid id, [FromQuery] int days = 30)
+    {
+        var supplier = await Db.Suppliers.FindAsync(id);
+        if (supplier is null) return NotFound();
+
+        supplier.TrialEndsAt = DateTime.UtcNow.AddDays(days);
+        supplier.UpdatedAt   = DateTime.UtcNow;
+        await Db.SaveChangesAsync();
+
+        return Ok(new
+        {
+            supplierId    = supplier.Id,
+            trialEndsAt   = supplier.TrialEndsAt?.ToString("yyyy-MM-dd"),
+            daysRemaining = days,
+        });
+    }
+
     [HttpPost("suppliers/{id}/approve-application")]
     public async Task<IActionResult> ApproveApplication(Guid id, [FromQuery] Guid userId)
     {
