@@ -194,9 +194,12 @@ public class IntegrationDispatchService(
 
     private async Task DispatchEmailAsync(Order order, Supplier supplier)
     {
+        var supplierUser = await db.Users
+            .FirstOrDefaultAsync(u => u.SupplierId == supplier.Id);
+        var lang      = supplierUser?.Language ?? "et";
         var recipient = supplier.RecipientEmail ?? supplier.ContactEmail;
         var subject   = $"Ruumly: Uus tellimus #{order.Id.ToString()[..8]}";
-        var body      = BuildEmailBody(order, supplier.Name);
+        var body      = BuildEmailBody(order, supplier.Name, lang);
 
         await emailSender.SendAsync(recipient, subject, body);
 
@@ -291,73 +294,74 @@ public class IntegrationDispatchService(
 
     // ─── Email body builder (mirrors generateOrderEmailPreview from mockOrders.ts) ──
 
-    private static string BuildEmailBody(Order order, string supplierName)
+    private static string BuildEmailBody(Order order, string supplierName, string language = "et")
     {
+        var t  = EmailTranslations.For(language);
         var sb = new StringBuilder();
 
-        sb.AppendLine($"Tere, {supplierName}!");
+        sb.AppendLine($"{t.EmailGreeting}, {supplierName}!");
         sb.AppendLine();
-        sb.AppendLine("Ruumly platvormilt on saabunud uus tellimus.");
+        sb.AppendLine(t.EmailNewOrder);
         sb.AppendLine();
         sb.AppendLine("═══════════════════════════════════");
-        sb.AppendLine("TELLIMUSE ANDMED");
+        sb.AppendLine(t.EmailOrderDetails);
         sb.AppendLine("═══════════════════════════════════");
         sb.AppendLine();
-        sb.AppendLine($"Tellimuse nr:    {order.Id}");
-        sb.AppendLine($"Teenus:          {order.ListingTitle}");
+        sb.AppendLine($"{t.EmailOrderNumber}:    {order.Id}");
+        sb.AppendLine($"{t.EmailService}:          {order.ListingTitle}");
         var typeLabel = order.ListingType switch
         {
-            ListingType.Warehouse => "Laopind",
-            ListingType.Moving    => "Kolimine",
-            ListingType.Trailer   => "Haagise rent",
+            ListingType.Warehouse => t.EmailTypeWarehouse,
+            ListingType.Moving    => t.EmailTypeMoving,
+            ListingType.Trailer   => t.EmailTypeTrailer,
             _                     => order.ListingType.ToString(),
         };
-        sb.AppendLine($"Tüüp:           {typeLabel}");
+        sb.AppendLine($"{t.EmailType}:           {typeLabel}");
         sb.AppendLine();
         sb.AppendLine("═══════════════════════════════════");
-        sb.AppendLine("KLIENT");
+        sb.AppendLine(t.EmailClient);
         sb.AppendLine("═══════════════════════════════════");
         sb.AppendLine();
-        sb.AppendLine($"Nimi:            {order.CustomerName}");
+        sb.AppendLine($"{t.EmailName}:            {order.CustomerName}");
         sb.AppendLine($"E-post:          {order.CustomerEmail}");
-        sb.AppendLine($"Telefon:         {order.CustomerPhone}");
+        sb.AppendLine($"{t.EmailPhone}:         {order.CustomerPhone}");
         sb.AppendLine();
         sb.AppendLine("═══════════════════════════════════");
-        sb.AppendLine("DETAILID");
+        sb.AppendLine(t.EmailDetails);
         sb.AppendLine("═══════════════════════════════════");
         sb.AppendLine();
-        sb.AppendLine($"Alguskuupäev:    {order.StartDate:yyyy-MM-dd}");
+        sb.AppendLine($"{t.EmailStartDate}:    {order.StartDate:yyyy-MM-dd}");
         if (order.EndDate.HasValue)
-            sb.AppendLine($"Lõppkuupäev:     {order.EndDate:yyyy-MM-dd}");
-        sb.AppendLine($"Periood:         {order.Duration}");
+            sb.AppendLine($"{t.EmailEndDate}:     {order.EndDate:yyyy-MM-dd}");
+        sb.AppendLine($"{t.EmailPeriod}:         {order.Duration}");
         if (order.ExtrasSnapshot.Count > 0)
         {
-            sb.AppendLine("Lisateenused:");
+            sb.AppendLine($"{t.EmailExtras}:");
             foreach (var extra in order.ExtrasSnapshot)
                 sb.AppendLine($"  • {extra.Label,-20} €{extra.SupplierPrice:F2}");
         }
         sb.AppendLine();
         sb.AppendLine("═══════════════════════════════════");
-        sb.AppendLine("HIND");
+        sb.AppendLine(t.EmailPrice);
         sb.AppendLine("═══════════════════════════════════");
         sb.AppendLine();
-        sb.AppendLine($"Partneri hind:    €{order.SupplierPrice:F2}");
+        sb.AppendLine($"{t.EmailPartnerPrice}:    €{order.SupplierPrice:F2}");
         if (order.ExtrasSnapshot.Count > 0)
         {
             var extrasSupplierTotal = order.ExtrasSnapshot.Sum(e => e.SupplierPrice);
-            sb.AppendLine($"Lisateenused:     €{extrasSupplierTotal:F2}");
-            sb.AppendLine($"Kokku partnerile: €{order.SupplierPrice + extrasSupplierTotal:F2}");
+            sb.AppendLine($"{t.EmailExtras}:     €{extrasSupplierTotal:F2}");
+            sb.AppendLine($"{t.EmailTotalPartner}: €{order.SupplierPrice + extrasSupplierTotal:F2}");
         }
         else
         {
-            sb.AppendLine($"Kokku partnerile: €{order.SupplierPrice:F2}");
+            sb.AppendLine($"{t.EmailTotalPartner}: €{order.SupplierPrice:F2}");
         }
 
         if (!string.IsNullOrWhiteSpace(order.Notes))
         {
             sb.AppendLine();
             sb.AppendLine("═══════════════════════════════════");
-            sb.AppendLine("MÄRKUSED");
+            sb.AppendLine(t.EmailNotes);
             sb.AppendLine("═══════════════════════════════════");
             sb.AppendLine();
             sb.AppendLine(order.Notes);
@@ -366,12 +370,11 @@ public class IntegrationDispatchService(
         sb.AppendLine();
         sb.AppendLine("═══════════════════════════════════");
         sb.AppendLine();
-        sb.AppendLine("Palun kinnitage tellimus 2 tunni jooksul.");
+        sb.AppendLine(t.EmailConfirmRequest);
         sb.AppendLine();
-        sb.AppendLine("Kinnitamiseks vastake sellele e-kirjale märksõnaga KINNITAN");
-        sb.AppendLine("või logige sisse Ruumly partneripaneeli.");
+        sb.AppendLine(t.EmailConfirmInstructions);
         sb.AppendLine();
-        sb.AppendLine("Lugupidamisega,");
+        sb.AppendLine(t.EmailRegards);
         sb.AppendLine("Ruumly meeskond");
         sb.AppendLine("info@ruumly.eu | +372 5555 1234");
 

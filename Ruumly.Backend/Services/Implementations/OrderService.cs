@@ -165,7 +165,7 @@ public class OrderService(
             await NotifyBookingStatusAsync(
                 booking,
                 notificationTitle: tl.NotifBookingConfirmed,
-                notificationBody:  $"{booking.Listing?.Title ?? order.ListingTitle} on kinnitatud",
+                notificationBody:  $"{booking.Listing?.Title ?? order.ListingTitle} — {tl.NotifBookingConfirmedBody}",
                 emailSubject:      tl.BookingStatusConfirmedSubject,
                 emailBody:         tl.BookingStatusConfirmedBody);
 
@@ -235,7 +235,7 @@ public class OrderService(
             await NotifyBookingStatusAsync(
                 booking,
                 notificationTitle: tl.NotifBookingRejected,
-                notificationBody:  string.IsNullOrWhiteSpace(reason) ? "Teie broneering lükati tagasi" : reason,
+                notificationBody:  string.IsNullOrWhiteSpace(reason) ? tl.NotifBookingRejectedBody : reason,
                 emailSubject:      tl.BookingStatusRejectedSubject,
                 emailBody:         tl.BookingStatusRejectedBody);
         }
@@ -304,7 +304,7 @@ public class OrderService(
             await NotifyBookingStatusAsync(
                 booking,
                 notificationTitle: tl.NotifBookingConfirmed,
-                notificationBody:  $"{booking.Listing?.Title ?? "Teenus"} on kinnitatud — teenus on aktiivne",
+                notificationBody:  $"{booking.Listing?.Title ?? order.ListingTitle} — {tl.NotifServiceActiveBody}",
                 emailSubject:      tl.BookingStatusConfirmedSubject,
                 emailBody:         tl.BookingStatusConfirmedBody);
 
@@ -379,11 +379,11 @@ public class OrderService(
 
                 var (notifTitle, notifBody, emailSubject, emailBody) = newStatus == OrderStatus.Completed
                     ? (tl.TimelineServiceCompleted,
-                       $"{booking.Listing?.Title ?? order.ListingTitle} on lõpetatud",
+                       $"{booking.Listing?.Title ?? order.ListingTitle} — {tl.NotifServiceCompletedBody}",
                        tl.BookingStatusCompletedSubject,
                        tl.BookingStatusCompletedBody)
                     : (tl.NotifBookingCancelled,
-                       $"{booking.Listing?.Title ?? order.ListingTitle} on tühistatud",
+                       $"{booking.Listing?.Title ?? order.ListingTitle} — {tl.NotifBookingCancelledBody}",
                        tl.BookingStatusCancelledSubject,
                        tl.BookingStatusCancelledBody);
 

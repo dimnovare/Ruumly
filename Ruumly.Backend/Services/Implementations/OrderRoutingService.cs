@@ -1,6 +1,7 @@
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
+using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
@@ -155,6 +156,9 @@ public class OrderRoutingService(
         // Notify admins if manual approval is needed before dispatch
         if (!order.AutoDispatch)
         {
+            var bookingUser = await db.Users.FindAsync(booking.UserId);
+            var tl = EmailTranslations.For(bookingUser?.Language);
+
             var admins = await db.Users
                 .Where(u => u.Role == UserRole.Admin)
                 .ToListAsync();
@@ -175,9 +179,9 @@ public class OrderRoutingService(
             {
                 Id        = Guid.NewGuid(),
                 OrderId   = order.Id,
-                Event     = "Ootame kinnitust",
+                Event     = tl.TimelineAwaitingApproval,
                 Status    = OrderStatus.Created,
-                Detail    = "Tellimus vajab käsitsi kinnitust enne saatmist",
+                Detail    = tl.TimelineManualApprovalNeeded,
                 CreatedAt = DateTime.UtcNow,
             });
 
