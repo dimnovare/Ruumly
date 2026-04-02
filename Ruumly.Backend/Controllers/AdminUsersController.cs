@@ -57,6 +57,41 @@ public class AdminUsersController(RuumlyDbContext db) : AdminBaseController(db)
         return Ok(AdminMappers.MapUser(user));
     }
 
+    [HttpPatch("users/{id:guid}")]
+    public async Task<IActionResult> UpdateUser(Guid id, [FromBody] AdminPatchUserRequest body)
+    {
+        var user = await Db.Users.FindAsync(id);
+        if (user is null) return NotFound(new { error = "User not found" });
+
+        if (body.Name    is not null) user.Name    = body.Name.Trim();
+        if (body.Phone   is not null) user.Phone   = body.Phone.Trim();
+        if (body.Company is not null) user.Company = body.Company.Trim();
+
+        if (body.Role is not null && Enum.TryParse<UserRole>(body.Role, ignoreCase: true, out var newRole))
+            user.Role = newRole;
+
+        if (body.Status == "blocked")      user.Status = UserStatus.Blocked;
+        else if (body.Status == "active")  user.Status = UserStatus.Active;
+
+        if (body.EmailVerified.HasValue)
+            user.EmailVerified = body.EmailVerified.Value;
+
+        if (body.SupplierId.HasValue)
+            user.SupplierId = body.SupplierId.Value == Guid.Empty ? null : body.SupplierId.Value;
+
+        await Audit("user.updated", User.GetUserEmail(), user.Name, null);
+        await Db.SaveChangesAsync();
+
+        return Ok(new
+        {
+            user.Id, user.Name, user.Email, user.Phone, user.Company,
+            role           = user.Role.ToString().ToLower(),
+            status         = user.Status.ToString().ToLower(),
+            user.EmailVerified,
+            supplierId     = user.SupplierId,
+        });
+    }
+
     [HttpPatch("users/{userId:guid}/assign-supplier/{supplierId:guid}")]
     public async Task<IActionResult> AssignSupplier(Guid userId, Guid supplierId)
     {
