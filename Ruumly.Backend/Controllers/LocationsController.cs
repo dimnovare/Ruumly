@@ -19,6 +19,21 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
 {
     private static object Error(string msg) => new { error = msg };
 
+    // ── GET /api/locations/cities ─────────────────────────────────────────────
+    [HttpGet("cities")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetCities()
+    {
+        var cities = await db.SupplierLocations
+            .Where(l => l.IsActive)
+            .Select(l => l.City)
+            .Distinct()
+            .OrderBy(c => c)
+            .ToListAsync();
+
+        return Ok(cities);
+    }
+
     // ── GET /api/locations ─────────────────────────────────────────────────────
     [HttpGet]
     [EnableRateLimiting("search")]
