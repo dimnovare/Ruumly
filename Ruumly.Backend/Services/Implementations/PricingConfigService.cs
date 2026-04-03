@@ -75,4 +75,14 @@ public class PricingConfigService(RuumlyDbContext db, IDistributedCache cache) :
 
     public async Task InvalidateCacheAsync()
         => await cache.RemoveAsync(CacheKey);
+
+    public static decimal GetDefaultVatRate(string? country) => (country ?? "EE") switch
+    {
+        "EE" => 24m,
+        "LV" => 21m,
+        "LT" => 21m,
+        "FI" => 25.5m,
+        "SE" => 25m,
+        _    => 24m,
+    };
 }

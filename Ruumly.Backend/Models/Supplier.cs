@@ -40,6 +40,8 @@ public class Supplier
     public decimal Rating { get; set; }
     public int ReviewCount { get; set; }
 
+    public string Country { get; set; } = "EE";
+
     public BillingModel BillingModel { get; set; } = BillingModel.Marketplace;
 
     public SupplierTier Tier { get; set; } = SupplierTier.Starter;

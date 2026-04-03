@@ -21,6 +21,7 @@ public class BookingService(
     IInvoiceService invoiceService,
     IHttpContextAccessor http,
     IDistributedCache cache,
+    ILogger<BookingService> logger,
     IBackgroundJobClient? backgroundJobs = null) : IBookingService
 {
     private string Lang => http.HttpContext?.Request.GetLang() ?? "et";
@@ -158,6 +159,7 @@ public class BookingService(
             // 1. Load listing
             var listing = await db.Listings
                 .Include(l => l.Supplier)
+                .Include(l => l.Location)
                 .FirstOrDefaultAsync(l => l.Id == request.ListingId && l.IsActive)
                 ?? throw new NotFoundException(Msg("LISTING_NOT_FOUND"));
 
@@ -232,6 +234,14 @@ public class BookingService(
             var ruumlyMinMargin      = pricingConfig.RuumlyMinMarginRate;
             var customerDiscountRate = Math.Max(0, partnerDiscountRate - ruumlyMinMargin);
 
+            // Log when supplier margin falls below platform minimum
+            if (partnerDiscountRate < ruumlyMinMargin)
+            {
+                logger.LogWarning(
+                    "Booking {ListingId}: supplier margin {PartnerRate}% below platform minimum {MinRate}%. Margin: {Margin}%",
+                    request.ListingId, partnerDiscountRate, ruumlyMinMargin, partnerDiscountRate);
+            }
+
             // What the customer pays
             var platformPrice = Math.Round(basePrice * (1m - customerDiscountRate / 100m));
 
@@ -264,7 +274,8 @@ public class BookingService(
             }
 
             // 5. VAT calculation
-            var vatRate   = listing.VatRate ?? pricingConfig.DefaultVatRate;
+            var country = listing.Location?.Country ?? supplier.Country ?? "EE";
+            var vatRate = listing.VatRate ?? PricingConfigService.GetDefaultVatRate(country);
             var subtotal  = platformPrice + extrasCustomerTotal;
             var vatAmount = listing.PricesIncludeVat
                 ? Math.Round(subtotal * vatRate / (100m + vatRate), 2)

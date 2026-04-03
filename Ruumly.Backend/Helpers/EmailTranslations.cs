@@ -360,6 +360,8 @@ public static class EmailTranslations
         {
             "en" => En,
             "ru" => Ru,
+            "lv" => En,  // TODO: Add Latvian translations
+            "lt" => En,  // TODO: Add Lithuanian translations
             _    => Et,   // default Estonian
         };
 }

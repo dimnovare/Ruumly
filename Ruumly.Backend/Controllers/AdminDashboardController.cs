@@ -48,4 +48,57 @@ public class AdminDashboardController(RuumlyDbContext db) : AdminBaseController(
             conversionRate = (decimal?)null,   // no listing-view tracking yet
         });
     }
+
+    // ── GET /api/admin/dashboard/revenue ──────────────────────────────────────
+    [HttpGet("revenue")]
+    public async Task<IActionResult> GetRevenue(
+        [FromQuery] string? period     = "month",
+        [FromQuery] Guid?   supplierId = null)
+    {
+        var now         = DateTime.UtcNow;
+        var periodStart = period switch
+        {
+            "week" => now.AddDays(-7),
+            "year" => now.AddYears(-1),
+            _      => new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc),
+        };
+
+        var query = Db.Bookings
+            .Include(b => b.Supplier)
+            .Where(b => !b.IsDeleted && b.CreatedAt >= periodStart);
+
+        if (supplierId.HasValue)
+            query = query.Where(b => b.SupplierId == supplierId.Value);
+
+        var bookings = await query.ToListAsync();
+
+        var supplierBreakdown = bookings
+            .GroupBy(b => new { b.SupplierId, b.Supplier.Name })
+            .Select(g => new
+            {
+                supplierId       = g.Key.SupplierId,
+                supplierName     = g.Key.Name,
+                bookingCount     = g.Count(),
+                gmv              = g.Sum(b => b.Total),
+                customerPaid     = g.Sum(b => b.PlatformPrice + b.ExtrasTotal),
+                avgMarginPercent = g.Average(b => b.BasePrice > 0
+                    ? (b.PlatformPrice - b.BasePrice * 0.85m) / b.BasePrice * 100
+                    : 0),
+            })
+            .OrderByDescending(x => x.gmv)
+            .ToList();
+
+        var subscriptionRevenue = await Db.Suppliers
+            .Where(s => s.IsActive)
+            .SumAsync(s => s.MonthlyFee);
+
+        return Ok(new
+        {
+            period,
+            totalBookings    = bookings.Count,
+            totalGmv         = bookings.Sum(b => b.Total),
+            subscriptionMrr  = subscriptionRevenue,
+            supplierBreakdown,
+        });
+    }
 }

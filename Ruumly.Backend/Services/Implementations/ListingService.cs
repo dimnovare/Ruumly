@@ -42,6 +42,10 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
             query = query.Where(l => l.Type == parsedType);
         }
 
+        // ── Country filter ────────────────────────────────────────────────────
+        if (!string.IsNullOrWhiteSpace(f.Country))
+            query = query.Where(l => l.Location != null && l.Location.Country == f.Country);
+
         // ── City filter (case-insensitive) ────────────────────────────────────
         if (!string.IsNullOrWhiteSpace(f.City))
         {

@@ -10,6 +10,7 @@ public record ListingSearchRequest
     [FromQuery(Name = "sort")]         public string?  Sort         { get; init; }
     [FromQuery(Name = "q")]            public string?  Q            { get; init; }
     [FromQuery(Name = "availableNow")] public bool?    AvailableNow { get; init; }
+    [FromQuery(Name = "country")]      public string?  Country      { get; init; }
     [FromQuery(Name = "page")]         public int      Page         { get; init; } = 1;
     [FromQuery(Name = "limit")]        public int      Limit        { get; init; } = 50;
 }

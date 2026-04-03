@@ -8,6 +8,7 @@ public class SupplierLocation
     public string Name { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
     public string City { get; set; } = string.Empty;
+    public string Country { get; set; } = "EE";
     public double Lat { get; set; }
     public double Lng { get; set; }
     public string? Notes { get; set; }

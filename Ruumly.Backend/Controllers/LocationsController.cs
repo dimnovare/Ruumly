@@ -159,6 +159,7 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
             Name         = body.Name,
             Address      = body.Address,
             City         = body.City,
+            Country      = supplier.Country ?? "EE",
             Lat          = body.Lat,
             Lng          = body.Lng,
             Notes        = body.Notes,
