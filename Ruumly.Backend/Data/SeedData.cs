@@ -28,6 +28,7 @@ public static class SeedData
             await SeedUsersAsync(db);
             await SeedRoutingRulesAsync(db);
             await SeedPlatformSettingsAsync(db);
+            await SeedFeatureDefinitionsAsync(db);
             Console.WriteLine("[Seed] Complete.");
         }
         catch (Exception ex)
@@ -947,6 +948,77 @@ public static class SeedData
         }));
         await db.SaveChangesAsync();
         Console.WriteLine("[Seed] Platform settings seeded.");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // FEATURE DEFINITIONS
+    // ─────────────────────────────────────────────────────────────────────────
+    private static async Task SeedFeatureDefinitionsAsync(RuumlyDbContext db)
+    {
+        var featureKeys = new[] { "features.warehouse", "features.moving", "features.trailer" };
+
+        // Only seed keys that don't exist yet (idempotent)
+        var existing = await db.PlatformSettings
+            .Where(s => featureKeys.Contains(s.Key))
+            .Select(s => s.Key)
+            .ToListAsync();
+
+        if (existing.Count == featureKeys.Length) return;
+
+        static object F(string key, string et, string en, string ru) => new
+        {
+            key,
+            type = "boolean",
+            showInSearch = true,
+            labels = new { et, en, ru },
+        };
+
+        var warehouseFeatures = J(new[]
+        {
+            F("heated",      "Küttega",             "Heated",              "С отоплением"),
+            F("indoor",      "Siseruumides",         "Indoor",              "В помещении"),
+            F("access24_7",  "24/7 ligipääs",        "24/7 access",         "Доступ 24/7"),
+            F("security",    "Turvasüsteem",          "Security system",     "Система безопасности"),
+            F("loadingDock", "Laadimisplatvorm",      "Loading dock",        "Погрузочная платформа"),
+            F("forklift",    "Tõstuk",               "Forklift available",   "Погрузчик"),
+            F("shortTerm",   "Lühiajaline rent",      "Short-term rental",   "Краткосрочная аренда"),
+            F("longTerm",    "Pikaajaline rent",      "Long-term rental",    "Долгосрочная аренда"),
+        });
+
+        var movingFeatures = J(new[]
+        {
+            F("withVan",       "Kaubikuga",       "With van",       "С фургоном"),
+            F("packingHelp",   "Pakkimisabi",     "Packing help",   "Помощь с упаковкой"),
+            F("loadingHelp",   "Laadimisabi",     "Loading help",   "Помощь с погрузкой"),
+            F("pricingFixed",  "Fikseeritud hind","Fixed pricing",  "Фиксированная цена"),
+        });
+
+        var trailerFeatures = J(new[]
+        {
+            F("trailerClosed", "Kinnine haagis", "Closed trailer", "Закрытый прицеп"),
+        });
+
+        var seeds = new Dictionary<string, (string value, string note)>
+        {
+            ["features.warehouse"] = (warehouseFeatures, "Feature definitions for warehouse listings"),
+            ["features.moving"]    = (movingFeatures,    "Feature definitions for moving listings"),
+            ["features.trailer"]   = (trailerFeatures,   "Feature definitions for trailer listings"),
+        };
+
+        foreach (var kv in seeds.Where(kv => !existing.Contains(kv.Key)))
+        {
+            db.PlatformSettings.Add(new PlatformSetting
+            {
+                Key       = kv.Key,
+                Value     = kv.Value.value,
+                Note      = kv.Value.note,
+                UpdatedAt = DateTime.UtcNow,
+                UpdatedBy = "system",
+            });
+        }
+
+        await db.SaveChangesAsync();
+        Console.WriteLine("[Seed] Feature definitions seeded.");
     }
 
     // ─────────────────────────────────────────────────────────────────────────

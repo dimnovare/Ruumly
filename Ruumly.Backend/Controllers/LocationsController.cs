@@ -26,9 +26,10 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
     {
         var cities = await db.SupplierLocations
             .Where(l => l.IsActive)
-            .Select(l => l.City)
+            .Select(l => new { l.City, l.Country })
             .Distinct()
-            .OrderBy(c => c)
+            .OrderBy(c => c.Country)
+            .ThenBy(c => c.City)
             .ToListAsync();
 
         return Ok(cities);
@@ -293,6 +294,9 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
             Description      = body.Description ?? string.Empty,
             VatRate          = body.VatRate,
             PricesIncludeVat = body.PricesIncludeVat,
+            FeaturesJson     = body.Features is not null
+                                   ? System.Text.Json.JsonSerializer.Serialize(body.Features)
+                                   : "{}",
             IsActive         = true,
             AvailableNow     = true,
             CreatedAt        = DateTime.UtcNow,
@@ -328,7 +332,8 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
         if (body.QuantityTotal.HasValue)     listing.QuantityTotal = body.QuantityTotal.Value;
         if (body.VatRate.HasValue)           listing.VatRate       = body.VatRate.Value;
         if (body.IsActive.HasValue)          listing.IsActive      = body.IsActive.Value;
-        if (body.Images is not null)         listing.Images        = body.Images;
+        if (body.Images    is not null)      listing.Images    = body.Images;
+        if (body.Features  is not null)      listing.Features  = body.Features;
 
         listing.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();

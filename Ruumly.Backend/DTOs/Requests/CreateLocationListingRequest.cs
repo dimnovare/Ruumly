@@ -14,5 +14,6 @@ public record CreateLocationListingRequest(
     int?        QuantityTotal,
     string?     Description,
     decimal?    VatRate,
-    bool        PricesIncludeVat
+    bool        PricesIncludeVat,
+    Dictionary<string, object>? Features = null
 );

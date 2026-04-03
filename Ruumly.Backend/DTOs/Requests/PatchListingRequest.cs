@@ -9,5 +9,6 @@ public record PatchListingRequest(
     int?          QuantityTotal,
     decimal?      VatRate,
     bool?         IsActive,
-    List<string>? Images
+    List<string>? Images,
+    Dictionary<string, object>? Features = null
 );
