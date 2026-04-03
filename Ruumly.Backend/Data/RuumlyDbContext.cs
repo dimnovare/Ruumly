@@ -92,7 +92,8 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
 
         model.Entity<Supplier>()
             .HasIndex(e => e.RegistryCode)
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("\"RegistryCode\" IS NOT NULL");
 
         model.Entity<RefreshToken>()
             .HasIndex(e => e.TokenHash)

@@ -49,6 +49,11 @@ public static class ErrorMessages
         ["EMAIL_NOT_VERIFIED"]          = "Palun kinnitage oma e-posti aadress enne broneeringu tegemist.",
         ["NO_INVOICE_FOR_BOOKING"]      = "Sellel broneeringul pole arvet.",
         ["REFUND_REQUIRES_PAID_INVOICE"]= "Tagastus on võimalik ainult tasutud arvetel.",
+        ["LOCATION_HAS_ACTIVE_BOOKINGS"]= "Asukohta ei saa kustutada, kuna sellel on aktiivseid broneeringuid. Tühistage broneeringud esmalt.",
+        ["UNIT_HAS_ACTIVE_BOOKINGS"]    = "Broneeritud üksust ei saa kustutada. Deaktiveerige see.",
+        ["NO_SUPPLIER_LINKED"]          = "Teie kontoga ei ole seotud ühtegi partnerit.",
+        ["REGISTRY_CODE_DUPLICATE"]     = "Selle registrikoodiga partner on juba olemas.",
+        ["SUPPLIER_NAME_REQUIRED"]      = "Partneri nimi on kohustuslik.",
     };
 
     private static readonly Dictionary<string, string> En = new()
@@ -78,6 +83,11 @@ public static class ErrorMessages
         ["EMAIL_NOT_VERIFIED"]          = "Please verify your email address before making a booking.",
         ["NO_INVOICE_FOR_BOOKING"]      = "This booking has no invoice.",
         ["REFUND_REQUIRES_PAID_INVOICE"]= "Refund is only possible on paid invoices.",
+        ["LOCATION_HAS_ACTIVE_BOOKINGS"]= "Cannot delete location with active bookings. Cancel the bookings first.",
+        ["UNIT_HAS_ACTIVE_BOOKINGS"]    = "Cannot delete unit with active bookings. Deactivate it instead.",
+        ["NO_SUPPLIER_LINKED"]          = "No supplier linked to your account.",
+        ["REGISTRY_CODE_DUPLICATE"]     = "A partner with this registry code already exists.",
+        ["SUPPLIER_NAME_REQUIRED"]      = "Partner name is required.",
     };
 
     private static readonly Dictionary<string, string> Ru = new()
@@ -107,5 +117,10 @@ public static class ErrorMessages
         ["EMAIL_NOT_VERIFIED"]          = "Пожалуйста, подтвердите адрес электронной почты перед бронированием.",
         ["NO_INVOICE_FOR_BOOKING"]      = "У этого бронирования нет счёта.",
         ["REFUND_REQUIRES_PAID_INVOICE"]= "Возврат возможен только для оплаченных счетов.",
+        ["LOCATION_HAS_ACTIVE_BOOKINGS"]= "Невозможно удалить локацию с активными бронированиями. Сначала отмените бронирования.",
+        ["UNIT_HAS_ACTIVE_BOOKINGS"]    = "Невозможно удалить единицу с активными бронированиями. Деактивируйте её.",
+        ["NO_SUPPLIER_LINKED"]          = "К вашему аккаунту не привязан ни один поставщик.",
+        ["REGISTRY_CODE_DUPLICATE"]     = "Партнёр с этим регистрационным кодом уже существует.",
+        ["SUPPLIER_NAME_REQUIRED"]      = "Имя партнёра обязательно.",
     };
 }

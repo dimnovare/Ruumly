@@ -23,7 +23,7 @@ public class ProviderBankController(RuumlyDbContext db) : ControllerBase
             .FirstOrDefaultAsync(u => u.Id == userId);
         var supplier = user?.Supplier;
         if (supplier is null)
-            return BadRequest(new { error = "No supplier linked to this account." });
+            return BadRequest(new { error = ErrorMessages.Get("NO_SUPPLIER_LINKED", Request.GetLang()) });
 
         return Ok(new
         {
@@ -43,7 +43,7 @@ public class ProviderBankController(RuumlyDbContext db) : ControllerBase
             .FirstOrDefaultAsync(u => u.Id == userId);
 
         if (user?.SupplierId is null)
-            return BadRequest(new { error = "No supplier linked to this account." });
+            return BadRequest(new { error = ErrorMessages.Get("NO_SUPPLIER_LINKED", Request.GetLang()) });
 
         var supplier = await db.Suppliers.FindAsync(user.SupplierId.Value);
         if (supplier is null) return NotFound(new { error = "Supplier not found." });

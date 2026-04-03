@@ -213,7 +213,18 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
                         && b.Status != BookingStatus.Completed);
 
         if (hasActiveBookings)
-            return BadRequest(new { error = "Asukohta ei saa kustutada, kuna sellel on aktiivseid broneeringuid." });
+            return BadRequest(new { error = ErrorMessages.Get("LOCATION_HAS_ACTIVE_BOOKINGS", Request.GetLang()) });
+
+        // Deactivate all child listings so they don't become orphans in search
+        var childListings = await db.Listings
+            .Where(l => l.LocationId == id)
+            .ToListAsync();
+
+        foreach (var listing in childListings)
+        {
+            listing.IsActive  = false;
+            listing.UpdatedAt = DateTime.UtcNow;
+        }
 
         db.SupplierLocations.Remove(location);
         await db.SaveChangesAsync();
@@ -327,7 +338,7 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
                         && b.Status != BookingStatus.Completed);
 
         if (hasBookings)
-            return BadRequest(new { error = "Cannot delete unit with active bookings. Deactivate it instead." });
+            return BadRequest(new { error = ErrorMessages.Get("UNIT_HAS_ACTIVE_BOOKINGS", Request.GetLang()) });
 
         db.Listings.Remove(listing);
         await db.SaveChangesAsync();

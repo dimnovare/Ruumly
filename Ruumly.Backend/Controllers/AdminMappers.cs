@@ -25,7 +25,7 @@ internal static class AdminMappers
         PricingConfig? pricingConfig = null) => new(
         Id:                  s.Id,
         Name:                s.Name,
-        RegistryCode:        s.RegistryCode,
+        RegistryCode:        s.RegistryCode ?? "",
         ContactName:         s.ContactName,
         ContactEmail:        s.ContactEmail,
         ContactPhone:        s.ContactPhone,

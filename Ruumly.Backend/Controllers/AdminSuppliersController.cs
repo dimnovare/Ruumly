@@ -2,6 +2,7 @@ using Asp.Versioning;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs;
 using Ruumly.Backend.DTOs.Requests;
@@ -89,11 +90,14 @@ public class AdminSuppliersController(
     [HttpPost("suppliers")]
     public async Task<IActionResult> CreateSupplier([FromBody] CreateSupplierRequest body)
     {
+        if (string.IsNullOrWhiteSpace(body.Name))
+            return BadRequest(new { error = ErrorMessages.Get("SUPPLIER_NAME_REQUIRED", Request.GetLang()) });
+
         var supplier = new Supplier
         {
             Id                  = Guid.NewGuid(),
             Name                = body.Name,
-            RegistryCode        = body.RegistryCode ?? "",
+            RegistryCode        = string.IsNullOrWhiteSpace(body.RegistryCode) ? null : body.RegistryCode.Trim(),
             ContactName         = body.ContactName ?? "",
             ContactEmail        = body.ContactEmail ?? "",
             ContactPhone        = body.ContactPhone ?? "",
@@ -119,8 +123,15 @@ public class AdminSuppliersController(
         };
 
         Db.Suppliers.Add(supplier);
+        try
+        {
+            await Db.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg && pg.SqlState == "23505")
+        {
+            return Conflict(new { error = ErrorMessages.Get("REGISTRY_CODE_DUPLICATE", Request.GetLang()) });
+        }
         await Audit("supplier.created", User.GetUserEmail(), supplier.Name, null);
-        await Db.SaveChangesAsync();
 
         var pricingConfig = await pricingConfigService.GetAsync();
         return Ok(AdminMappers.MapSupplier(supplier, 0, 0m, false, pricingConfig));
