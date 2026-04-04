@@ -450,6 +450,47 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
         return NoContent();
     }
 
+    // POST /api/locations/{id}/units/import
+    [HttpPost("{id:guid}/units/import")]
+    [Authorize(Roles = "Admin,Provider")]
+    public async Task<IActionResult> ImportUnits(Guid id, [FromBody] ImportUnitsRequest body)
+    {
+        var location = await db.SupplierLocations
+            .Include(l => l.Supplier).FirstOrDefaultAsync(l => l.Id == id);
+        if (location is null) return NotFound();
+        if (!await CanAccess(location.SupplierId)) return Forbid();
+
+        var created = 0;
+        foreach (var row in body.Units)
+        {
+            var listing = new Listing
+            {
+                Id            = Guid.NewGuid(),
+                SupplierId    = location.SupplierId,
+                LocationId    = id,
+                Type          = Enum.Parse<ListingType>(row.Type, true),
+                Title         = row.Title,
+                Address       = location.Address,
+                City          = location.City,
+                Lat           = location.Lat,
+                Lng           = location.Lng,
+                PriceFrom     = row.PriceFrom,
+                PriceUnit     = row.PriceUnit ?? "/month",
+                SizeM2        = row.SizeM2,
+                QuantityTotal = row.Quantity ?? 1,
+                Description   = row.Description ?? "",
+                IsActive      = true,
+                AvailableNow  = true,
+                CreatedAt     = DateTime.UtcNow,
+                UpdatedAt     = DateTime.UtcNow,
+            };
+            db.Listings.Add(listing);
+            created++;
+        }
+        await db.SaveChangesAsync();
+        return Ok(new { imported = created });
+    }
+
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     private async Task<bool> CanAccess(Guid supplierId)
