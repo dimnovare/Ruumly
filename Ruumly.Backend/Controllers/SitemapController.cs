@@ -43,7 +43,7 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
             ("/privacy",      "0.3", "yearly"),
         };
 
-        var langs = new[] { "et", "en", "ru" };
+        var langs = new[] { "et", "en", "ru", "lv", "lt" };
 
         foreach (var (path, priority, freq) in staticPages)
         {
@@ -93,6 +93,16 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
                 sb.AppendLine($"    <xhtml:link rel=\"alternate\" hreflang=\"{lang}\" href=\"{BaseUrl}{path}?lang={lang}\"/>");
 
             sb.AppendLine($"    <xhtml:link rel=\"alternate\" hreflang=\"x-default\" href=\"{BaseUrl}{path}\"/>");
+            sb.AppendLine("  </url>");
+        }
+
+        var cityPages = new[] { "tallinn", "riga", "vilnius" };
+        foreach (var city in cityPages)
+        {
+            sb.AppendLine("  <url>");
+            sb.AppendLine($"    <loc>{BaseUrl}/storage/{city}</loc>");
+            sb.AppendLine("    <changefreq>weekly</changefreq>");
+            sb.AppendLine("    <priority>0.8</priority>");
             sb.AppendLine("  </url>");
         }
 
