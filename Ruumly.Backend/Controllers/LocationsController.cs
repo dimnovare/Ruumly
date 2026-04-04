@@ -41,7 +41,9 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
     public async Task<IActionResult> GetAll(
         [FromQuery] string? city,
         [FromQuery] string? type,
-        [FromQuery] Guid?   supplierId = null)
+        [FromQuery] Guid?   supplierId = null,
+        [FromQuery] string? availableFrom = null,
+        [FromQuery] string? availableTo   = null)
     {
         var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
 
@@ -78,6 +80,21 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
             .OrderBy(l => l.City)
             .ThenBy(l => l.Name)
             .ToListAsync();
+
+        if (DateTime.TryParse(availableFrom, out var from) &&
+            DateTime.TryParse(availableTo,   out var to))
+        {
+            var bookedListingIds = await db.Bookings
+                .Where(b => (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Active)
+                    && b.StartDate < to && (!b.EndDate.HasValue || b.EndDate > from))
+                .Select(b => b.ListingId)
+                .Distinct()
+                .ToListAsync();
+
+            locations = locations
+                .Where(l => l.Listings.Any(u => u.IsActive && !bookedListingIds.Contains(u.Id)))
+                .ToList();
+        }
 
         var dtos = new List<SupplierLocationDto>();
         foreach (var loc in locations)
