@@ -671,7 +671,7 @@ public static class SeedData
     // ─────────────────────────────────────────────────────────────────────────
     private static async Task SeedUsersAsync(RuumlyDbContext db)
     {
-        if (await db.Users.AnyAsync(u => u.Email == "andres@email.com")) return;
+        if (await db.Users.AnyAsync()) return;
 
         var pwHash = BC.HashPassword("demo1234", workFactor: 12);
 
