@@ -160,6 +160,35 @@ public class SupplierTeamController(
         return Ok(dto);
     }
 
+    // PATCH /api/supplier/profile
+    [HttpPatch("profile")]
+    [Authorize(Roles = "Provider")]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateSupplierProfileRequest body)
+    {
+        var userId = User.GetUserId();
+        var supplier = await db.Users
+            .Where(u => u.Id == userId)
+            .Select(u => u.Supplier)
+            .FirstOrDefaultAsync();
+
+        if (supplier is null)
+            return NotFound(new { message = "No supplier profile linked to this account." });
+
+        if (body.ContactName  is not null) supplier.ContactName  = body.ContactName;
+        if (body.ContactEmail is not null) supplier.ContactEmail = body.ContactEmail;
+        if (body.ContactPhone is not null) supplier.ContactPhone = body.ContactPhone;
+
+        supplier.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        return Ok(new
+        {
+            supplier.ContactName,
+            supplier.ContactEmail,
+            supplier.ContactPhone,
+        });
+    }
+
     [HttpGet("analytics")]
     public async Task<IActionResult> GetAnalytics()
     {
