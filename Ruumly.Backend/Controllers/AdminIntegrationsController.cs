@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.Helpers;
+using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 
 namespace Ruumly.Backend.Controllers;
@@ -14,6 +15,29 @@ public class AdminIntegrationsController(RuumlyDbContext db) : AdminBaseControll
     [HttpGet("integrations")]
     public async Task<IActionResult> GetIntegrations()
     {
+        // Backfill: create IntegrationSettings for suppliers that don't have one
+        var suppliersWithoutSettings = await Db.Suppliers
+            .Where(s => s.IsActive && !Db.IntegrationSettings.Any(i => i.SupplierId == s.Id))
+            .ToListAsync();
+
+        if (suppliersWithoutSettings.Count > 0)
+        {
+            foreach (var s in suppliersWithoutSettings)
+            {
+                Db.IntegrationSettings.Add(new IntegrationSettings
+                {
+                    Id                  = Guid.NewGuid(),
+                    SupplierId          = s.Id,
+                    ApprovalMode        = ApprovalMode.Auto,
+                    PostingMode         = (PostingMode)(int)s.IntegrationType,
+                    FallbackPostingMode = PostingMode.Email,
+                    IsActive            = true,
+                    UpdatedAt           = DateTime.UtcNow,
+                });
+            }
+            await Db.SaveChangesAsync();
+        }
+
         var settings = await Db.IntegrationSettings
             .Include(i => i.Supplier)
             .OrderBy(i => i.Supplier.Name)

@@ -248,14 +248,16 @@ public class SupplierTeamController(
         sb.AppendLine("BEGIN:VCALENDAR");
         sb.AppendLine("VERSION:2.0");
         sb.AppendLine("PRODID:-//Ruumly//Bookings//EN");
+        sb.AppendLine("CALSCALE:GREGORIAN");
         foreach (var b in bookings)
         {
             sb.AppendLine("BEGIN:VEVENT");
             sb.AppendLine($"UID:{b.Id}@ruumly.eu");
-            sb.AppendLine($"DTSTART:{b.StartDate:yyyyMMdd}");
-            if (b.EndDate.HasValue) sb.AppendLine($"DTEND:{b.EndDate.Value:yyyyMMdd}");
+            sb.AppendLine($"DTSTART;VALUE=DATE:{b.StartDate:yyyyMMdd}");
+            if (b.EndDate.HasValue) sb.AppendLine($"DTEND;VALUE=DATE:{b.EndDate.Value:yyyyMMdd}");
             sb.AppendLine($"SUMMARY:{b.Listing?.Title ?? "Booking"} - {b.ContactName}");
-            sb.AppendLine($"DESCRIPTION:Booking #{b.Id}\\nCustomer: {b.ContactName}\\n{b.ContactEmail}");
+            sb.AppendLine($"DESCRIPTION:Booking #{b.Id}\\nCustomer: {b.ContactName}\\n{b.ContactEmail}\\n{b.ContactPhone}");
+            sb.AppendLine("STATUS:CONFIRMED");
             sb.AppendLine("END:VEVENT");
         }
         sb.AppendLine("END:VCALENDAR");

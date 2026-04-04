@@ -123,6 +123,19 @@ public class AdminSuppliersController(
         };
 
         Db.Suppliers.Add(supplier);
+
+        // Auto-create integration settings so supplier appears on Integrations tab
+        Db.IntegrationSettings.Add(new IntegrationSettings
+        {
+            Id                  = Guid.NewGuid(),
+            SupplierId          = supplier.Id,
+            ApprovalMode        = ApprovalMode.Auto,
+            PostingMode         = (PostingMode)(int)supplier.IntegrationType,
+            FallbackPostingMode = PostingMode.Email,
+            IsActive            = true,
+            UpdatedAt           = DateTime.UtcNow,
+        });
+
         try
         {
             await Db.SaveChangesAsync();
