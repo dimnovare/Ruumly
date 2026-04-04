@@ -89,7 +89,14 @@ public static class EmailTranslations
         string EmailRegards,
         string EmailTypeWarehouse,
         string EmailTypeMoving,
-        string EmailTypeTrailer
+        string EmailTypeTrailer,
+        // Abandoned booking reminder
+        string AbandonedSubject,
+        string AbandonedGreeting,
+        string AbandonedBody,
+        string AbandonedService,
+        string AbandonedTotal,
+        string AbandonedCta
     );
 
     private static readonly EmailStrings Et = new(
@@ -177,7 +184,13 @@ public static class EmailTranslations
         EmailRegards:                  "Lugupidamisega,",
         EmailTypeWarehouse:            "Laopind",
         EmailTypeMoving:               "Kolimine",
-        EmailTypeTrailer:              "Haagise rent"
+        EmailTypeTrailer:              "Haagise rent",
+        AbandonedSubject:              "Teie broneering ootab kinnitust",
+        AbandonedGreeting:             "Tere",
+        AbandonedBody:                 "Märkasime, et alustasite broneeringut, kuid makse on veel tegemata.",
+        AbandonedService:              "Teenus",
+        AbandonedTotal:                "Summa",
+        AbandonedCta:                  "Lõpetage broneering"
     );
 
     private static readonly EmailStrings En = new(
@@ -265,7 +278,13 @@ public static class EmailTranslations
         EmailRegards:                  "Best regards,",
         EmailTypeWarehouse:            "Storage",
         EmailTypeMoving:               "Moving",
-        EmailTypeTrailer:              "Trailer rental"
+        EmailTypeTrailer:              "Trailer rental",
+        AbandonedSubject:              "Your booking is waiting",
+        AbandonedGreeting:             "Hi",
+        AbandonedBody:                 "We noticed you started a booking but haven't completed payment yet.",
+        AbandonedService:              "Service",
+        AbandonedTotal:                "Total",
+        AbandonedCta:                  "Complete your booking"
     );
 
     private static readonly EmailStrings Ru = new(
@@ -352,7 +371,13 @@ public static class EmailTranslations
         EmailRegards:                  "С уважением,",
         EmailTypeWarehouse:            "Складское помещение",
         EmailTypeMoving:               "Переезд",
-        EmailTypeTrailer:              "Аренда прицепа"
+        EmailTypeTrailer:              "Аренда прицепа",
+        AbandonedSubject:              "Ваше бронирование ожидает",
+        AbandonedGreeting:             "Здравствуйте",
+        AbandonedBody:                 "Мы заметили, что вы начали бронирование, но ещё не оплатили.",
+        AbandonedService:              "Услуга",
+        AbandonedTotal:                "Сумма",
+        AbandonedCta:                  "Завершить бронирование"
     );
 
     public static EmailStrings For(string? lang) =>

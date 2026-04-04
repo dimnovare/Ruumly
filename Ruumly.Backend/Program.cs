@@ -397,6 +397,11 @@ using (var scope = app.Services.CreateScope())
         "stale-booking-cleanup",
         x => x.ExecuteAsync(),
         Cron.Hourly);
+
+    recurringJobManager.AddOrUpdate<AbandonedBookingReminderJob>(
+        "abandoned-booking-reminder",
+        x => x.ExecuteAsync(),
+        "*/15 * * * *");
 }
 
 app.MapControllers();

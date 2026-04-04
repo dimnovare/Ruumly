@@ -2,6 +2,8 @@ using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.Helpers;
+using Ruumly.Backend.Models;
+using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Services.Implementations;
@@ -37,7 +39,52 @@ public class BackgroundOrderDispatchService(
             return;
         }
 
-        await dispatchService.DispatchAsync(order, order.Supplier);
+        try
+        {
+            await dispatchService.DispatchAsync(order, order.Supplier);
+        }
+        catch (Exception ex)
+        {
+            // Schedule admin notification after retries are exhausted (~16 min total backoff)
+            BackgroundJob.Schedule<BackgroundOrderDispatchService>(
+                x => x.NotifyDispatchFailure(orderId, ex.Message),
+                TimeSpan.FromMinutes(20));
+            throw; // Re-throw so Hangfire records the failure and retries
+        }
+    }
+
+    /// <summary>
+    /// Notifies admins when an order dispatch permanently fails after all retries.
+    /// </summary>
+    [AutomaticRetry(Attempts = 0)]
+    public async Task NotifyDispatchFailure(Guid orderId, string errorMessage)
+    {
+        var order = await db.Orders
+            .Include(o => o.Supplier)
+            .FirstOrDefaultAsync(o => o.Id == orderId);
+        if (order is null) return;
+
+        var admins = await db.Users
+            .Where(u => u.Role == UserRole.Admin)
+            .ToListAsync();
+
+        foreach (var admin in admins)
+        {
+            await db.Notifications.AddAsync(new Notification
+            {
+                Id        = Guid.NewGuid(),
+                UserId    = admin.Id,
+                Type      = NotificationType.Order,
+                Title     = $"Dispatch failed: {order.Supplier?.Name}",
+                Message   = $"Order {orderId} failed after 3 retries. Error: {errorMessage}",
+                ActionUrl = "/admin?tab=orders",
+                CreatedAt = DateTime.UtcNow,
+            });
+        }
+        await db.SaveChangesAsync();
+
+        logger.LogError("Order {OrderId} dispatch permanently failed after retries: {Error}",
+            orderId, errorMessage);
     }
 
     /// <summary>
