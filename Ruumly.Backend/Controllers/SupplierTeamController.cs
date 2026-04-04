@@ -214,10 +214,10 @@ public class SupplierTeamController(
             .OrderBy(x => x.Year).ThenBy(x => x.Month)
             .ToListAsync();
 
-        // Total views across all active listings for this supplier
+        // Total views across all listings for this supplier (including inactive)
         var totalViews = await db.Listings
-            .Where(l => l.SupplierId == supplierId && l.IsActive)
-            .SumAsync(l => (int?)l.ViewCount) ?? 0;
+            .Where(l => l.SupplierId == supplierId)
+            .SumAsync(l => l.ViewCount);
 
         return Ok(new { monthly, totalViews });
     }
