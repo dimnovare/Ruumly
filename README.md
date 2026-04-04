@@ -1,8 +1,8 @@
 # Ruumly — Backend API
 
-Marketplace platform for warehouse storage, moving services, and trailer rental in Estonia.
+B2B2C marketplace platform for warehouse storage, moving services, and trailer rental across the Baltics (Estonia, Latvia, Lithuania).
 
-**Frontend repo:** [estonia-space-hub](https://github.com/dimnovare/Ruumly)
+**Frontend repo:** [estonia-space-hub](https://github.com/dimnovare/estonia-space-hub)
 **Live API:** https://api.ruumly.eu
 **Live site:** https://ruumly.eu
 
@@ -14,156 +14,78 @@ Marketplace platform for warehouse storage, moving services, and trailer rental 
 |-------|-----------|
 | Runtime | ASP.NET Core 8 (.NET 8) |
 | ORM | Entity Framework Core 8 + PostgreSQL |
-| Auth | JWT Bearer + refresh token rotation, Google OAuth, BCrypt (workFactor 12) |
+| Auth | JWT Bearer + HttpOnly refresh cookie rotation + CSRF double-submit, Google OAuth, BCrypt |
 | Email | Resend (production), console logger (development) |
-| Payments | Montonio (Estonian bank links + card) |
+| Payments | Montonio (bank links + card + pay-later, all 3 Baltic states) |
 | Storage | Cloudflare R2 (production), local disk (development) |
 | Background jobs | Hangfire + PostgreSQL storage |
 | Cache | Redis (production), in-memory (development fallback) |
 | Monitoring | Sentry + Serilog |
-| Deployment | Railway (Docker) |
+| API versioning | URL segment + header-based (Asp.Versioning) |
+| Deployment | Railway (Docker, europe-west4) |
 
 ## Architecture
 
-```
 Ruumly.Backend/
-├── Controllers/          # 23 API controllers (auth, bookings, admin, payments, etc.)
+├── Controllers/          # 29 API controllers
 ├── Services/
-│   ├── Interfaces/       # 12 service contracts
-│   └── Implementations/  # 16 service implementations
-├── Models/               # 18 domain entities
+│   ├── Interfaces/       # 13 service contracts
+│   └── Implementations/  # 17 service implementations
+├── Models/               # 22 domain entities + enums
 ├── DTOs/                 # Request/response objects
-├── Validators/           # FluentValidation rules
-├── Middleware/            # Exception, security headers, Sentry context
-├── Helpers/              # Error messages (i18n), tier rules, extensions
+├── Validators/           # 8 FluentValidation rules
+├── Jobs/                 # Hangfire background jobs
+├── Middleware/            # Exception handling, security headers, Sentry context
+├── Helpers/              # Error messages (5-language i18n), email translations, tier rules
 ├── Data/                 # DbContext, seed data
-└── Migrations/           # 21 EF Core migrations
+└── Migrations/           # 37 EF Core migrations
 
-Ruumly.Backend.Tests/     # 43 unit tests (xUnit + FluentAssertions)
-```
+Ruumly.Backend.Tests/     # 12 test files
 
 ## Key Features
 
-- **Tier-based pricing** — Starter (free), Standard (€49/mo), Premium (€99/mo). Per-supplier customer discount derived from negotiated partner rate. All rates configurable via admin panel (PlatformSettings).
-- **Order routing** — bookings create orders that are dispatched to suppliers via API, email, or manual channel with automatic fallback (API fails → email → manual + admin notification).
-- **Email verification** — registration sends a verification email; unverified users cannot book. Google OAuth auto-verifies.
-- **Refund flow** — admin can initiate refunds (marks invoice as PendingRefund, notifies customer, audit logged).
-- **Background jobs** — Hangfire processes order dispatch and booking confirmation emails asynchronously. Daily cron cleans up stale refresh tokens.
-- **Full-text search** — PostgreSQL tsvector on listings with GIN index.
-- **Soft deletes** — bookings and orders support soft delete with global query filters.
-- **Security** — rate limiting (auth/search/upload), CSP + HSTS + security headers, timing-safe login, 500 errors never expose internals.
+- Tier-based subscriptions — Starter €19/mo (3 units), Growth €49/mo (10 units), Business €99/mo (30 units). 30-day free trial.
+- Pricing engine — Duration-based calculation, per-supplier partner discount with per-listing override, guaranteed minimum margin.
+- Order routing & dispatch — API/email/manual channels with custom JSON payload templates per supplier and automatic fallback.
+- Booking integrity — Idempotency key + pg_advisory_xact_lock for concurrent overlap detection.
+- Payment — Montonio bank/card/pay-later across all 3 Baltic states. JWT-verified webhook.
+- Security — HttpOnly refresh cookies + CSRF, rate limiting, CSP/HSTS headers, GDPR deletion + export.
+- Multi-country — Per-country VAT (EE 24%, LV 21%, LT 21%). Dynamic city lists.
+- Background jobs — Order dispatch, confirmation emails, stale booking cleanup, token cleanup.
+- iCal export — Business-tier providers export bookings as .ics.
+- SEO — Dynamic XML sitemap with hreflang (5 languages), robots.txt.
 
 ## Local Development
 
-### Prerequisites
+Prerequisites: .NET 8 SDK, PostgreSQL 15+, Redis (optional).
 
-- .NET 8 SDK
-- PostgreSQL 15+ (default port 5432)
-- Node.js 20+ (for frontend)
-
-### Setup
-
-```bash
+```
 cd Ruumly.Backend
 dotnet restore
-# Set connection string in appsettings.Development.json or environment
-dotnet ef database update   # applies all 21 migrations + seeds demo data
-dotnet run                  # starts on http://localhost:3000
+dotnet ef database update
+dotnet run
 ```
 
-- Swagger UI: http://localhost:3000/swagger
-- Health check: http://localhost:3000/health
-- Hangfire dashboard: http://localhost:3000/hangfire (dev only)
+Swagger: http://localhost:3000/swagger
+Health: http://localhost:3000/health
+Hangfire: http://localhost:3000/hangfire (dev only)
 
-### Environment Variables (Railway)
+## Environment Variables (Railway)
 
-| Variable | Description |
-|----------|-------------|
-| `DATABASE_URL` | PostgreSQL connection URI (auto-injected by Railway) |
-| `JWT__SECRET` | Min 32-char JWT signing key |
-| `GOOGLE__CLIENTID` | Google OAuth client ID |
-| `RESEND__APIKEY` | Resend email API key |
-| `MONTONIO__ACCESSKEY` | Montonio payment access key |
-| `MONTONIO__SECRETKEY` | Montonio payment secret key |
-| `SENTRY__DSN` | Sentry error tracking DSN |
-| `STORAGE__R2ACCOUNTID` | Cloudflare R2 account ID |
-| `STORAGE__R2ACCESSKEY` | R2 access key |
-| `STORAGE__R2SECRETKEY` | R2 secret key |
-| `STORAGE__R2BUCKETNAME` | R2 bucket name |
-| `STORAGE__R2PUBLICURL` | R2 public URL for images |
-| `REDIS_URL` | Redis connection (optional, falls back to in-memory) |
-
-## API Endpoints
-
-### Public
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | /api/auth/register | Register + sends verification email |
-| POST | /api/auth/login | Email/password login |
-| POST | /api/auth/google | Google OAuth login |
-| POST | /api/auth/refresh | Rotate refresh token |
-| POST | /api/auth/verify-email | Verify email with token |
-| POST | /api/auth/forgot-password | Send password reset link |
-| POST | /api/auth/reset-password | Apply reset token |
-| GET | /api/listings | Search listings (filters, pagination, full-text) |
-| GET | /api/listings/featured | Featured listings (badged) |
-| GET | /api/listings/{id} | Listing detail |
-| GET | /api/locations | Supplier locations |
-| GET | /api/settings/public | Public site settings |
-| GET | /api/bookings/extras-config | Extras pricing |
-| GET | /api/bookings/stats | Booking stats (cached) |
-| GET | /sitemap.xml | Dynamic XML sitemap |
-
-### Authenticated (Customer/Provider)
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | /api/bookings | Create booking (requires verified email) |
-| GET | /api/bookings | List own bookings (paginated) |
-| POST | /api/bookings/{id}/cancel | Cancel booking |
-| POST | /api/payments/initiate | Start Montonio payment |
-| POST | /api/payments/webhook | Montonio payment callback |
-| GET | /api/orders | Provider order list |
-| POST | /api/orders/{id}/confirm | Confirm order |
-| GET | /api/messages | Booking messages |
-| POST | /api/messages | Send message |
-| POST | /api/reviews | Submit review |
-| GET | /api/supplier/team | Provider team members |
-| POST | /api/supplier/team/invite | Invite team member |
-
-### Admin
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | /api/admin/users | Paginated user list |
-| GET | /api/admin/suppliers | Paginated supplier list |
-| GET | /api/admin/dashboard/stats | Revenue + booking metrics |
-| POST | /api/admin/bookings/{id}/refund | Initiate refund |
-| GET | /api/admin/integrations | Integration settings |
-| GET | /api/admin/routing-rules | Order routing rules |
-| GET | /api/admin/audit-log | Audit trail |
-| PATCH | /api/admin/suppliers/{id}/tier | Change supplier tier |
-
-Full reference at `/swagger` (development only).
-
-## User Roles
-
-| Role | Description |
-|------|-------------|
-| Customer | Browse, book, review, manage own bookings and messages |
-| Provider | Manage listings, view incoming orders, team management, analytics |
-| Admin | Full platform access — users, suppliers, settings, routing, refunds, audit |
+DATABASE_URL, JWT__SECRET, GOOGLE__CLIENTID, RESEND__APIKEY, MONTONIO__ACCESSKEY, MONTONIO__SECRETKEY, SENTRY__DSN, STORAGE__R2ACCOUNTID, STORAGE__R2ACCESSKEY, STORAGE__R2SECRETKEY, STORAGE__R2BUCKETNAME, STORAGE__R2PUBLICURL, REDIS_URL, APP_URL
 
 ## Testing
 
-```bash
+```
 cd Ruumly.Backend.Tests
 dotnet test
 ```
 
-43 tests covering: auth (registration, login, refresh, invite codes), booking creation and pricing, listing search and pagination, pricing consistency across tiers, tier rules, error message i18n, and role-based access scoping.
+12 test files covering auth, booking, pricing, overlap, deletion, tiers.
 
 ## Deployment
 
-Railway auto-builds from the Dockerfile. Migrations run automatically on startup in production. Health check at `/health` is configured in `railway.json`.
+Railway auto-builds from Dockerfile on push to master. Migrations run on startup.
 
 ## License
 
