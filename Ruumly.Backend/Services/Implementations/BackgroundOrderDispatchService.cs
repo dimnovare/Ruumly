@@ -76,7 +76,7 @@ public class BackgroundOrderDispatchService(
                 UserId    = admin.Id,
                 Type      = NotificationType.Order,
                 Title     = $"Dispatch failed: {order.Supplier?.Name}",
-                Message   = $"Order {orderId} failed after 3 retries. Error: {errorMessage}",
+                Desc      = $"Order {orderId} failed after 3 retries. Error: {errorMessage}",
                 ActionUrl = "/admin?tab=orders",
                 CreatedAt = DateTime.UtcNow,
             });
