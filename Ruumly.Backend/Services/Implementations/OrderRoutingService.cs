@@ -121,6 +121,10 @@ public class OrderRoutingService(
             Status         = PayoutStatus.Pending,
         });
 
+        // Resolve language for timeline/notification strings
+        var bookingUser = await db.Users.FindAsync(booking.UserId);
+        var tl          = EmailTranslations.For(bookingUser?.Language);
+
         // 7. Initial fulfillment event
         db.FulfillmentEvents.Add(new FulfillmentEvent
         {
@@ -129,7 +133,7 @@ public class OrderRoutingService(
             Status    = FulfillmentStatus.AwaitingApproval,
             Actor     = "system",
             ActorRole = UserRole.Admin,
-            Detail    = "Tellimus loodud, suunamine alustatud",
+            Detail    = "Order created, routing started",
             CreatedAt = DateTime.UtcNow,
         });
 
@@ -138,7 +142,7 @@ public class OrderRoutingService(
         {
             Id        = Guid.NewGuid(),
             OrderId   = order.Id,
-            Event     = "Tellimus loodud",
+            Event     = tl.TimelineBookingCreated,
             Status    = OrderStatus.Created,
             CreatedAt = DateTime.UtcNow,
         });
@@ -156,9 +160,6 @@ public class OrderRoutingService(
         // Notify admins if manual approval is needed before dispatch
         if (!order.AutoDispatch)
         {
-            var bookingUser = await db.Users.FindAsync(booking.UserId);
-            var tl = EmailTranslations.For(bookingUser?.Language);
-
             var admins = await db.Users
                 .Where(u => u.Role == UserRole.Admin)
                 .ToListAsync();
@@ -168,8 +169,8 @@ public class OrderRoutingService(
                 await notificationService.CreateAsync(
                     admin.Id,
                     NotificationType.Order,
-                    "Uus tellimus vajab kinnitust",
-                    $"Tellimus teenusele \"{listing.Title}\" ootab kinnitust",
+                    "New order requires approval",
+                    $"Order for \"{listing.Title}\" awaiting confirmation",
                     actionUrl:  $"/orders/{order.Id}",
                     entityId:   order.Id.ToString(),
                     entityType: "Order");

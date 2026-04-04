@@ -122,7 +122,7 @@ public class OrderService(
             Status    = FulfillmentStatus.Approved,
             Actor     = approverName,
             ActorRole = approver?.Role ?? UserRole.Admin,
-            Detail    = $"Kinnitatud: {approverName}",
+            Detail    = $"Approved: {approverName}",
             CreatedAt = DateTime.UtcNow,
         });
 
@@ -132,7 +132,7 @@ public class OrderService(
             OrderId   = order.Id,
             Event     = tl.TimelineOrderApproved,
             Status    = OrderStatus.Sent,
-            Detail    = $"Kinnitaja: {approverName}",
+            Detail    = $"Approver: {approverName}",
             CreatedAt = DateTime.UtcNow,
         });
 
@@ -269,7 +269,7 @@ public class OrderService(
             Status    = FulfillmentStatus.Confirmed,
             Actor     = confirmerName,
             ActorRole = confirmer?.Role ?? UserRole.Provider,
-            Detail    = $"Kinnitas: {confirmerName}",
+            Detail    = $"Confirmed: {confirmerName}",
             CreatedAt = DateTime.UtcNow,
         });
 
@@ -279,7 +279,7 @@ public class OrderService(
             OrderId   = order.Id,
             Event     = tl.TimelinePartnerConfirmed,
             Status    = OrderStatus.Confirmed,
-            Detail    = $"Kinnitas: {confirmerName}",
+            Detail    = $"Confirmed: {confirmerName}",
             CreatedAt = DateTime.UtcNow,
         });
 

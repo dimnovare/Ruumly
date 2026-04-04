@@ -43,6 +43,9 @@ public class IntegrationDispatchService(
 
     private async Task DispatchApiAsync(Order order, Supplier supplier)
     {
+        var supplierUser = await db.Users.FirstOrDefaultAsync(u => u.SupplierId == supplier.Id);
+        var tl           = EmailTranslations.For(supplierUser?.Language);
+
         var settings = await db.IntegrationSettings
             .FirstOrDefaultAsync(s => s.SupplierId == supplier.Id);
         var fallback = settings?.FallbackPostingMode ?? PostingMode.Email;
@@ -114,7 +117,7 @@ public class IntegrationDispatchService(
                 {
                     Id        = Guid.NewGuid(),
                     OrderId   = order.Id,
-                    Event     = "Saadetud API kaudu",
+                    Event     = tl.TimelineStatusChanged + ": API",
                     Status    = OrderStatus.Sent,
                     Detail    = $"POST {supplier.ApiEndpoint} → {statusCode}",
                     CreatedAt = DateTime.UtcNow,
@@ -179,7 +182,9 @@ public class IntegrationDispatchService(
             .FirstOrDefaultAsync(u => u.SupplierId == supplier.Id);
         var lang      = supplierUser?.Language ?? "et";
         var recipient = supplier.RecipientEmail ?? supplier.ContactEmail;
-        var subject   = $"Ruumly: Uus tellimus #{order.Id.ToString()[..8]}";
+        var t         = EmailTranslations.For(lang);
+        var tl        = t;
+        var subject   = $"Ruumly: {t.EmailNewOrder} #{order.Id.ToString()[..8]}";
         var body      = BuildEmailBody(order, supplier.Name, lang);
 
         await emailSender.SendAsync(recipient, subject, body);
@@ -197,7 +202,7 @@ public class IntegrationDispatchService(
             Actor     = "system",
             ActorRole = UserRole.Admin,
             Channel   = PostingMode.Email,
-            Detail    = $"E-kiri saadetud: {recipient}",
+            Detail    = $"Email sent: {recipient}",
             CreatedAt = DateTime.UtcNow,
         });
 
@@ -205,9 +210,9 @@ public class IntegrationDispatchService(
         {
             Id        = Guid.NewGuid(),
             OrderId   = order.Id,
-            Event     = "Tellimus saadetud e-postiga",
+            Event     = tl.TimelineStatusChanged + ": Email",
             Status    = OrderStatus.Sent,
-            Detail    = $"E-kiri saadetud: {recipient}",
+            Detail    = $"Email sent: {recipient}",
             CreatedAt = DateTime.UtcNow,
         });
 
@@ -215,7 +220,7 @@ public class IntegrationDispatchService(
         {
             Id        = Guid.NewGuid(),
             OrderId   = order.Id,
-            Event     = "Ootame partneri kinnitust",
+            Event     = tl.TimelineOrderApproved,
             Status    = OrderStatus.Sent,
             CreatedAt = DateTime.UtcNow.AddSeconds(1),
         });
@@ -239,7 +244,7 @@ public class IntegrationDispatchService(
             Actor     = "system",
             ActorRole = UserRole.Admin,
             Channel   = PostingMode.Manual,
-            Detail    = "Manuaalne integratsioon — operaator peab partneri teavitama",
+            Detail    = "Manual integration — operator must notify partner",
             CreatedAt = DateTime.UtcNow,
         });
 
@@ -247,9 +252,9 @@ public class IntegrationDispatchService(
         {
             Id        = Guid.NewGuid(),
             OrderId   = order.Id,
-            Event     = "Ootame operaatori tegevust",
+            Event     = "Awaiting operator action",
             Status    = OrderStatus.Sending,
-            Detail    = "Manuaalne integratsioon — operaator peab partneri teavitama",
+            Detail    = "Manual integration — operator must notify partner",
             CreatedAt = DateTime.UtcNow,
         });
 
@@ -263,8 +268,8 @@ public class IntegrationDispatchService(
             await notificationService.CreateAsync(
                 admin.Id,
                 NotificationType.Order,
-                "Manuaalne tellimus vajab edastamist",
-                $"Tellimus {order.Id} — {order.ListingTitle} vajab manuaalset edastamist",
+                "Manual order requires dispatch",
+                $"Order {order.Id} — {order.ListingTitle} requires manual dispatch",
                 actionUrl:  $"/orders/{order.Id}",
                 entityId:   order.Id.ToString(),
                 entityType: "Order");
@@ -356,7 +361,6 @@ public class IntegrationDispatchService(
         sb.AppendLine(t.EmailConfirmInstructions);
         sb.AppendLine();
         sb.AppendLine(t.EmailRegards);
-        sb.AppendLine("Ruumly meeskond");
         sb.AppendLine("info@ruumly.eu | +372 5555 1234");
 
         return sb.ToString();
