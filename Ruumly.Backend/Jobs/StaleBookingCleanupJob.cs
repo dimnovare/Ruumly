@@ -1,4 +1,5 @@
 using Ruumly.Backend.Data;
+using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 using Microsoft.EntityFrameworkCore;
 
