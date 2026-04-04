@@ -8,6 +8,7 @@ using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
+using System.Text;
 
 namespace Ruumly.Backend.Controllers;
 
@@ -219,6 +220,48 @@ public class SupplierTeamController(
             .SumAsync(l => (int?)l.ViewCount) ?? 0;
 
         return Ok(new { monthly, totalViews });
+    }
+
+    // GET /api/supplier/calendar.ics
+    [HttpGet("/api/supplier/calendar.ics")]
+    [Authorize(Roles = "Provider")]
+    public async Task<IActionResult> ExportIcal()
+    {
+        var userId = User.GetUserId();
+        var user = await db.Users.FindAsync(userId);
+        if (user?.SupplierId is null) return NotFound();
+
+        var supplier = await db.Suppliers.FindAsync(user.SupplierId);
+        if (supplier is null) return NotFound();
+
+        var config = await pricingConfigService.GetAsync();
+        if (!config.ForTier(supplier.Tier).HasCalendarSync)
+            return Forbid("Calendar sync requires Business plan.");
+
+        var bookings = await db.Bookings
+            .Include(b => b.Listing)
+            .Where(b => b.SupplierId == user.SupplierId &&
+                   (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Active))
+            .ToListAsync();
+
+        var sb = new StringBuilder();
+        sb.AppendLine("BEGIN:VCALENDAR");
+        sb.AppendLine("VERSION:2.0");
+        sb.AppendLine("PRODID:-//Ruumly//Bookings//EN");
+        foreach (var b in bookings)
+        {
+            sb.AppendLine("BEGIN:VEVENT");
+            sb.AppendLine($"UID:{b.Id}@ruumly.eu");
+            sb.AppendLine($"DTSTART:{b.StartDate:yyyyMMdd}");
+            if (b.EndDate.HasValue) sb.AppendLine($"DTEND:{b.EndDate.Value:yyyyMMdd}");
+            sb.AppendLine($"SUMMARY:{b.Listing?.Title ?? "Booking"} - {b.CustomerName}");
+            sb.AppendLine($"DESCRIPTION:Booking #{b.Id}\\nCustomer: {b.CustomerName}\\n{b.CustomerEmail}");
+            sb.AppendLine("END:VEVENT");
+        }
+        sb.AppendLine("END:VCALENDAR");
+
+        return File(Encoding.UTF8.GetBytes(sb.ToString()),
+            "text/calendar", "ruumly-calendar.ics");
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
