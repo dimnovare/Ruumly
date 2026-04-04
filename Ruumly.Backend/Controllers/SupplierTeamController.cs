@@ -254,8 +254,8 @@ public class SupplierTeamController(
             sb.AppendLine($"UID:{b.Id}@ruumly.eu");
             sb.AppendLine($"DTSTART:{b.StartDate:yyyyMMdd}");
             if (b.EndDate.HasValue) sb.AppendLine($"DTEND:{b.EndDate.Value:yyyyMMdd}");
-            sb.AppendLine($"SUMMARY:{b.Listing?.Title ?? "Booking"} - {b.CustomerName}");
-            sb.AppendLine($"DESCRIPTION:Booking #{b.Id}\\nCustomer: {b.CustomerName}\\n{b.CustomerEmail}");
+            sb.AppendLine($"SUMMARY:{b.Listing?.Title ?? "Booking"} - {b.ContactName}");
+            sb.AppendLine($"DESCRIPTION:Booking #{b.Id}\\nCustomer: {b.ContactName}\\n{b.ContactEmail}");
             sb.AppendLine("END:VEVENT");
         }
         sb.AppendLine("END:VCALENDAR");
