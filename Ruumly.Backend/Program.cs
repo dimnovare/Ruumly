@@ -14,6 +14,7 @@ using Ruumly.Backend.Middleware;
 // SeedData is in Ruumly.Backend.Data namespace — already covered
 using Ruumly.Backend.Models;
 using Resend;
+using Ruumly.Backend.Jobs;
 using Ruumly.Backend.Services.Implementations;
 using Ruumly.Backend.Services.Interfaces;
 // BookingService, OrderRoutingService, IntegrationDispatchService are in same namespace
@@ -391,6 +392,11 @@ using (var scope = app.Services.CreateScope())
         "cleanup-tokens",
         x => x.CleanupStaleRefreshTokensAsync(),
         Cron.Daily);
+
+    recurringJobManager.AddOrUpdate<StaleBookingCleanupJob>(
+        "stale-booking-cleanup",
+        x => x.ExecuteAsync(),
+        Cron.Hourly);
 }
 
 app.MapControllers();
