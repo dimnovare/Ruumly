@@ -83,27 +83,8 @@ public class IntegrationDispatchService(
                 client.DefaultRequestHeaders.Add("X-API-Key", plainToken);
         }
 
-        var payload = new
-        {
-            orderId       = order.Id,
-            listingTitle  = order.ListingTitle,
-            listingType   = order.ListingType.ToString().ToLower(),
-            startDate     = order.StartDate.ToString("yyyy-MM-dd"),
-            endDate       = order.EndDate?.ToString("yyyy-MM-dd"),
-            duration      = order.Duration,
-            extras        = order.ExtrasKeys,
-            customerName  = order.CustomerName,
-            customerEmail = order.CustomerEmail,
-            customerPhone = order.CustomerPhone,
-            supplierPrice = order.SupplierPrice,
-            extrasTotal   = order.ExtrasTotal,
-            notes         = order.Notes,
-        };
-
-        var content = new StringContent(
-            JsonSerializer.Serialize(payload),
-            Encoding.UTF8,
-            "application/json");
+        var payloadJson = await BuildPayloadJson(order, supplier);
+        var content = new StringContent(payloadJson, Encoding.UTF8, "application/json");
 
         try
         {
@@ -379,5 +360,80 @@ public class IntegrationDispatchService(
         sb.AppendLine("info@ruumly.eu | +372 5555 1234");
 
         return sb.ToString();
+    }
+
+    private async Task<string> BuildPayloadJson(Order order, Supplier supplier)
+    {
+        var settings = await db.IntegrationSettings
+            .FirstOrDefaultAsync(s => s.SupplierId == supplier.Id);
+
+        var template = settings?.MappingProfile;
+
+        if (string.IsNullOrWhiteSpace(template))
+        {
+            var defaultPayload = new
+            {
+                orderId       = order.Id,
+                listingTitle  = order.ListingTitle,
+                listingType   = order.ListingType.ToString().ToLower(),
+                startDate     = order.StartDate.ToString("yyyy-MM-dd"),
+                endDate       = order.EndDate?.ToString("yyyy-MM-dd"),
+                duration      = order.Duration,
+                extras        = order.ExtrasKeys,
+                customerName  = order.CustomerName,
+                customerEmail = order.CustomerEmail,
+                customerPhone = order.CustomerPhone,
+                supplierPrice = order.SupplierPrice,
+                extrasTotal   = order.ExtrasTotal,
+                notes         = order.Notes,
+            };
+            return JsonSerializer.Serialize(defaultPayload);
+        }
+
+        var result = template
+            .Replace("{{orderId}}",       order.Id.ToString())
+            .Replace("{{listingTitle}}",  order.ListingTitle ?? "")
+            .Replace("{{listingType}}",   order.ListingType.ToString().ToLower())
+            .Replace("{{startDate}}",     order.StartDate.ToString("yyyy-MM-dd"))
+            .Replace("{{endDate}}",       order.EndDate?.ToString("yyyy-MM-dd") ?? "")
+            .Replace("{{duration}}",      order.Duration ?? "")
+            .Replace("{{customerName}}",  order.CustomerName ?? "")
+            .Replace("{{customerEmail}}", order.CustomerEmail ?? "")
+            .Replace("{{customerPhone}}", order.CustomerPhone ?? "")
+            .Replace("{{supplierPrice}}", order.SupplierPrice.ToString("F2"))
+            .Replace("{{extrasTotal}}",   order.ExtrasTotal.ToString("F2"))
+            .Replace("{{notes}}",         order.Notes ?? "")
+            .Replace("{{extras}}",        JsonSerializer.Serialize(order.ExtrasKeys ?? new List<string>()));
+
+        try
+        {
+            JsonDocument.Parse(result);
+        }
+        catch (JsonException ex)
+        {
+            logger.LogWarning(ex,
+                "MappingProfile for supplier {SupplierId} produced invalid JSON. Using default payload.",
+                supplier.Id);
+
+            var fallback = new
+            {
+                orderId       = order.Id,
+                listingTitle  = order.ListingTitle,
+                listingType   = order.ListingType.ToString().ToLower(),
+                startDate     = order.StartDate.ToString("yyyy-MM-dd"),
+                endDate       = order.EndDate?.ToString("yyyy-MM-dd"),
+                duration      = order.Duration,
+                extras        = order.ExtrasKeys,
+                customerName  = order.CustomerName,
+                customerEmail = order.CustomerEmail,
+                customerPhone = order.CustomerPhone,
+                supplierPrice = order.SupplierPrice,
+                extrasTotal   = order.ExtrasTotal,
+                notes         = order.Notes,
+            };
+            return JsonSerializer.Serialize(fallback);
+        }
+
+        return result;
     }
 }
