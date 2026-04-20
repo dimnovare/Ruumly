@@ -328,6 +328,28 @@ public class AdminSuppliersController(
         });
     }
 
+    [HttpPost("suppliers/{id:guid}/grant-founding-partner")]
+    public async Task<IActionResult> GrantFoundingPartner(Guid id)
+    {
+        var supplier = await Db.Suppliers.FindAsync(id);
+        if (supplier is null) return NotFound(Error("Supplier not found"));
+
+        supplier.FoundingPartner      = true;
+        supplier.FoundingPartnerUntil = DateTime.UtcNow.AddMonths(12);
+        supplier.UpdatedAt            = DateTime.UtcNow;
+        await Db.SaveChangesAsync();
+
+        await Audit("supplier.founding_partner_granted", User.GetUserEmail(),
+            supplier.Name, $"until {supplier.FoundingPartnerUntil:yyyy-MM-dd}");
+
+        return Ok(new
+        {
+            supplierId           = supplier.Id,
+            foundingPartner      = supplier.FoundingPartner,
+            foundingPartnerUntil = supplier.FoundingPartnerUntil,
+        });
+    }
+
     [HttpPost("suppliers/{id}/approve-application")]
     public async Task<IActionResult> ApproveApplication(Guid id, [FromQuery] Guid userId)
     {

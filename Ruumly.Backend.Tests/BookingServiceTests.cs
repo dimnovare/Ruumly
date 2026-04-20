@@ -46,6 +46,8 @@ public class BookingServiceTests
     {
         public Task<PricingConfig> GetAsync() => Task.FromResult(TestPricingConfig);
         public Task InvalidateCacheAsync() => Task.CompletedTask;
+        public Task<EffectivePricing> GetEffectivePricingAsync(Ruumly.Backend.Models.Supplier s) =>
+            Task.FromResult(new EffectivePricing(TestPricingConfig.ForTier(s.Tier).MonthlyFee, TestPricingConfig.ForTier(s.Tier).CustomerDiscountRate));
     }
 
     private sealed class NoOpInvoiceService : IInvoiceService

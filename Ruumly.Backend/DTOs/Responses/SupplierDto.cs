@@ -32,5 +32,7 @@ public record SupplierDto(
     int       MaxLocations,
     bool      HasFullAnalytics,
     bool      CanHavePromotedBadge,
-    DateTime? SubscriptionEndsAt
+    DateTime? SubscriptionEndsAt,
+    bool      FoundingPartner,
+    DateTime? FoundingPartnerUntil
 );

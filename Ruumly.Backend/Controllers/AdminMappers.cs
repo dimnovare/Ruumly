@@ -51,9 +51,11 @@ internal static class AdminMappers
             : null,
         BillingModel:        s.BillingModel.ToString().ToLower(),
         Tier:                s.Tier.ToString(),
-        CommissionRate:      pricingConfig?.ForTier(s.Tier).CustomerDiscountRate
+        CommissionRate:      s.IsFoundingPartnerActive ? 12m
+                             : pricingConfig?.ForTier(s.Tier).CustomerDiscountRate
                              ?? TierRules.CustomerDiscountRate(s.Tier),
-        MonthlyFee:          pricingConfig?.ForTier(s.Tier).MonthlyFee
+        MonthlyFee:          s.IsFoundingPartnerActive ? 0m
+                             : pricingConfig?.ForTier(s.Tier).MonthlyFee
                              ?? TierRules.MonthlyFee(s.Tier),
         MaxLocations:        pricingConfig?.ForTier(s.Tier).MaxLocations
                              ?? TierRules.MaxLocations(s.Tier),
@@ -61,7 +63,9 @@ internal static class AdminMappers
                              ?? TierRules.HasFullAnalytics(s.Tier),
         CanHavePromotedBadge: pricingConfig?.ForTier(s.Tier).CanHavePromotedBadge
                              ?? TierRules.CanHavePromotedBadge(s.Tier),
-        SubscriptionEndsAt:  s.SubscriptionEndsAt);
+        SubscriptionEndsAt:  s.SubscriptionEndsAt,
+        FoundingPartner:     s.FoundingPartner,
+        FoundingPartnerUntil: s.FoundingPartnerUntil);
 
     internal static IntegrationSettingsDto MapIntegrationSettings(Models.IntegrationSettings i) => new(
         Id:                  i.Id,

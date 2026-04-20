@@ -7,7 +7,12 @@ public interface IPricingConfigService
     Task<PricingConfig> GetAsync();
     /// <summary>Call after admin saves settings to bust the cache</summary>
     Task InvalidateCacheAsync();
+    /// <summary>Returns effective subscription fee and commission rate for a supplier,
+    /// accounting for founding partner status.</summary>
+    Task<EffectivePricing> GetEffectivePricingAsync(Ruumly.Backend.Models.Supplier supplier);
 }
+
+public record EffectivePricing(decimal SubscriptionFee, decimal CommissionRate);
 
 public record TierConfig(
     decimal CustomerDiscountRate,

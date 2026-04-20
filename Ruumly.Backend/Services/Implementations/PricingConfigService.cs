@@ -76,6 +76,17 @@ public class PricingConfigService(RuumlyDbContext db, IDistributedCache cache) :
     public async Task InvalidateCacheAsync()
         => await cache.RemoveAsync(CacheKey);
 
+    public async Task<EffectivePricing> GetEffectivePricingAsync(Models.Supplier supplier)
+    {
+        var config = await GetAsync();
+        var tier   = config.ForTier(supplier.Tier);
+
+        if (supplier.IsFoundingPartnerActive)
+            return new EffectivePricing(SubscriptionFee: 0m, CommissionRate: 12m);
+
+        return new EffectivePricing(SubscriptionFee: tier.MonthlyFee, CommissionRate: tier.CustomerDiscountRate);
+    }
+
     public static decimal GetDefaultVatRate(string? country) => (country ?? "EE") switch
     {
         "EE" => 24m,

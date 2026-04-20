@@ -50,6 +50,10 @@ public class Supplier
     public DateTime? TrialEndsAt { get; set; }
     public bool IsOnTrial => TrialEndsAt.HasValue && TrialEndsAt.Value > DateTime.UtcNow;
 
+    public bool FoundingPartner { get; set; }
+    public DateTime? FoundingPartnerUntil { get; set; }
+    public bool IsFoundingPartnerActive => FoundingPartner && FoundingPartnerUntil.HasValue && FoundingPartnerUntil.Value > DateTime.UtcNow;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
