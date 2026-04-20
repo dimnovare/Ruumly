@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 using FluentValidation;
 using Microsoft.AspNetCore.DataProtection;
@@ -120,41 +121,67 @@ else
     builder.Services.AddDistributedMemoryCache();
 }
 
-// ─── Rate limiting ───
+// ─── Rate limiting (per-client partitioned) ───
+static string IpKey(HttpContext ctx) =>
+    ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+static string UserOrIpKey(HttpContext ctx) =>
+    ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+    ?? IpKey(ctx);
+
 builder.Services.AddRateLimiter(options =>
 {
-    options.AddFixedWindowLimiter("auth", limiterOptions =>
-    {
-        limiterOptions.PermitLimit           = 10;
-        limiterOptions.Window                = TimeSpan.FromMinutes(1);
-        limiterOptions.QueueProcessingOrder  = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
-        limiterOptions.QueueLimit            = 0;
-    });
-    options.AddFixedWindowLimiter("search", limiterOptions =>
-    {
-        limiterOptions.PermitLimit = 60;
-        limiterOptions.Window      = TimeSpan.FromMinutes(1);
-        limiterOptions.QueueLimit  = 0;
-    });
-    options.AddFixedWindowLimiter("upload", limiterOptions =>
-    {
-        limiterOptions.PermitLimit  = 20;   // 20 uploads per window
-        limiterOptions.Window       = TimeSpan.FromMinutes(1);
-        limiterOptions.QueueLimit   = 0;
-    });
-    options.AddFixedWindowLimiter("booking", limiterOptions =>
-    {
-        limiterOptions.PermitLimit = 5;     // 5 bookings per minute per user
-        limiterOptions.Window      = TimeSpan.FromMinutes(1);
-        limiterOptions.QueueLimit  = 0;
-    });
-    options.AddFixedWindowLimiter("payment", limiterOptions =>
-    {
-        limiterOptions.PermitLimit = 10;    // 10 payment attempts per minute
-        limiterOptions.Window      = TimeSpan.FromMinutes(1);
-        limiterOptions.QueueLimit  = 0;
-    });
+    options.AddPolicy("auth", ctx =>
+        RateLimitPartition.GetFixedWindowLimiter(IpKey(ctx), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit          = 10,
+            Window               = TimeSpan.FromMinutes(1),
+            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+            QueueLimit           = 0,
+        }));
+
+    options.AddPolicy("search", ctx =>
+        RateLimitPartition.GetFixedWindowLimiter(IpKey(ctx), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 60,
+            Window      = TimeSpan.FromMinutes(1),
+            QueueLimit  = 0,
+        }));
+
+    options.AddPolicy("upload", ctx =>
+        RateLimitPartition.GetFixedWindowLimiter(IpKey(ctx), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 20,
+            Window      = TimeSpan.FromMinutes(1),
+            QueueLimit  = 0,
+        }));
+
+    options.AddPolicy("booking", ctx =>
+        RateLimitPartition.GetFixedWindowLimiter(UserOrIpKey(ctx), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window      = TimeSpan.FromMinutes(1),
+            QueueLimit  = 0,
+        }));
+
+    options.AddPolicy("payment", ctx =>
+        RateLimitPartition.GetFixedWindowLimiter(UserOrIpKey(ctx), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window      = TimeSpan.FromMinutes(1),
+            QueueLimit  = 0,
+        }));
+
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+            context.HttpContext.Response.Headers.RetryAfter = ((int)retryAfter.TotalSeconds).ToString();
+
+        context.HttpContext.Response.ContentType = "application/json";
+        await context.HttpContext.Response.WriteAsync(
+            """{"error":"Too many requests. Please try again later."}""", cancellationToken);
+    };
 });
 
 // ─── CORS ───
