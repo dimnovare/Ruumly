@@ -434,6 +434,11 @@ using (var scope = app.Services.CreateScope())
         "abandoned-booking-reminder",
         x => x.ExecuteAsync(),
         "*/15 * * * *");
+
+    recurringJobManager.AddOrUpdate<FoundingPartnerExpiryReminderJob>(
+        "founding-partner-expiry-reminder",
+        x => x.ExecuteAsync(),
+        Cron.Daily);
 }
 
 app.MapControllers();

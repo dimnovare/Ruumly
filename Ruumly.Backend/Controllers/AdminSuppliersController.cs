@@ -350,6 +350,41 @@ public class AdminSuppliersController(
         });
     }
 
+    [HttpPost("suppliers/{id:guid}/extend-founding-partner")]
+    public async Task<IActionResult> ExtendFoundingPartner(Guid id, [FromBody] ExtendFoundingPartnerRequest? body)
+    {
+        var supplier = await Db.Suppliers.FindAsync(id);
+        if (supplier is null) return NotFound(Error("Supplier not found"));
+
+        if (!supplier.FoundingPartner)
+            return BadRequest(Error("Supplier is not a founding partner"));
+
+        var months = body?.Months ?? 12;
+        if (months < 1 || months > 60)
+            return BadRequest(Error("Months must be between 1 and 60"));
+
+        var baseline = supplier.FoundingPartnerUntil > DateTime.UtcNow
+            ? supplier.FoundingPartnerUntil.Value
+            : DateTime.UtcNow;
+
+        supplier.FoundingPartnerUntil = baseline.AddMonths(months);
+        supplier.FoundingPartnerReminderSentAt = null; // reset so reminder fires again
+        supplier.UpdatedAt = DateTime.UtcNow;
+        await Db.SaveChangesAsync();
+
+        await Audit("supplier.founding_partner_extended", User.GetUserEmail(),
+            supplier.Name, $"+{months} months, until {supplier.FoundingPartnerUntil:yyyy-MM-dd}");
+
+        return Ok(new
+        {
+            supplierId           = supplier.Id,
+            foundingPartnerUntil = supplier.FoundingPartnerUntil,
+            extendedByMonths     = months,
+        });
+    }
+
+    public record ExtendFoundingPartnerRequest(int Months = 12);
+
     [HttpPost("suppliers/{id}/approve-application")]
     public async Task<IActionResult> ApproveApplication(Guid id, [FromQuery] Guid userId)
     {

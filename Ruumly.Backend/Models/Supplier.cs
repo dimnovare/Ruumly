@@ -52,6 +52,7 @@ public class Supplier
 
     public bool FoundingPartner { get; set; }
     public DateTime? FoundingPartnerUntil { get; set; }
+    public DateTime? FoundingPartnerReminderSentAt { get; set; }
     public bool IsFoundingPartnerActive => FoundingPartner && FoundingPartnerUntil.HasValue && FoundingPartnerUntil.Value > DateTime.UtcNow;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
