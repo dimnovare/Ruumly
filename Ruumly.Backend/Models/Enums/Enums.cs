@@ -6,7 +6,7 @@ public enum IntegrationType { Api, Email, Manual }
 public enum IntegrationHealth { Healthy, Degraded, Offline }
 public enum ApprovalMode { Auto, Admin, Provider }
 public enum PostingMode { Api, Email, Manual }
-public enum BookingStatus { Pending, Confirmed, Active, Completed, Cancelled }
+public enum BookingStatus { Pending, Reserved, Confirmed, Active, Completed, Cancelled }
 public enum OrderStatus { Created, Sending, Sent, Confirmed, Rejected, Active, Completed, Cancelled }
 public enum FulfillmentStatus { AwaitingApproval, Approved, Rejected, Posting, Posted, Confirmed, Failed, Completed }
 public enum InvoiceStatus { Pending, AwaitingPayment, Paid, Overdue, PendingRefund, Refunded }

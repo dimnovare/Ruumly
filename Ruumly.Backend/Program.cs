@@ -425,6 +425,11 @@ using (var scope = app.Services.CreateScope())
         x => x.ExecuteAsync(),
         Cron.Hourly);
 
+    recurringJobManager.AddOrUpdate<BackgroundCleanupService>(
+        "expire-reservations",
+        x => x.ExpireReservationsAsync(),
+        "*/15 * * * *");
+
     recurringJobManager.AddOrUpdate<AbandonedBookingReminderJob>(
         "abandoned-booking-reminder",
         x => x.ExecuteAsync(),

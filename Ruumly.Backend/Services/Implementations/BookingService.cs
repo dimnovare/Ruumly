@@ -193,7 +193,8 @@ public class BookingService(
                     .CountAsync(b =>
                         b.ListingId == request.ListingId &&
                         (b.Status == BookingStatus.Confirmed ||
-                         b.Status == BookingStatus.Active) &&
+                         b.Status == BookingStatus.Active ||
+                         b.Status == BookingStatus.Reserved) &&
                         b.EndDate.HasValue &&
                         b.StartDate < endUtc &&
                         b.EndDate.Value > startUtc);
@@ -304,6 +305,7 @@ public class BookingService(
             }
 
             // 6. Create Booking entity
+            var isReservation = string.Equals(request.PaymentMethod, "reserve", StringComparison.OrdinalIgnoreCase);
             var booking = new Booking
             {
                 Id             = Guid.NewGuid(),
@@ -324,7 +326,8 @@ public class BookingService(
                 ContactPhone   = request.ContactPhone,
                 Notes          = request.Notes,
                 IdempotencyKey = request.IdempotencyKey,
-                Status         = BookingStatus.Pending,
+                Status         = isReservation ? BookingStatus.Reserved : BookingStatus.Pending,
+                ReservedUntil  = isReservation ? DateTime.UtcNow.AddHours(24) : null,
                 CreatedAt      = DateTime.UtcNow,
                 UpdatedAt      = DateTime.UtcNow,
             };
@@ -360,7 +363,7 @@ public class BookingService(
 
             // 9. Reload with all navigations for response
             var result = await db.Bookings
-                .Include(b => b.Listing)
+                .Include(b => b.Listing).ThenInclude(l => l!.Location)
                 .Include(b => b.Supplier)
                 .Include(b => b.Timeline)
                 .Include(b => b.Order).ThenInclude(o => o!.Supplier)
@@ -383,7 +386,7 @@ public class BookingService(
     public async Task<BookingDto> CancelAsync(Guid id, Guid userId, UserRole role)
     {
         var booking = await db.Bookings
-            .Include(b => b.Listing)
+            .Include(b => b.Listing).ThenInclude(l => l!.Location)
             .Include(b => b.Supplier)
             .Include(b => b.Timeline)
             .Include(b => b.Order).ThenInclude(o => o!.Supplier)
@@ -468,7 +471,9 @@ public class BookingService(
                 Status: t.Status.ToString().ToLower()
             )).ToList(),
         Order:     b.Order is null ? null : MapOrderToDto(b.Order),
-        InvoiceId: invoiceId
+        InvoiceId: invoiceId,
+        ReservedUntil: b.ReservedUntil?.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+        IsReservation: b.Status == BookingStatus.Reserved
     );
 
     private static OrderSummaryDto MapOrderToDto(Order o) => new(

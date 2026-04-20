@@ -39,5 +39,7 @@ public record BookingDto(
     string CreatedAt,
     List<BookingTimelineDto> Timeline,
     OrderSummaryDto? Order,
-    Guid? InvoiceId
+    Guid? InvoiceId,
+    string? ReservedUntil,
+    bool IsReservation
 );

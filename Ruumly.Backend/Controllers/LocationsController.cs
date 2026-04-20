@@ -85,7 +85,7 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
             DateTime.TryParse(availableTo,   out var to))
         {
             var bookedListingIds = await db.Bookings
-                .Where(b => (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Active)
+                .Where(b => (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Active || b.Status == BookingStatus.Reserved)
                     && b.StartDate < to && (!b.EndDate.HasValue || b.EndDate > from))
                 .Select(b => b.ListingId)
                 .Distinct()
@@ -537,7 +537,7 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
             var capacity       = listing.QuantityTotal ?? 1;
             var activeBookings = await db.Bookings.CountAsync(b =>
                 b.ListingId == listing.Id &&
-                (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Active) &&
+                (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Active || b.Status == BookingStatus.Reserved) &&
                 b.StartDate <= now &&
                 (!b.EndDate.HasValue || b.EndDate.Value > now));
             totalAvailable += Math.Max(0, capacity - activeBookings);

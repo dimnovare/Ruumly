@@ -88,6 +88,7 @@ public class Booking
     public string? ContactEmail { get; set; }
     public string? ContactPhone { get; set; }
     public BookingStatus Status { get; set; } = BookingStatus.Pending;
+    public DateTime? ReservedUntil { get; set; }
     public string? Notes { get; set; }
     public string? IdempotencyKey { get; set; }
     public bool IsDeleted { get; set; } = false;
