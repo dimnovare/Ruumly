@@ -12,6 +12,8 @@ public class Listing
     public string Title { get; set; } = string.Empty;
     public Guid SupplierId { get; set; }
     public Supplier Supplier { get; set; } = null!;
+    // TODO: Address, City, Lat, Lng duplicate data from SupplierLocation.
+    // Remove these in a future refactor and project from l.Location.Lat/Lng/Address/City in DTO mapping instead.
     public string Address { get; set; } = string.Empty;
     public string City { get; set; } = string.Empty;
     public double Lat { get; set; }
