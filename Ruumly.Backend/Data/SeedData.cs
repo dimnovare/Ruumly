@@ -936,6 +936,24 @@ public static class SeedData
             ["tier.premium.customerDiscount"]  = ("12",  "Premium tier: customer discount %"),
             ["tier.premium.monthlyFee"]        = ("99",  "Premium tier: monthly subscription fee (EUR)"),
             ["tier.premium.maxLocations"]      = ("999", "Premium tier: max active locations (effectively unlimited)"),
+            // ── About page settings ────────────────────────────────────────
+            ["aboutPage.enabled"]    = ("true",  "Controls whether /about renders at all"),
+            ["aboutPage.showStats"]  = ("false", "Show platform stats on about page (default OFF until real numbers exist)"),
+            // aboutPage.founders is a JSON array of founder objects:
+            // {
+            //   "name": "string",
+            //   "role": { "et": "string", "en": "string", "ru": "string", "lv": "string", "lt": "string" },
+            //   "bio":  { "et": "string", "en": "string", "ru": "string", "lv": "string", "lt": "string" },
+            //   "photoUrl": "string | null",
+            //   "email": "string | null",
+            //   "linkedinUrl": "string | null"
+            // }
+            ["aboutPage.founders"]   = ("[]",    "JSON array of founder objects (see schema above)"),
+            ["aboutPage.mission.et"] = ("Ruumly on Baltikumi esimene ühtne platvorm laopindade, kolimis­teenuste ja haagiste rentimiseks. Meie missioon on muuta ruumide ja teenuste leidmine lihtsaks, läbipaistvaks ning usaldusväärseks — nii eraklientidele kui ettevõtetele.", "About page mission text (Estonian)"),
+            ["aboutPage.mission.en"] = ("Ruumly is the Baltics' first unified platform for storage, moving services, and trailer rentals. Our mission is to make finding spaces and services simple, transparent, and trustworthy — for both private and business customers.", "About page mission text (English)"),
+            ["aboutPage.mission.ru"] = ("",      "About page mission text (Russian) — empty = falls back to ET"),
+            ["aboutPage.mission.lv"] = ("",      "About page mission text (Latvian) — empty = falls back to ET"),
+            ["aboutPage.mission.lt"] = ("",      "About page mission text (Lithuanian) — empty = falls back to ET"),
         };
 
         db.PlatformSettings.AddRange(defaults.Select(kv => new PlatformSetting

@@ -20,7 +20,7 @@ public class SettingsController(RuumlyDbContext db) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPublic()
     {
-        // Whitelist of keys safe to expose publicly
+        // Whitelist of exact keys safe to expose publicly
         var publicKeys = new[]
         {
             "siteName",
@@ -38,8 +38,12 @@ public class SettingsController(RuumlyDbContext db) : ControllerBase
             // Note: "inviteCode" is NOT included — the actual code stays server-side only
         };
 
+        // Prefixes whose keys are also public (e.g. aboutPage.enabled, aboutPage.mission.en)
+        var publicPrefixes = new[] { "aboutPage." };
+
         var settings = await db.PlatformSettings
-            .Where(s => publicKeys.Contains(s.Key))
+            .Where(s => publicKeys.Contains(s.Key)
+                     || publicPrefixes.Any(p => s.Key.StartsWith(p)))
             .ToDictionaryAsync(s => s.Key, s => s.Value);
 
         // Provide defaults for any missing keys
@@ -57,6 +61,10 @@ public class SettingsController(RuumlyDbContext db) : ControllerBase
             showProviderCta      = settings.GetValueOrDefault("showProviderCta",      "true")  == "true",
             showFaq              = settings.GetValueOrDefault("showFaq",              "true")  == "true",
             showMap              = settings.GetValueOrDefault("showMap",              "true")  == "true",
+            // About page — pass all aboutPage.* keys as a sub-dictionary
+            aboutPage = settings
+                .Where(kv => kv.Key.StartsWith("aboutPage."))
+                .ToDictionary(kv => kv.Key["aboutPage.".Length..], kv => kv.Value),
         });
     }
 
