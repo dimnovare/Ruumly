@@ -222,23 +222,6 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
         if (body.OpeningHours is not null) location.OpeningHours = body.OpeningHours;
         if (body.Images      is not null) location.Images      = body.Images;
 
-        // Cascade Lat/Lng/Address/City to child listings so they stay in sync
-        if (body.Lat.HasValue || body.Lng.HasValue || body.Address is not null || body.City is not null)
-        {
-            var childListings = await db.Listings
-                .Where(l => l.LocationId == id)
-                .ToListAsync();
-
-            foreach (var listing in childListings)
-            {
-                listing.Lat       = location.Lat;
-                listing.Lng       = location.Lng;
-                listing.Address   = location.Address;
-                listing.City      = location.City;
-                listing.UpdatedAt = DateTime.UtcNow;
-            }
-        }
-
         location.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
@@ -580,8 +563,8 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
                          .OrderBy(u => u.PriceFrom)
                          .Select(u => new ListingDto(
                              u.Id, u.Type.ToString().ToLower(), u.Title,
-                             l.Supplier?.Name ?? "", u.Address, u.City,
-                             u.Lat, u.Lng, u.PriceFrom, u.PriceUnit, u.AvailableNow,
+                             l.Supplier?.Name ?? "", l.Address, l.City,
+                             l.Lat, l.Lng, u.PriceFrom, u.PriceUnit, u.AvailableNow,
                              u.Badge?.ToString().ToLower(), u.Rating, u.ReviewCount,
                              u.Description, u.Images, u.Features,
                              u.PartnerDiscountRateOverride, u.ClientDiscountRateOverride,

@@ -249,6 +249,7 @@ public class AdminSettingsController(
     {
         var listings = await Db.Listings
             .Include(l => l.Supplier)
+            .Include(l => l.Location)
             .OrderByDescending(l => l.CreatedAt)
             .ToListAsync();
         return Ok(listings.Select(AdminMappers.MapListing));
@@ -259,6 +260,7 @@ public class AdminSettingsController(
     {
         var listing = await Db.Listings
             .Include(l => l.Supplier)
+            .Include(l => l.Location)
             .FirstOrDefaultAsync(l => l.Id == id);
         if (listing is null) return NotFound(Error("Listing not found"));
         return Ok(AdminMappers.MapListing(listing));
@@ -323,6 +325,7 @@ public class AdminSettingsController(
     {
         var listing = await Db.Listings
             .Include(l => l.Supplier)
+            .Include(l => l.Location)
             .FirstOrDefaultAsync(l => l.Id == id);
         if (listing is null) return NotFound(Error("Listing not found"));
 
@@ -380,6 +383,7 @@ public class AdminSettingsController(
     {
         var listing = await Db.Listings
             .Include(l => l.Supplier)
+            .Include(l => l.Location)
             .FirstOrDefaultAsync(l => l.Id == id);
         if (listing is null) return NotFound(Error("Listing not found"));
 

@@ -82,7 +82,7 @@ public class OrderRoutingService(
             ListingId       = listing.Id,
             ListingTitle    = listing.Title,
             ListingType     = listing.Type,
-            City            = listing.City,
+            City            = listing.Location?.City ?? listing.City,
             StartDate       = booking.StartDate,
             EndDate         = booking.EndDate,
             Duration        = booking.Duration,

@@ -36,7 +36,8 @@ public class BookingPaymentFlowTests
             new NoOpPricing(),
             new InvoiceService(db),   // real: exercises invoice creation in DB
             new NoOpHttp(),
-            new NoOpCache());
+            new NoOpCache(),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<BookingService>.Instance);
 
     private static OrderService MakeOrderService(RuumlyDbContext db) =>
         new(db,

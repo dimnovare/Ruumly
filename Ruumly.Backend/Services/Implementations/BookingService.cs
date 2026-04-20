@@ -58,7 +58,7 @@ public class BookingService(
         limit = Math.Clamp(limit, 1, 100);
 
         var query = db.Bookings
-            .Include(b => b.Listing)
+            .Include(b => b.Listing).ThenInclude(l => l!.Location)
             .Include(b => b.Supplier)
             .Include(b => b.Timeline)
             .Include(b => b.Order).ThenInclude(o => o!.Supplier)
@@ -97,7 +97,7 @@ public class BookingService(
     public async Task<BookingDto?> GetByIdAsync(Guid id, Guid userId, UserRole role)
     {
         var booking = await db.Bookings
-            .Include(b => b.Listing)
+            .Include(b => b.Listing).ThenInclude(l => l!.Location)
             .Include(b => b.Supplier)
             .Include(b => b.Timeline)
             .Include(b => b.Order).ThenInclude(o => o!.Supplier)
@@ -134,7 +134,7 @@ public class BookingService(
         if (!string.IsNullOrEmpty(request.IdempotencyKey))
         {
             var existing = await db.Bookings
-                .Include(b => b.Listing)
+                .Include(b => b.Listing).ThenInclude(l => l!.Location)
                 .Include(b => b.Supplier)
                 .Include(b => b.Timeline)
                 .Include(b => b.Order).ThenInclude(o => o!.Supplier)
@@ -448,7 +448,7 @@ public class BookingService(
         ListingTitle: b.Listing?.Title ?? string.Empty,
         ListingType:  b.Listing?.Type.ToString().ToLower() ?? string.Empty,
         Provider:     b.Supplier?.Name ?? string.Empty,
-        City:         b.Listing?.City ?? string.Empty,
+        City:         b.Listing?.Location?.City ?? b.Listing?.City ?? string.Empty,
         StartDate:    b.StartDate.ToString("yyyy-MM-dd"),
         EndDate:      b.EndDate?.ToString("yyyy-MM-dd"),
         Duration:     b.Duration,

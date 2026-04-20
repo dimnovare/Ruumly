@@ -37,7 +37,8 @@ public class OverlapDetectionTests
             new NoOpPricing(),
             new NoOpInvoice(),
             new NoOpHttp(),
-            new NoOpCache());
+            new NoOpCache(),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<BookingService>.Instance);
 
     private sealed class NoOpRouting : IOrderRoutingService
     {

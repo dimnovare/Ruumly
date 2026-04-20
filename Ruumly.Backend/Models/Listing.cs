@@ -12,8 +12,12 @@ public class Listing
     public string Title { get; set; } = string.Empty;
     public Guid SupplierId { get; set; }
     public Supplier Supplier { get; set; } = null!;
-    // TODO: Address, City, Lat, Lng duplicate data from SupplierLocation.
-    // Remove these in a future refactor and project from l.Location.Lat/Lng/Address/City in DTO mapping instead.
+    // For location-attached listings (LocationId != null), these fields are
+    // snapshots taken at creation time and MUST NOT be read directly — they
+    // drift from the parent SupplierLocation. Read via Location?.X ?? X.
+    // Kept only for standalone listings (LocationId == null), which have no parent.
+    // Future refactor: migrate all standalone listings to auto-generated
+    // SupplierLocation rows, then drop these four columns entirely.
     public string Address { get; set; } = string.Empty;
     public string City { get; set; } = string.Empty;
     public double Lat { get; set; }

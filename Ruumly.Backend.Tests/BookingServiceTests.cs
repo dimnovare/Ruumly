@@ -34,7 +34,8 @@ public class BookingServiceTests
             new NoOpPricingConfigService(),
             new NoOpInvoiceService(),
             new NoOpHttpContextAccessor(),
-            new NoOpDistributedCache());
+            new NoOpDistributedCache(),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<BookingService>.Instance);
 
     private sealed class NoOpOrderRoutingService : IOrderRoutingService
     {
