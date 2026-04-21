@@ -39,6 +39,10 @@ public record OrderDto(
     string?           ConfirmedAt,
     string            Notes,
     string            CreatedAt,
+    // Lead / CRM fields (provider & admin only — customers ignore these)
+    string            LeadStatus,
+    string?           LastContactAt,
+    string?           ProviderNotes,
     List<OrderTimelineDto>    Timeline,
     List<FulfillmentEventDto> FulfillmentEvents
 );

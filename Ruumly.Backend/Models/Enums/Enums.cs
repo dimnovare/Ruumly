@@ -19,3 +19,4 @@ public enum SupplierTier { Starter = 0, Standard = 1, Premium = 2 }
 public enum PayoutStatus { Pending, Paid, Disputed, Cancelled }
 public enum BillingModel { Marketplace = 0, Rebate = 1 }
 public enum RebateInvoiceStatus { Draft, Sent, Paid, Overdue }
+public enum LeadStatus { New, Contacted, Won, Lost }

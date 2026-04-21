@@ -1,8 +1,11 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.Helpers;
+using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Controllers;
@@ -10,7 +13,7 @@ namespace Ruumly.Backend.Controllers;
 [ApiController]
 [Route("api/orders")]
 [Authorize]
-public class OrdersController(IOrderService orderService) : ControllerBase
+public class OrdersController(IOrderService orderService, RuumlyDbContext db) : ControllerBase
 {
     /// <summary>
     /// Returns orders. Admin sees all; Provider sees their supplier's orders; Customer sees their own.
@@ -106,6 +109,92 @@ public class OrdersController(IOrderService orderService) : ControllerBase
     {
         var order = await orderService.UpdateStatusAsync(id, request);
         return Ok(order);
+    }
+    /// <summary>
+    /// Patch lead/CRM fields on an order. Provider (own supplier) or admin only.
+    /// </summary>
+    [HttpPatch("{id:guid}/lead")]
+    [Authorize(Roles = "Admin,Provider")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateLead(Guid id, [FromBody] UpdateOrderLeadRequest body)
+    {
+        var order = await db.Orders
+            .Include(o => o.Supplier)
+            .Include(o => o.FulfillmentEvents.OrderBy(e => e.CreatedAt))
+            .Include(o => o.Timeline.OrderBy(t => t.CreatedAt))
+            .Include(o => o.Booking)
+            .FirstOrDefaultAsync(o => o.Id == id);
+
+        if (order is null)
+            return NotFound(new { error = "Not Found", message = "Order not found", statusCode = 404 });
+
+        // Authorization: admin always OK; provider must own the supplier
+        if (User.GetUserRole() == UserRole.Provider)
+        {
+            var user = await db.Users.FindAsync(User.GetUserId());
+            if (user?.SupplierId != order.SupplierId)
+                return StatusCode(403, new { error = "Forbidden", message = "You can only update leads for your own supplier's orders", statusCode = 403 });
+        }
+
+        // Validate providerNotes length
+        if (body.ProviderNotes is not null && body.ProviderNotes.Length > 2000)
+            return BadRequest(new { error = "Bad Request", message = "ProviderNotes must be 2000 characters or fewer", statusCode = 400 });
+
+        // Patch semantics: null means don't change
+        if (body.LeadStatus is not null)
+        {
+            if (!Enum.TryParse<LeadStatus>(body.LeadStatus, ignoreCase: true, out var status))
+                return BadRequest(new { error = "Bad Request", message = $"Invalid LeadStatus '{body.LeadStatus}'", statusCode = 400 });
+            order.LeadStatus = status;
+        }
+
+        if (body.LastContactAt.HasValue)
+            order.LastContactAt = body.LastContactAt.Value;
+
+        if (body.ProviderNotes is not null)
+            order.ProviderNotes = body.ProviderNotes;
+
+        order.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        return Ok(orderService.MapToDto(order));
+    }
+
+    /// <summary>
+    /// Lead summary for the calling provider's supplier (rolling 30-day window).
+    /// </summary>
+    [HttpGet("lead-summary")]
+    [Authorize(Roles = "Provider")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetLeadSummary()
+    {
+        var user = await db.Users.FindAsync(User.GetUserId());
+        if (user?.SupplierId is null)
+            return StatusCode(403, new { error = "Forbidden", message = "No supplier linked to your account", statusCode = 403 });
+
+        var supplierId = user.SupplierId.Value;
+        var now        = DateTime.UtcNow;
+        var since30    = now.AddDays(-30);
+        var since7     = now.AddDays(-7);
+
+        var orders = await db.Orders
+            .Where(o => o.SupplierId == supplierId && o.CreatedAt > since30)
+            .Select(o => new { o.LeadStatus, o.CreatedAt })
+            .ToListAsync();
+
+        return Ok(new
+        {
+            newCount       = orders.Count(o => o.LeadStatus == LeadStatus.New),
+            contactedCount = orders.Count(o => o.LeadStatus == LeadStatus.Contacted),
+            wonCount       = orders.Count(o => o.LeadStatus == LeadStatus.Won),
+            lostCount      = orders.Count(o => o.LeadStatus == LeadStatus.Lost),
+            wonThisWeek    = orders.Count(o => o.LeadStatus == LeadStatus.Won  && o.CreatedAt > since7),
+            lostThisWeek   = orders.Count(o => o.LeadStatus == LeadStatus.Lost && o.CreatedAt > since7),
+        });
     }
 }
 

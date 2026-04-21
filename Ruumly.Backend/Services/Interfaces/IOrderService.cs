@@ -14,4 +14,5 @@ public interface IOrderService
     Task<OrderDto>        RejectAsync(Guid id, string reason, Guid rejectedByUserId);
     Task<OrderDto>        ConfirmAsync(Guid id, Guid confirmedByUserId);
     Task<OrderDto>        UpdateStatusAsync(Guid id, UpdateOrderStatusRequest request);
+    OrderDto              MapToDto(Models.Order order);
 }

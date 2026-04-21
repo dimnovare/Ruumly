@@ -458,7 +458,9 @@ public class OrderService(
             .Include(o => o.Booking)
             .FirstOrDefaultAsync(o => o.Id == id);
 
-    private static OrderDto MapToDto(Order o) => new(
+    public OrderDto MapToDto(Order o) => MapOrderToDto(o);
+
+    private static OrderDto MapOrderToDto(Order o) => new(
         Id:               o.Id,
         BookingId:        o.BookingId,
         ListingId:        o.ListingId,
@@ -489,6 +491,9 @@ public class OrderService(
         ConfirmedAt:      o.ConfirmedAt?.ToString("yyyy-MM-dd HH:mm"),
         Notes:            o.Notes,
         CreatedAt:        o.CreatedAt.ToString("yyyy-MM-dd HH:mm"),
+        LeadStatus:       o.LeadStatus.ToString().ToLower(),
+        LastContactAt:    o.LastContactAt?.ToString("yyyy-MM-dd HH:mm"),
+        ProviderNotes:    o.ProviderNotes,
         Timeline: o.Timeline
             .Select(t => new OrderTimelineDto(
                 Date:   t.CreatedAt.ToString("yyyy-MM-dd"),

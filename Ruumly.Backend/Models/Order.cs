@@ -84,6 +84,12 @@ public class Order
     public DateTime? SentAt { get; set; }
     public DateTime? ConfirmedAt { get; set; }
     public string Notes { get; set; } = string.Empty;
+
+    // ── Lead / CRM fields (provider-facing) ──────────────────────────────
+    public LeadStatus LeadStatus { get; set; } = LeadStatus.New;
+    public DateTime? LastContactAt { get; set; }
+    public string ProviderNotes { get; set; } = string.Empty;
+
     public bool IsDeleted { get; set; } = false;
     public DateTime? DeletedAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
