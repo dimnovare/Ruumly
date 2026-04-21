@@ -34,7 +34,7 @@ public class ProviderStatsController(RuumlyDbContext db) : ControllerBase
 
         var thisMonth = allBookings.Where(b => b.CreatedAt >= monthStart).ToList();
         var active    = allBookings.Where(b =>
-            b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Active).ToList();
+            b.Status is BookingStatus.Reserved or BookingStatus.Confirmed or BookingStatus.Active).ToList();
 
         var totalUnits = await db.Listings
             .CountAsync(l => l.SupplierId == effectiveId && l.IsActive);
