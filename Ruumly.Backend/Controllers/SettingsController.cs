@@ -39,7 +39,7 @@ public class SettingsController(RuumlyDbContext db) : ControllerBase
         };
 
         // Prefixes whose keys are also public (e.g. aboutPage.enabled, aboutPage.mission.en)
-        var publicPrefixes = new[] { "aboutPage." };
+        var publicPrefixes = new[] { "aboutPage.", "blog." };
 
         var settings = await db.PlatformSettings
             .Where(s => publicKeys.Contains(s.Key)
@@ -65,6 +65,10 @@ public class SettingsController(RuumlyDbContext db) : ControllerBase
             aboutPage = settings
                 .Where(kv => kv.Key.StartsWith("aboutPage."))
                 .ToDictionary(kv => kv.Key["aboutPage.".Length..], kv => kv.Value),
+            // Blog settings
+            blog = settings
+                .Where(kv => kv.Key.StartsWith("blog."))
+                .ToDictionary(kv => kv.Key["blog.".Length..], kv => kv.Value),
         });
     }
 

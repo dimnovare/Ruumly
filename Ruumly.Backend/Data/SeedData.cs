@@ -954,6 +954,10 @@ public static class SeedData
             ["aboutPage.mission.ru"] = ("",      "About page mission text (Russian) — empty = falls back to ET"),
             ["aboutPage.mission.lv"] = ("",      "About page mission text (Latvian) — empty = falls back to ET"),
             ["aboutPage.mission.lt"] = ("",      "About page mission text (Lithuanian) — empty = falls back to ET"),
+            // ── Blog settings ──────────────────────────────────────────────
+            ["blog.enabled"]          = ("false", "Controls whether /blog route renders (true shows blog, false returns 404)"),
+            ["blog.showInNav"]        = ("false", "Show Blog link in top navigation (requires blog.enabled=true)"),
+            ["blog.showInFooter"]     = ("true",  "Show Blog link in footer (requires blog.enabled=true)"),
         };
 
         db.PlatformSettings.AddRange(defaults.Select(kv => new PlatformSetting
