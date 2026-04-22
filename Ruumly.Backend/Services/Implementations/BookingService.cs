@@ -494,13 +494,17 @@ public class BookingService(
         var days = Math.Max(1, (endDate - startDate).Days);
         var unit = (priceUnit ?? "").ToLower().Replace("€", "").Trim().TrimStart('/');
 
+        // Month = calendar-month rounding: 28–31 days counts as 1 month
+        var months = Math.Max(1m, Math.Round(days / 30.44m, MidpointRounding.AwayFromZero));
+
         return unit switch
         {
-            "day" or "päev" or "день"      => Math.Round(priceFrom * days, 2),
-            "week" or "nädal" or "неделя"  => Math.Round(priceFrom * days / 7m, 2),
-            "hour" or "tund" or "час"      => priceFrom,
-            "time" or "kord" or "раз"      => priceFrom,
-            _                              => Math.Round(priceFrom * days / 30m, 2),
+            "day" or "päev" or "diena" or "diena" or "день"                  => Math.Round(priceFrom * days, 2),
+            "week" or "nädal" or "savaitė" or "nedēļa" or "неделя"          => Math.Round(priceFrom * days / 7m, 2),
+            "month" or "kuu" or "mėnuo" or "mēnesis" or "месяц"            => Math.Round(priceFrom * months, 2),
+            "hour" or "tund" or "valanda" or "stunda" or "час"              => priceFrom,
+            "time" or "kord" or "kartas" or "reize" or "раз"               => priceFrom,
+            _                                                               => Math.Round(priceFrom * months, 2),
         };
     }
 }
