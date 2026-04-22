@@ -53,7 +53,7 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
             sb.AppendLine($"    <priority>{priority}</priority>");
 
             foreach (var lang in langs)
-                sb.AppendLine($"    <xhtml:link rel=\"alternate\" hreflang=\"{lang}\" href=\"{BaseUrl}{path}?lang={lang}\"/>");
+                sb.AppendLine($"    <xhtml:link rel=\"alternate\" hreflang=\"{lang}\" href=\"{BaseUrl}{path}\"/>");
 
             sb.AppendLine($"    <xhtml:link rel=\"alternate\" hreflang=\"x-default\" href=\"{BaseUrl}{path}\"/>");
             sb.AppendLine("  </url>");
@@ -72,7 +72,7 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
             sb.AppendLine("    <priority>0.8</priority>");
 
             foreach (var lang in langs)
-                sb.AppendLine($"    <xhtml:link rel=\"alternate\" hreflang=\"{lang}\" href=\"{BaseUrl}{path}?lang={lang}\"/>");
+                sb.AppendLine($"    <xhtml:link rel=\"alternate\" hreflang=\"{lang}\" href=\"{BaseUrl}{path}\"/>");
 
             sb.AppendLine($"    <xhtml:link rel=\"alternate\" hreflang=\"x-default\" href=\"{BaseUrl}{path}\"/>");
             sb.AppendLine("  </url>");
@@ -90,7 +90,7 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
             sb.AppendLine("    <priority>0.9</priority>");
 
             foreach (var lang in langs)
-                sb.AppendLine($"    <xhtml:link rel=\"alternate\" hreflang=\"{lang}\" href=\"{BaseUrl}{path}?lang={lang}\"/>");
+                sb.AppendLine($"    <xhtml:link rel=\"alternate\" hreflang=\"{lang}\" href=\"{BaseUrl}{path}\"/>");
 
             sb.AppendLine($"    <xhtml:link rel=\"alternate\" hreflang=\"x-default\" href=\"{BaseUrl}{path}\"/>");
             sb.AppendLine("  </url>");
