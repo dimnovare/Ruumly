@@ -136,5 +136,6 @@ internal static class AdminMappers
         SizeM2:          l.SizeM2,
         QuantityTotal:   l.QuantityTotal,
         LocationId:      l.LocationId,
-        ViewCount:       l.ViewCount);
+        ViewCount:       l.ViewCount,
+        IsVerified:      l.Supplier?.IsVerified ?? false);
 }

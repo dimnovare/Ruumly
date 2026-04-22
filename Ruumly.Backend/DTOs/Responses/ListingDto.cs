@@ -27,5 +27,6 @@ public record ListingDto(
     decimal?         SizeM2,
     int?             QuantityTotal,
     Guid?            LocationId,
-    int              ViewCount
+    int              ViewCount,
+    bool             IsVerified
 );

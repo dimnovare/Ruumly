@@ -71,10 +71,14 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
         // ── Sort ──────────────────────────────────────────────────────────────
         query = f.Sort switch
         {
-            "cheapest" => query.OrderBy(l => l.PriceFrom),
-            "rating"   => query.OrderByDescending(l => l.Rating),
-            "newest"   => query.OrderByDescending(l => l.CreatedAt),
-            _          => query.OrderBy(l => l.CreatedAt),
+            "cheapest" => query.OrderBy(l => l.PriceFrom)
+                               .ThenByDescending(l => (int)l.Supplier!.Tier),
+            "rating"   => query.OrderByDescending(l => l.Rating)
+                               .ThenByDescending(l => (int)l.Supplier!.Tier),
+            "newest"   => query.OrderByDescending(l => l.CreatedAt)
+                               .ThenByDescending(l => (int)l.Supplier!.Tier),
+            _          => query.OrderByDescending(l => (int)l.Supplier!.Tier)
+                               .ThenBy(l => l.CreatedAt),
         };
 
         // ── Pagination ────────────────────────────────────────────────────────
@@ -205,7 +209,8 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
         SizeM2:          l.SizeM2,
         QuantityTotal:   l.QuantityTotal,
         LocationId:      l.LocationId,
-        ViewCount:       l.ViewCount
+        ViewCount:       l.ViewCount,
+        IsVerified:      l.Supplier?.IsVerified ?? false
     );
 
     private static string? BadgeToString(ListingBadge? badge) => badge switch

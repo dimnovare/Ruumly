@@ -340,6 +340,54 @@ public class AdminSuppliersController(
         return Ok(new { supplierId = supplier.Id, foundingPartner = false });
     }
 
+    [HttpPost("suppliers/{id:guid}/verify")]
+    public async Task<IActionResult> VerifySupplier(Guid id)
+    {
+        var supplier = await Db.Suppliers.FindAsync(id);
+        if (supplier is null) return NotFound(Error("Supplier not found"));
+
+        supplier.IsVerified = true;
+        supplier.VerifiedAt = DateTime.UtcNow;
+        supplier.UpdatedAt  = DateTime.UtcNow;
+        await Db.SaveChangesAsync();
+
+        await Audit("supplier.verified", User.GetUserEmail(), supplier.Name, null);
+        return Ok(new { supplierId = supplier.Id, isVerified = true, verifiedAt = supplier.VerifiedAt });
+    }
+
+    [HttpPost("suppliers/{id:guid}/unverify")]
+    public async Task<IActionResult> UnverifySupplier(Guid id)
+    {
+        var supplier = await Db.Suppliers.FindAsync(id);
+        if (supplier is null) return NotFound(Error("Supplier not found"));
+
+        supplier.IsVerified = false;
+        supplier.VerifiedAt = null;
+        supplier.UpdatedAt  = DateTime.UtcNow;
+        await Db.SaveChangesAsync();
+
+        await Audit("supplier.unverified", User.GetUserEmail(), supplier.Name, null);
+        return Ok(new { supplierId = supplier.Id, isVerified = false });
+    }
+
+    [HttpPatch("suppliers/{id:guid}/priority")]
+    public async Task<IActionResult> UpdatePriorityLevel(Guid id, [FromBody] UpdatePriorityRequest body)
+    {
+        var supplier = await Db.Suppliers.FindAsync(id);
+        if (supplier is null) return NotFound(Error("Supplier not found"));
+
+        if (!Enum.TryParse<PriorityLevel>(body.Level, ignoreCase: true, out var level))
+            return BadRequest(Error("Invalid priority level. Use Standard, High, or Critical."));
+
+        supplier.PriorityLevel = level;
+        supplier.UpdatedAt     = DateTime.UtcNow;
+        await Db.SaveChangesAsync();
+
+        await Audit("supplier.priority_changed", User.GetUserEmail(),
+            supplier.Name, $"priorityLevel → {level}");
+        return Ok(new { supplierId = supplier.Id, priorityLevel = level.ToString() });
+    }
+
     [HttpPost("suppliers/{id}/approve-application")]
     public async Task<IActionResult> ApproveApplication(Guid id, [FromQuery] Guid userId)
     {

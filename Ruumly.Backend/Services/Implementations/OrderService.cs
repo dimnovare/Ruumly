@@ -58,9 +58,15 @@ public class OrderService(
             query = query.Where(o => o.SupplierId == supplierId.Value);
         }
 
-        var total  = await query.CountAsync();
-        var orders = await query
-            .OrderByDescending(o => o.CreatedAt)
+        var total = await query.CountAsync();
+
+        // Admin inbox: surface high-priority suppliers first
+        var sorted = role == UserRole.Admin
+            ? query.OrderByDescending(o => (int)o.Supplier!.PriorityLevel)
+                   .ThenByDescending(o => o.CreatedAt)
+            : query.OrderByDescending(o => o.CreatedAt);
+
+        var orders = await sorted
             .Skip((page - 1) * limit)
             .Take(limit)
             .ToListAsync();

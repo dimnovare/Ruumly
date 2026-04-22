@@ -39,6 +39,8 @@ public class ProviderStatsController(RuumlyDbContext db) : ControllerBase
         var totalUnits = await db.Listings
             .CountAsync(l => l.SupplierId == effectiveId && l.IsActive);
 
+        var supplier = await db.Suppliers.FindAsync(effectiveId);
+
         return Ok(new
         {
             totalBookings     = allBookings.Count,
@@ -49,6 +51,7 @@ public class ProviderStatsController(RuumlyDbContext db) : ControllerBase
             totalRevenue      = allBookings
                 .Where(b => b.Status != BookingStatus.Cancelled)
                 .Sum(b => b.Total),
+            hasFullAnalytics  = supplier?.Tier >= SupplierTier.Standard,
         });
     }
 }
