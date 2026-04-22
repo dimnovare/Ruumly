@@ -123,7 +123,33 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
             "Disallow: /provider/dashboard\n" +
             "Disallow: /provider/onboarding\n" +
             "Disallow: /book\n" +
-            $"\nSitemap: {BaseUrl}/sitemap.xml\n";
+            "\n" +
+            "# AI training crawlers — blocked\n" +
+            "User-agent: Amazonbot\n" +
+            "Disallow: /\n" +
+            "\n" +
+            "User-agent: Applebot-Extended\n" +
+            "Disallow: /\n" +
+            "\n" +
+            "User-agent: Bytespider\n" +
+            "Disallow: /\n" +
+            "\n" +
+            "User-agent: CCBot\n" +
+            "Disallow: /\n" +
+            "\n" +
+            "User-agent: ClaudeBot\n" +
+            "Disallow: /\n" +
+            "\n" +
+            "User-agent: Google-Extended\n" +
+            "Disallow: /\n" +
+            "\n" +
+            "User-agent: GPTBot\n" +
+            "Disallow: /\n" +
+            "\n" +
+            "User-agent: meta-externalagent\n" +
+            "Disallow: /\n" +
+            "\n" +
+            $"Sitemap: {BaseUrl}/sitemap.xml\n";
 
         return Content(content, "text/plain");
     }

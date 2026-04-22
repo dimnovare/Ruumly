@@ -1,0 +1,34 @@
+using System.Text.RegularExpressions;
+using FluentAssertions;
+using Microsoft.AspNetCore.Mvc;
+using Ruumly.Backend.Controllers;
+
+namespace Ruumly.Backend.Tests;
+
+public class RobotsTxtTests
+{
+    [Fact]
+    public void RobotsController_SingleUserAgentStar()
+    {
+        var db = TestDbContext.Create();
+        var controller = new SitemapController(db);
+
+        var result = controller.Robots() as ContentResult;
+
+        result.Should().NotBeNull();
+        result!.ContentType.Should().Contain("text/plain");
+
+        var body = result.Content!;
+
+        // Exactly one User-agent: * block
+        var starCount = Regex.Matches(body, @"User-agent: \*").Count;
+        starCount.Should().Be(1, "there must be exactly one User-agent: * block");
+
+        // Sitemap directive present
+        body.Should().Contain("Sitemap: https://ruumly.eu/sitemap.xml");
+
+        // No Cloudflare managed content markers
+        body.Should().NotContain("Cloudflare Managed content");
+        body.Should().NotContain("Content-Signal:");
+    }
+}
