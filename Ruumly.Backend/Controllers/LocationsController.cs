@@ -155,25 +155,6 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
         if (supplier is null)
             return NotFound(new { error = ErrorMessages.Get("LISTING_NOT_FOUND", Request.GetLang()) });
 
-        // Check tier limit — count active locations, not individual unit listings.
-        // Skipped for founding partners (unlimited locations).
-        if (!supplier.IsOnTrial && !supplier.IsFoundingPartnerActive)
-        {
-            var activeLocationCount = await db.SupplierLocations
-                .CountAsync(l => l.SupplierId == supplierId && l.IsActive);
-
-            var config     = await pricingConfigService.GetAsync();
-            var maxAllowed = config.ForTier(supplier.Tier).MaxLocations;
-
-            if (activeLocationCount >= maxAllowed)
-            {
-                var lang = Request.GetLang();
-                var raw  = ErrorMessages.Get("TIER_LOCATION_LIMIT", lang);
-                var msg  = string.Format(raw, maxAllowed);
-                return BadRequest(new { error = msg });
-            }
-        }
-
         var location = new SupplierLocation
         {
             Id           = Guid.NewGuid(),
@@ -284,18 +265,6 @@ public class LocationsController(RuumlyDbContext db, IPricingConfigService prici
 
         if (!await CanAccess(location.SupplierId))
             return Forbid();
-
-        // Enforce MaxActiveUnits tier limit (skipped during trial and founding partners)
-        var supplier = location.Supplier;
-        if (!supplier.IsOnTrial && !supplier.IsFoundingPartnerActive)
-        {
-            var pricingCfg = await pricingConfigService.GetAsync();
-            var tierConfig = pricingCfg.ForTier(supplier.Tier);
-            var totalActiveUnits = await db.Listings
-                .CountAsync(l => l.SupplierId == location.SupplierId && l.IsActive);
-            if (totalActiveUnits >= tierConfig.MaxActiveUnits)
-                return BadRequest(new { error = $"Your plan allows up to {tierConfig.MaxActiveUnits} active units. Upgrade your plan to add more." });
-        }
 
         var listing = new Listing
         {

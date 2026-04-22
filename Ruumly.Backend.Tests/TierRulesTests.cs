@@ -7,21 +7,6 @@ namespace Ruumly.Backend.Tests;
 public class TierRulesTests
 {
     [Fact]
-    public void Starter_MaxLocations_Is1() =>
-        TierRules.MaxLocations(SupplierTier.Starter)
-            .Should().Be(1);
-
-    [Fact]
-    public void Standard_MaxLocations_Is5() =>
-        TierRules.MaxLocations(SupplierTier.Standard)
-            .Should().Be(5);
-
-    [Fact]
-    public void Premium_MaxLocations_Is999() =>
-        TierRules.MaxLocations(SupplierTier.Premium)
-            .Should().Be(999);
-
-    [Fact]
     public void CustomerDiscountRates_AreCorrect()
     {
         TierRules.CustomerDiscountRate(SupplierTier.Starter)
@@ -62,8 +47,6 @@ public class TierRulesTests
     [Fact]
     public void CustomerDiscountRates_AllBelowDefaultPartnerDiscount()
     {
-        // Safety invariant: customer discount must always be < default partner discount (15%)
-        // otherwise margin would be negative
         const decimal defaultPartnerDiscount = 15m;
 
         TierRules.CustomerDiscountRate(SupplierTier.Starter)

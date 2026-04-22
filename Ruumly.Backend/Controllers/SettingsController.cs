@@ -86,9 +86,9 @@ public class SettingsController(RuumlyDbContext db) : ControllerBase
             defaultVatRate         = c.DefaultVatRate,
             tiers = new
             {
-                starter  = new { c.Starter.CustomerDiscountRate,  c.Starter.MonthlyFee,  c.Starter.MaxLocations },
-                standard = new { c.Standard.CustomerDiscountRate, c.Standard.MonthlyFee, c.Standard.MaxLocations },
-                premium  = new { c.Premium.CustomerDiscountRate,  c.Premium.MonthlyFee,  c.Premium.MaxLocations },
+                starter  = new { c.Starter.CustomerDiscountRate,  c.Starter.MonthlyFee },
+                standard = new { c.Standard.CustomerDiscountRate, c.Standard.MonthlyFee },
+                premium  = new { c.Premium.CustomerDiscountRate,  c.Premium.MonthlyFee },
             },
         });
     }

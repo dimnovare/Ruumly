@@ -20,3 +20,4 @@ public enum PayoutStatus { Pending, Paid, Disputed, Cancelled }
 public enum BillingModel { Marketplace = 0, Rebate = 1 }
 public enum RebateInvoiceStatus { Draft, Sent, Paid, Overdue }
 public enum LeadStatus { New, Contacted, Won, Lost }
+public enum PriorityLevel { Standard = 0, High = 1, Critical = 2 }

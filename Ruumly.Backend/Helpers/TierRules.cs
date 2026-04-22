@@ -33,14 +33,6 @@ public static class TierRules
             _                     => 0m,
         };
 
-    public static int MaxLocations(SupplierTier tier)
-        => tier switch
-        {
-            SupplierTier.Premium  => 999,
-            SupplierTier.Standard => 5,
-            _                     => 1,
-        };
-
     public static bool CanHavePromotedBadge(SupplierTier tier)
         => tier == SupplierTier.Premium;
 

@@ -29,10 +29,11 @@ public record SupplierDto(
     string    Tier,
     decimal   CommissionRate,
     decimal   MonthlyFee,
-    int       MaxLocations,
     bool      HasFullAnalytics,
     bool      CanHavePromotedBadge,
-    DateTime? SubscriptionEndsAt,
     bool      FoundingPartner,
-    DateTime? FoundingPartnerUntil
+    DateTime? OnboardingStartedAt,
+    bool      IsInOnboarding,
+    bool      IsVerified,
+    string    PriorityLevel
 );

@@ -170,9 +170,6 @@ public class AdminSuppliersController(
             var config = await pricingConfigService.GetAsync();
             supplier.Tier       = tier;
             supplier.MonthlyFee = config.ForTier(tier).MonthlyFee;
-            supplier.SubscriptionEndsAt = tier != SupplierTier.Starter
-                ? DateTime.UtcNow.AddMonths(1)
-                : null;
         }
         if (body.IntegrationType is not null &&
             Enum.TryParse<IntegrationType>(body.IntegrationType, true, out var it2))
@@ -217,8 +214,14 @@ public class AdminSuppliersController(
         var supplier = await Db.Suppliers.FindAsync(id);
         if (supplier is null) return NotFound(Error("Supplier not found"));
 
+        var wasInactive = !supplier.IsActive;
         supplier.IsActive  = body.IsActive;
         supplier.UpdatedAt = DateTime.UtcNow;
+
+        // Auto-grant onboarding when supplier is first activated
+        if (body.IsActive && wasInactive && supplier.OnboardingStartedAt is null)
+            supplier.OnboardingStartedAt = DateTime.UtcNow;
+
         await Audit("supplier.status_changed", User.GetUserEmail(),
             supplier.Name, $"isActive → {body.IsActive}");
         await Db.SaveChangesAsync();
@@ -239,18 +242,13 @@ public class AdminSuppliersController(
         var config = await pricingConfigService.GetAsync();
         supplier.Tier       = tier;
         supplier.MonthlyFee = config.ForTier(tier).MonthlyFee;
-        supplier.SubscriptionEndsAt =
-            tier != SupplierTier.Starter
-                ? DateTime.UtcNow.AddMonths(1)
-                : null;
-        supplier.UpdatedAt = DateTime.UtcNow;
+        supplier.UpdatedAt  = DateTime.UtcNow;
 
         await Db.SaveChangesAsync();
 
         return Ok(new {
-            id     = supplier.Id,
-            tier   = supplier.Tier.ToString(),
-            endsAt = supplier.SubscriptionEndsAt,
+            id   = supplier.Id,
+            tier = supplier.Tier.ToString(),
         });
     }
 
@@ -310,80 +308,37 @@ public class AdminSuppliersController(
         return Ok(new { success, latencyMs });
     }
 
-    [HttpPost("suppliers/{id:guid}/reset-trial")]
-    public async Task<IActionResult> ResetTrial(Guid id, [FromQuery] int days = 30)
-    {
-        var supplier = await Db.Suppliers.FindAsync(id);
-        if (supplier is null) return NotFound();
-
-        supplier.TrialEndsAt = DateTime.UtcNow.AddDays(days);
-        supplier.UpdatedAt   = DateTime.UtcNow;
-        await Db.SaveChangesAsync();
-
-        return Ok(new
-        {
-            supplierId    = supplier.Id,
-            trialEndsAt   = supplier.TrialEndsAt?.ToString("yyyy-MM-dd"),
-            daysRemaining = days,
-        });
-    }
-
     [HttpPost("suppliers/{id:guid}/grant-founding-partner")]
     public async Task<IActionResult> GrantFoundingPartner(Guid id)
     {
         var supplier = await Db.Suppliers.FindAsync(id);
         if (supplier is null) return NotFound(Error("Supplier not found"));
 
-        supplier.FoundingPartner      = true;
-        supplier.FoundingPartnerUntil = DateTime.UtcNow.AddMonths(12);
-        supplier.UpdatedAt            = DateTime.UtcNow;
+        supplier.FoundingPartner = true;
+        supplier.UpdatedAt       = DateTime.UtcNow;
         await Db.SaveChangesAsync();
 
         await Audit("supplier.founding_partner_granted", User.GetUserEmail(),
-            supplier.Name, $"until {supplier.FoundingPartnerUntil:yyyy-MM-dd}");
+            supplier.Name, "permanent status granted");
 
-        return Ok(new
-        {
-            supplierId           = supplier.Id,
-            foundingPartner      = supplier.FoundingPartner,
-            foundingPartnerUntil = supplier.FoundingPartnerUntil,
-        });
+        return Ok(new { supplierId = supplier.Id, foundingPartner = true });
     }
 
-    [HttpPost("suppliers/{id:guid}/extend-founding-partner")]
-    public async Task<IActionResult> ExtendFoundingPartner(Guid id, [FromBody] ExtendFoundingPartnerRequest? body)
+    [HttpPost("suppliers/{id:guid}/revoke-founding-partner")]
+    public async Task<IActionResult> RevokeFoundingPartner(Guid id)
     {
         var supplier = await Db.Suppliers.FindAsync(id);
         if (supplier is null) return NotFound(Error("Supplier not found"));
 
-        if (!supplier.FoundingPartner)
-            return BadRequest(Error("Supplier is not a founding partner"));
-
-        var months = body?.Months ?? 12;
-        if (months < 1 || months > 60)
-            return BadRequest(Error("Months must be between 1 and 60"));
-
-        var baseline = supplier.FoundingPartnerUntil > DateTime.UtcNow
-            ? supplier.FoundingPartnerUntil.Value
-            : DateTime.UtcNow;
-
-        supplier.FoundingPartnerUntil = baseline.AddMonths(months);
-        supplier.FoundingPartnerReminderSentAt = null; // reset so reminder fires again
-        supplier.UpdatedAt = DateTime.UtcNow;
+        supplier.FoundingPartner = false;
+        supplier.UpdatedAt       = DateTime.UtcNow;
         await Db.SaveChangesAsync();
 
-        await Audit("supplier.founding_partner_extended", User.GetUserEmail(),
-            supplier.Name, $"+{months} months, until {supplier.FoundingPartnerUntil:yyyy-MM-dd}");
+        await Audit("supplier.founding_partner_revoked", User.GetUserEmail(),
+            supplier.Name, "status revoked");
 
-        return Ok(new
-        {
-            supplierId           = supplier.Id,
-            foundingPartnerUntil = supplier.FoundingPartnerUntil,
-            extendedByMonths     = months,
-        });
+        return Ok(new { supplierId = supplier.Id, foundingPartner = false });
     }
-
-    public record ExtendFoundingPartnerRequest(int Months = 12);
 
     [HttpPost("suppliers/{id}/approve-application")]
     public async Task<IActionResult> ApproveApplication(Guid id, [FromQuery] Guid userId)
@@ -399,6 +354,8 @@ public class AdminSuppliersController(
 
         supplier.IsActive  = true;
         supplier.UpdatedAt = DateTime.UtcNow;
+        if (supplier.OnboardingStartedAt is null)
+            supplier.OnboardingStartedAt = DateTime.UtcNow;
         user.SupplierId    = supplier.Id;
         user.Role          = UserRole.Provider;
 

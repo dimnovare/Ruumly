@@ -17,8 +17,6 @@ public record EffectivePricing(decimal SubscriptionFee, decimal CommissionRate);
 public record TierConfig(
     decimal CustomerDiscountRate,
     decimal MonthlyFee,
-    int     MaxLocations,
-    int     MaxActiveUnits,
     int     MaxExtras,
     bool    CanHavePromotedBadge,
     bool    HasFullAnalytics,

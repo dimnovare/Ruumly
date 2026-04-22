@@ -47,13 +47,21 @@ public class Supplier
     public SupplierTier Tier { get; set; } = SupplierTier.Starter;
     public decimal MonthlyFee { get; set; } = 0m;
     public DateTime? SubscriptionEndsAt { get; set; }
-    public DateTime? TrialEndsAt { get; set; }
-    public bool IsOnTrial => TrialEndsAt.HasValue && TrialEndsAt.Value > DateTime.UtcNow;
 
     public bool FoundingPartner { get; set; }
-    public DateTime? FoundingPartnerUntil { get; set; }
-    public DateTime? FoundingPartnerReminderSentAt { get; set; }
-    public bool IsFoundingPartnerActive => FoundingPartner && FoundingPartnerUntil.HasValue && FoundingPartnerUntil.Value > DateTime.UtcNow;
+
+    // Onboarding window — 0% commission, 0€ subscription for first 90 days after supplier is activated.
+    // Set when admin activates (IsActive flips to true); starts the clock.
+    public DateTime? OnboardingStartedAt { get; set; }
+    public bool IsInOnboarding => OnboardingStartedAt.HasValue
+        && OnboardingStartedAt.Value.AddDays(90) > DateTime.UtcNow;
+
+    // Priority support flag — Business tier + manual admin grant.
+    public PriorityLevel PriorityLevel { get; set; } = PriorityLevel.Standard;
+
+    // Admin-granted verified badge — Business tier only, KYC-confirmed.
+    public bool IsVerified { get; set; } = false;
+    public DateTime? VerifiedAt { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
