@@ -34,6 +34,7 @@ public record SupplierDto(
     bool      FoundingPartner,
     DateTime? OnboardingStartedAt,
     bool      IsInOnboarding,
+    int       OnboardingDaysRemaining,
     bool      IsVerified,
     string    PriorityLevel
 );

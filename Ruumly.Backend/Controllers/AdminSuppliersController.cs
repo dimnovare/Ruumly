@@ -118,6 +118,7 @@ public class AdminSuppliersController(
             BankAccountName     = body.BankAccountName,
             BankName            = body.BankName,
             IsActive            = true,
+            OnboardingStartedAt = DateTime.UtcNow,
             CreatedAt           = DateTime.UtcNow,
             UpdatedAt           = DateTime.UtcNow,
         };

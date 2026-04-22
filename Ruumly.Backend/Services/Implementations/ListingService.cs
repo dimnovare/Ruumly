@@ -210,7 +210,8 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
         QuantityTotal:   l.QuantityTotal,
         LocationId:      l.LocationId,
         ViewCount:       l.ViewCount,
-        IsVerified:      l.Supplier?.IsVerified ?? false
+        IsVerified:      l.Supplier?.IsVerified ?? false,
+        FoundingPartner: l.Supplier?.FoundingPartner ?? false
     );
 
     private static string? BadgeToString(ListingBadge? badge) => badge switch

@@ -62,6 +62,9 @@ internal static class AdminMappers
         FoundingPartner:     s.FoundingPartner,
         OnboardingStartedAt: s.OnboardingStartedAt,
         IsInOnboarding:      s.IsInOnboarding,
+        OnboardingDaysRemaining: s.OnboardingStartedAt.HasValue
+            ? Math.Max(0, 90 - (int)(DateTime.UtcNow - s.OnboardingStartedAt.Value).TotalDays)
+            : 0,
         IsVerified:          s.IsVerified,
         PriorityLevel:       s.PriorityLevel.ToString());
 
@@ -137,5 +140,6 @@ internal static class AdminMappers
         QuantityTotal:   l.QuantityTotal,
         LocationId:      l.LocationId,
         ViewCount:       l.ViewCount,
-        IsVerified:      l.Supplier?.IsVerified ?? false);
+        IsVerified:      l.Supplier?.IsVerified ?? false,
+        FoundingPartner: l.Supplier?.FoundingPartner ?? false);
 }

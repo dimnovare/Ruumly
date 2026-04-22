@@ -28,5 +28,6 @@ public record ListingDto(
     int?             QuantityTotal,
     Guid?            LocationId,
     int              ViewCount,
-    bool             IsVerified
+    bool             IsVerified,
+    bool             FoundingPartner
 );
