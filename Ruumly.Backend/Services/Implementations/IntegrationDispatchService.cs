@@ -19,6 +19,20 @@ public class IntegrationDispatchService(
 {
     public async Task DispatchAsync(Order order, Supplier supplier)
     {
+        // Defense-in-depth: even if a stale order somehow has a non-Manual channel
+        // while the integration is deactivated, refuse to forward.
+        var settings = await db.IntegrationSettings
+            .FirstOrDefaultAsync(s => s.SupplierId == supplier.Id);
+
+        if (settings is { IsActive: false })
+        {
+            logger.LogWarning(
+                "Refusing to dispatch order {OrderId} to supplier {SupplierId} — integration is deactivated.",
+                order.Id, supplier.Id);
+            await DispatchManualAsync(order);
+            return;
+        }
+
         // Honor order-level posting channel (set by routing service from IntegrationSettings)
         // Fall back to supplier's base integration type if PostingChannel is null
         var channel = order.PostingChannel ?? (PostingMode)(int)supplier.IntegrationType;

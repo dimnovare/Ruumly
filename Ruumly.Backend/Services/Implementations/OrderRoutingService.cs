@@ -68,10 +68,24 @@ public class OrderRoutingService(
                 partnerDiscountRate, booking.PlatformPrice / booking.BasePrice * 100);
 
         // 5. Determine posting channel
-        var postingChannel = matchedRule?.PostingChannel
-            ?? (PostingMode)(int)supplier.IntegrationType;
+        // If IntegrationSettings exists and is deactivated, force Manual mode.
+        // The order is still created so admin sees it in dashboard, but no
+        // forwarding happens until admin reactivates the integration.
+        var integrationActive = supplier.IntegrationSettings?.IsActive ?? true;
+
+        var postingChannel = !integrationActive
+            ? PostingMode.Manual
+            : matchedRule?.PostingChannel
+              ?? (PostingMode)(int)supplier.IntegrationType;
 
         var approvalMode = supplier.IntegrationSettings?.ApprovalMode ?? ApprovalMode.Admin;
+
+        if (!integrationActive)
+        {
+            logger.LogInformation(
+                "Integration deactivated for supplier {SupplierId}. Order will be created with Manual channel.",
+                supplier.Id);
+        }
 
         // 6. Create Order entity
         var order = new Order
