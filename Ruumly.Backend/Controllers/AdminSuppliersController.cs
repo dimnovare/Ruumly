@@ -419,4 +419,22 @@ public class AdminSuppliersController(
 
         return Ok(new { message = "Supplier approved and user linked as provider." });
     }
+
+    [HttpDelete("suppliers/demo")]
+    public async Task<IActionResult> DeleteDemoSuppliers()
+    {
+        var demoSuppliers = await Db.Suppliers
+            .Where(s => s.Name.StartsWith("[Demo]"))
+            .ToListAsync();
+
+        foreach (var supplier in demoSuppliers)
+        {
+            var listings = await Db.Listings.Where(l => l.SupplierId == supplier.Id).ToListAsync();
+            Db.Listings.RemoveRange(listings);
+            Db.Suppliers.Remove(supplier);
+        }
+
+        await Db.SaveChangesAsync();
+        return Ok(new { removedSuppliers = demoSuppliers.Count });
+    }
 }

@@ -490,6 +490,14 @@ if (app.Environment.IsDevelopment())
     }
 }
 
+using (var scope = app.Services.CreateScope())
+{
+    var db     = scope.ServiceProvider.GetRequiredService<RuumlyDbContext>();
+    var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    await DemoSeeder.SeedIfRequestedAsync(db, config, logger);
+}
+
 var port = Environment.GetEnvironmentVariable("PORT") ?? "3000";
 app.Urls.Add($"http://+:{port}");
 Console.WriteLine($"[Ruumly] Starting on http://localhost:{port}");
