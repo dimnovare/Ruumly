@@ -15,7 +15,7 @@ namespace Ruumly.Backend.Controllers;
 
 [ApiController]
 [Route("api/locations")]
-public class LocationsController(RuumlyDbContext db, IPricingConfigService pricingConfigService) : ControllerBase
+public class LocationsController(RuumlyDbContext db) : ControllerBase
 {
     private static object Error(string msg) => new { error = msg };
 
