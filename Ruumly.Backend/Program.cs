@@ -441,7 +441,24 @@ using (var scope = app.Services.CreateScope())
 
 app.MapControllers();
 
+// ─── Health endpoints ───
+// Public /health — minimal response for uptime monitors (Railway, UptimeRobot, etc.)
+// Returns only HTTP 200 ("ok") or 503 ("unhealthy"). No dependency names, no timings.
 app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "text/plain";
+        await context.Response.WriteAsync(
+            report.Status == Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Healthy
+                ? "ok"
+                : "unhealthy");
+    }
+});
+
+// Authenticated /health/details — full diagnostic report for admin / on-call
+// Returns dependency names, individual check status, and timing.
+app.MapHealthChecks("/health/details", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
 {
     ResponseWriter = async (context, report) =>
     {
@@ -449,16 +466,19 @@ app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks
         var result = System.Text.Json.JsonSerializer.Serialize(new
         {
             status = report.Status.ToString(),
+            totalDuration = report.TotalDuration.TotalMilliseconds,
             checks = report.Entries.Select(e => new
             {
-                name     = e.Key,
-                status   = e.Value.Status.ToString(),
-                duration = e.Value.Duration.TotalMilliseconds,
+                name        = e.Key,
+                status      = e.Value.Status.ToString(),
+                duration    = e.Value.Duration.TotalMilliseconds,
+                description = e.Value.Description,
+                exception   = e.Value.Exception?.Message,
             }),
         });
         await context.Response.WriteAsync(result);
     }
-});
+}).RequireAuthorization(new Microsoft.AspNetCore.Authorization.AuthorizeAttribute { Roles = "Admin" });
 
 if (app.Environment.IsProduction())
 {
@@ -502,7 +522,8 @@ var port = Environment.GetEnvironmentVariable("PORT") ?? "3000";
 app.Urls.Add($"http://+:{port}");
 Console.WriteLine($"[Ruumly] Starting on http://localhost:{port}");
 Console.WriteLine($"[Ruumly] Swagger: http://localhost:{port}/swagger");
-Console.WriteLine($"[Ruumly] Health:  http://localhost:{port}/health");
+Console.WriteLine($"[Ruumly] Health (public):  http://localhost:{port}/health");
+Console.WriteLine($"[Ruumly] Health (details): http://localhost:{port}/health/details (admin auth required)");
 app.Run();
 
 static string ParseDatabaseUrl(string databaseUrl)
