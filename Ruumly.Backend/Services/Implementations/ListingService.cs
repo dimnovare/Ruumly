@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
+using Ruumly.Backend.Constants;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs;
 using Ruumly.Backend.DTOs.Requests;
@@ -45,6 +46,27 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
         // ── Country filter ────────────────────────────────────────────────────
         if (!string.IsNullOrWhiteSpace(f.Country))
             query = query.Where(l => l.Location != null && l.Location.Country == f.Country);
+
+        // ── Size filter (m² range OR category code) ────────────────────────────
+        // Listings without a SizeM2 value (movers, trailers) are excluded only if
+        // a size filter is explicitly applied. Otherwise they pass through.
+        if (f.MinSize.HasValue)
+            query = query.Where(l => l.SizeM2 != null && l.SizeM2 >= f.MinSize.Value);
+
+        if (f.MaxSize.HasValue)
+            query = query.Where(l => l.SizeM2 != null && l.SizeM2 < f.MaxSize.Value);
+
+        if (!string.IsNullOrWhiteSpace(f.SizeCategory))
+        {
+            var bucket = StorageSizeBuckets.FindByCode(f.SizeCategory);
+            if (bucket != null)
+            {
+                if (bucket.MinM2.HasValue)
+                    query = query.Where(l => l.SizeM2 != null && l.SizeM2 >= bucket.MinM2.Value);
+                if (bucket.MaxM2.HasValue)
+                    query = query.Where(l => l.SizeM2 != null && l.SizeM2 <  bucket.MaxM2.Value);
+            }
+        }
 
         // ── City filter (case-insensitive) ────────────────────────────────────
         if (!string.IsNullOrWhiteSpace(f.City))

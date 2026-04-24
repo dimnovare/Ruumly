@@ -46,7 +46,8 @@ public class ListingServiceTests
         ListingType type        = ListingType.Warehouse,
         bool        isActive    = true,
         decimal     priceFrom   = 50m,
-        ListingBadge? badge     = null) => new()
+        ListingBadge? badge     = null,
+        decimal?    sizeM2      = null) => new()
     {
         Id           = Guid.NewGuid(),
         SupplierId   = supplierId,
@@ -60,7 +61,21 @@ public class ListingServiceTests
         AvailableNow = true,
         Description  = "Test listing",
         Badge        = badge,
+        SizeM2       = sizeM2,
     };
+
+    private static async Task<RuumlyDbContext> SeedListingsWithSizesAsync(params decimal?[] sizes)
+    {
+        var db       = CreateDb();
+        var supplier = MakeSupplier();
+        db.Suppliers.Add(supplier);
+
+        foreach (var size in sizes)
+            db.Listings.Add(MakeListing(supplier.Id, sizeM2: size));
+
+        await db.SaveChangesAsync();
+        return db;
+    }
 
     private static async Task<RuumlyDbContext> SeedListingsAsync(
         params (ListingType type, string city, bool isActive, decimal price, ListingBadge? badge)[] specs)
@@ -231,5 +246,69 @@ public class ListingServiceTests
 
         result.Should().NotBeNull();
         result!.Id.Should().Be(listing.Id);
+    }
+
+    // ─── Size filter tests ─────────────────────────────────────────────────
+
+    [Fact]
+    public async Task SearchAsync_FilterByMinSize_ReturnsOnlyListingsAboveThreshold()
+    {
+        var db      = await SeedListingsWithSizesAsync(1m, 2m, 5m, 10m);
+        var service = MakeService(db);
+
+        var result = await service.SearchAsync(new ListingSearchRequest { MinSize = 4m });
+
+        result.Data.Should().HaveCount(2);
+        result.Data.Should().OnlyContain(l => l.SizeM2 >= 4m);
+    }
+
+    [Fact]
+    public async Task SearchAsync_FilterByMaxSize_ReturnsOnlyListingsBelowThreshold()
+    {
+        var db      = await SeedListingsWithSizesAsync(1m, 2m, 5m, 10m);
+        var service = MakeService(db);
+
+        // MaxSize is exclusive on upper bound
+        var result = await service.SearchAsync(new ListingSearchRequest { MaxSize = 5m });
+
+        result.Data.Should().HaveCount(2);
+        result.Data.Should().OnlyContain(l => l.SizeM2 < 5m);
+    }
+
+    [Fact]
+    public async Task SearchAsync_FilterBySizeCategoryM_ReturnsOnly3_7To7_4M2()
+    {
+        // M bucket is [3.7, 7.4)
+        var db      = await SeedListingsWithSizesAsync(3m, 3.7m, 5m, 7.39m, 7.4m, 10m);
+        var service = MakeService(db);
+
+        var result = await service.SearchAsync(new ListingSearchRequest { SizeCategory = "M" });
+
+        result.Data.Should().HaveCount(3);
+        result.Data.Should().OnlyContain(l => l.SizeM2 >= 3.7m && l.SizeM2 < 7.4m);
+    }
+
+    [Fact]
+    public async Task SearchAsync_NoSizeFilter_IncludesListingsWithNullSize()
+    {
+        // Mix of sized listings (storage) and null-sized (movers/trailers)
+        var db      = await SeedListingsWithSizesAsync(5m, null, 10m, null);
+        var service = MakeService(db);
+
+        var result = await service.SearchAsync(new ListingSearchRequest());
+
+        result.Data.Should().HaveCount(4);
+    }
+
+    [Fact]
+    public async Task SearchAsync_SizeFilter_ExcludesListingsWithNullSize()
+    {
+        var db      = await SeedListingsWithSizesAsync(5m, null, 10m, null);
+        var service = MakeService(db);
+
+        var result = await service.SearchAsync(new ListingSearchRequest { MinSize = 1m });
+
+        result.Data.Should().HaveCount(2);
+        result.Data.Should().OnlyContain(l => l.SizeM2 != null);
     }
 }

@@ -1,6 +1,8 @@
 using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Ruumly.Backend.Constants;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.Services.Interfaces;
 
@@ -34,6 +36,20 @@ public class ListingsController(IListingService listingService) : ControllerBase
     {
         var result = await listingService.GetFeaturedAsync();
         return Ok(result);
+    }
+
+    [HttpGet("size-buckets")]
+    [AllowAnonymous]
+    [ResponseCache(Duration = 3600)]
+    public IActionResult GetSizeBuckets()
+    {
+        var buckets = StorageSizeBuckets.All.Select(b => new
+        {
+            code  = b.Code,
+            minM2 = b.MinM2,
+            maxM2 = b.MaxM2,
+        });
+        return Ok(buckets);
     }
 
     /// <summary>
