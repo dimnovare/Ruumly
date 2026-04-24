@@ -15,9 +15,11 @@ public class SecurityHeadersMiddleware(RequestDelegate next, IWebHostEnvironment
             "script-src 'self' 'unsafe-inline' " +
                 "https://accounts.google.com " +
                 "https://www.googletagmanager.com; " +
-            "style-src 'self' 'unsafe-inline'; " +
+            "style-src 'self' 'unsafe-inline' " +
+                "https://fonts.googleapis.com; " +
             "img-src 'self' data: https: blob:; " +
-            "font-src 'self' data:; " +
+            "font-src 'self' data: " +
+                "https://fonts.gstatic.com; " +
             "connect-src 'self' " +
                 "https://api.ruumly.eu " +
                 "https://api.montonio.com " +
