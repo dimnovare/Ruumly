@@ -109,7 +109,7 @@ public class LocationCoordinateDriftTests
         // ── 4. LocationsController.GetById — units should use parent coords ──
         using (var ctrlDb = new TestDbContext(options))
         {
-            var controller = new LocationsController(ctrlDb, null!)
+            var controller = new LocationsController(ctrlDb)
             {
                 ControllerContext = new ControllerContext
                 {
