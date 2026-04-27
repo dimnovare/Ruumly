@@ -84,10 +84,15 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
             query = query.Where(l => l.AvailableNow);
 
         // ── Full-text search via indexed tsvector column ──────────────────────
+        // EF.Functions.PlainToTsQuery MUST be called inline within the lambda for EF Core
+        // to translate it to a server-side plainto_tsquery() call. Hoisting it to a local
+        // variable causes "switched to client-evaluation" InvalidOperationException.
         if (!string.IsNullOrWhiteSpace(f.Q))
         {
-            var tsQuery = EF.Functions.PlainToTsQuery("simple", f.Q);
-            query = query.Where(l => l.SearchVector!.Matches(tsQuery));
+            var searchTerm = f.Q.Trim();
+            query = query.Where(l =>
+                l.SearchVector != null &&
+                l.SearchVector.Matches(EF.Functions.PlainToTsQuery("simple", searchTerm)));
         }
 
         // ── Sort ──────────────────────────────────────────────────────────────
