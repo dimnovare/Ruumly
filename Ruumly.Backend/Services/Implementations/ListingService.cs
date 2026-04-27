@@ -96,15 +96,27 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
         }
 
         // ── Sort ──────────────────────────────────────────────────────────────
+        // Tier is stored as string via HasConversion<string>() in RuumlyDbContext,
+        // so (int)l.Supplier.Tier translates to "Tier"::int in SQL and Postgres
+        // throws 22P02 ("Starter" cannot cast to int). Use a CASE WHEN expression
+        // EF can translate without casting from text.
         query = f.Sort switch
         {
             "cheapest" => query.OrderBy(l => l.PriceFrom)
-                               .ThenByDescending(l => (int)l.Supplier!.Tier),
+                               .ThenByDescending(l => l.Supplier!.Tier == SupplierTier.Premium  ? 3
+                                                    : l.Supplier!.Tier == SupplierTier.Standard ? 2
+                                                    : 1),
             "rating"   => query.OrderByDescending(l => l.Rating)
-                               .ThenByDescending(l => (int)l.Supplier!.Tier),
+                               .ThenByDescending(l => l.Supplier!.Tier == SupplierTier.Premium  ? 3
+                                                    : l.Supplier!.Tier == SupplierTier.Standard ? 2
+                                                    : 1),
             "newest"   => query.OrderByDescending(l => l.CreatedAt)
-                               .ThenByDescending(l => (int)l.Supplier!.Tier),
-            _          => query.OrderByDescending(l => (int)l.Supplier!.Tier)
+                               .ThenByDescending(l => l.Supplier!.Tier == SupplierTier.Premium  ? 3
+                                                    : l.Supplier!.Tier == SupplierTier.Standard ? 2
+                                                    : 1),
+            _          => query.OrderByDescending(l => l.Supplier!.Tier == SupplierTier.Premium  ? 3
+                                                    : l.Supplier!.Tier == SupplierTier.Standard ? 2
+                                                    : 1)
                                .ThenBy(l => l.CreatedAt),
         };
 
