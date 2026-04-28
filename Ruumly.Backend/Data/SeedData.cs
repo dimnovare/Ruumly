@@ -737,11 +737,9 @@ public static class SeedData
     // ─────────────────────────────────────────────────────────────────────────
     private static async Task SeedUsersAsync(RuumlyDbContext db)
     {
-        if (await db.Users.AnyAsync()) return;
-
         var pwHash = BC.HashPassword("demo1234", workFactor: 12);
 
-        db.Users.AddRange(new List<User>
+        var seedUsers = new List<User>
         {
             new() {
                 Id             = G("u1"),
@@ -871,10 +869,23 @@ public static class SeedData
                 LastLoginAt    = Utc(2026, 3, 21),
                 BookingsCount  = 0,
             },
-        });
+        };
 
-        await db.SaveChangesAsync();
-        Console.WriteLine("[Seed] Users done.");
+        // Per-email upsert: insert only users not already in the DB. The earlier
+        // all-or-nothing AnyAsync guard skipped seeding entirely whenever the
+        // admin row survived a partial wipe (which keeps Role = 'Admin').
+        var existingEmails = await db.Users.Select(u => u.Email).ToListAsync();
+        var existingSet = new HashSet<string>(existingEmails, StringComparer.OrdinalIgnoreCase);
+
+        var toInsert = seedUsers.Where(u => !existingSet.Contains(u.Email)).ToList();
+
+        if (toInsert.Count > 0)
+        {
+            await db.Users.AddRangeAsync(toInsert);
+            await db.SaveChangesAsync();
+        }
+
+        Console.WriteLine($"[Seed] Users done. ({toInsert.Count} new, {seedUsers.Count - toInsert.Count} already existed)");
     }
 
     // ─────────────────────────────────────────────────────────────────────────

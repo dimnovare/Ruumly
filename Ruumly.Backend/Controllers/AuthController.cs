@@ -150,6 +150,49 @@ public class AuthController(
         return Ok(new { message = "Parool uuendatud." });
     }
 
+    /// <summary>Update the authenticated user's own profile (name, phone, company).</summary>
+    [HttpPatch("me")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateMyProfile([FromBody] PatchProfileRequest body)
+    {
+        var userId = User.GetUserId();
+        var user = await db.Users.FindAsync(userId);
+        if (user is null)
+            return NotFound(new { error = "User not found." });
+
+        if (body.Name is not null)
+        {
+            var trimmed = body.Name.Trim();
+            if (trimmed.Length < 2 || trimmed.Length > 100)
+                return BadRequest(new { error = "Name must be 2-100 characters." });
+            user.Name = trimmed;
+        }
+
+        if (body.Phone is not null)
+        {
+            var trimmed = body.Phone.Trim();
+            if (trimmed.Length > 30)
+                return BadRequest(new { error = "Phone too long." });
+            user.Phone = string.IsNullOrEmpty(trimmed) ? null : trimmed;
+        }
+
+        if (body.Company is not null)
+        {
+            var trimmed = body.Company.Trim();
+            if (trimmed.Length > 200)
+                return BadRequest(new { error = "Company name too long." });
+            user.Company = string.IsNullOrEmpty(trimmed) ? null : trimmed;
+        }
+
+        await db.SaveChangesAsync();
+
+        return Ok(await authService.GetMeAsync(userId));
+    }
+
     [HttpPatch("language")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
