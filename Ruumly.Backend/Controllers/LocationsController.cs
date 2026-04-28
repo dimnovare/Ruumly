@@ -517,6 +517,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
     private static SupplierLocationDto MapToDto(SupplierLocation l, int availableUnits, bool fullyBooked) => new(
         Id:             l.Id,
         SupplierId:     l.SupplierId,
+        SupplierName:   l.Supplier?.Name ?? "",
         Name:           l.Name,
         Address:        l.Address,
         City:           l.City,

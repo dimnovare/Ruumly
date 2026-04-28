@@ -654,7 +654,12 @@ public static class SeedData
 
         var newLocations = new List<SupplierLocation>();
 
-        foreach (var grp in listings.GroupBy(l => new { l.SupplierId, l.Address }))
+        // Only wrap multi-listing sites (2+ units at same address) in a Location.
+        // Single-listing sites stay LocationId = null so they remain visible in
+        // ListingService.SearchAsync, which filters out listings tied to a Location.
+        foreach (var grp in listings
+                     .GroupBy(l => new { l.SupplierId, l.Address })
+                     .Where(g => g.Count() >= 2))
         {
             var supplier = suppliersById.GetValueOrDefault(grp.Key.SupplierId);
             if (supplier is null) continue;

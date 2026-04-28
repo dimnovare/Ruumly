@@ -3,6 +3,7 @@ namespace Ruumly.Backend.DTOs.Responses;
 public record SupplierLocationDto(
     Guid          Id,
     Guid          SupplierId,
+    string        SupplierName,
     string        Name,
     string        Address,
     string        City,
