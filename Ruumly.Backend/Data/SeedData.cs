@@ -24,6 +24,7 @@ public static class SeedData
             await SeedSuppliersAsync(db);
             await SeedIntegrationSettingsAsync(db);
             await SeedListingsAsync(db);
+            await SeedLocationsAsync(db);
             await SeedListingExtrasAsync(db);
             await SeedUsersAsync(db);
             await SeedRoutingRulesAsync(db);
@@ -631,6 +632,60 @@ public static class SeedData
 
         await db.SaveChangesAsync();
         Console.WriteLine("[Seed] Listings done.");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // SUPPLIER LOCATIONS — one per (SupplierId, Address) tuple from listings.
+    // CityPage queries /api/locations?city={city}; without these rows it shows
+    // an empty state regardless of how many listings exist.
+    // ─────────────────────────────────────────────────────────────────────────
+    private static async Task SeedLocationsAsync(RuumlyDbContext db)
+    {
+        if (await db.SupplierLocations.AnyAsync()) return;
+
+        // Load tracked listings once and group in memory: EF's PostgreSQL provider
+        // can't translate the FirstListing/ListingIds projections we'd need otherwise.
+        var listings = await db.Listings
+            .Where(l => l.LocationId == null)
+            .OrderBy(l => l.CreatedAt)
+            .ToListAsync();
+
+        var suppliersById = await db.Suppliers.ToDictionaryAsync(s => s.Id);
+
+        var newLocations = new List<SupplierLocation>();
+
+        foreach (var grp in listings.GroupBy(l => new { l.SupplierId, l.Address }))
+        {
+            var supplier = suppliersById.GetValueOrDefault(grp.Key.SupplierId);
+            if (supplier is null) continue;
+
+            var first = grp.First();
+            var location = new SupplierLocation
+            {
+                Id          = G($"loc:{grp.Key.SupplierId}:{grp.Key.Address}"),
+                SupplierId  = grp.Key.SupplierId,
+                Name        = first.Title,
+                Address     = grp.Key.Address,
+                City        = first.City,
+                Country     = "EE",
+                Lat         = first.Lat,
+                Lng         = first.Lng,
+                IsActive    = true,
+                ImagesJson  = first.ImagesJson,
+                Description = first.Description,
+                CreatedAt   = first.CreatedAt,
+                UpdatedAt   = first.UpdatedAt,
+            };
+            newLocations.Add(location);
+
+            foreach (var listing in grp)
+                listing.LocationId = location.Id;
+        }
+
+        await db.SupplierLocations.AddRangeAsync(newLocations);
+        await db.SaveChangesAsync();
+
+        Console.WriteLine($"[Seed] Locations done. ({newLocations.Count} created)");
     }
 
     // ─────────────────────────────────────────────────────────────────────────
