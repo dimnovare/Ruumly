@@ -127,7 +127,7 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
         // ── Pagination ────────────────────────────────────────────────────────
         var total = await query.CountAsync();
         var page  = Math.Max(1, f.Page);
-        var limit = Math.Clamp(f.Limit, 1, 100);
+        var limit = Math.Clamp(f.Limit, 1, 200);
         var items = await query
             .Skip((page - 1) * limit)
             .Take(limit)
