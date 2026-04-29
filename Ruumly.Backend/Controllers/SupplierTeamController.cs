@@ -175,6 +175,23 @@ public class SupplierTeamController(
         if (supplier is null)
             return NotFound(new { message = "No supplier profile linked to this account." });
 
+        if (body.Name is not null)
+        {
+            var trimmed = body.Name.Trim();
+            if (trimmed.Length < 2 || trimmed.Length > 200)
+                return BadRequest(new { error = "Company name must be 2-200 characters." });
+            supplier.Name = trimmed;
+        }
+
+        if (body.RegistryCode is not null)
+        {
+            // Allow empty (clearing the code) but cap length
+            var trimmed = body.RegistryCode.Trim();
+            if (trimmed.Length > 50)
+                return BadRequest(new { error = "Registry code too long." });
+            supplier.RegistryCode = string.IsNullOrEmpty(trimmed) ? null : trimmed;
+        }
+
         if (body.ContactName  is not null) supplier.ContactName  = body.ContactName;
         if (body.ContactEmail is not null) supplier.ContactEmail = body.ContactEmail;
         if (body.ContactPhone is not null) supplier.ContactPhone = body.ContactPhone;
@@ -184,6 +201,8 @@ public class SupplierTeamController(
 
         return Ok(new
         {
+            supplier.Name,
+            supplier.RegistryCode,
             supplier.ContactName,
             supplier.ContactEmail,
             supplier.ContactPhone,
