@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -87,9 +88,12 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
         // EF.Functions.PlainToTsQuery MUST be called inline within the lambda for EF Core
         // to translate it to a server-side plainto_tsquery() call. Hoisting it to a local
         // variable causes "switched to client-evaluation" InvalidOperationException.
+        // Diacritic-insensitive: the SearchVector trigger applies unaccent() at index time,
+        // and we strip diacritics from the query in C# (avoids EF/Npgsql translation of
+        // EF.Functions.Unaccent which isn't available in older Npgsql versions).
         if (!string.IsNullOrWhiteSpace(f.Q))
         {
-            var searchTerm = f.Q.Trim();
+            var searchTerm = RemoveDiacritics(f.Q.Trim());
             query = query.Where(l =>
                 l.SearchVector != null &&
                 l.SearchVector.Matches(EF.Functions.PlainToTsQuery("simple", searchTerm)));
@@ -213,6 +217,21 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
         var json  = JsonSerializer.Serialize(f);
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(json));
         return Convert.ToHexString(bytes)[..16];
+    }
+
+    // Strips combining diacritical marks so the search query matches the
+    // unaccented SearchVector index. "Rīga" → "Riga", "Pärnu" → "Parnu".
+    private static string RemoveDiacritics(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return text;
+        var normalized = text.Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder(normalized.Length);
+        foreach (var c in normalized)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                sb.Append(c);
+        }
+        return sb.ToString().Normalize(NormalizationForm.FormC);
     }
 
     // ─── Mapping ──────────────────────────────────────────────────────────────

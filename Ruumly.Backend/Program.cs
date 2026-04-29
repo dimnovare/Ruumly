@@ -485,6 +485,9 @@ if (app.Environment.IsProduction())
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<RuumlyDbContext>();
     await db.Database.MigrateAsync();
+    // Required by SearchVector trigger and ListingService for diacritic-folding.
+    // Idempotent — no-op if already installed.
+    await db.Database.ExecuteSqlRawAsync("CREATE EXTENSION IF NOT EXISTS unaccent;");
 }
 
 if (app.Environment.IsDevelopment())
@@ -499,6 +502,7 @@ if (app.Environment.IsDevelopment())
             Console.WriteLine($"[Startup] Applying {pending.Count()} pending migration(s)...");
             await db.Database.MigrateAsync();
         }
+        await db.Database.ExecuteSqlRawAsync("CREATE EXTENSION IF NOT EXISTS unaccent;");
         await SeedData.SeedAsync(db);
     }
     catch (Exception ex)
