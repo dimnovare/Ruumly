@@ -24,6 +24,11 @@ public class Listing
     public double Lng { get; set; }
     public decimal PriceFrom { get; set; }
     public string PriceUnit { get; set; } = string.Empty;
+
+    // TODO: Add MinBookingDays / MinBookingMonths field for suppliers who
+    // require a minimum commitment (common in storage). UI should display
+    // "1 month minimum" as a badge on the listing card and enforce server-side.
+    // Out of scope until v2.
     public bool AvailableNow { get; set; } = true;
     public bool IsActive { get; set; } = true;
     public string Description { get; set; } = string.Empty;

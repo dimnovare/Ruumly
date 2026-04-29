@@ -517,17 +517,33 @@ public class BookingService(
         var days = Math.Max(1, (endDate - startDate).Days);
         var unit = (priceUnit ?? "").ToLower().Replace("€", "").Trim().TrimStart('/');
 
-        // Month = calendar-month rounding: 28–31 days counts as 1 month
-        var months = Math.Max(1m, Math.Round(days / 30.44m, MidpointRounding.AwayFromZero));
-
-        return unit switch
+        // Days-per-unit lookup: how many days does one unit price cover?
+        // Used to pro-rate sub-unit bookings (e.g. 5 days on a /month listing
+        // = 5/30.44 of a month price, NOT 1 full month).
+        decimal daysPerUnit = unit switch
         {
-            "day" or "päev" or "diena" or "diena" or "день"                  => Math.Round(priceFrom * days, 2),
-            "week" or "nädal" or "savaitė" or "nedēļa" or "неделя"          => Math.Round(priceFrom * days / 7m, 2),
-            "month" or "kuu" or "mėnuo" or "mēnesis" or "месяц"            => Math.Round(priceFrom * months, 2),
-            "hour" or "tund" or "valanda" or "stunda" or "час"              => priceFrom,
-            "time" or "kord" or "kartas" or "reize" or "раз"               => priceFrom,
-            _                                                               => Math.Round(priceFrom * months, 2),
+            "day"   or "päev"  or "diena"  or "день"               => 1m,
+            "week"  or "nädal" or "savaitė" or "nedēļa" or "неделя" => 7m,
+            "month" or "kuu"   or "mėnuo"  or "mēnesis" or "месяц"  => 30.44m,
+            "hour"  or "tund"  or "valanda" or "stunda" or "час"    => 1m / 24m,
+            "time"  or "kord"  or "kartas" or "reize" or "раз"      => 1m,
+            _                                                       => 30.44m, // default: assume monthly
         };
+
+        // For one-time price units (hour/time), price is flat regardless of duration.
+        if (unit is "hour" or "tund" or "valanda" or "stunda" or "час"
+                or "time" or "kord" or "kartas" or "reize" or "раз")
+        {
+            return priceFrom;
+        }
+
+        // Pro-rate: total = (priceFrom / daysPerUnit) * days
+        // Example: €49/month listing, 1-day booking
+        //   = (49 / 30.44) * 1 = €1.61
+        // Example: €49/month listing, 60-day booking
+        //   = (49 / 30.44) * 60 = €96.59
+        var total = priceFrom * days / daysPerUnit;
+
+        return Math.Round(total, 2);
     }
 }
