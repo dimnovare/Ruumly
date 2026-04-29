@@ -13,7 +13,8 @@ public class CreateBookingRequestValidator : AbstractValidator<CreateBookingRequ
         RuleFor(x => x.StartDate)
             .NotEmpty().WithMessage("StartDate is required")
             .Matches(@"^\d{4}-\d{2}-\d{2}$")
-            .WithMessage("StartDate must be yyyy-MM-dd");
+            .WithMessage("StartDate must be yyyy-MM-dd")
+            .Must(BeNotInPast).WithMessage("Start date cannot be in the past.");
 
         RuleFor(x => x.Duration)
             .NotEmpty().WithMessage("Duration is required")
@@ -54,5 +55,17 @@ public class CreateBookingRequestValidator : AbstractValidator<CreateBookingRequ
             .MaximumLength(50)
             .Matches(@"^[a-z0-9-]+$")
             .WithMessage("Extra key must be lowercase alphanumeric with hyphens only: {PropertyValue}");
+    }
+
+    // Allow today (UTC-tolerant: 1-day buffer for client/server timezone drift).
+    private static bool BeNotInPast(string startDate)
+    {
+        if (!DateTime.TryParseExact(
+                startDate, "yyyy-MM-dd",
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None,
+                out var parsed))
+            return true; // format check elsewhere; don't double-fail
+        return parsed.Date >= DateTime.UtcNow.Date.AddDays(-1);
     }
 }

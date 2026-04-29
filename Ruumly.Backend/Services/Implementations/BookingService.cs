@@ -149,6 +149,29 @@ public class BookingService(
             }
         }
 
+        // Reject bookings with start date in the past (defense in depth — the
+        // FluentValidation rule on the request runs first; this guards against
+        // direct service calls and request shapes that bypass model validation).
+        // Allow today (UTC-tolerant: 1-day buffer for timezone drift).
+        if (DateTime.TryParseExact(
+                request.StartDate, "yyyy-MM-dd",
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None,
+                out var requestedStart))
+        {
+            if (requestedStart.Date < DateTime.UtcNow.Date.AddDays(-1))
+                throw new ArgumentException(Msg("BOOKING_START_PAST"));
+
+            if (DateTime.TryParseExact(
+                    request.EndDate ?? "", "yyyy-MM-dd",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None,
+                    out var requestedEnd) && requestedEnd <= requestedStart)
+            {
+                throw new ArgumentException(Msg("BOOKING_END_BEFORE_START"));
+            }
+        }
+
         await using var transaction = await db.Database.BeginTransactionAsync();
         try
         {

@@ -28,6 +28,7 @@ public static class SeedData
             await SeedListingExtrasAsync(db);
             await SeedUsersAsync(db);
             await SeedRoutingRulesAsync(db);
+            await SeedBookingsAsync(db);
             await SeedPlatformSettingsAsync(db);
             await SeedFeatureDefinitionsAsync(db);
             Console.WriteLine("[Seed] Complete.");
@@ -961,6 +962,71 @@ public static class SeedData
 
         await db.SaveChangesAsync();
         Console.WriteLine("[Seed] RoutingRules done.");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // BOOKINGS — demo data for admin/customer/provider testing
+    // ─────────────────────────────────────────────────────────────────────────
+    private static async Task SeedBookingsAsync(RuumlyDbContext db)
+    {
+        if (await db.Bookings.AnyAsync()) return;
+
+        var customer = await db.Users.FirstOrDefaultAsync(u => u.Email == "andres@email.com");
+        var listings = await db.Listings
+            .Where(l => l.Type == ListingType.Warehouse)
+            .OrderBy(l => l.CreatedAt)
+            .Take(3)
+            .ToListAsync();
+
+        if (customer is null || listings.Count < 3)
+        {
+            Console.WriteLine("[Seed] Bookings skipped — required customer or listings missing.");
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+
+        Booking Make(Listing listing, DateTime start, DateTime? end, BookingStatus status, string duration, DateTime createdAt)
+        {
+            var basePrice     = listing.PriceFrom;
+            var platformPrice = Math.Round(basePrice * 0.95m, 2);
+            return new Booking
+            {
+                Id            = Guid.NewGuid(),
+                UserId        = customer.Id,
+                ListingId     = listing.Id,
+                SupplierId    = listing.SupplierId,
+                StartDate     = DateTime.SpecifyKind(start.Date, DateTimeKind.Utc),
+                EndDate       = end.HasValue ? DateTime.SpecifyKind(end.Value.Date, DateTimeKind.Utc) : null,
+                Duration      = duration,
+                Status        = status,
+                ContactName   = customer.Name,
+                ContactEmail  = customer.Email,
+                ContactPhone  = customer.Phone ?? "",
+                BasePrice     = basePrice,
+                PlatformPrice = platformPrice,
+                ExtrasTotal   = 0m,
+                VatAmount     = 0m,
+                Total         = platformPrice,
+                CreatedAt     = createdAt,
+                UpdatedAt     = createdAt,
+            };
+        }
+
+        var bookings = new List<Booking>
+        {
+            // Active — started a week ago, ongoing for 1 month
+            Make(listings[0], now.AddDays(-7), now.AddDays(23), BookingStatus.Active, "1 month", now.AddDays(-7)),
+            // Confirmed — starts in 2 weeks
+            Make(listings[1], now.AddDays(14), now.AddDays(44), BookingStatus.Confirmed, "1 month", now.AddDays(-2)),
+            // Pending — submitted today, starts in 5 days
+            Make(listings[2], now.AddDays(5), now.AddDays(35), BookingStatus.Pending, "1 month", now.AddHours(-3)),
+        };
+
+        await db.Bookings.AddRangeAsync(bookings);
+        await db.SaveChangesAsync();
+
+        Console.WriteLine($"[Seed] Bookings done. ({bookings.Count} created)");
     }
 
     // ─────────────────────────────────────────────────────────────────────────
