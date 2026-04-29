@@ -2,15 +2,18 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Constants;
+using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
+using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Controllers;
 
 [ApiController]
 [Route("api/listings")]
-public class ListingsController(IListingService listingService) : ControllerBase
+public class ListingsController(IListingService listingService, RuumlyDbContext db) : ControllerBase
 {
     /// <summary>
     /// Search listings with optional filters.
@@ -70,6 +73,53 @@ public class ListingsController(IListingService listingService) : ControllerBase
         var listing = await listingService.GetByIdAsync(id, language);
         if (listing is null) return NotFound(new { error = "Not Found", message = "Listing not found", statusCode = 404 });
         return Ok(listing);
+    }
+
+    /// <summary>
+    /// Check unit availability for a listing in a given date range.
+    /// Returns available capacity without creating a booking.
+    /// </summary>
+    [HttpGet("{id:guid}/availability")]
+    [AllowAnonymous]
+    public async Task<IActionResult> CheckAvailability(
+        Guid id,
+        [FromQuery] string startDate,
+        [FromQuery] string endDate)
+    {
+        if (!DateTime.TryParse(startDate, out var start) ||
+            !DateTime.TryParse(endDate, out var end))
+            return BadRequest(new { error = "Invalid date format" });
+
+        var startUtc = DateTime.SpecifyKind(start, DateTimeKind.Utc);
+        var endUtc   = DateTime.SpecifyKind(end,   DateTimeKind.Utc);
+
+        var listing = await db.Listings
+            .FirstOrDefaultAsync(l => l.Id == id && l.IsActive);
+        if (listing is null)
+            return NotFound();
+
+        var totalUnits = listing.QuantityTotal ?? 1;
+
+        var bookedCount = await db.Bookings
+            .CountAsync(b =>
+                b.ListingId == id &&
+                (b.Status == BookingStatus.Confirmed ||
+                 b.Status == BookingStatus.Active    ||
+                 b.Status == BookingStatus.Reserved) &&
+                b.EndDate.HasValue &&
+                b.StartDate < endUtc &&
+                b.EndDate.Value > startUtc);
+
+        var available = totalUnits - bookedCount;
+
+        return Ok(new
+        {
+            listingId   = id,
+            totalUnits,
+            bookedCount,
+            available   = Math.Max(0, available),
+            isAvailable = available > 0,
+        });
     }
 
     // Falls back to the first Accept-Language tag (e.g. "et-EE" → "et") when the

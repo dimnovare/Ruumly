@@ -547,6 +547,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
                              u.Description, u.Images, u.Features,
                              u.PartnerDiscountRateOverride, u.ClientDiscountRateOverride,
                              l.Supplier?.ClientDiscountRate,
+                             null, null,  // EffectiveCustomerDiscount, EffectivePartnerDiscount — not computed in nested location view
                              u.VatRate, u.PricesIncludeVat, u.SupplierId,
                              u.SizeM2, u.QuantityTotal, u.LocationId, u.ViewCount,
                              l.Supplier?.IsVerified ?? false,

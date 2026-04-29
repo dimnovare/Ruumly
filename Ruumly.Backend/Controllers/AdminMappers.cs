@@ -66,7 +66,8 @@ internal static class AdminMappers
             ? Math.Max(0, 90 - (int)(DateTime.UtcNow - s.OnboardingStartedAt.Value).TotalDays)
             : 0,
         IsVerified:          s.IsVerified,
-        PriorityLevel:       s.PriorityLevel.ToString());
+        PriorityLevel:       s.PriorityLevel.ToString(),
+        Country:             s.Country);
 
     internal static IntegrationSettingsDto MapIntegrationSettings(Models.IntegrationSettings i) => new(
         Id:                  i.Id,
@@ -133,6 +134,8 @@ internal static class AdminMappers
         PartnerDiscountRateOverride: l.PartnerDiscountRateOverride,
         ClientDiscountRateOverride:  l.ClientDiscountRateOverride,
         ClientDiscountRate:          l.Supplier?.ClientDiscountRate,
+        EffectiveCustomerDiscount:   null,
+        EffectivePartnerDiscount:    null,
         VatRate:         l.VatRate,
         PricesIncludeVat: l.PricesIncludeVat,
         SupplierId:      l.SupplierId,

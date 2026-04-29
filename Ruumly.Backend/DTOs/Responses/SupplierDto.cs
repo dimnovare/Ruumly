@@ -36,5 +36,6 @@ public record SupplierDto(
     bool      IsInOnboarding,
     int       OnboardingDaysRemaining,
     bool      IsVerified,
-    string    PriorityLevel
+    string    PriorityLevel,
+    string?   Country
 );

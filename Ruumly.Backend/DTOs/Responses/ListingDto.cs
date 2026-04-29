@@ -21,6 +21,8 @@ public record ListingDto(
     decimal?         PartnerDiscountRateOverride,
     decimal?         ClientDiscountRateOverride,
     decimal?         ClientDiscountRate,
+    decimal?         EffectiveCustomerDiscount,
+    decimal?         EffectivePartnerDiscount,
     decimal?         VatRate,
     bool             PricesIncludeVat,
     Guid             SupplierId,

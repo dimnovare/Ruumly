@@ -15,7 +15,10 @@ using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Services.Implementations;
 
-public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IListingService
+public class ListingService(
+    RuumlyDbContext       db,
+    IDistributedCache     cache,
+    IPricingConfigService pricingConfigService) : IListingService
 {
     private static readonly DistributedCacheEntryOptions SearchTtl =
         new() { AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(60) };
@@ -29,6 +32,8 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
         var cached   = await cache.GetStringAsync(cacheKey);
         if (cached is not null)
             return JsonSerializer.Deserialize<PaginatedResult<ListingDto>>(cached)!;
+
+        var pricingConfig = await pricingConfigService.GetAsync();
 
         var query = db.Listings
             .Include(l => l.Supplier)
@@ -134,7 +139,7 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
             .ToListAsync();
 
         var result = new PaginatedResult<ListingDto>(
-            items.Select(l => MapToDto(l, language)).ToList(),
+            items.Select(l => MapToDto(l, language, pricingConfig)).ToList(),
             total,
             page,
             limit,
@@ -151,6 +156,8 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
         var cached   = await cache.GetStringAsync(cacheKey);
         if (cached is not null)
             return JsonSerializer.Deserialize<ListingDto>(cached);
+
+        var pricingConfig = await pricingConfigService.GetAsync();
 
         var listing = await db.Listings
             .Include(l => l.Supplier)
@@ -169,7 +176,7 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
             await db.SaveChangesAsync();
         }
 
-        var dto = MapToDto(listing, language);
+        var dto = MapToDto(listing, language, pricingConfig);
         await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(dto), SearchTtl);
         return dto;
     }
@@ -177,6 +184,8 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
     public async Task<List<ListingDto>> GetFeaturedAsync(string? language = null)
     {
         var cacheKey = $"listings:featured:{language ?? "_"}";
+
+        var pricingConfig = await pricingConfigService.GetAsync();
         var cached = await cache.GetStringAsync(cacheKey);
         if (cached is not null)
             return JsonSerializer.Deserialize<List<ListingDto>>(cached)!;
@@ -197,7 +206,7 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
                 _                      => 0,
             })
             .Take(4)
-            .Select(l => MapToDto(l, language))
+            .Select(l => MapToDto(l, language, pricingConfig))
             .ToList();
 
         await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(result), FeaturedTtl);
@@ -252,7 +261,16 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
             : l.Description;
     }
 
-    private static ListingDto MapToDto(Listing l, string? language = null) => new(
+    private static ListingDto MapToDto(Listing l, string? language, PricingConfig pricingConfig)
+    {
+        var (partner, customer) = PricingHelpers.ComputeEffectiveDiscounts(
+            listingPartnerOverride:  l.PartnerDiscountRateOverride,
+            listingCustomerOverride: l.ClientDiscountRateOverride,
+            supplierPartnerRate:     l.Supplier?.PartnerDiscountRate,
+            defaultPartnerDiscount:  pricingConfig.DefaultPartnerDiscountRate,
+            ruumlyMinMargin:         pricingConfig.RuumlyMinMarginRate);
+
+        return new ListingDto(
         Id:          l.Id,
         Type:        l.Type.ToString().ToLower(),
         Title:       l.Title,
@@ -277,6 +295,8 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
         PartnerDiscountRateOverride: l.PartnerDiscountRateOverride,
         ClientDiscountRateOverride:  l.ClientDiscountRateOverride,
         ClientDiscountRate:          l.Supplier?.ClientDiscountRate,
+        EffectiveCustomerDiscount:   customer,
+        EffectivePartnerDiscount:    partner,
         VatRate:         l.VatRate,
         PricesIncludeVat: l.PricesIncludeVat,
         SupplierId:      l.SupplierId,
@@ -285,8 +305,8 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
         LocationId:      l.LocationId,
         ViewCount:       l.ViewCount,
         IsVerified:      l.Supplier?.IsVerified ?? false,
-        FoundingPartner: l.Supplier?.FoundingPartner ?? false
-    );
+        FoundingPartner: l.Supplier?.FoundingPartner ?? false);
+    }
 
     private static string? BadgeToString(ListingBadge? badge) => badge switch
     {

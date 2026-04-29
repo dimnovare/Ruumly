@@ -242,17 +242,18 @@ public class BookingService(
                 basePrice = listing.PriceFrom;
             }
 
-            // 3. Calculate base pricing — Option C: per-supplier customer discount
-            // Partner discount: per-listing override → per-supplier rate → platform default
-            var partnerDiscountRate = listing.PartnerDiscountRateOverride
-                                      ?? supplier.PartnerDiscountRate;
-            if (partnerDiscountRate == 0)
-                partnerDiscountRate = pricingConfig.DefaultPartnerDiscountRate;
+            // 3. Calculate base pricing via shared PricingHelpers — single source of
+            // truth so frontend display and booking math always agree.
+            // Honors per-listing partner + customer overrides; falls back to supplier
+            // rate, then platform default; customer rate guarantees ruumlyMinMargin.
+            var (partnerDiscountRate, customerDiscountRate) = PricingHelpers.ComputeEffectiveDiscounts(
+                listingPartnerOverride:  listing.PartnerDiscountRateOverride,
+                listingCustomerOverride: listing.ClientDiscountRateOverride,
+                supplierPartnerRate:     supplier.PartnerDiscountRate,
+                defaultPartnerDiscount:  pricingConfig.DefaultPartnerDiscountRate,
+                ruumlyMinMargin:         pricingConfig.RuumlyMinMarginRate);
 
-            // Customer discount = partnerDiscount - ruumlyMinMargin
-            // This guarantees Ruumly always keeps at least ruumlyMinMargin
-            var ruumlyMinMargin      = pricingConfig.RuumlyMinMarginRate;
-            var customerDiscountRate = Math.Max(0, partnerDiscountRate - ruumlyMinMargin);
+            var ruumlyMinMargin = pricingConfig.RuumlyMinMarginRate;
 
             // Log when supplier margin falls below platform minimum
             if (partnerDiscountRate < ruumlyMinMargin)
