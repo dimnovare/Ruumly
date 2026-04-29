@@ -282,6 +282,43 @@ public class AdminSettingsController(
         var supplier = await Db.Suppliers.FindAsync(body.SupplierId);
         if (supplier is null) return NotFound(Error("Supplier not found"));
 
+        // Ensure the listing has a SupplierLocation. If LocationId not provided,
+        // find or create one matching (SupplierId, City) so the listing shows up
+        // on the provider dashboard (My listings / Calendar) and admin views.
+        Guid? locationId = body.LocationId;
+        if (!locationId.HasValue)
+        {
+            var existing = await Db.SupplierLocations
+                .FirstOrDefaultAsync(sl =>
+                    sl.SupplierId == body.SupplierId &&
+                    sl.City == body.City &&
+                    sl.IsActive);
+
+            if (existing is null)
+            {
+                existing = new SupplierLocation
+                {
+                    Id          = Guid.NewGuid(),
+                    SupplierId  = body.SupplierId,
+                    Name        = string.IsNullOrWhiteSpace(body.City) ? "Location" : body.City,
+                    Address     = body.Address ?? string.Empty,
+                    City        = body.City ?? string.Empty,
+                    Country     = supplier.Country ?? "EE",
+                    Lat         = body.Lat ?? 0,
+                    Lng         = body.Lng ?? 0,
+                    IsActive    = true,
+                    CreatedAt   = DateTime.UtcNow,
+                    UpdatedAt   = DateTime.UtcNow,
+                    Description = string.Empty,
+                    ImagesJson  = "[]",
+                };
+                Db.SupplierLocations.Add(existing);
+                await Db.SaveChangesAsync();
+            }
+
+            locationId = existing.Id;
+        }
+
         var listing = new Listing
         {
             Id                          = Guid.NewGuid(),
@@ -304,7 +341,7 @@ public class AdminSettingsController(
             ClientDiscountRateOverride  = body.ClientDiscountRateOverride,
             VatRate                     = body.VatRate,
             PricesIncludeVat            = body.PricesIncludeVat,
-            LocationId                  = body.LocationId,
+            LocationId                  = locationId,
             QuantityTotal               = body.QuantityTotal,
             SizeM2                      = body.SizeM2,
             CreatedAt                   = DateTime.UtcNow,

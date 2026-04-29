@@ -1601,6 +1601,44 @@ public static class SeedData
         });
 
         await db.SaveChangesAsync();
+
+        // Ensure every seeded listing has a SupplierLocation. Idempotent — runs
+        // every startup, no-op after first time (WHERE clause excludes already-linked
+        // listings). Backfills any standalone listings (LocationId IS NULL) by
+        // finding/creating a Location per (SupplierId, City) group.
+        await db.Database.ExecuteSqlRawAsync(@"
+            INSERT INTO ""SupplierLocations""
+                (""Id"", ""SupplierId"", ""Name"", ""Address"", ""City"", ""Country"",
+                 ""Lat"", ""Lng"", ""IsActive"", ""Images"", ""ImagesJson"", ""Description"",
+                 ""CreatedAt"", ""UpdatedAt"")
+            SELECT
+                gen_random_uuid(),
+                l.""SupplierId"",
+                COALESCE(NULLIF(l.""City"", ''), 'Location') AS ""Name"",
+                MIN(l.""Address""),
+                l.""City"",
+                COALESCE(s.""Country"", 'EE'),
+                AVG(l.""Lat""),
+                AVG(l.""Lng""),
+                true,
+                '{}'::text[],
+                '[]',
+                '',
+                NOW() AT TIME ZONE 'UTC',
+                NOW() AT TIME ZONE 'UTC'
+            FROM ""Listings"" l
+            JOIN ""Suppliers"" s ON s.""Id"" = l.""SupplierId""
+            WHERE l.""LocationId"" IS NULL AND l.""IsActive"" = true
+            GROUP BY l.""SupplierId"", l.""City"", s.""Country"";
+
+            UPDATE ""Listings"" l
+            SET ""LocationId"" = sl.""Id""
+            FROM ""SupplierLocations"" sl
+            WHERE l.""LocationId"" IS NULL
+              AND l.""SupplierId"" = sl.""SupplierId""
+              AND l.""City"" = sl.""City"";
+        ");
+
         Console.WriteLine("[Seed] Listings done.");
     }
 
