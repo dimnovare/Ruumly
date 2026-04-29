@@ -24,9 +24,12 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> GetCities()
     {
-        var cities = await db.SupplierLocations
-            .Where(l => l.IsActive)
-            .Select(l => new { l.City, l.Country })
+        // Pull distinct cities from active Listings (joined to Suppliers for Country).
+        // Was previously querying SupplierLocations which is sparsely populated
+        // (only multi-listing groups) — gave a near-empty dropdown.
+        var cities = await db.Listings
+            .Where(l => l.IsActive && l.Supplier != null)
+            .Select(l => new { City = l.City, Country = l.Supplier!.Country })
             .Distinct()
             .OrderBy(c => c.Country)
             .ThenBy(c => c.City)
