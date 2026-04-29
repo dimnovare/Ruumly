@@ -17,12 +17,31 @@ public class AdminRebateController(RuumlyDbContext db) : AdminBaseController(db)
     /// Idempotent: existing invoices for the period are skipped.
     /// </summary>
     [HttpPost("rebate-invoices/generate")]
-    public async Task<IActionResult> GenerateMonthly([FromQuery] int year, [FromQuery] int month)
+    public async Task<IActionResult> GenerateMonthly(
+        [FromQuery] int? year,
+        [FromQuery] int? month,
+        [FromBody] GenerateRebateRequest? body = null)
     {
-        if (year < 2020 || year > 2100 || month < 1 || month > 12)
+        // Resolve year/month from either query or body.period (e.g. "2026-04")
+        int resolvedYear  = year  ?? body?.Year  ?? 0;
+        int resolvedMonth = month ?? body?.Month ?? 0;
+
+        if ((resolvedYear == 0 || resolvedMonth == 0) && !string.IsNullOrWhiteSpace(body?.Period))
+        {
+            var parts = body.Period.Split('-');
+            if (parts.Length == 2 &&
+                int.TryParse(parts[0], out var y) &&
+                int.TryParse(parts[1], out var m))
+            {
+                resolvedYear  = y;
+                resolvedMonth = m;
+            }
+        }
+
+        if (resolvedYear < 2020 || resolvedYear > 2100 || resolvedMonth < 1 || resolvedMonth > 12)
             return BadRequest(Error("Invalid year or month."));
 
-        var period    = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var period    = new DateTime(resolvedYear, resolvedMonth, 1, 0, 0, 0, DateTimeKind.Utc);
         var periodEnd = period.AddMonths(1);
 
         var rebateSuppliers = await Db.Suppliers
@@ -186,3 +205,5 @@ public class AdminRebateController(RuumlyDbContext db) : AdminBaseController(db)
 }
 
 public record MarkRebatePaidRequest(string? Notes);
+
+public record GenerateRebateRequest(string? Period, int? Year, int? Month);

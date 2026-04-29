@@ -44,6 +44,11 @@ public class Supplier
 
     public BillingModel BillingModel { get; set; } = BillingModel.Marketplace;
 
+    // TODO(billing): add BillingMode { B2C, B2B } enum.
+    // B2C suppliers (default): listings show VAT-inclusive prices to all visitors.
+    // B2B suppliers: listings show VAT-exclusive prices when the customer is a
+    // verified business buyer (registered with VAT number). Out of scope for v1.
+
     public SupplierTier Tier { get; set; } = SupplierTier.Starter;
     public decimal MonthlyFee { get; set; } = 0m;
     public DateTime? SubscriptionEndsAt { get; set; }

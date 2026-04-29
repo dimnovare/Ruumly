@@ -10,5 +10,6 @@ public record PatchListingRequest(
     decimal?      VatRate,
     bool?         IsActive,
     List<string>? Images,
-    Dictionary<string, object>? Features = null
+    Dictionary<string, object>?  Features                 = null,
+    Dictionary<string, string>?  DescriptionTranslations  = null
 );

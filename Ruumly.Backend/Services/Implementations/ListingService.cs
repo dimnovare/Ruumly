@@ -23,9 +23,9 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
     private static readonly DistributedCacheEntryOptions FeaturedTtl =
         new() { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) };
 
-    public async Task<PaginatedResult<ListingDto>> SearchAsync(ListingSearchRequest f)
+    public async Task<PaginatedResult<ListingDto>> SearchAsync(ListingSearchRequest f, string? language = null)
     {
-        var cacheKey = $"listings:search:{HashFilters(f)}";
+        var cacheKey = $"listings:search:{HashFilters(f)}:{language ?? "_"}";
         var cached   = await cache.GetStringAsync(cacheKey);
         if (cached is not null)
             return JsonSerializer.Deserialize<PaginatedResult<ListingDto>>(cached)!;
@@ -134,7 +134,7 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
             .ToListAsync();
 
         var result = new PaginatedResult<ListingDto>(
-            items.Select(MapToDto).ToList(),
+            items.Select(l => MapToDto(l, language)).ToList(),
             total,
             page,
             limit,
@@ -145,9 +145,9 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
         return result;
     }
 
-    public async Task<ListingDto?> GetByIdAsync(Guid id)
+    public async Task<ListingDto?> GetByIdAsync(Guid id, string? language = null)
     {
-        var cacheKey = $"listing:{id}";
+        var cacheKey = $"listing:{id}:{language ?? "_"}";
         var cached   = await cache.GetStringAsync(cacheKey);
         if (cached is not null)
             return JsonSerializer.Deserialize<ListingDto>(cached);
@@ -169,14 +169,14 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
             await db.SaveChangesAsync();
         }
 
-        var dto = MapToDto(listing);
+        var dto = MapToDto(listing, language);
         await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(dto), SearchTtl);
         return dto;
     }
 
-    public async Task<List<ListingDto>> GetFeaturedAsync()
+    public async Task<List<ListingDto>> GetFeaturedAsync(string? language = null)
     {
-        const string cacheKey = "listings:featured";
+        var cacheKey = $"listings:featured:{language ?? "_"}";
         var cached = await cache.GetStringAsync(cacheKey);
         if (cached is not null)
             return JsonSerializer.Deserialize<List<ListingDto>>(cached)!;
@@ -197,7 +197,7 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
                 _                      => 0,
             })
             .Take(4)
-            .Select(MapToDto)
+            .Select(l => MapToDto(l, language))
             .ToList();
 
         await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(result), FeaturedTtl);
@@ -236,7 +236,23 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
 
     // ─── Mapping ──────────────────────────────────────────────────────────────
 
-    private static ListingDto MapToDto(Listing l) => new(
+    /// <summary>
+    /// Returns the description in the requested language, falling back to
+    /// the canonical Description (Estonian) if a translation isn't present.
+    /// </summary>
+    private static string ResolveDescription(Listing l, string? language)
+    {
+        if (string.IsNullOrWhiteSpace(language))
+            return l.Description;
+
+        var lang = language.ToLowerInvariant();
+        var translations = l.DescriptionTranslations;
+        return translations.TryGetValue(lang, out var translated) && !string.IsNullOrWhiteSpace(translated)
+            ? translated
+            : l.Description;
+    }
+
+    private static ListingDto MapToDto(Listing l, string? language = null) => new(
         Id:          l.Id,
         Type:        l.Type.ToString().ToLower(),
         Title:       l.Title,
@@ -251,7 +267,7 @@ public class ListingService(RuumlyDbContext db, IDistributedCache cache) : IList
         Badge:       BadgeToString(l.Badge),
         Rating:      l.Rating,
         ReviewCount: l.ReviewCount,
-        Description: l.Description,
+        Description: ResolveDescription(l, language),
         Images:      DeserializeList(l.ImagesJson) is { Count: > 0 } imgs
                          ? imgs
                          : l.Location != null

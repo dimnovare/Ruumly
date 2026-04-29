@@ -319,6 +319,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
 
         if (body.Title is not null)          listing.Title         = body.Title;
         if (body.Description is not null)    listing.Description   = body.Description;
+        if (body.DescriptionTranslations is not null) listing.DescriptionTranslations = body.DescriptionTranslations;
         if (body.PriceFrom.HasValue)         listing.PriceFrom     = body.PriceFrom.Value;
         if (body.PriceUnit is not null)      listing.PriceUnit     = body.PriceUnit;
         if (body.SizeM2.HasValue)            listing.SizeM2        = body.SizeM2.Value;

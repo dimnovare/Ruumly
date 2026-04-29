@@ -341,6 +341,7 @@ public class AdminSettingsController(
         if (body.AvailableNow.HasValue)     listing.AvailableNow = body.AvailableNow.Value;
         if (body.IsActive.HasValue)         listing.IsActive    = body.IsActive.Value;
         if (body.Description is not null)   listing.Description = body.Description;
+        if (body.DescriptionTranslations is not null) listing.DescriptionTranslations = body.DescriptionTranslations;
         if (body.Images is not null)        listing.ImagesJson  = System.Text.Json.JsonSerializer.Serialize(body.Images);
         if (body.Features is not null)      listing.FeaturesJson = System.Text.Json.JsonSerializer.Serialize(body.Features);
         if (body.PartnerDiscountRateOverride.HasValue) listing.PartnerDiscountRateOverride = body.PartnerDiscountRateOverride;

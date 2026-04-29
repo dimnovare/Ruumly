@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using NpgsqlTypes;
@@ -13,9 +14,11 @@ using Ruumly.Backend.Data;
 namespace Ruumly.Backend.Migrations
 {
     [DbContext(typeof(RuumlyDbContext))]
-    partial class RuumlyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260429124139_ListingsVatInclusive")]
+    partial class ListingsVatInclusive
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -371,10 +374,6 @@ namespace Ruumly.Backend.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("DescriptionTranslationsJson")
                         .IsRequired()
                         .HasColumnType("text");
 

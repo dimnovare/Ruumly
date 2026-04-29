@@ -434,9 +434,10 @@ public class BookingService(
         var now = DateTime.UtcNow;
 
         booking.Status    = BookingStatus.Cancelled;
-        booking.IsDeleted = true;
-        booking.DeletedAt = now;
         booking.UpdatedAt = now;
+        // Note: do NOT set IsDeleted here. Cancelled bookings remain visible to
+        // the customer in their booking history (filterable by status).
+        // IsDeleted is reserved for admin/GDPR hard-delete operations.
 
         db.BookingTimelines.Add(new BookingTimeline
         {
@@ -447,13 +448,11 @@ public class BookingService(
             CreatedAt = now,
         });
 
-        // Soft-delete the linked order if present
         if (booking.Order is not null)
         {
             booking.Order.Status    = OrderStatus.Cancelled;
-            booking.Order.IsDeleted = true;
-            booking.Order.DeletedAt = now;
             booking.Order.UpdatedAt = now;
+            // Order also stays visible — only set IsDeleted for hard-delete.
         }
 
         await db.SaveChangesAsync();

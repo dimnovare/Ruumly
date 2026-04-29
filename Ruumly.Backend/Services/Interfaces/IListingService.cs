@@ -6,8 +6,8 @@ namespace Ruumly.Backend.Services.Interfaces;
 
 public interface IListingService
 {
-    Task<PaginatedResult<ListingDto>> SearchAsync(ListingSearchRequest filters);
-    Task<ListingDto?>               GetByIdAsync(Guid id);
-    Task<List<ListingDto>>          GetFeaturedAsync();
+    Task<PaginatedResult<ListingDto>> SearchAsync(ListingSearchRequest filters, string? language = null);
+    Task<ListingDto?>               GetByIdAsync(Guid id, string? language = null);
+    Task<List<ListingDto>>          GetFeaturedAsync(string? language = null);
     Task                            InvalidateListingAsync(Guid id);
 }

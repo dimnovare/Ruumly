@@ -19,9 +19,12 @@ public class ListingsController(IListingService listingService) : ControllerBase
     [HttpGet]
     [EnableRateLimiting("search")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> Search([FromQuery] ListingSearchRequest filters)
+    public async Task<IActionResult> Search(
+        [FromQuery] ListingSearchRequest filters,
+        [FromQuery(Name = "lang")] string? language = null)
     {
-        var result = await listingService.SearchAsync(filters);
+        language ??= ResolveLanguageFromHeader();
+        var result = await listingService.SearchAsync(filters, language);
         return Ok(result);
     }
 
@@ -32,9 +35,10 @@ public class ListingsController(IListingService listingService) : ControllerBase
     [HttpGet("featured")]
     [EnableRateLimiting("search")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> Featured()
+    public async Task<IActionResult> Featured([FromQuery(Name = "lang")] string? language = null)
     {
-        var result = await listingService.GetFeaturedAsync();
+        language ??= ResolveLanguageFromHeader();
+        var result = await listingService.GetFeaturedAsync(language);
         return Ok(result);
     }
 
@@ -60,10 +64,20 @@ public class ListingsController(IListingService listingService) : ControllerBase
     [EnableRateLimiting("search")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<IActionResult> GetById(Guid id, [FromQuery(Name = "lang")] string? language = null)
     {
-        var listing = await listingService.GetByIdAsync(id);
+        language ??= ResolveLanguageFromHeader();
+        var listing = await listingService.GetByIdAsync(id, language);
         if (listing is null) return NotFound(new { error = "Not Found", message = "Listing not found", statusCode = 404 });
         return Ok(listing);
+    }
+
+    // Falls back to the first Accept-Language tag (e.g. "et-EE" → "et") when the
+    // ?lang= query parameter is not supplied. Returns null if neither is present.
+    private string? ResolveLanguageFromHeader()
+    {
+        if (!Request.Headers.TryGetValue("Accept-Language", out var al)) return null;
+        var first = al.ToString().Split(',')[0].Split('-')[0].Trim().ToLowerInvariant();
+        return string.IsNullOrEmpty(first) ? null : first;
     }
 }

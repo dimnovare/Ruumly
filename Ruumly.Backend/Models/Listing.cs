@@ -27,6 +27,20 @@ public class Listing
     public bool AvailableNow { get; set; } = true;
     public bool IsActive { get; set; } = true;
     public string Description { get; set; } = string.Empty;
+    // Default-language fallback used by Featured cards, search snippets, and
+    // when a per-language translation isn't present.
+
+    public string DescriptionTranslationsJson { get; set; } = "{}";
+    // JSON: { "et": "...", "en": "...", "ru": "...", "lv": "...", "lt": "..." }
+    // Backend reads/writes via DescriptionTranslations dict.
+
+    [NotMapped]
+    public Dictionary<string, string> DescriptionTranslations
+    {
+        get => JsonSerializer.Deserialize<Dictionary<string, string>>(DescriptionTranslationsJson) ?? new();
+        set => DescriptionTranslationsJson = JsonSerializer.Serialize(value);
+    }
+
     public ListingBadge? Badge { get; set; }
     public decimal Rating { get; set; }
     public int ReviewCount { get; set; }
@@ -34,7 +48,7 @@ public class Listing
     public decimal? PartnerDiscountRateOverride { get; set; }
     public decimal? ClientDiscountRateOverride { get; set; }
     public decimal? VatRate { get; set; }
-    public bool PricesIncludeVat { get; set; } = false;
+    public bool PricesIncludeVat { get; set; } = true;
 
     /// <summary>
     /// JSON array of image URLs. First element is the cover image.

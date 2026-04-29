@@ -48,5 +48,6 @@ public record PatchAdminListingRequest(
     bool?               PricesIncludeVat,
     Guid?               LocationId,
     int?                QuantityTotal,
-    decimal?            SizeM2
+    decimal?            SizeM2,
+    Dictionary<string, string>? DescriptionTranslations = null
 );
