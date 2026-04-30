@@ -52,7 +52,7 @@ public class BookingService(
         return result;
     }
 
-    public async Task<PaginatedResult<BookingDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 50)
+    public async Task<PaginatedResult<BookingDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 50, Guid? supplierId = null)
     {
         page  = Math.Max(1, page);
         limit = Math.Clamp(limit, 1, 100);
@@ -62,6 +62,7 @@ public class BookingService(
             .Include(b => b.Supplier)
             .Include(b => b.Timeline)
             .Include(b => b.Order).ThenInclude(o => o!.Supplier)
+            .AsSplitQuery()
             .AsQueryable();
 
         if (role == UserRole.Customer)
@@ -76,7 +77,11 @@ public class BookingService(
 
             query = query.Where(b => b.SupplierId == user.SupplierId);
         }
-        // Admin: no filter — sees everything
+        else if (role == UserRole.Admin && supplierId.HasValue)
+        {
+            query = query.Where(b => b.SupplierId == supplierId.Value);
+        }
+        // Admin without supplierId → no filter, sees everything (existing behavior)
 
         var total    = await query.CountAsync();
         var bookings = await query

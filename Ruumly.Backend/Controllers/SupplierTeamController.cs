@@ -164,13 +164,8 @@ public class SupplierTeamController(
     [HttpGet("profile")]
     public async Task<IActionResult> GetProfile()
     {
-        var userId = User.GetUserId();
-        var user   = await db.Users
-            .Include(u => u.Supplier)
-                .ThenInclude(s => s!.IntegrationSettings)
-            .FirstOrDefaultAsync(u => u.Id == userId);
-
-        if (user?.Supplier is null)
+        var supplierId = await GetSupplierIdAsync(User.GetUserId());
+        if (supplierId is null)
         {
             if (User.IsInRole("Admin"))
                 return BadRequest(new
@@ -182,18 +177,23 @@ public class SupplierTeamController(
             return NotFound(new { message = "No supplier profile linked to this account." });
         }
 
-        var s             = user.Supplier;
+        var supplier = await db.Suppliers
+            .Include(s => s.IntegrationSettings)
+            .FirstOrDefaultAsync(s => s.Id == supplierId.Value);
+        if (supplier is null)
+            return NotFound(new { message = "Supplier not found." });
+
         var ordersTotal = await db.Orders
-            .Where(o => o.SupplierId == s.Id)
+            .Where(o => o.SupplierId == supplier.Id)
             .CountAsync();
 
         var revenue = await db.PayoutEntries
-            .Where(p => p.SupplierId == s.Id && p.Status == PayoutStatus.Paid)
+            .Where(p => p.SupplierId == supplier.Id && p.Status == PayoutStatus.Paid)
             .SumAsync(p => (decimal?)p.SupplierAmount) ?? 0m;
 
         var pricingConfig = await pricingConfigService.GetAsync();
         var dto           = AdminMappers.MapSupplier(
-            s,
+            supplier,
             ordersTotal:     ordersTotal,
             revenue:         revenue,
             includeSettings: true,

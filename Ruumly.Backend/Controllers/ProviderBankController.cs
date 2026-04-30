@@ -12,16 +12,26 @@ namespace Ruumly.Backend.Controllers;
 [Authorize(Roles = "Provider,Admin")]
 public class ProviderBankController(RuumlyDbContext db) : ControllerBase
 {
+    // Admin: ?supplierId= query param. Provider: own user.SupplierId.
+    private async Task<Guid?> ResolveSupplierIdAsync()
+    {
+        if (User.IsInRole("Admin"))
+        {
+            if (Request.Query.TryGetValue("supplierId", out var sv) &&
+                Guid.TryParse(sv, out var sid))
+                return sid;
+            return null;
+        }
+        var user = await db.Users.FindAsync(User.GetUserId());
+        return user?.SupplierId;
+    }
+
     [HttpGet("bank-details")]
     [HttpGet("/api/admin/my-bank-details")]  // backward compat
     public async Task<IActionResult> GetBankDetails()
     {
-        var userId   = User.GetUserId();
-        var user     = await db.Users
-            .Include(u => u.Supplier)
-            .FirstOrDefaultAsync(u => u.Id == userId);
-        var supplier = user?.Supplier;
-        if (supplier is null)
+        var supplierId = await ResolveSupplierIdAsync();
+        if (supplierId is null)
         {
             if (User.IsInRole("Admin"))
                 return BadRequest(new
@@ -32,6 +42,9 @@ public class ProviderBankController(RuumlyDbContext db) : ControllerBase
                 });
             return BadRequest(new { error = ErrorMessages.Get("NO_SUPPLIER_LINKED", Request.GetLang()) });
         }
+
+        var supplier = await db.Suppliers.FindAsync(supplierId.Value);
+        if (supplier is null) return NotFound(new { error = "Supplier not found." });
 
         return Ok(new
         {
@@ -45,12 +58,8 @@ public class ProviderBankController(RuumlyDbContext db) : ControllerBase
     [HttpPatch("/api/admin/my-bank-details")]  // backward compat
     public async Task<IActionResult> UpdateBankDetails([FromBody] UpdateBankDetailsRequest body)
     {
-        var userId = User.GetUserId();
-        var user   = await db.Users
-            .Include(u => u.Supplier)
-            .FirstOrDefaultAsync(u => u.Id == userId);
-
-        if (user?.SupplierId is null)
+        var supplierId = await ResolveSupplierIdAsync();
+        if (supplierId is null)
         {
             if (User.IsInRole("Admin"))
                 return BadRequest(new
@@ -62,7 +71,7 @@ public class ProviderBankController(RuumlyDbContext db) : ControllerBase
             return BadRequest(new { error = ErrorMessages.Get("NO_SUPPLIER_LINKED", Request.GetLang()) });
         }
 
-        var supplier = await db.Suppliers.FindAsync(user.SupplierId.Value);
+        var supplier = await db.Suppliers.FindAsync(supplierId.Value);
         if (supplier is null) return NotFound(new { error = "Supplier not found." });
 
         if (!string.IsNullOrWhiteSpace(body.Iban))

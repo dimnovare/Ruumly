@@ -19,19 +19,22 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
     /// Customer sees own bookings; Admin/Provider see all.
     /// Pass personal=true to always filter by UserId regardless of role
     /// (e.g. a Provider viewing their own /account page, not the supplier dashboard).
+    /// Admin can pass supplierId to scope the response to that supplier; without it,
+    /// admin sees ALL bookings platform-wide.
     /// </summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] int page = 1,
         [FromQuery] int limit = 50,
-        [FromQuery] bool personal = false)
+        [FromQuery] bool personal = false,
+        [FromQuery] Guid? supplierId = null)
     {
         var userId = User.GetUserId();
         var role   = User.GetUserRole();
         // When personal=true, always filter by UserId regardless of role
         var effectiveRole = personal ? UserRole.Customer : role;
-        var result = await bookingService.GetAllAsync(userId, effectiveRole, page, limit);
+        var result = await bookingService.GetAllAsync(userId, effectiveRole, page, limit, supplierId);
         return Ok(result);
     }
 
