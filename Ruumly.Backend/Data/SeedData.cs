@@ -29,6 +29,7 @@ public static class SeedData
             await SeedUsersAsync(db);
             await SeedRoutingRulesAsync(db);
             await SeedBookingsAsync(db);
+            await SeedReviewsAsync(db);
             await SeedPlatformSettingsAsync(db);
             await SeedFeatureDefinitionsAsync(db);
             Console.WriteLine("[Seed] Complete.");
@@ -2049,6 +2050,169 @@ public static class SeedData
         await db.SaveChangesAsync();
 
         Console.WriteLine($"[Seed] Bookings done. ({bookings.Count} created)");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // REVIEWS — backfill actual records to match listing.ReviewCount aggregates
+    // ─────────────────────────────────────────────────────────────────────────
+    private static async Task SeedReviewsAsync(RuumlyDbContext db)
+    {
+        var listings = await db.Listings
+            .Where(l => l.IsActive && l.ReviewCount > 0)
+            .ToListAsync();
+        if (listings.Count == 0)
+        {
+            Console.WriteLine("[Seed] Reviews skipped — no eligible listings.");
+            return;
+        }
+
+        // Realistic Estonian / Latvian / Lithuanian first names + last initials.
+        string[] firstNames =
+        [
+            // Estonian
+            "Mart", "Kati", "Jüri", "Liina", "Tiina", "Andres", "Kristel", "Tõnu",
+            "Anneli", "Margus", "Helen", "Rainer", "Maarja", "Indrek", "Riin", "Priit",
+            "Kaire", "Toomas", "Kerli", "Henrik",
+            // Latvian
+            "Jānis", "Anna", "Kārlis", "Līga", "Edgars", "Ilze", "Mārtiņš", "Inese",
+            "Kaspars", "Dace", "Andris", "Sandra", "Pēteris", "Zane",
+            // Lithuanian
+            "Tomas", "Rūta", "Mindaugas", "Eglė", "Darius", "Gintarė", "Vytautas",
+            "Aušra", "Linas", "Birutė", "Saulius", "Jurga",
+        ];
+        string[] lastInitials =
+        [
+            "K.", "T.", "S.", "L.", "M.", "P.", "R.", "V.", "B.", "J.",
+            "A.", "O.", "E.", "I.", "U.", "N.", "H.", "G.",
+        ];
+        string?[] commentTemplates =
+        [
+            "Great service, would recommend!",
+            "Smooth booking process, helpful staff.",
+            "Clean facility, easy access.",
+            "Good value for money.",
+            "Friendly and professional.",
+            "Easy to find, good location.",
+            "Exactly as described.",
+            "Will use again.",
+            "No complaints.",
+            "Quick communication, fair pricing.",
+            null, null, null, // some reviews have no comment
+        ];
+
+        // Idempotent synthetic reviewer pool — deterministic Ids so repeated
+        // seed runs do not duplicate users. Sized to give variety without
+        // bloating the Users table.
+        const int reviewerPoolSize = 60;
+        var reviewerIds = Enumerable.Range(0, reviewerPoolSize)
+            .Select(i => G($"reviewer-{i}")).ToArray();
+        var existingReviewerIds = (await db.Users
+            .Where(u => reviewerIds.Contains(u.Id))
+            .Select(u => u.Id).ToListAsync()).ToHashSet();
+        if (existingReviewerIds.Count < reviewerPoolSize)
+        {
+            var pwHash = BC.HashPassword("demo1234", workFactor: 12);
+            var poolRng = new Random(20260430);
+            var newReviewers = new List<User>();
+            for (var i = 0; i < reviewerPoolSize; i++)
+            {
+                if (existingReviewerIds.Contains(reviewerIds[i])) continue;
+                var first = firstNames[poolRng.Next(firstNames.Length)];
+                var initial = lastInitials[poolRng.Next(lastInitials.Length)];
+                newReviewers.Add(new User
+                {
+                    Id           = reviewerIds[i],
+                    Name         = $"{first} {initial}",
+                    Email        = $"reviewer-{i}@demo.local",
+                    PasswordHash = pwHash,
+                    Role         = UserRole.Customer,
+                    Status       = UserStatus.Active,
+                    RegisteredAt = Utc(2025, 1, 1).AddDays(poolRng.Next(0, 365)),
+                });
+            }
+            await db.Users.AddRangeAsync(newReviewers);
+            await db.SaveChangesAsync();
+            Console.WriteLine($"[Seed] Reviews: created {newReviewers.Count} reviewer users.");
+        }
+
+        var totalAdded = 0;
+        foreach (var listing in listings)
+        {
+            // Per-listing idempotency: skip listings that already have reviews.
+            if (await db.Reviews.AnyAsync(r => r.ListingId == listing.Id)) continue;
+
+            var rng = new Random(unchecked((int)BitConverter.ToUInt32(listing.Id.ToByteArray(), 0)));
+            var bookingsForListing = new List<Booking>(listing.ReviewCount);
+            var reviewsForListing  = new List<Review>(listing.ReviewCount);
+            var sumRating = 0;
+
+            for (var i = 0; i < listing.ReviewCount; i++)
+            {
+                var reviewerId = reviewerIds[rng.Next(reviewerPoolSize)];
+                var createdAt  = DateTime.SpecifyKind(
+                    DateTime.UtcNow.AddDays(-rng.Next(30, 730)), DateTimeKind.Utc);
+                // Bias toward higher ratings to keep average around 4.0–4.7.
+                var rating = rng.NextDouble() switch
+                {
+                    < 0.55 => 5,
+                    < 0.85 => 4,
+                    < 0.95 => 3,
+                    < 0.98 => 2,
+                    _      => 1,
+                };
+                sumRating += rating;
+                var bookingId     = Guid.NewGuid();
+                var startDate     = createdAt.AddDays(-rng.Next(20, 60));
+                var endDate       = createdAt.AddDays(-rng.Next(1, 7));
+                var basePrice     = listing.PriceFrom;
+                var platformPrice = Math.Round(basePrice * 0.95m, 2);
+
+                bookingsForListing.Add(new Booking
+                {
+                    Id            = bookingId,
+                    UserId        = reviewerId,
+                    ListingId     = listing.Id,
+                    SupplierId    = listing.SupplierId,
+                    StartDate     = DateTime.SpecifyKind(startDate.Date, DateTimeKind.Utc),
+                    EndDate       = DateTime.SpecifyKind(endDate.Date, DateTimeKind.Utc),
+                    Duration      = "1 month",
+                    Status        = BookingStatus.Completed,
+                    BasePrice     = basePrice,
+                    PlatformPrice = platformPrice,
+                    ExtrasTotal   = 0m,
+                    VatAmount     = 0m,
+                    Total         = platformPrice,
+                    CreatedAt     = startDate,
+                    UpdatedAt     = endDate,
+                });
+                reviewsForListing.Add(new Review
+                {
+                    Id         = Guid.NewGuid(),
+                    BookingId  = bookingId,
+                    UserId     = reviewerId,
+                    ListingId  = listing.Id,
+                    SupplierId = listing.SupplierId,
+                    Rating     = rating,
+                    Comment    = commentTemplates[rng.Next(commentTemplates.Length)],
+                    CreatedAt  = createdAt,
+                });
+            }
+
+            // Recompute Rating to stay consistent with the actual records.
+            // ReviewCount is left untouched (per spec).
+            listing.Rating = Math.Round((decimal)sumRating / listing.ReviewCount, 2);
+
+            await db.Bookings.AddRangeAsync(bookingsForListing);
+            await db.Reviews.AddRangeAsync(reviewsForListing);
+            Console.WriteLine(
+                $"[Seed] Reviews: listing {listing.Id} (+{reviewsForListing.Count}, avg={listing.Rating}).");
+            totalAdded += reviewsForListing.Count;
+        }
+
+        if (totalAdded > 0)
+            await db.SaveChangesAsync();
+
+        Console.WriteLine($"[Seed] Reviews done. ({totalAdded} created)");
     }
 
     // ─────────────────────────────────────────────────────────────────────────
