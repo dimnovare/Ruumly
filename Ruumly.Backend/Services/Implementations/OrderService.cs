@@ -36,6 +36,7 @@ public class OrderService(
             .Include(o => o.FulfillmentEvents)
             .Include(o => o.Timeline)
             .Include(o => o.Booking)
+            .AsSplitQuery()
             .AsQueryable();
 
         if (role == UserRole.Provider)
@@ -88,6 +89,7 @@ public class OrderService(
             .Include(o => o.FulfillmentEvents.OrderBy(e => e.CreatedAt))
             .Include(o => o.Timeline.OrderBy(t => t.CreatedAt))
             .Include(o => o.Booking)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(o => o.BookingId == bookingId);
 
         return order is null ? null : MapToDto(order);
@@ -415,8 +417,9 @@ public class OrderService(
         string emailBody)
     {
         var shortId = booking.Id.ToString()[..8].ToUpper();
-        var subject = emailSubject.Replace("{id}", $"#{shortId}");
-        var body    = emailBody.Replace("{id}", $"#{shortId}");
+        // Templates already include the "#" sigil before {id}; pass the raw id only.
+        var subject = emailSubject.Replace("{id}", shortId);
+        var body    = emailBody.Replace("{id}", shortId);
 
         // In-app notification
         await notificationService.CreateAsync(
@@ -462,6 +465,7 @@ public class OrderService(
             .Include(o => o.FulfillmentEvents.OrderBy(e => e.CreatedAt))
             .Include(o => o.Timeline.OrderBy(t => t.CreatedAt))
             .Include(o => o.Booking)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(o => o.Id == id);
 
     public OrderDto MapToDto(Order o) => MapOrderToDto(o);
