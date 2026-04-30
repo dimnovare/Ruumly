@@ -43,6 +43,11 @@ public class SupplierTeamController(
             .OrderBy(u => u.RegisteredAt)
             .FirstOrDefaultAsync();
 
+        // Capture as a value-typed Guid? so the projection below has nothing
+        // to dereference at SQL-translation time — `u.Id == owner!.Id` would
+        // NRE inside EF's expression visitor when owner is null.
+        var ownerId = owner?.Id;
+
         var members = await db.Users
             .Where(u => u.SupplierId == supplierId && u.Role == UserRole.Provider)
             .OrderBy(u => u.RegisteredAt)
@@ -52,7 +57,7 @@ public class SupplierTeamController(
                 u.Email,
                 u.Phone,
                 u.Role.ToString(),
-                u.Id == owner!.Id,
+                ownerId.HasValue && u.Id == ownerId.Value,
                 u.LastLoginAt.HasValue ? u.LastLoginAt.Value.ToString("yyyy-MM-dd HH:mm") : null,
                 u.RegisteredAt.ToString("yyyy-MM-dd")))
             .ToListAsync();
