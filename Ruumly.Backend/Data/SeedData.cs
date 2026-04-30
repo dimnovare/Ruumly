@@ -2046,10 +2046,141 @@ public static class SeedData
             Make(listings[2], now.AddDays(5), now.AddDays(35), BookingStatus.Pending, "1 month", now.AddHours(-3)),
         };
 
+        // ─── Historical bookings + orders for analytics charts ──────────────
+        // SupplierTeamController.GetAnalytics groups Orders by month, so we
+        // need actual Order rows (not just Bookings) for the 6-month chart.
+        // Tier-gated to keep Starter providers analytics-empty (matches prod).
+        var suppliers = await db.Suppliers
+            .Where(s => s.IsActive && s.Tier >= SupplierTier.Standard)
+            .ToListAsync();
+
+        var listingsBySupplier = (await db.Listings
+            .Where(l => l.IsActive)
+            .ToListAsync())
+            .GroupBy(l => l.SupplierId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var historicalCustomers = await db.Users
+            .Where(u => u.Role == UserRole.Customer && u.Status == UserStatus.Active)
+            .Take(20)
+            .ToListAsync();
+        if (historicalCustomers.Count == 0) historicalCustomers.Add(customer);
+
+        // (monthOffset, minBookings, maxBookings)
+        var monthDistribution = new (int offset, int min, int max)[]
+        {
+            (-5, 1, 2),
+            (-4, 1, 2),
+            (-3, 2, 3),
+            (-2, 2, 3),
+            (-1, 1, 3),
+            (0,  1, 2),
+        };
+        var monthAnchorBase = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        var orders = new List<Order>();
+        var supplierBookingCount = 0;
+        foreach (var supplier in suppliers)
+        {
+            if (!listingsBySupplier.TryGetValue(supplier.Id, out var supplierListings) || supplierListings.Count == 0)
+                continue;
+
+            // Deterministic per-supplier RNG → reproducible across seed runs.
+            var rng = new Random(unchecked((int)BitConverter.ToUInt32(supplier.Id.ToByteArray(), 0)));
+
+            var supplierAdded = 0;
+            foreach (var (offset, min, max) in monthDistribution)
+            {
+                var monthCount = rng.Next(min, max + 1);
+                var monthAnchor = monthAnchorBase.AddMonths(offset);
+                var daysInMonth = DateTime.DaysInMonth(monthAnchor.Year, monthAnchor.Month);
+                // Cap current month at today to avoid future-dated history.
+                var maxDay = offset == 0 ? Math.Min(now.Day, daysInMonth) : daysInMonth;
+
+                for (var i = 0; i < monthCount; i++)
+                {
+                    var listing  = supplierListings[rng.Next(supplierListings.Count)];
+                    var who      = historicalCustomers[rng.Next(historicalCustomers.Count)];
+                    var day      = rng.Next(1, maxDay + 1);
+                    var createdAt = DateTime.SpecifyKind(
+                        monthAnchor.AddDays(day - 1).AddHours(rng.Next(0, 24)),
+                        DateTimeKind.Utc);
+                    var startDate = createdAt.AddDays(rng.Next(1, 14));
+                    var endDate   = startDate.AddMonths(1);
+
+                    var bookingId     = Guid.NewGuid();
+                    var basePrice     = listing.PriceFrom;
+                    var platformPrice = Math.Round(basePrice * 0.95m, 2);
+                    var supplierPrice = Math.Round(basePrice * 0.85m, 2);
+                    var margin        = platformPrice - supplierPrice;
+
+                    bookings.Add(new Booking
+                    {
+                        Id            = bookingId,
+                        UserId        = who.Id,
+                        ListingId     = listing.Id,
+                        SupplierId    = supplier.Id,
+                        StartDate     = DateTime.SpecifyKind(startDate.Date, DateTimeKind.Utc),
+                        EndDate       = DateTime.SpecifyKind(endDate.Date, DateTimeKind.Utc),
+                        Duration      = "1 month",
+                        Status        = BookingStatus.Completed,
+                        ContactName   = who.Name,
+                        ContactEmail  = who.Email,
+                        ContactPhone  = who.Phone ?? "",
+                        BasePrice     = basePrice,
+                        PlatformPrice = platformPrice,
+                        ExtrasTotal   = 0m,
+                        VatAmount     = 0m,
+                        Total         = platformPrice,
+                        CreatedAt     = createdAt,
+                        UpdatedAt     = createdAt,
+                    });
+                    orders.Add(new Order
+                    {
+                        Id              = Guid.NewGuid(),
+                        BookingId       = bookingId,
+                        SupplierId      = supplier.Id,
+                        ListingId       = listing.Id,
+                        ListingTitle    = listing.Title,
+                        ListingType     = listing.Type,
+                        City            = listing.City,
+                        StartDate       = DateTime.SpecifyKind(startDate.Date, DateTimeKind.Utc),
+                        EndDate         = DateTime.SpecifyKind(endDate.Date, DateTimeKind.Utc),
+                        Duration        = "1 month",
+                        ExtrasJson      = "[]",
+                        AutoDispatch    = true,
+                        IntegrationType = supplier.IntegrationType,
+                        CustomerName    = who.Name,
+                        CustomerEmail   = who.Email,
+                        CustomerPhone   = who.Phone ?? "",
+                        PartnerDiscountRate = supplier.PartnerDiscountRate,
+                        BasePrice       = basePrice,
+                        PlatformPrice   = platformPrice,
+                        SupplierPrice   = supplierPrice,
+                        ExtrasTotal     = 0m,
+                        Total           = platformPrice,
+                        Margin          = margin,
+                        Status          = OrderStatus.Confirmed,
+                        LeadStatus      = LeadStatus.Won,
+                        CreatedAt       = createdAt,
+                        UpdatedAt       = createdAt,
+                    });
+                    supplierAdded++;
+                }
+            }
+            if (supplierAdded > 0)
+            {
+                Console.WriteLine($"[Seed] Bookings: supplier {supplier.Name} +{supplierAdded} historical.");
+                supplierBookingCount++;
+            }
+        }
+
         await db.Bookings.AddRangeAsync(bookings);
+        await db.Orders.AddRangeAsync(orders);
         await db.SaveChangesAsync();
 
-        Console.WriteLine($"[Seed] Bookings done. ({bookings.Count} created)");
+        Console.WriteLine(
+            $"[Seed] Bookings done. ({bookings.Count} bookings, {orders.Count} historical orders across {supplierBookingCount} suppliers.)");
     }
 
     // ─────────────────────────────────────────────────────────────────────────
