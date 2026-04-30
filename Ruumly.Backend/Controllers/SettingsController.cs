@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -35,6 +36,11 @@ public class SettingsController(RuumlyDbContext db) : ControllerBase
             "showProviderCta",
             "showFaq",
             "showMap",
+            "heroSubtitle",
+            "heroDiscount",
+            "defaultLanguage",
+            "currency",
+            "featuredPartners",
             // Note: "inviteCode" is NOT included — the actual code stays server-side only
         };
 
@@ -45,6 +51,19 @@ public class SettingsController(RuumlyDbContext db) : ControllerBase
             .Where(s => publicKeys.Contains(s.Key)
                      || publicPrefixes.Any(p => s.Key.StartsWith(p)))
             .ToDictionaryAsync(s => s.Key, s => s.Value);
+
+        // featuredPartners is stored as a JSON string in the DB; parse it here so
+        // the frontend can use Array.isArray() directly without a JSON.parse.
+        List<object> featuredPartners;
+        try
+        {
+            featuredPartners = JsonSerializer.Deserialize<List<object>>(
+                settings.GetValueOrDefault("featuredPartners", "[]")) ?? [];
+        }
+        catch
+        {
+            featuredPartners = [];
+        }
 
         // Provide defaults for any missing keys
         return Ok(new
@@ -61,6 +80,11 @@ public class SettingsController(RuumlyDbContext db) : ControllerBase
             showProviderCta      = settings.GetValueOrDefault("showProviderCta",      "true")  == "true",
             showFaq              = settings.GetValueOrDefault("showFaq",              "true")  == "true",
             showMap              = settings.GetValueOrDefault("showMap",              "true")  == "true",
+            heroSubtitle         = settings.GetValueOrDefault("heroSubtitle",    ""),
+            heroDiscount         = settings.GetValueOrDefault("heroDiscount",    "10"),
+            defaultLanguage      = settings.GetValueOrDefault("defaultLanguage", "et"),
+            currency             = settings.GetValueOrDefault("currency",        "EUR"),
+            featuredPartners,
             // About page — pass all aboutPage.* keys as a sub-dictionary
             aboutPage = settings
                 .Where(kv => kv.Key.StartsWith("aboutPage."))
