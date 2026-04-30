@@ -55,9 +55,11 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
               .Include(l => l.Supplier)
               .Include(l => l.Listings.Where(u => u.IsActive));
 
-        // Public callers and customers only see active locations
+        // Public callers and customers only see active, non-synthetic locations.
+        // Synthetic Locations are auto-created data shells and have no user
+        // content; their listings appear directly in /api/listings search results.
         if (!isAuthenticated || User.GetUserRole() == UserRole.Customer)
-            query = query.Where(l => l.IsActive);
+            query = query.Where(l => l.IsActive && !l.IsSynthetic);
 
         // Providers see only their own supplier's locations
         if (isAuthenticated && User.GetUserRole() == UserRole.Provider)
@@ -121,8 +123,14 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         if (location is null)
             return NotFound(new { error = ErrorMessages.Get("LOCATION_NOT_FOUND", Request.GetLang()) });
 
+        // Public/customer callers can't access synthetic Locations directly;
+        // their listings are surfaced via /api/listings search results instead.
+        var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
+        if ((!isAuthenticated || User.GetUserRole() == UserRole.Customer) && location.IsSynthetic)
+            return NotFound(new { error = ErrorMessages.Get("LOCATION_NOT_FOUND", Request.GetLang()) });
+
         // Providers can only see their own locations
-        if (User.Identity?.IsAuthenticated == true &&
+        if (isAuthenticated &&
             User.GetUserRole() == UserRole.Provider)
             if (!await CanAccess(location.SupplierId))
                 return Forbid();

@@ -522,6 +522,24 @@ using (var scope = app.Services.CreateScope())
     await DemoSeeder.SeedIfRequestedAsync(db, config, logger);
 }
 
+// After migrations + seed, flush the featured-listings cache so we don't serve
+// stale pre-migration responses (e.g. empty results when synthetic-Location
+// listings were excluded). Search keys are hashed and can't be enumerated;
+// they expire on TTL within minutes.
+using (var scope = app.Services.CreateScope())
+{
+    var cache = scope.ServiceProvider.GetService<Microsoft.Extensions.Caching.Distributed.IDistributedCache>();
+    if (cache is not null)
+    {
+        try
+        {
+            foreach (var lang in new[] { "_", "et", "en", "ru", "lv", "lt" })
+                await cache.RemoveAsync($"listings:featured:{lang}");
+        }
+        catch { /* swallow — cache flush is best-effort */ }
+    }
+}
+
 var port = Environment.GetEnvironmentVariable("PORT") ?? "3000";
 app.Urls.Add($"http://+:{port}");
 Console.WriteLine($"[Ruumly] Starting on http://localhost:{port}");

@@ -1603,40 +1603,61 @@ public static class SeedData
         await db.SaveChangesAsync();
 
         // Ensure every seeded listing has a SupplierLocation. Idempotent — runs
-        // every startup, no-op after first time (WHERE clause excludes already-linked
-        // listings). Backfills any standalone listings (LocationId IS NULL) by
-        // finding/creating a Location per (SupplierId, City) group.
+        // every startup, no-op after first time (loop body excludes already-linked
+        // listings). For each (SupplierId, City, Type) group of standalone listings,
+        // creates one synthetic SupplierLocation and links them.
+        // Per-type grouping prevents mixed-type Locations (e.g. Moving + Warehouse
+        // sharing one Location), which would conflate UI rendering and discount math.
         await db.Database.ExecuteSqlRawAsync(@"
-            INSERT INTO ""SupplierLocations""
-                (""Id"", ""SupplierId"", ""Name"", ""Address"", ""City"", ""Country"",
-                 ""Lat"", ""Lng"", ""IsActive"", ""Images"", ""ImagesJson"", ""Description"",
-                 ""CreatedAt"", ""UpdatedAt"")
-            SELECT
-                gen_random_uuid(),
-                l.""SupplierId"",
-                COALESCE(NULLIF(l.""City"", ''), 'Location') AS ""Name"",
-                MIN(l.""Address""),
-                l.""City"",
-                COALESCE(s.""Country"", 'EE'),
-                AVG(l.""Lat""),
-                AVG(l.""Lng""),
-                true,
-                '{}'::text[],
-                '[]',
-                '',
-                NOW() AT TIME ZONE 'UTC',
-                NOW() AT TIME ZONE 'UTC'
-            FROM ""Listings"" l
-            JOIN ""Suppliers"" s ON s.""Id"" = l.""SupplierId""
-            WHERE l.""LocationId"" IS NULL AND l.""IsActive"" = true
-            GROUP BY l.""SupplierId"", l.""City"", s.""Country"";
+            DO $$
+            DECLARE
+                grp        RECORD;
+                new_loc_id UUID;
+            BEGIN
+                FOR grp IN
+                    SELECT
+                        l.""SupplierId""                                 AS supplier_id,
+                        l.""City""                                       AS city,
+                        l.""Type""                                       AS listing_type,
+                        MIN(l.""Address"")                               AS address,
+                        AVG(l.""Lat"")                                   AS lat,
+                        AVG(l.""Lng"")                                   AS lng,
+                        COALESCE(s.""Country"", 'EE')                    AS country
+                    FROM ""Listings"" l
+                    JOIN ""Suppliers"" s ON s.""Id"" = l.""SupplierId""
+                    WHERE l.""LocationId"" IS NULL AND l.""IsActive"" = true
+                    GROUP BY l.""SupplierId"", l.""City"", l.""Type"", s.""Country""
+                LOOP
+                    new_loc_id := gen_random_uuid();
 
-            UPDATE ""Listings"" l
-            SET ""LocationId"" = sl.""Id""
-            FROM ""SupplierLocations"" sl
-            WHERE l.""LocationId"" IS NULL
-              AND l.""SupplierId"" = sl.""SupplierId""
-              AND l.""City"" = sl.""City"";
+                    INSERT INTO ""SupplierLocations"" (
+                        ""Id"", ""SupplierId"", ""Name"", ""Address"", ""City"", ""Country"",
+                        ""Lat"", ""Lng"", ""IsActive"", ""Images"", ""ImagesJson"", ""Description"",
+                        ""IsSynthetic"", ""CreatedAt"", ""UpdatedAt""
+                    ) VALUES (
+                        new_loc_id,
+                        grp.supplier_id,
+                        COALESCE(NULLIF(grp.city, ''), 'Location'),
+                        grp.address,
+                        grp.city,
+                        grp.country,
+                        grp.lat,
+                        grp.lng,
+                        true, '{}'::text[], '[]', '',
+                        true,
+                        NOW() AT TIME ZONE 'UTC',
+                        NOW() AT TIME ZONE 'UTC'
+                    );
+
+                    UPDATE ""Listings""
+                    SET ""LocationId"" = new_loc_id
+                    WHERE ""LocationId"" IS NULL
+                      AND ""IsActive"" = true
+                      AND ""SupplierId"" = grp.supplier_id
+                      AND ""City"" = grp.city
+                      AND ""Type"" = grp.listing_type;
+                END LOOP;
+            END $$;
         ");
 
         Console.WriteLine("[Seed] Listings done.");

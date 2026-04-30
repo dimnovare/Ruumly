@@ -311,6 +311,7 @@ public class AdminSettingsController(
                     UpdatedAt   = DateTime.UtcNow,
                     Description = string.Empty,
                     ImagesJson  = "[]",
+                    IsSynthetic = true,  // marked synthetic; can be promoted later when provider adds content
                 };
                 Db.SupplierLocations.Add(existing);
                 await Db.SaveChangesAsync();

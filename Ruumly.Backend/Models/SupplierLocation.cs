@@ -28,5 +28,14 @@ public class SupplierLocation
     public string Description { get; set; } = string.Empty;
     public string? OpeningHours { get; set; }
 
+    /// <summary>
+    /// True when this Location was auto-created as a data-grouping shell.
+    /// Synthetic Locations have no user-curated content (no images, no description)
+    /// and are hidden from public-facing browse surfaces. Their listings appear
+    /// directly in /api/listings search results instead of being shown via the
+    /// Location card (which would have nothing to display).
+    /// </summary>
+    public bool IsSynthetic { get; set; } = false;
+
     public List<Listing> Listings { get; set; } = [];
 }

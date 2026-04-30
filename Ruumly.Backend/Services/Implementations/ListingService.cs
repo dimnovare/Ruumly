@@ -39,7 +39,12 @@ public class ListingService(
             .Include(l => l.Supplier)
             .Include(l => l.Location)
             .Where(l => l.IsActive)
-            .Where(l => l.LocationId == null)  // Units inside locations are accessed via the location page
+            // Include standalone listings AND listings inside synthetic (auto-created)
+            // Locations. Real, user-curated Locations are shown as their own cards;
+            // their listings are accessed via the Location detail page and not
+            // duplicated in the listing search results.
+            .Where(l => l.LocationId == null
+                     || (l.Location != null && l.Location.IsSynthetic))
             .AsQueryable();
 
         // ── Type filter ───────────────────────────────────────────────────────
