@@ -20,60 +20,6 @@ public class AdminSettingsController(
     IPricingConfigService pricingConfigService) : AdminBaseController(db)
 {
     // ══════════════════════════════════════════════════════════════════════════
-    // STATS
-    // ══════════════════════════════════════════════════════════════════════════
-
-    [HttpGet("stats")]
-    public async Task<IActionResult> GetStats()
-    {
-        var monthStart = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-
-        var totalListings      = await Db.Listings.CountAsync(l => l.IsActive);
-        var totalOrders        = await Db.Orders.CountAsync();
-        var totalUsers         = await Db.Users.CountAsync(u => u.Role != UserRole.Admin);
-        var totalRevenue       = await Db.Invoices
-                                    .Where(i => i.Status == InvoiceStatus.Paid)
-                                    .SumAsync(i => (decimal?)i.Amount) ?? 0m;
-        var ordersThisMonth    = await Db.Orders
-                                    .CountAsync(o => o.CreatedAt >= monthStart);
-        var revenueThisMonth   = await Db.Invoices
-                                    .Where(i => i.Status == InvoiceStatus.Paid && i.CreatedAt >= monthStart)
-                                    .SumAsync(i => (decimal?)i.Amount) ?? 0m;
-        var pendingOrders      = await Db.Orders
-                                    .CountAsync(o => o.Status == OrderStatus.Created
-                                                  || o.Status == OrderStatus.Sending);
-
-        var recentInquiries = await Db.Bookings
-            .Include(b => b.Listing)
-            .Include(b => b.User)
-            .Where(b => b.Status == BookingStatus.Pending)
-            .OrderByDescending(b => b.CreatedAt)
-            .Take(5)
-            .Select(b => new RecentInquiryDto(
-                b.Id,
-                b.User.Name,
-                b.User.Email,
-                b.Listing.Title,
-                b.Listing.Type.ToString().ToLower(),
-                b.CreatedAt.ToString("yyyy-MM-dd"),
-                "new",
-                b.Notes ?? ""
-            ))
-            .ToListAsync();
-
-        return Ok(new AdminStatsDto(
-            TotalListings:    totalListings,
-            TotalOrders:      totalOrders,
-            TotalUsers:       totalUsers,
-            TotalRevenue:     totalRevenue,
-            OrdersThisMonth:  ordersThisMonth,
-            RevenueThisMonth: revenueThisMonth,
-            PendingOrders:    pendingOrders,
-            RecentInquiries:  recentInquiries
-        ));
-    }
-
-    // ══════════════════════════════════════════════════════════════════════════
     // INQUIRIES
     // ══════════════════════════════════════════════════════════════════════════
 

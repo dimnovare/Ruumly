@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
+using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Models.Enums;
 
 namespace Ruumly.Backend.Controllers;
@@ -10,43 +11,53 @@ public class AdminDashboardController(RuumlyDbContext db) : AdminBaseController(
 {
     // ── GET /api/admin/dashboard/stats ─────────────────────────────────────────
     [HttpGet("stats")]
-    public async Task<IActionResult> Stats()
+    public async Task<IActionResult> GetStats()
     {
-        var now           = DateTime.UtcNow;
-        var weekStart     = now.Date.AddDays(-(int)now.DayOfWeek);   // Sunday 00:00 UTC
-        var monthStart    = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var monthStart = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        // Revenue = sum of Total on non-cancelled bookings
-        var revenueThisWeek = await Db.Bookings
-            .Where(b => b.CreatedAt >= weekStart &&
-                        b.Status != BookingStatus.Cancelled)
-            .SumAsync(b => (decimal?)b.Total) ?? 0m;
+        var totalListings      = await Db.Listings.CountAsync(l => l.IsActive);
+        var totalOrders        = await Db.Orders.CountAsync();
+        var totalUsers         = await Db.Users.CountAsync(u => u.Role != UserRole.Admin);
+        var totalRevenue       = await Db.Invoices
+                                    .Where(i => i.Status == InvoiceStatus.Paid)
+                                    .SumAsync(i => (decimal?)i.Amount) ?? 0m;
+        var ordersThisMonth    = await Db.Orders
+                                    .CountAsync(o => o.CreatedAt >= monthStart);
+        var revenueThisMonth   = await Db.Invoices
+                                    .Where(i => i.Status == InvoiceStatus.Paid && i.CreatedAt >= monthStart)
+                                    .SumAsync(i => (decimal?)i.Amount) ?? 0m;
+        var pendingOrders      = await Db.Orders
+                                    .CountAsync(o => o.Status == OrderStatus.Created
+                                                  || o.Status == OrderStatus.Sending);
 
-        var revenueThisMonth = await Db.Bookings
-            .Where(b => b.CreatedAt >= monthStart &&
-                        b.Status != BookingStatus.Cancelled)
-            .SumAsync(b => (decimal?)b.Total) ?? 0m;
+        var recentInquiries = await Db.Bookings
+            .Include(b => b.Listing)
+            .Include(b => b.User)
+            .Where(b => b.Status == BookingStatus.Pending)
+            .OrderByDescending(b => b.CreatedAt)
+            .Take(5)
+            .Select(b => new RecentInquiryDto(
+                b.Id,
+                b.User.Name,
+                b.User.Email,
+                b.Listing.Title,
+                b.Listing.Type.ToString().ToLower(),
+                b.CreatedAt.ToString("yyyy-MM-dd"),
+                "new",
+                b.Notes ?? ""
+            ))
+            .ToListAsync();
 
-        var bookingsThisWeek = await Db.Bookings
-            .CountAsync(b => b.CreatedAt >= weekStart &&
-                             b.Status != BookingStatus.Cancelled);
-
-        var bookingsThisMonth = await Db.Bookings
-            .CountAsync(b => b.CreatedAt >= monthStart &&
-                             b.Status != BookingStatus.Cancelled);
-
-        var newSuppliersThisMonth = await Db.Suppliers
-            .CountAsync(s => s.CreatedAt >= monthStart);
-
-        return Ok(new
-        {
-            revenueThisWeek,
-            revenueThisMonth,
-            bookingsThisWeek,
-            bookingsThisMonth,
-            newSuppliersThisMonth,
-            conversionRate = (decimal?)null,   // no listing-view tracking yet
-        });
+        return Ok(new AdminStatsDto(
+            TotalListings:    totalListings,
+            TotalOrders:      totalOrders,
+            TotalUsers:       totalUsers,
+            TotalRevenue:     totalRevenue,
+            OrdersThisMonth:  ordersThisMonth,
+            RevenueThisMonth: revenueThisMonth,
+            PendingOrders:    pendingOrders,
+            RecentInquiries:  recentInquiries
+        ));
     }
 
     // ── GET /api/admin/dashboard/revenue ──────────────────────────────────────
