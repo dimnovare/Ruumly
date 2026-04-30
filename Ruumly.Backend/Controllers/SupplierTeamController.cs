@@ -27,7 +27,16 @@ public class SupplierTeamController(
         var userId     = User.GetUserId();
         var supplierId = await GetSupplierIdAsync(userId);
         if (supplierId is null)
+        {
+            if (User.IsInRole("Admin"))
+                return BadRequest(new
+                {
+                    error   = "supplier_context_required",
+                    message = "Admin must specify ?supplierId= to view this resource.",
+                    hint    = "Pick a supplier from /admin/suppliers and pass its id as a query param.",
+                });
             return NotFound(new { message = "No supplier linked to this account." });
+        }
 
         var owner = await db.Users
             .Where(u => u.SupplierId == supplierId && u.Role == UserRole.Provider)
@@ -58,7 +67,16 @@ public class SupplierTeamController(
         var userId     = User.GetUserId();
         var supplierId = await GetSupplierIdAsync(userId);
         if (supplierId is null)
+        {
+            if (User.IsInRole("Admin"))
+                return BadRequest(new
+                {
+                    error   = "supplier_context_required",
+                    message = "Admin must specify ?supplierId= to view this resource.",
+                    hint    = "Pick a supplier from /admin/suppliers and pass its id as a query param.",
+                });
             return NotFound(new { message = "No supplier linked to this account." });
+        }
 
         // Find or create the invited user
         var existing = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
@@ -100,7 +118,16 @@ public class SupplierTeamController(
         var callerId   = User.GetUserId();
         var supplierId = await GetSupplierIdAsync(callerId);
         if (supplierId is null)
+        {
+            if (User.IsInRole("Admin"))
+                return BadRequest(new
+                {
+                    error   = "supplier_context_required",
+                    message = "Admin must specify ?supplierId= to view this resource.",
+                    hint    = "Pick a supplier from /admin/suppliers and pass its id as a query param.",
+                });
             return NotFound(new { message = "No supplier linked to this account." });
+        }
 
         if (memberId == callerId)
             return BadRequest(new { message = "You cannot remove yourself from the team." });
@@ -139,7 +166,16 @@ public class SupplierTeamController(
             .FirstOrDefaultAsync(u => u.Id == userId);
 
         if (user?.Supplier is null)
+        {
+            if (User.IsInRole("Admin"))
+                return BadRequest(new
+                {
+                    error   = "supplier_context_required",
+                    message = "Admin must specify ?supplierId= to view this resource.",
+                    hint    = "Pick a supplier from /admin/suppliers and pass its id as a query param.",
+                });
             return NotFound(new { message = "No supplier profile linked to this account." });
+        }
 
         var s             = user.Supplier;
         var ordersTotal = await db.Orders
@@ -212,16 +248,33 @@ public class SupplierTeamController(
     [HttpGet("analytics")]
     public async Task<IActionResult> GetAnalytics()
     {
-        var userId = User.GetUserId();
-        var supplierId = await GetSupplierIdAsync(userId);
-        if (supplierId is null)
-            return NotFound(new { message = "No supplier linked." });
+        bool aggregateAll = false;
+        Guid? effectiveSupplierId = null;
+
+        if (User.GetUserRole() == UserRole.Admin)
+        {
+            if (Request.Query.TryGetValue("supplierId", out var sv) &&
+                Guid.TryParse(sv, out var sid))
+                effectiveSupplierId = sid;
+            else
+                aggregateAll = true;
+        }
+        else
+        {
+            var supplierId = await GetSupplierIdAsync(User.GetUserId());
+            if (supplierId is null)
+                return BadRequest(new { error = "No supplier linked." });
+            effectiveSupplierId = supplierId;
+        }
 
         var sixMonthsAgo = DateTime.UtcNow.AddMonths(-6);
 
         // Monthly bookings + revenue for the last 6 months
-        var monthly = await db.Orders
-            .Where(o => o.SupplierId == supplierId && o.CreatedAt >= sixMonthsAgo)
+        var ordersQuery = db.Orders.Where(o => o.CreatedAt >= sixMonthsAgo);
+        if (!aggregateAll)
+            ordersQuery = ordersQuery.Where(o => o.SupplierId == effectiveSupplierId);
+
+        var monthly = await ordersQuery
             .GroupBy(o => new { o.CreatedAt.Year, o.CreatedAt.Month })
             .Select(g => new
             {
@@ -233,10 +286,11 @@ public class SupplierTeamController(
             .OrderBy(x => x.Year).ThenBy(x => x.Month)
             .ToListAsync();
 
-        // Total views across all listings for this supplier (including inactive)
-        var totalViews = await db.Listings
-            .Where(l => l.SupplierId == supplierId)
-            .SumAsync(l => l.ViewCount);
+        // Total views across all listings (per-supplier or platform-wide)
+        var listingsQuery = db.Listings.AsQueryable();
+        if (!aggregateAll)
+            listingsQuery = listingsQuery.Where(l => l.SupplierId == effectiveSupplierId);
+        var totalViews = await listingsQuery.SumAsync(l => l.ViewCount);
 
         return Ok(new { monthly, totalViews });
     }

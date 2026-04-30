@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.Helpers;
-using Ruumly.Backend.Models.Enums;
 
 namespace Ruumly.Backend.Controllers;
 
@@ -23,7 +22,16 @@ public class ProviderBankController(RuumlyDbContext db) : ControllerBase
             .FirstOrDefaultAsync(u => u.Id == userId);
         var supplier = user?.Supplier;
         if (supplier is null)
+        {
+            if (User.IsInRole("Admin"))
+                return BadRequest(new
+                {
+                    error   = "supplier_context_required",
+                    message = "Admin must specify ?supplierId= to view this resource.",
+                    hint    = "Pick a supplier from /admin/suppliers and pass its id as a query param.",
+                });
             return BadRequest(new { error = ErrorMessages.Get("NO_SUPPLIER_LINKED", Request.GetLang()) });
+        }
 
         return Ok(new
         {
@@ -43,7 +51,16 @@ public class ProviderBankController(RuumlyDbContext db) : ControllerBase
             .FirstOrDefaultAsync(u => u.Id == userId);
 
         if (user?.SupplierId is null)
+        {
+            if (User.IsInRole("Admin"))
+                return BadRequest(new
+                {
+                    error   = "supplier_context_required",
+                    message = "Admin must specify ?supplierId= to view this resource.",
+                    hint    = "Pick a supplier from /admin/suppliers and pass its id as a query param.",
+                });
             return BadRequest(new { error = ErrorMessages.Get("NO_SUPPLIER_LINKED", Request.GetLang()) });
+        }
 
         var supplier = await db.Suppliers.FindAsync(user.SupplierId.Value);
         if (supplier is null) return NotFound(new { error = "Supplier not found." });
@@ -69,52 +86,6 @@ public class ProviderBankController(RuumlyDbContext db) : ControllerBase
             iban            = supplier.Iban,
             bankAccountName = supplier.BankAccountName,
             bankName        = supplier.BankName,
-        });
-    }
-
-    [HttpGet("/api/supplier/stats")]
-    public async Task<IActionResult> GetSupplierStats([FromQuery] Guid? supplierId = null)
-    {
-        Guid effectiveSupplierId;
-        if (supplierId.HasValue && User.GetUserRole() == UserRole.Admin)
-        {
-            effectiveSupplierId = supplierId.Value;
-        }
-        else
-        {
-            var user = await db.Users.FindAsync(User.GetUserId());
-            if (user?.SupplierId is null) return BadRequest(new { error = "No supplier linked." });
-            effectiveSupplierId = user.SupplierId.Value;
-        }
-
-        var now        = DateTime.UtcNow;
-        var monthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-
-        var allBookings = await db.Bookings
-            .Where(b => b.SupplierId == effectiveSupplierId && !b.IsDeleted)
-            .ToListAsync();
-
-        var thisMonth      = allBookings.Where(b => b.CreatedAt >= monthStart).ToList();
-        var activeBookings = allBookings.Where(b =>
-            b.Status is BookingStatus.Reserved or BookingStatus.Confirmed or BookingStatus.Active).ToList();
-
-        var totalUnits  = await db.Listings.CountAsync(l => l.SupplierId == effectiveSupplierId && l.IsActive);
-        var bookedUnits = activeBookings.Select(b => b.ListingId).Distinct().Count();
-
-        return Ok(new
-        {
-            totalBookings     = allBookings.Count,
-            thisMonthBookings = thisMonth.Count,
-            thisMonthRevenue  = thisMonth.Sum(b => b.Total),
-            activeBookings    = activeBookings.Count,
-            totalUnits,
-            bookedUnits,
-            occupancyRate = totalUnits > 0
-                ? Math.Round((decimal)bookedUnits / totalUnits * 100, 1)
-                : 0,
-            totalRevenue = allBookings
-                .Where(b => b.Status != BookingStatus.Cancelled)
-                .Sum(b => b.Total),
         });
     }
 }
