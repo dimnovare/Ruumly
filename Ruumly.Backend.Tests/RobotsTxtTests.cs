@@ -33,6 +33,28 @@ public class RobotsTxtTests
         body.Should().NotContain("Content-Signal:");
     }
 
+    [Fact]
+    public void RobotsController_LanguagePrefixedDisallowsPresent()
+    {
+        var db = TestDbContext.Create();
+        var controller = new SitemapController(db);
+        var body = ((ContentResult)controller.Robots()).Content!;
+
+        // Wildcard prefixes for the language-prefixed canonical URLs.
+        body.Should().Contain("Disallow: /*/account");
+        body.Should().Contain("Disallow: /*/admin");
+        body.Should().Contain("Disallow: /*/provider/dashboard");
+        body.Should().Contain("Disallow: /*/provider/onboarding");
+        body.Should().Contain("Disallow: /*/book");
+
+        // Defense-in-depth: original unprefixed paths still present.
+        body.Should().Contain("Disallow: /account");
+        body.Should().Contain("Disallow: /admin");
+        body.Should().Contain("Disallow: /provider/dashboard");
+        body.Should().Contain("Disallow: /provider/onboarding");
+        body.Should().Contain("Disallow: /book");
+    }
+
     // Google does a HEAD probe before fetching robots.txt. Without [HttpHead]
     // alongside [HttpGet], ASP.NET returns 405 and the crawler skips the file.
     [Fact]
@@ -46,7 +68,7 @@ public class RobotsTxtTests
         headAttrs[0].Template.Should().Be("robots.txt",
             "HEAD route must match the GET route exactly");
 
-        var getAttrs = method.GetCustomAttributes<HttpGetAttribute>(inherit: true).ToList();
+        var getAttrs = method!.GetCustomAttributes<HttpGetAttribute>(inherit: true).ToList();
         getAttrs.Should().ContainSingle();
         getAttrs[0].Template.Should().Be("robots.txt");
     }

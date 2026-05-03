@@ -10,6 +10,31 @@ namespace Ruumly.Backend.Controllers;
 public class SitemapController(RuumlyDbContext db) : ControllerBase
 {
     private const string BaseUrl = "https://ruumly.eu";
+    private static readonly string[] Langs = ["et", "en", "ru", "lv", "lt"];
+
+    // Emits five <url> entries (one per language prefix) for a given path.
+    // path "" → {BaseUrl}/{lang} (no trailing slash) for the homepage.
+    // path "/search" → {BaseUrl}/{lang}/search, etc.
+    // x-default always points to the /et/ version.
+    private static void AppendLangUrlSet(
+        StringBuilder sb, string path, string priority, string changefreq, string? lastMod = null)
+    {
+        foreach (var lang in Langs)
+        {
+            sb.AppendLine("  <url>");
+            sb.AppendLine($"    <loc>{BaseUrl}/{lang}{path}</loc>");
+            if (lastMod is not null)
+                sb.AppendLine($"    <lastmod>{lastMod}</lastmod>");
+            sb.AppendLine($"    <changefreq>{changefreq}</changefreq>");
+            sb.AppendLine($"    <priority>{priority}</priority>");
+
+            foreach (var altLang in Langs)
+                sb.AppendLine($"    <xhtml:link rel=\"alternate\" hreflang=\"{altLang}\" href=\"{BaseUrl}/{altLang}{path}\"/>");
+
+            sb.AppendLine($"    <xhtml:link rel=\"alternate\" hreflang=\"x-default\" href=\"{BaseUrl}/et{path}\"/>");
+            sb.AppendLine("  </url>");
+        }
+    }
 
     [HttpGet("sitemap.xml")]
     [HttpHead("sitemap.xml")]
@@ -44,68 +69,27 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
             ("/privacy",      "0.3", "yearly"),
         };
 
-        var langs = new[] { "et", "en", "ru", "lv", "lt" };
-
         foreach (var (path, priority, freq) in staticPages)
-        {
-            sb.AppendLine("  <url>");
-            sb.AppendLine($"    <loc>{BaseUrl}{path}</loc>");
-            sb.AppendLine($"    <changefreq>{freq}</changefreq>");
-            sb.AppendLine($"    <priority>{priority}</priority>");
-
-            foreach (var lang in langs)
-                sb.AppendLine($"    <xhtml:link rel=\"alternate\" hreflang=\"{lang}\" href=\"{BaseUrl}{path}\"/>");
-
-            sb.AppendLine($"    <xhtml:link rel=\"alternate\" hreflang=\"x-default\" href=\"{BaseUrl}{path}\"/>");
-            sb.AppendLine("  </url>");
-        }
+            AppendLangUrlSet(sb, path, priority, freq);
 
         foreach (var listing in listings)
         {
             var type    = listing.Type.ToString().ToLower();
             var path    = $"/{type}/{listing.Id}";
             var lastMod = listing.UpdatedAt.ToString("yyyy-MM-dd");
-
-            sb.AppendLine("  <url>");
-            sb.AppendLine($"    <loc>{BaseUrl}{path}</loc>");
-            sb.AppendLine($"    <lastmod>{lastMod}</lastmod>");
-            sb.AppendLine("    <changefreq>weekly</changefreq>");
-            sb.AppendLine("    <priority>0.8</priority>");
-
-            foreach (var lang in langs)
-                sb.AppendLine($"    <xhtml:link rel=\"alternate\" hreflang=\"{lang}\" href=\"{BaseUrl}{path}\"/>");
-
-            sb.AppendLine($"    <xhtml:link rel=\"alternate\" hreflang=\"x-default\" href=\"{BaseUrl}{path}\"/>");
-            sb.AppendLine("  </url>");
+            AppendLangUrlSet(sb, path, "0.8", "weekly", lastMod);
         }
 
         foreach (var location in locations)
         {
             var path    = $"/location/{location.Id}";
             var lastMod = location.UpdatedAt.ToString("yyyy-MM-dd");
-
-            sb.AppendLine("  <url>");
-            sb.AppendLine($"    <loc>{BaseUrl}{path}</loc>");
-            sb.AppendLine($"    <lastmod>{lastMod}</lastmod>");
-            sb.AppendLine("    <changefreq>weekly</changefreq>");
-            sb.AppendLine("    <priority>0.9</priority>");
-
-            foreach (var lang in langs)
-                sb.AppendLine($"    <xhtml:link rel=\"alternate\" hreflang=\"{lang}\" href=\"{BaseUrl}{path}\"/>");
-
-            sb.AppendLine($"    <xhtml:link rel=\"alternate\" hreflang=\"x-default\" href=\"{BaseUrl}{path}\"/>");
-            sb.AppendLine("  </url>");
+            AppendLangUrlSet(sb, path, "0.9", "weekly", lastMod);
         }
 
         var cityPages = new[] { "tallinn", "riga", "vilnius" };
         foreach (var city in cityPages)
-        {
-            sb.AppendLine("  <url>");
-            sb.AppendLine($"    <loc>{BaseUrl}/storage/{city}</loc>");
-            sb.AppendLine("    <changefreq>weekly</changefreq>");
-            sb.AppendLine("    <priority>0.8</priority>");
-            sb.AppendLine("  </url>");
-        }
+            AppendLangUrlSet(sb, $"/storage/{city}", "0.8", "weekly");
 
         sb.AppendLine("</urlset>");
 
@@ -120,11 +104,19 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
         var content =
             "User-agent: *\n" +
             "Allow: /\n" +
+            // Unprefixed paths kept as defense-in-depth in case a bot hits the
+            // URL before the language-redirect fires.
             "Disallow: /account\n" +
             "Disallow: /admin\n" +
             "Disallow: /provider/dashboard\n" +
             "Disallow: /provider/onboarding\n" +
             "Disallow: /book\n" +
+            // Language-prefixed paths (the canonical URLs after the redirect).
+            "Disallow: /*/account\n" +
+            "Disallow: /*/admin\n" +
+            "Disallow: /*/provider/dashboard\n" +
+            "Disallow: /*/provider/onboarding\n" +
+            "Disallow: /*/book\n" +
             "\n" +
             "# AI training crawlers — blocked\n" +
             "User-agent: Amazonbot\n" +
