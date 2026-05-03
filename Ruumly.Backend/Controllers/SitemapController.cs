@@ -87,6 +87,18 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
             AppendLangUrlSet(sb, path, "0.9", "weekly", lastMod);
         }
 
+        var partners = await db.Suppliers
+            .Where(s => s.IsActive && s.Slug != null)
+            .Select(s => new { s.Slug, s.UpdatedAt })
+            .ToListAsync();
+
+        foreach (var partner in partners)
+        {
+            var path    = $"/partner/{partner.Slug}";
+            var lastMod = partner.UpdatedAt.ToString("yyyy-MM-dd");
+            AppendLangUrlSet(sb, path, "0.8", "weekly", lastMod);
+        }
+
         var cityPages = new[] { "tallinn", "riga", "vilnius" };
         foreach (var city in cityPages)
             AppendLangUrlSet(sb, $"/storage/{city}", "0.8", "weekly");

@@ -32,6 +32,7 @@ public static class SeedData
             await SeedReviewsAsync(db);
             await SeedPlatformSettingsAsync(db);
             await SeedFeatureDefinitionsAsync(db);
+            await SeedKookonAsync(db);   // env-gated: Development only
             Console.WriteLine("[Seed] Complete.");
         }
         catch (Exception ex)
@@ -2499,6 +2500,309 @@ public static class SeedData
 
         await db.SaveChangesAsync();
         Console.WriteLine("[Seed] Feature definitions seeded.");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // KOOKON — real-partner demo data (Development env only).
+    // Production onboarding goes via the regular admin flow, NOT this seeder.
+    // ─────────────────────────────────────────────────────────────────────────
+    private static async Task SeedKookonAsync(RuumlyDbContext db)
+    {
+        // Environment gate: localhost-only. Production onboarding goes via admin UI.
+        var aspEnv = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        if (!string.Equals(aspEnv, "Development", StringComparison.OrdinalIgnoreCase))
+        {
+            Console.WriteLine($"[Seed] SeedKookonAsync skipped — ASPNETCORE_ENVIRONMENT='{aspEnv ?? "(null)"}', expected 'Development'.");
+            return;
+        }
+
+        // Targeted guard — checks for Kookon specifically, NOT "any supplier".
+        if (await db.Suppliers.AnyAsync(s => s.Slug == "kookon")) return;
+
+        var kookonId = G("sup-kookon");
+        var now      = Utc(2026, 1, 15);
+
+        // ─── Photo pools (real Kookon imagery from kookon.ee) ─────────────────
+        // Standard interior shots — 1920x1080, sourced from the Tänassilma gallery.
+        var standardInteriorPool = new[]
+        {
+            "https://www.kookon.ee/content/uploads/2021/03/Tanassilma_1-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2021/03/Tanassilma_2-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2021/03/Tanassilma_3-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2021/03/Tanassilma_4-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2021/03/Tanassilma_5-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2021/03/Tanassilma_6-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2021/03/Tanassilma_7-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2021/03/Tanassilma_8-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2021/03/Tanassilma_9-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2016/11/MG_9838-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2016/11/MG_9844-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2016/11/MG_9853-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2016/11/MG_9856-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2016/11/MG_9861-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2016/11/MG_9862-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2016/11/MG_9868-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2016/11/MG_9869-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2016/11/MG_9875-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2016/11/MG_9885-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2016/11/MG_9896-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2016/11/MG_9908-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2016/11/MG_9910-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2016/11/MG_9920-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2016/11/MG_9925-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2016/11/MG_9928-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2016/11/MG_9937-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2016/11/MG_9941-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2016/11/MG_9984-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2016/11/MG_9987-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2016/11/MG_9990-1920x1080.jpg",
+            "https://www.kookon.ee/content/uploads/2016/11/MG_0021-1920x1080.jpg",
+        };
+
+        // Light-type shots — Lennuradari exterior views + hero (Lennuradari is the only Light site).
+        var lightInteriorPool = new[]
+        {
+            "https://www.kookon.ee/content/uploads/2018/01/Lennuradari_01-.jpg",
+            "https://www.kookon.ee/content/uploads/2018/01/kookon_piloodi_1-450x253.jpg",
+            "https://www.kookon.ee/content/uploads/2018/01/kookon_piloodi_2-450x253.jpg",
+            "https://www.kookon.ee/content/uploads/2018/01/kookon_piloodi_3-450x253.jpg",
+        };
+
+        // Helper: pick N images from a pool starting at offset, wrapping around.
+        static string[] PickImages(string[] pool, int offset, int count)
+        {
+            var result = new string[count];
+            for (var i = 0; i < count; i++) result[i] = pool[(offset + i) % pool.Length];
+            return result;
+        }
+
+        // ─── Supplier ──────────────────────────────────────────────────────────
+        db.Suppliers.Add(new Supplier
+        {
+            Id                = kookonId,
+            Name              = "Kookon",
+            Slug              = "kookon",
+            RegistryCode      = null,                          // TODO confirm with Kookon
+            ContactName       = "Kookon klienditugi",          // TODO confirm contact person
+            ContactEmail      = "info@kookon.ee",
+            ContactPhone      = "+372 5199 9075",
+            IntegrationType   = IntegrationType.Email,
+            RecipientEmail    = "info@kookon.ee",
+            IsActive          = true,
+            IntegrationHealth = IntegrationHealth.Healthy,
+            Country           = "EE",
+            // NOTE: spec said SupplierTier.Business; using Premium since enum has no Business.
+            Tier              = SupplierTier.Premium,
+            IsVerified        = true,
+            VerifiedAt        = now,
+            FoundingPartner   = true,
+            Rating            = 4.8m,                          // TODO replace with real once reviews seeded
+            ReviewCount       = 47,                            // TODO replace with real once reviews seeded
+            Tagline           = "Nutikas laopinna rent kogu Tallinnas",
+            LogoUrl           = "https://www.kookon.ee/content/uploads/2016/09/vikelaod-tume.svg",
+            HeroImageUrl      = "https://www.kookon.ee/content/uploads/2021/09/Viimsi_01--450x272.jpg",
+            WebsiteUrl        = "https://www.kookon.ee",
+            FoundedYear       = 2016,                          // TODO confirm
+            LongDescriptionTranslationsJson = J(new
+            {
+                et = "Kookon on innovaatiline iseteenindusladude lahendus — kontaktivaba rentimine, 24/7 ligipääs läbi mobiilirakenduse, päikeseenergia ja tipptasemel turvalahendused. 9 asukohta üle Tallinna piirkonna teevad sobiva laopinna leidmise lihtsaks. Kookoni Standard-tüüpi laopinnad on köetud, varustatud vee- ja kanalisatsioonivalmidusega ning tasuta internetiga; Light-tüüpi laopinnad on lihtsam ja soodsam lahendus puhtalt ladustamiseks.",
+                en = "Kookon is an innovative self-storage solution — contactless rental, 24/7 mobile-first access, solar power, and top-tier security. With 9 locations across the Tallinn area, finding the right storage space is effortless. Kookon Standard units are heated and equipped with water, sewage and free Wi-Fi; Light units are a simpler, more affordable option for pure storage use cases.",
+                ru = "Kookon — инновационное решение для самостоятельного хранения: бесконтактная аренда, круглосуточный доступ через мобильное приложение, солнечная энергия и современные системы безопасности. 9 локаций по всему Таллинну делают поиск нужного склада простым. Помещения Kookon Standard отапливаются, оборудованы водой, канализацией и бесплатным Wi-Fi; помещения Light — более простое и доступное решение для хранения.",
+            }),
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+
+        // ─── Locations + Listings ─────────────────────────────────────────────
+        var locations = new[]
+        {
+            new {
+                Key="saue", Name="Saue Kookon",
+                Address="Tule tänav 39", City="Saue",
+                Lat=59.3153692, Lng=24.5708577,                 // exact
+                TotalUnits=14, AvailableUnits=3, IsLight=false,
+                Img="https://www.kookon.ee/content/uploads/2022/10/kookon_saue_ajutine-1-450x272.jpg",
+                DescEt="Saue Kookon asub aktiivse liiklusega Tule tänaval, Transpordiameti Saue teenindusbüroo kõrval. Tallinna ringtee tagab väga hea ühenduse Tallinna ja Keilaga.",
+            },
+            new {
+                Key="tabasalu-2", Name="Tabasalu 2 Kookon",
+                Address="Lillemäe tee 2, Rannamõisa küla, Harku vald", City="Harku vald",
+                Lat=59.4327, Lng=24.5520,                       // approx
+                TotalUnits=27, AvailableUnits=2, IsLight=false,
+                Img="https://www.kookon.ee/content/uploads/2022/09/20230517_115739-450x273.jpg",
+                DescEt="Tabasalu Kookon asub kiiresti arenevas Harku vallas. Harku tee tagab väga hea ühenduse Tallinna ringtee ja Laagri piirkonnaga. Haabersti ning Õismäe asuvad 10-minutilise autosõidu kaugusel.",
+            },
+            new {
+                Key="viimsi", Name="Viimsi Kookon",
+                Address="Paekaare tee 2", City="Viimsi",
+                Lat=59.5099011, Lng=24.8535674,                 // exact
+                TotalUnits=36, AvailableUnits=1, IsLight=false,
+                Img="https://www.kookon.ee/content/uploads/2021/09/Viimsi_01--450x272.jpg",
+                DescEt="Viimsi Kookon asub logistiliselt suurepärases asukohas, Pärnamäe tee ja Aiandi tee ristmikul. Väga hea ligipääs on tagatud kogu Viimsi poolsaarel; mugav ühendus Pirita tee ja Tallinna kesklinnaga.",
+            },
+            new {
+                Key="tabasalu-1", Name="Tabasalu 1 Kookon",
+                Address="Lillemäe tee 1, Rannamõisa küla, Harku vald", City="Harku vald",
+                Lat=59.4327, Lng=24.5523,                       // approx
+                TotalUnits=21, AvailableUnits=0, IsLight=false,
+                Img="https://www.kookon.ee/content/uploads/2021/03/Tabasalu_07--450x272.jpg",
+                DescEt="Tabasalu Kookoni esimene asukoht. Harku tee tagab väga hea ühenduse Tallinna ringtee ja Laagri piirkonnaga.",
+            },
+            new {
+                Key="peetri", Name="Peetri Kookon",
+                Address="Valguse tee 2, Rae vald", City="Rae vald",
+                Lat=59.398548, Lng=24.828255,                   // exact
+                TotalUnits=23, AvailableUnits=2, IsLight=false,
+                Img="https://www.kookon.ee/content/uploads/2020/09/Peetri_01--450x272.jpg",
+                DescEt="Peetri Kookon asub Tallinna linnapiiril, Tartu maantee ääres, Mõigu tehnopargis. Tagatud on suurepärane ligipääs kesklinna ja Tallinna ringteele.",
+            },
+            new {
+                Key="laagri", Name="Laagri Kookon",
+                Address="Kuuse põik 30", City="Laagri",
+                Lat=59.3483487, Lng=24.6122815,                 // exact
+                TotalUnits=17, AvailableUnits=0, IsLight=false,
+                Img="https://www.kookon.ee/content/uploads/2018/07/Laagri_01--450x272.jpg",
+                DescEt="Laagri Kookon asub Laagri südames. Laagri liiklussõlme tõttu on tagatud suurepärane ligipääs nii Tallinna, Pärnu kui Saku suunalt; väga hea ühendus ka Paldiski maanteega.",
+            },
+            new {
+                Key="lennuradari", Name="Lennuradari Kookon",
+                Address="Piloodi tee 5, Rae vald", City="Rae vald",
+                Lat=59.4017, Lng=24.8323,                       // approx
+                TotalUnits=28, AvailableUnits=4, IsLight=true,  // ← only Light-type site
+                Img="https://www.kookon.ee/content/uploads/2018/01/Lennuradari_01-.jpg",
+                DescEt="Lennuradari Kookon asub Tallinna piiril, Tallinna ringtee serval, ~12-minutilise autosõidu kaugusel kesklinnast. Kookon Light-tüüpi laopinnad — lihtsam ehitus, mõeldud eelkõige ladustavale kliendile.",
+            },
+            new {
+                Key="ulemiste", Name="Ülemiste Kookon",
+                Address="Tapri 5", City="Tallinn",
+                Lat=59.4214, Lng=24.7918,                       // approx
+                TotalUnits=47, AvailableUnits=1, IsLight=false,
+                Img="https://www.kookon.ee/content/uploads/2017/08/Ülemiste_01--450x272.jpg",
+                DescEt="Ülemiste Kookon asub Tallinna lennujaama läheduses, Tapri tänaval. Uuenenud Suur-Sõjamäe tänav, lennujaama lähedus ning hea ühendus Tallinna kesklinnaga tagavad mugava ligipääsu igal ajahetkel.",
+            },
+            new {
+                Key="tanassilma", Name="Tänassilma Kookon",
+                Address="Tänassilma tee 17", City="Tallinn",
+                Lat=59.3593, Lng=24.6253,                       // approx
+                TotalUnits=33, AvailableUnits=0, IsLight=false,
+                Img="https://www.kookon.ee/content/uploads/2016/09/Tänassilma_01--450x272.jpg",
+                DescEt="Tänassilma Kookon asub Tallinna linnapiiril. Äsja valminud Laagri liiklussõlme tulemusena on tagatud suurepärane ligipääs Tallinna, Pärnu ja Saku suunalt; kesklinn 20-minutilise autosõidu kaugusel.",
+            },
+        };
+
+        // Three size brackets per location.
+        // STANDARD prices: Tallinn market estimates with ~30% premium over Light (heated/water/internet).
+        //                  TODO confirm with Kookon at meeting — great talking point.
+        // LIGHT prices:    REAL data scraped from kookon.ee/lennuradari/ (January 2026).
+        var standardSizes = new[]
+        {
+            (Suffix: "s", Size: 4m,  Price: 49m,  Label: "Väike (~4 m²)"),       // estimated
+            (Suffix: "m", Size: 10m, Price: 119m, Label: "Keskmine (~10 m²)"),   // estimated
+            (Suffix: "l", Size: 20m, Price: 219m, Label: "Suur (~20 m²)"),       // estimated
+        };
+        var lightSizes = new[]
+        {
+            (Suffix: "s", Size: 18m,   Price: 141m, Label: "Light 18 m²"),       // real (Lennuradari ladu #15)
+            (Suffix: "m", Size: 24.5m, Price: 193m, Label: "Light 24,5 m²"),     // real (Lennuradari ladu #12)
+            (Suffix: "l", Size: 32.3m, Price: 254m, Label: "Light 32,3 m²"),     // real (Lennuradari ladu #7)
+        };
+
+        var imageOffset = 0;     // rotates through standardInteriorPool to give every listing distinct shots
+
+        foreach (var loc in locations)
+        {
+            var locId = G($"loc-kookon-{loc.Key}");
+
+            // Location-level images: exterior hero + 4 interior shots from the pool (rotating)
+            var locImages = new List<string> { loc.Img };
+            if (loc.IsLight)
+            {
+                locImages.AddRange(lightInteriorPool.Skip(1));   // skip the hero (already added if same)
+            }
+            else
+            {
+                locImages.AddRange(PickImages(standardInteriorPool, imageOffset, 4));
+                imageOffset = (imageOffset + 4) % standardInteriorPool.Length;
+            }
+
+            db.SupplierLocations.Add(new SupplierLocation
+            {
+                Id           = locId,
+                SupplierId   = kookonId,
+                Name         = loc.Name,
+                Address      = loc.Address,
+                City         = loc.City,
+                Country      = "EE",
+                Lat          = loc.Lat,
+                Lng          = loc.Lng,
+                IsActive     = true,
+                IsSynthetic  = false,
+                ImagesJson   = J(locImages),
+                Description  = loc.DescEt,
+                OpeningHours = "24/7 (mobiilirakenduse kaudu)",
+                CreatedAt    = now,
+                UpdatedAt    = now,
+            });
+
+            var sizes     = loc.IsLight ? lightSizes : standardSizes;
+            var available = loc.AvailableUnits > 0;
+
+            foreach (var s in sizes)
+            {
+                // Per-listing images: 2 photos rotated through the appropriate pool
+                var listingImages = loc.IsLight
+                    ? PickImages(lightInteriorPool, imageOffset % lightInteriorPool.Length, Math.Min(2, lightInteriorPool.Length))
+                    : PickImages(standardInteriorPool, imageOffset, 2);
+                imageOffset = (imageOffset + 2) % standardInteriorPool.Length;
+
+                var featuresJson = loc.IsLight
+                    ? J(new
+                    {
+                        size       = (double)s.Size, sizeUnit = "m²",
+                        heated     = false, indoor = true, access24_7 = true, security = true,
+                        loadingDock= false, forklift = false, shortTerm = true, longTerm = true,
+                        features   = new[] { "24/7 ligipääs", "VideoValve", "Mobiilirakendus", "Iseteenindus" },
+                    })
+                    : J(new
+                    {
+                        size       = (double)s.Size, sizeUnit = "m²",
+                        heated     = true, indoor = true, access24_7 = true, security = true,
+                        loadingDock= false, forklift = false, shortTerm = true, longTerm = true,
+                        features   = new[] { "Köetud", "24/7 ligipääs", "VideoValve", "Mobiilirakendus", "Tasuta WiFi", "Iseteenindus" },
+                    });
+
+                db.Listings.Add(new Listing
+                {
+                    Id           = G($"listing-kookon-{loc.Key}-{s.Suffix}"),
+                    Type         = ListingType.Warehouse,
+                    SupplierId   = kookonId,
+                    LocationId   = locId,
+                    Title        = $"{loc.Name} — {s.Label}",
+                    Address      = loc.Address,
+                    City         = loc.City,
+                    Lat          = loc.Lat,
+                    Lng          = loc.Lng,
+                    PriceFrom    = s.Price,
+                    PriceUnit    = "€/kuu",
+                    SizeM2       = s.Size,
+                    AvailableNow = available,
+                    IsActive     = true,
+                    Rating       = 4.8m,
+                    ReviewCount  = 8,
+                    Badge        = ListingBadge.Promoted,
+                    Description  = loc.IsLight
+                        ? $"{loc.Name} Light-tüüpi laopind ({s.Size} m²). Lihtne ja soodne lahendus ladustamiseks. 24/7 ligipääs mobiilirakenduse kaudu."
+                        : $"{loc.Name} Standard-tüüpi laopind ({s.Size} m²). Köetud, varustatud vee- ja kanalisatsioonivalmidusega ning tasuta WiFi-ga. 24/7 ligipääs mobiilirakenduse kaudu.",
+                    ImagesJson   = J(listingImages),
+                    FeaturesJson = featuresJson,
+                    CreatedAt    = now,
+                    UpdatedAt    = now,
+                });
+            }
+        }
+
+        await db.SaveChangesAsync();
+        Console.WriteLine($"[Seed] Kookon partner seeded (Development env): 1 supplier, {locations.Length} locations, {locations.Length * 3} listings.");
     }
 
     // ─────────────────────────────────────────────────────────────────────────

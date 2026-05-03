@@ -1,12 +1,16 @@
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Controllers;
 
 [ApiController]
 [Route("api/suppliers")]
-public class SuppliersController(IFeaturedPartnersService featuredPartnersService) : ControllerBase
+public class SuppliersController(
+    IFeaturedPartnersService featuredPartnersService,
+    ISupplierProfileService  supplierProfileService) : ControllerBase
 {
     /// <summary>
     /// Returns up to 6 featured partners (verified Standard/Premium suppliers),
@@ -19,5 +23,27 @@ public class SuppliersController(IFeaturedPartnersService featuredPartnersServic
     {
         var result = await featuredPartnersService.GetFeaturedAsync();
         return Ok(result);
+    }
+
+    /// <summary>
+    /// Returns the public profile for a partner identified by slug.
+    /// Public — no auth required.
+    /// </summary>
+    [HttpGet("by-slug/{slug}")]
+    [EnableRateLimiting("search")]
+    [ProducesResponseType(typeof(SupplierProfileDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetBySlug(string slug, CancellationToken ct)
+    {
+        // Slug shape guard — reject anything not [a-z0-9-]{2,80} before any DB or cache work.
+        if (string.IsNullOrWhiteSpace(slug) ||
+            slug.Length is < 2 or > 80 ||
+            !Regex.IsMatch(slug, "^[a-z0-9-]+$"))
+        {
+            return NotFound();
+        }
+
+        var profile = await supplierProfileService.GetBySlugAsync(slug, ct);
+        return profile is null ? NotFound() : Ok(profile);
     }
 }

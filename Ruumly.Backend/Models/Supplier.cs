@@ -21,6 +21,31 @@ public class Supplier
     public decimal ClientDiscountRate { get; set; } = 0;
     public string? Notes { get; set; }
 
+    // ── Public partner page ────────────────────────────────────────────────
+    // These power /partner/{slug} — opt-in per supplier, all nullable, none
+    // change behavior for rows that don't set them.
+
+    /// <summary>kebab-case, [a-z0-9-], 2..80 chars, globally unique when set.</summary>
+    public string? Slug { get; set; }
+
+    /// <summary>Short pitch shown under the partner name. <= 160 chars.</summary>
+    public string? Tagline { get; set; }
+
+    /// <summary>JSON: {"et":"...","en":"...","ru":"..."} — long-form story.</summary>
+    public string? LongDescriptionTranslationsJson { get; set; }
+
+    /// <summary>Absolute URL or R2 key.</summary>
+    public string? LogoUrl { get; set; }
+
+    /// <summary>Absolute URL or R2 key.</summary>
+    public string? HeroImageUrl { get; set; }
+
+    /// <summary>The partner's own site, used as outbound link.</summary>
+    public string? WebsiteUrl { get; set; }
+
+    /// <summary>Year founded — for the stats strip on the public page.</summary>
+    public int? FoundedYear { get; set; }
+
     /// <summary>
     /// IBAN for payout transfers (e.g. EE382200221011xxx).
     /// Stored and displayed only to admin and the partner themselves.
