@@ -12,6 +12,7 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
     private const string BaseUrl = "https://ruumly.eu";
 
     [HttpGet("sitemap.xml")]
+    [HttpHead("sitemap.xml")]
     [Produces("application/xml")]
     public async Task<IActionResult> Sitemap()
     {
@@ -112,6 +113,7 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
     }
 
     [HttpGet("robots.txt")]
+    [HttpHead("robots.txt")]
     [Produces("text/plain")]
     public IActionResult Robots()
     {

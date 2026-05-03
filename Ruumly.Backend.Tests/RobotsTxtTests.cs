@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text.RegularExpressions;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
@@ -30,5 +31,23 @@ public class RobotsTxtTests
         // No Cloudflare managed content markers
         body.Should().NotContain("Cloudflare Managed content");
         body.Should().NotContain("Content-Signal:");
+    }
+
+    // Google does a HEAD probe before fetching robots.txt. Without [HttpHead]
+    // alongside [HttpGet], ASP.NET returns 405 and the crawler skips the file.
+    [Fact]
+    public void Robots_AllowsHeadMethod()
+    {
+        var method = typeof(SitemapController).GetMethod(nameof(SitemapController.Robots));
+        method.Should().NotBeNull();
+
+        var headAttrs = method!.GetCustomAttributes<HttpHeadAttribute>(inherit: true).ToList();
+        headAttrs.Should().ContainSingle("Robots must accept HEAD requests");
+        headAttrs[0].Template.Should().Be("robots.txt",
+            "HEAD route must match the GET route exactly");
+
+        var getAttrs = method.GetCustomAttributes<HttpGetAttribute>(inherit: true).ToList();
+        getAttrs.Should().ContainSingle();
+        getAttrs[0].Template.Should().Be("robots.txt");
     }
 }

@@ -9,6 +9,7 @@ using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Implementations;
+using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Tests;
 
@@ -31,6 +32,25 @@ public class LocationCoordinateDriftTests
         public Task RemoveAsync(string key, CancellationToken token = default) => Task.CompletedTask;
         public void Set(string key, byte[] value, DistributedCacheEntryOptions options) { }
         public Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token = default) => Task.CompletedTask;
+    }
+
+    private static readonly PricingConfig DefaultPricing = new(
+        DefaultPartnerDiscountRate: 13m,
+        DefaultVatRate:              0m,
+        ExtrasMarginRate:            20m,
+        RuumlyMinMarginRate:         8m,
+        Starter:  new TierConfig(5m,  0m,    2,   false, false, false, "standard", "email_48h"),
+        Standard: new TierConfig(8m,  49m,  10,   false, true,  false, "boosted",  "email_24h"),
+        Premium:  new TierConfig(12m, 99m, 999,   true,  true,  true,  "priority", "priority_4h"));
+
+    private sealed class NoOpPricing : IPricingConfigService
+    {
+        public Task<PricingConfig> GetAsync() => Task.FromResult(DefaultPricing);
+        public Task InvalidateCacheAsync() => Task.CompletedTask;
+        public Task<EffectivePricing> GetEffectivePricingAsync(Supplier s) =>
+            Task.FromResult(new EffectivePricing(
+                DefaultPricing.ForTier(s.Tier).MonthlyFee,
+                DefaultPricing.ForTier(s.Tier).CustomerDiscountRate));
     }
 
     [Fact]
@@ -98,7 +118,7 @@ public class LocationCoordinateDriftTests
         // ── 3. ListingService.GetByIdAsync should return Location coords ──
         using (var readDb = new TestDbContext(options))
         {
-            var service = new ListingService(readDb, new NoOpCache());
+            var service = new ListingService(readDb, new NoOpCache(), new NoOpPricing());
             var dto = await service.GetByIdAsync(listingId);
 
             dto.Should().NotBeNull();

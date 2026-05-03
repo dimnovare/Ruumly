@@ -144,7 +144,7 @@ public class TierDifferentiationTests
         db.Listings.AddRange(starterListing, premiumListing);
         await db.SaveChangesAsync();
 
-        var svc = new ListingService(db, new NoOpCache());
+        var svc = new ListingService(db, new NoOpCache(), new NoOpPricing());
         var result = await svc.SearchAsync(new ListingSearchRequest());
 
         var ids = result.Data.Select(l => l.SupplierId).ToList();
@@ -168,7 +168,7 @@ public class TierDifferentiationTests
         db.Listings.AddRange(starterListing, standardListing);
         await db.SaveChangesAsync();
 
-        var svc = new ListingService(db, new NoOpCache());
+        var svc = new ListingService(db, new NoOpCache(), new NoOpPricing());
         var result = await svc.SearchAsync(new ListingSearchRequest { Sort = "cheapest" });
 
         var supplierIds = result.Data.Select(l => l.SupplierId).ToList();
@@ -192,7 +192,7 @@ public class TierDifferentiationTests
         db.Listings.AddRange(vListing, uListing);
         await db.SaveChangesAsync();
 
-        var svc = new ListingService(db, new NoOpCache());
+        var svc = new ListingService(db, new NoOpCache(), new NoOpPricing());
         var result = await svc.SearchAsync(new ListingSearchRequest());
 
         var verifiedDto = result.Data.First(l => l.SupplierId == verifiedSupplier.Id);
