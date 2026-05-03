@@ -39,13 +39,21 @@ public class ListingService(
             .Include(l => l.Supplier)
             .Include(l => l.Location)
             .Where(l => l.IsActive)
-            // Include standalone listings AND listings inside synthetic (auto-created)
-            // Locations. Real, user-curated Locations are shown as their own cards;
-            // their listings are accessed via the Location detail page and not
-            // duplicated in the listing search results.
-            .Where(l => l.LocationId == null
-                     || (l.Location != null && l.Location.IsSynthetic))
             .AsQueryable();
+
+        // Hide listings inside real (non-synthetic) Locations from generic search
+        // — those are surfaced via Location detail pages — UNLESS the caller is
+        // explicitly drilling into a supplier or location, in which case they want
+        // everything.
+        var hasExplicitTarget = f.SupplierId.HasValue || f.LocationId.HasValue;
+        if (!hasExplicitTarget)
+        {
+            query = query.Where(l => l.LocationId == null
+                                  || (l.Location != null && l.Location.IsSynthetic));
+        }
+
+        if (f.SupplierId.HasValue) query = query.Where(l => l.SupplierId == f.SupplierId.Value);
+        if (f.LocationId.HasValue) query = query.Where(l => l.LocationId == f.LocationId.Value);
 
         // ── Type filter ───────────────────────────────────────────────────────
         if (!string.IsNullOrWhiteSpace(f.Type) &&

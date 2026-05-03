@@ -37,5 +37,11 @@ public class SupplierLocation
     /// </summary>
     public bool IsSynthetic { get; set; } = false;
 
+    /// <summary>Total physical units at this site (e.g. 27 in "2/27 available").</summary>
+    public int? TotalUnitCount { get; set; }
+
+    /// <summary>Currently available units at this site (e.g. 2 in "2/27 available").</summary>
+    public int? AvailableUnitCount { get; set; }
+
     public List<Listing> Listings { get; set; } = [];
 }

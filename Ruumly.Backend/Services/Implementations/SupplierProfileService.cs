@@ -65,7 +65,9 @@ public class SupplierProfileService(RuumlyDbContext db, IDistributedCache cache)
             r.Loc.OpeningHours,
             r.Loc.Description,
             r.Loc.Images,
-            r.ListingCount)).ToList();
+            r.ListingCount,
+            r.Loc.TotalUnitCount,
+            r.Loc.AvailableUnitCount)).ToList();
 
         var dto = new SupplierProfileDto(
             Id:              supplier.Id,

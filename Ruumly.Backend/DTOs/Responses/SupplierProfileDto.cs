@@ -31,4 +31,6 @@ public record SupplierProfileLocationDto(
     string?  OpeningHours,
     string?  Description,
     List<string> Images,
-    int      ListingCount);
+    int      ListingCount,
+    int?     TotalUnitCount,
+    int?     AvailableUnitCount);

@@ -2740,6 +2740,8 @@ public static class SeedData
                 ImagesJson   = J(locImages),
                 Description  = loc.DescEt,
                 OpeningHours = "24/7 (mobiilirakenduse kaudu)",
+                TotalUnitCount     = loc.TotalUnits,
+                AvailableUnitCount = loc.AvailableUnits,
                 CreatedAt    = now,
                 UpdatedAt    = now,
             });

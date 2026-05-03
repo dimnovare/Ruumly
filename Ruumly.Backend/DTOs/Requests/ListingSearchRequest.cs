@@ -14,6 +14,8 @@ public record ListingSearchRequest
     [FromQuery(Name = "minSize")]      public decimal? MinSize      { get; init; }
     [FromQuery(Name = "maxSize")]      public decimal? MaxSize      { get; init; }
     [FromQuery(Name = "sizeCategory")] public string?  SizeCategory { get; init; }
+    [FromQuery(Name = "supplierId")]   public Guid?    SupplierId   { get; init; }
+    [FromQuery(Name = "locationId")]   public Guid?    LocationId   { get; init; }
     [FromQuery(Name = "page")]         public int      Page         { get; init; } = 1;
     [FromQuery(Name = "limit")]        public int      Limit        { get; init; } = 50;
 }
