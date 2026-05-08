@@ -33,6 +33,7 @@ public static class SeedData
             await SeedPlatformSettingsAsync(db);
             await SeedFeatureDefinitionsAsync(db);
             await SeedKookonAsync(db);   // env-gated: Development only
+            await SeedBoxoAsync(db);     // env-gated: Development only
             Console.WriteLine("[Seed] Complete.");
         }
         catch (Exception ex)
@@ -2805,6 +2806,215 @@ public static class SeedData
 
         await db.SaveChangesAsync();
         Console.WriteLine($"[Seed] Kookon partner seeded (Development env): 1 supplier, {locations.Length} locations, {locations.Length * 3} listings.");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // BOXO — second prospective-partner demo data (Development env only).
+    // Modelled on SeedKookonAsync; same pattern, env gate, and idempotency.
+    // ─────────────────────────────────────────────────────────────────────────
+    private static async Task SeedBoxoAsync(RuumlyDbContext db)
+    {
+        // Environment gate — same as Kookon: localhost-only.
+        var aspEnv = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        if (!string.Equals(aspEnv, "Development", StringComparison.OrdinalIgnoreCase))
+        {
+            Console.WriteLine($"[Seed] SeedBoxoAsync skipped — ASPNETCORE_ENVIRONMENT='{aspEnv ?? "(null)"}', expected 'Development'.");
+            return;
+        }
+
+        // Targeted guard — checks for Boxo specifically.
+        if (await db.Suppliers.AnyAsync(s => s.Slug == "boxo")) return;
+
+        var boxoId = G("sup-boxo");
+        var now    = Utc(2026, 1, 15);
+
+        // ─── Photo pools (real Boxo imagery from boxo.ee) ─────────────────────
+        var interiorPool = new[]
+        {
+            "https://boxo.ee/_next/static/media/DSC03912.f8ea3d35.webp",
+            "https://boxo.ee/_next/static/media/man.063f977d.webp",
+            "https://boxo.ee/_next/static/media/boxes.a0b41b40.webp",
+            "https://boxo.ee/_next/static/media/window.a8bf5a5f.webp",
+            "https://boxo.ee/_next/static/media/couch.1a4e9a98.webp",
+            "https://boxo.ee/_next/static/media/sport-things.0b371e15.webp",
+        };
+
+        static string[] PickImages(string[] pool, int offset, int count)
+        {
+            var result = new string[count];
+            for (var i = 0; i < count; i++) result[i] = pool[(offset + i) % pool.Length];
+            return result;
+        }
+
+        // ─── Supplier ──────────────────────────────────────────────────────────
+        db.Suppliers.Add(new Supplier
+        {
+            Id                = boxoId,
+            Name              = "BOXO",
+            Slug              = "boxo",
+            RegistryCode      = "16794172",
+            ContactName       = "BOXO klienditugi",       // TODO confirm
+            ContactEmail      = "kliendid@boxo.ee",
+            ContactPhone      = "+372 55 555 826",
+            IntegrationType   = IntegrationType.Email,
+            RecipientEmail    = "kliendid@boxo.ee",
+            IsActive          = true,
+            IntegrationHealth = IntegrationHealth.Healthy,
+            Country           = "EE",
+            Tier              = SupplierTier.Standard,    // tier rotation — Kookon is Premium
+            IsVerified        = true,
+            VerifiedAt        = now,
+            FoundingPartner   = false,
+            Rating            = 4.7m,
+            ReviewCount       = 32,
+            Tagline           = "Minilaod Tallinnas — broneeri 15 minutiga",
+            LogoUrl           = "https://boxo.ee/_next/static/media/logo.3dcd9476.svg",
+            HeroImageUrl      = "https://boxo.ee/_next/static/media/DSC03912.f8ea3d35.webp",
+            WebsiteUrl        = "https://boxo.ee",
+            FoundedYear       = 2021,
+            LongDescriptionTranslationsJson = J(new
+            {
+                et = "BOXO pakub nutikaid mini-laopindu Tallinnas — täielikult veebis broneeritavad, professionaalse transporditeenusega kohale ja 15-minutilise ligipääsu seadistusega. 6 asukohta üle Tallinna, suurused 1,4 m² kuni 30 m² (XS kuni XL). Kõik laod on köetud, valvesignalisatsiooni ja videovalvega. Tegutseb nii Eestis kui Lätis (Riias).",
+                en = "BOXO offers smart mini-storage in Tallinn — fully online booking, professional door-to-storage transport, and 15-minute access setup. 6 locations across the city, sizes from 1.4 m² (XS) to 30 m² (XL). All units are heated and protected by alarm + CCTV. Operating in Estonia and Latvia (Riga).",
+                ru = "BOXO предлагает умные мини-склады в Таллинне — полностью онлайн-бронирование, профессиональная доставка вещей и настройка доступа за 15 минут. 6 локаций по городу, размеры от 1,4 м² (XS) до 30 м² (XL). Все боксы отапливаются, под охраной и видеонаблюдением. Работаем в Эстонии и Латвии (Рига).",
+            }),
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+
+        // ─── Locations ────────────────────────────────────────────────────────
+        // Real Boxo addresses from boxo.ee. Coords are approximate (within ~200m);
+        // refine when verified. Availability counts are illustrative.
+        var locations = new[]
+        {
+            new {
+                Key="lasnamae-punane", Name="BOXO Lasnamäe (Punane)",
+                Address="Punane tn 6", City="Tallinn",
+                Lat=59.4358, Lng=24.8217,                       // approx
+                TotalUnits=18, AvailableUnits=4,
+                DescEt="Lasnamäe BOXO Punase tänaval, mugav ligipääs Punase ja Pae tänavate ristmikult. Lasnamäe Centruumi ja Smuuli tee lähedal — sobib eriti Lasnamäe ning Kesklinna idapoolsete elanike jaoks.",
+            },
+            new {
+                Key="mustamae-tuuliku", Name="BOXO Mustamäe (Tuuliku)",
+                Address="Tuuliku tee 2", City="Tallinn",
+                Lat=59.4097, Lng=24.6608,                       // approx
+                TotalUnits=22, AvailableUnits=2,
+                DescEt="Mustamäe BOXO Tuuliku teel, lihtne ligipääs Sõpruse pst ja Akadeemia teelt. Sobib hästi Mustamäe, Õismäe ja Nõmme elanikele; lähim Tallinna Tehnikaülikoolist.",
+            },
+            new {
+                Key="kopli-72a", Name="BOXO Kopli 72a",
+                Address="Kopli tn 72a", City="Tallinn",
+                Lat=59.4534, Lng=24.7156,                       // approx
+                TotalUnits=16, AvailableUnits=3,
+                DescEt="Kopli BOXO Kopli tänaval, Põhja-Tallinna südames. Hea ligipääs Telliskivi ja Kalamajast; trammipeatus mõne minuti kaugusel.",
+            },
+            new {
+                Key="lasnamae-vesse", Name="BOXO Lasnamäe (Vesse)",
+                Address="Vesse 12", City="Tallinn",
+                Lat=59.4400, Lng=24.8050,                       // approx
+                TotalUnits=14, AvailableUnits=1,
+                DescEt="Lasnamäe BOXO Vesse tänaval, ligipääs Lasnamäe põhjapoolsest osast. Sobib eriti Sikupilli, Kuristiku ja Pae piirkondade klientidele.",
+            },
+            new {
+                Key="mustamae-artelli", Name="BOXO Mustamäe (Artelli)",
+                Address="Artelli 17", City="Tallinn",
+                Lat=59.4106, Lng=24.7028,                       // approx
+                TotalUnits=20, AvailableUnits=5,
+                DescEt="Mustamäe BOXO Artelli tänaval, mugav asukoht Tammsaare tee ja Akadeemia tee vahelisel alal. Lähim Mustamäe keskuse ja Olümpia spordikeskuse külastajatele.",
+            },
+            new {
+                Key="kopli-heina", Name="BOXO Kopli (Heina)",
+                Address="Heina tn 33", City="Tallinn",
+                Lat=59.4520, Lng=24.7280,                       // approx
+                TotalUnits=12, AvailableUnits=0,                // ← fully booked
+                DescEt="Kopli BOXO Heina tänaval, Põhja-Tallinnas. Otsene ligipääs sadama-, raudtee- ja Põhja pst kaudu; sobib Kopli ja Pelguranna elanikele.",
+            },
+        };
+
+        // Three size brackets per location, modelled on Boxo's real pricing
+        // (boxo.ee, Jan 2026). Net of VAT, monthly equivalent (their site quotes
+        // 4-week periods so monthly ≈ 4-week × 1.083). TODO confirm with BOXO.
+        var sizes = new[]
+        {
+            (Suffix: "s", Size: 3.7m,  Price: 38m,  Label: "S (~3.7 m²)"),     // BOXO S
+            (Suffix: "m", Size: 7.4m,  Price: 50m,  Label: "M (~7.4 m²)"),     // BOXO M
+            (Suffix: "l", Size: 15m,   Price: 77m,  Label: "L (~15 m²)"),      // BOXO L
+        };
+
+        var imageOffset = 0;
+
+        foreach (var loc in locations)
+        {
+            var locId = G($"loc-boxo-{loc.Key}");
+
+            // Each location: 4 interior shots (rotated through the pool)
+            var locImages = PickImages(interiorPool, imageOffset, 4);
+            imageOffset = (imageOffset + 2) % interiorPool.Length;
+
+            db.SupplierLocations.Add(new SupplierLocation
+            {
+                Id                 = locId,
+                SupplierId         = boxoId,
+                Name               = loc.Name,
+                Address            = loc.Address,
+                City               = loc.City,
+                Country            = "EE",
+                Lat                = loc.Lat,
+                Lng                = loc.Lng,
+                IsActive           = true,
+                IsSynthetic        = false,
+                ImagesJson         = J(locImages),
+                Description        = loc.DescEt,
+                OpeningHours       = "24/7 (mobiilirakenduse kaudu)",
+                TotalUnitCount     = loc.TotalUnits,
+                AvailableUnitCount = loc.AvailableUnits,
+                CreatedAt          = now,
+                UpdatedAt          = now,
+            });
+
+            var available = loc.AvailableUnits > 0;
+
+            foreach (var s in sizes)
+            {
+                var listingImages = PickImages(interiorPool, imageOffset, 2);
+                imageOffset = (imageOffset + 1) % interiorPool.Length;
+
+                db.Listings.Add(new Listing
+                {
+                    Id           = G($"listing-boxo-{loc.Key}-{s.Suffix}"),
+                    Type         = ListingType.Warehouse,
+                    SupplierId   = boxoId,
+                    LocationId   = locId,
+                    Title        = $"{loc.Name} — {s.Label}",
+                    Address      = loc.Address,
+                    City         = loc.City,
+                    Lat          = loc.Lat,
+                    Lng          = loc.Lng,
+                    PriceFrom    = s.Price,
+                    PriceUnit    = "€/kuu",
+                    SizeM2       = s.Size,
+                    AvailableNow = available,
+                    IsActive     = true,
+                    Rating       = 4.7m,
+                    ReviewCount  = 6,
+                    Badge        = ListingBadge.Promoted,
+                    Description  = $"{loc.Name} mini-laopind ({s.Size} m²). Köetud, varustatud valvesignalisatsiooniga ja videovalvega. 24/7 ligipääs. Online-broneerimine ja transporditeenus saadaval.",
+                    ImagesJson   = J(listingImages),
+                    FeaturesJson = J(new
+                    {
+                        size       = (double)s.Size, sizeUnit = "m²",
+                        heated     = true, indoor = true, access24_7 = true, security = true,
+                        loadingDock= false, forklift = false, shortTerm = true, longTerm = true,
+                        features   = new[] { "Köetud", "24/7 ligipääs", "Häiresüsteem", "VideoValve", "Online-broneerimine", "Transporditeenus" },
+                    }),
+                    CreatedAt    = now,
+                    UpdatedAt    = now,
+                });
+            }
+        }
+
+        await db.SaveChangesAsync();
+        Console.WriteLine($"[Seed] BOXO partner seeded (Development env): 1 supplier, {locations.Length} locations, {locations.Length * 3} listings.");
     }
 
     // ─────────────────────────────────────────────────────────────────────────

@@ -124,22 +124,33 @@ public class ListingService(
         // EF can translate without casting from text.
         query = f.Sort switch
         {
-            "cheapest" => query.OrderBy(l => l.PriceFrom)
-                               .ThenByDescending(l => l.Supplier!.Tier == SupplierTier.Premium  ? 3
-                                                    : l.Supplier!.Tier == SupplierTier.Standard ? 2
-                                                    : 1),
-            "rating"   => query.OrderByDescending(l => l.Rating)
-                               .ThenByDescending(l => l.Supplier!.Tier == SupplierTier.Premium  ? 3
-                                                    : l.Supplier!.Tier == SupplierTier.Standard ? 2
-                                                    : 1),
-            "newest"   => query.OrderByDescending(l => l.CreatedAt)
-                               .ThenByDescending(l => l.Supplier!.Tier == SupplierTier.Premium  ? 3
-                                                    : l.Supplier!.Tier == SupplierTier.Standard ? 2
-                                                    : 1),
-            _          => query.OrderByDescending(l => l.Supplier!.Tier == SupplierTier.Premium  ? 3
-                                                    : l.Supplier!.Tier == SupplierTier.Standard ? 2
-                                                    : 1)
-                               .ThenBy(l => l.CreatedAt),
+            "cheapest"   => query.OrderBy(l => l.PriceFrom)
+                                 .ThenByDescending(l => l.Supplier!.Tier == SupplierTier.Premium  ? 3
+                                                      : l.Supplier!.Tier == SupplierTier.Standard ? 2
+                                                      : 1),
+            "rating"     => query.OrderByDescending(l => l.Rating)
+                                 .ThenBy(l => l.PriceFrom)
+                                 .ThenByDescending(l => l.Supplier!.Tier == SupplierTier.Premium  ? 3
+                                                      : l.Supplier!.Tier == SupplierTier.Standard ? 2
+                                                      : 1),
+            "newest"     => query.OrderByDescending(l => l.CreatedAt)
+                                 .ThenByDescending(l => l.Supplier!.Tier == SupplierTier.Premium  ? 3
+                                                      : l.Supplier!.Tier == SupplierTier.Standard ? 2
+                                                      : 1),
+            // Best value = high rating per €; rating bucketed to half-stars so
+            // a 4.8★ at €49 beats a 4.9★ at €99.
+            "best-value" => query.OrderByDescending(l => Math.Floor((double)l.Rating * 2) / 2.0)
+                                 .ThenBy(l => l.PriceFrom)
+                                 .ThenByDescending(l => l.Supplier!.Tier == SupplierTier.Premium  ? 3
+                                                      : l.Supplier!.Tier == SupplierTier.Standard ? 2
+                                                      : 1),
+            // "best" (and any unknown value) = balanced default: tier first,
+            // then rating, then recency.
+            _            => query.OrderByDescending(l => l.Supplier!.Tier == SupplierTier.Premium  ? 3
+                                                      : l.Supplier!.Tier == SupplierTier.Standard ? 2
+                                                      : 1)
+                                 .ThenByDescending(l => l.Rating)
+                                 .ThenByDescending(l => l.CreatedAt),
         };
 
         // ── Pagination ────────────────────────────────────────────────────────
