@@ -374,7 +374,7 @@ public class AuthService(
     public async Task ChangePasswordAsync(Guid userId, ChangePasswordRequest request)
     {
         if (request.NewPassword != request.ConfirmPassword)
-            throw new ArgumentException("Uus parool ja kinnitus ei ühti.");
+            throw new ArgumentException(Msg("PASSWORD_MISMATCH"));
 
         if (request.NewPassword.Length < 8)
             throw new ArgumentException(Msg("PASSWORD_TOO_SHORT"));

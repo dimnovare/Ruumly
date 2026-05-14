@@ -328,7 +328,7 @@ public class BookingService(
                     throw new ArgumentException(Msg("INVALID_DATE_FORMAT"));
 
                 if (parsedEnd <= startDate)
-                    throw new ArgumentException("Lõppkuupäev peab olema alguskuupäevast hiljem.");
+                    throw new ArgumentException(Msg("BOOKING_END_BEFORE_START"));
 
                 endDate = parsedEnd;
             }

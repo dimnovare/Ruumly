@@ -1,3 +1,4 @@
+using System.Web;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
@@ -73,10 +74,11 @@ public class ContractService(RuumlyDbContext db) : IContractService
         // Render the contract with tenant-specific values substituted
         var rendered = await RenderAsync(req.ContractTemplateId, req.BookingId, ct);
 
-        // Re-substitute tenant_name and tenant_id_code with the actual sign-time values
+        // Re-substitute tenant_name and tenant_id_code with the actual sign-time values.
+        // HTML-encode to prevent injection if a template uses these in an HTML context.
         rendered = rendered
-            .Replace("{{tenant_name}}",    req.TenantName)
-            .Replace("{{tenant_id_code}}", req.TenantIdCode ?? "");
+            .Replace("{{tenant_name}}",    HttpUtility.HtmlEncode(req.TenantName))
+            .Replace("{{tenant_id_code}}", HttpUtility.HtmlEncode(req.TenantIdCode ?? ""));
 
         var signed = new SignedContract
         {

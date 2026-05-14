@@ -9,6 +9,8 @@ public static class ErrorMessages
         {
             "en" => En.GetValueOrDefault(key, key),
             "ru" => Ru.GetValueOrDefault(key, key),
+            "lv" => Lv.GetValueOrDefault(key, key),
+            "lt" => Lt.GetValueOrDefault(key, key),
             _    => Et.GetValueOrDefault(key, key),
         };
     }
@@ -19,7 +21,7 @@ public static class ErrorMessages
         var s = lang.ToLowerInvariant().Split('-')[0]
                                       .Split(',')[0]
                                       .Trim();
-        return s is "en" or "ru" ? s : "et";
+        return s is "en" or "ru" or "lv" or "lt" ? s : "et";
     }
 
     private static readonly Dictionary<string, string> Et = new()
@@ -42,6 +44,7 @@ public static class ErrorMessages
         ["PASSWORD_TOO_SHORT"]          = "Parool peab olema vähemalt 8 tähemärki.",
         ["CURRENT_PASSWORD_REQUIRED"]   = "Praeguse parooli sisestamine on kohustuslik.",
         ["CURRENT_PASSWORD_WRONG"]      = "Praegune parool on vale.",
+        ["PASSWORD_MISMATCH"]           = "Uus parool ja kinnitus ei ühti.",
         ["PASSWORD_SAME_AS_OLD"]        = "Uus parool peab erinema praegusest.",
         ["USER_NOT_FOUND"]              = "Kasutajat ei leitud.",
         ["TIER_LOCATION_LIMIT"]         = "Teie plaan lubab kuni {0} aktiivset asukohta. Uuendage plaani.",
@@ -78,6 +81,7 @@ public static class ErrorMessages
         ["PASSWORD_TOO_SHORT"]          = "Password must be at least 8 characters.",
         ["CURRENT_PASSWORD_REQUIRED"]   = "Current password is required.",
         ["CURRENT_PASSWORD_WRONG"]      = "Current password is incorrect.",
+        ["PASSWORD_MISMATCH"]           = "New password and confirmation do not match.",
         ["PASSWORD_SAME_AS_OLD"]        = "New password must differ from the current one.",
         ["USER_NOT_FOUND"]              = "User not found.",
         ["TIER_LOCATION_LIMIT"]         = "Your plan allows up to {0} active locations. Please upgrade your plan.",
@@ -114,6 +118,7 @@ public static class ErrorMessages
         ["PASSWORD_TOO_SHORT"]          = "Пароль должен содержать не менее 8 символов.",
         ["CURRENT_PASSWORD_REQUIRED"]   = "Требуется текущий пароль.",
         ["CURRENT_PASSWORD_WRONG"]      = "Текущий пароль неверен.",
+        ["PASSWORD_MISMATCH"]           = "Новый пароль и подтверждение не совпадают.",
         ["PASSWORD_SAME_AS_OLD"]        = "Новый пароль должен отличаться от текущего.",
         ["USER_NOT_FOUND"]              = "Пользователь не найден.",
         ["TIER_LOCATION_LIMIT"]         = "Ваш план позволяет до {0} активных локаций. Обновите план.",
@@ -128,5 +133,79 @@ public static class ErrorMessages
         ["NO_SUPPLIER_LINKED"]          = "К вашему аккаунту не привязан ни один поставщик.",
         ["REGISTRY_CODE_DUPLICATE"]     = "Партнёр с этим регистрационным кодом уже существует.",
         ["SUPPLIER_NAME_REQUIRED"]      = "Имя партнёра обязательно.",
+    };
+
+    private static readonly Dictionary<string, string> Lv = new()
+    {
+        ["EMAIL_ALREADY_REGISTERED"]    = "Šī e-pasta adrese jau ir reģistrēta.",
+        ["INVALID_CREDENTIALS"]         = "Nepareizs e-pasts vai parole.",
+        ["ACCOUNT_BLOCKED"]             = "Jūsu konts ir bloķēts. Sazinieties ar mums.",
+        ["INVALID_REFRESH_TOKEN"]       = "Sesija beigusies. Lūdzu, pierakstieties vēlreiz.",
+        ["INVALID_GOOGLE_TOKEN"]        = "Google pieteikšanās neizdevās.",
+        ["INVITE_CODE_REQUIRED"]        = "Reģistrācija pašlaik ir tikai ar ielūgumu.",
+        ["INVALID_INVITE_CODE"]         = "Nepareizs ielūguma kods. Pārbaudiet kodu.",
+        ["LISTING_NOT_FOUND"]           = "Sludinājums nav atrasts.",
+        ["LOCATION_NOT_FOUND"]          = "Atrašanās vieta nav atrasta.",
+        ["NO_UNITS_AVAILABLE"]          = "Izvēlētajā periodā nav pieejamu šāda veida vienību. Lūdzu, izvēlieties citu datumu.",
+        ["BOOKING_START_PAST"]          = "Sākuma datums nevar būt pagātnē.",
+        ["BOOKING_END_BEFORE_START"]    = "Beigu datumam jābūt vēlākam par sākuma datumu.",
+        ["BOOKING_NOT_FOUND"]           = "Rezervācija nav atrasta.",
+        ["ORDER_NOT_FOUND"]             = "Pasūtījums nav atrasts.",
+        ["ORDER_WRONG_STATUS"]          = "Pasūtījumu nevar mainīt pašreizējā statusā.",
+        ["PASSWORD_MISMATCH"]           = "Jaunā parole un apstiprinājums nesakrīt.",
+        ["PASSWORD_TOO_SHORT"]          = "Parolei jābūt vismaz 8 rakstzīmēm.",
+        ["CURRENT_PASSWORD_REQUIRED"]   = "Pašreizējā parole ir obligāta.",
+        ["CURRENT_PASSWORD_WRONG"]      = "Pašreizējā parole ir nepareiza.",
+        ["PASSWORD_SAME_AS_OLD"]        = "Jaunajai parolei jāatšķiras no pašreizējās.",
+        ["USER_NOT_FOUND"]              = "Lietotājs nav atrasts.",
+        ["TIER_LOCATION_LIMIT"]         = "Jūsu plāns atļauj līdz {0} aktīvām atrašanās vietām. Lūdzu, uzlabojiet plānu.",
+        ["PAYMENT_PROVIDER_UNAVAILABLE"]= "Maksājumu pakalpojums pašlaik nav pieejams. Lūdzu, mēģiniet vēlāk.",
+        ["INVOICE_NOT_FOUND"]           = "Rēķins nav atrasts.",
+        ["INVALID_DATE_FORMAT"]         = "Nepareizs datuma formāts. Izmantojiet yyyy-MM-dd.",
+        ["EMAIL_NOT_VERIFIED"]          = "Lūdzu, apstipriniet savu e-pasta adresi pirms rezervācijas veikšanas.",
+        ["NO_INVOICE_FOR_BOOKING"]      = "Šai rezervācijai nav rēķina.",
+        ["REFUND_REQUIRES_PAID_INVOICE"]= "Atmaksa ir iespējama tikai samaksātiem rēķiniem.",
+        ["LOCATION_HAS_ACTIVE_BOOKINGS"]= "Nevar dzēst atrašanās vietu ar aktīvām rezervācijām. Vispirms atceliet rezervācijas.",
+        ["UNIT_HAS_ACTIVE_BOOKINGS"]    = "Nevar dzēst vienību ar aktīvām rezervācijām. Deaktivizējiet to.",
+        ["NO_SUPPLIER_LINKED"]          = "Jūsu kontam nav piesaistīts neviens piegādātājs.",
+        ["REGISTRY_CODE_DUPLICATE"]     = "Partneris ar šo reģistrācijas kodu jau eksistē.",
+        ["SUPPLIER_NAME_REQUIRED"]      = "Partnera nosaukums ir obligāts.",
+    };
+
+    private static readonly Dictionary<string, string> Lt = new()
+    {
+        ["EMAIL_ALREADY_REGISTERED"]    = "Šis el. pašto adresas jau užregistruotas.",
+        ["INVALID_CREDENTIALS"]         = "Neteisingas el. paštas arba slaptažodis.",
+        ["ACCOUNT_BLOCKED"]             = "Jūsų paskyra užblokuota. Susisiekite su mumis.",
+        ["INVALID_REFRESH_TOKEN"]       = "Sesija baigėsi. Prašome prisijungti iš naujo.",
+        ["INVALID_GOOGLE_TOKEN"]        = "Google prisijungimas nepavyko.",
+        ["INVITE_CODE_REQUIRED"]        = "Registracija šiuo metu galima tik su pakvietimu.",
+        ["INVALID_INVITE_CODE"]         = "Neteisingas pakvietimo kodas. Patikrinkite kodą.",
+        ["LISTING_NOT_FOUND"]           = "Skelbimas nerastas.",
+        ["LOCATION_NOT_FOUND"]          = "Vieta nerasta.",
+        ["NO_UNITS_AVAILABLE"]          = "Pasirinktu laikotarpiu nėra laisvų šio tipo vienetų. Pasirinkite kitą datą.",
+        ["BOOKING_START_PAST"]          = "Pradžios data negali būti praeityje.",
+        ["BOOKING_END_BEFORE_START"]    = "Pabaigos data turi būti vėlesnė nei pradžios data.",
+        ["BOOKING_NOT_FOUND"]           = "Rezervacija nerasta.",
+        ["ORDER_NOT_FOUND"]             = "Užsakymas nerastas.",
+        ["ORDER_WRONG_STATUS"]          = "Užsakymo negalima keisti esamu statusu.",
+        ["PASSWORD_MISMATCH"]           = "Naujas slaptažodis ir patvirtinimas nesutampa.",
+        ["PASSWORD_TOO_SHORT"]          = "Slaptažodis turi būti bent 8 simbolių.",
+        ["CURRENT_PASSWORD_REQUIRED"]   = "Dabartinis slaptažodis yra privalomas.",
+        ["CURRENT_PASSWORD_WRONG"]      = "Dabartinis slaptažodis yra neteisingas.",
+        ["PASSWORD_SAME_AS_OLD"]        = "Naujas slaptažodis turi skirtis nuo dabartinio.",
+        ["USER_NOT_FOUND"]              = "Vartotojas nerastas.",
+        ["TIER_LOCATION_LIMIT"]         = "Jūsų planas leidžia iki {0} aktyvių vietų. Atnaujinkite planą.",
+        ["PAYMENT_PROVIDER_UNAVAILABLE"]= "Mokėjimo paslauga šiuo metu nepasiekiama. Bandykite vėliau.",
+        ["INVOICE_NOT_FOUND"]           = "Sąskaita nerasta.",
+        ["INVALID_DATE_FORMAT"]         = "Neteisingas datos formatas. Naudokite yyyy-MM-dd.",
+        ["EMAIL_NOT_VERIFIED"]          = "Prašome patvirtinti savo el. pašto adresą prieš atliekant rezervaciją.",
+        ["NO_INVOICE_FOR_BOOKING"]      = "Ši rezervacija neturi sąskaitos.",
+        ["REFUND_REQUIRES_PAID_INVOICE"]= "Grąžinimas galimas tik apmokėtoms sąskaitoms.",
+        ["LOCATION_HAS_ACTIVE_BOOKINGS"]= "Negalima ištrinti vietos su aktyviomis rezervacijomis. Pirmiausia atšaukite rezervacijas.",
+        ["UNIT_HAS_ACTIVE_BOOKINGS"]    = "Negalima ištrinti vieneto su aktyviomis rezervacijomis. Deaktyvuokite jį.",
+        ["NO_SUPPLIER_LINKED"]          = "Su jūsų paskyra nesusietas joks tiekėjas.",
+        ["REGISTRY_CODE_DUPLICATE"]     = "Partneris su šiuo registracijos kodu jau egzistuoja.",
+        ["SUPPLIER_NAME_REQUIRED"]      = "Partnerio pavadinimas yra privalomas.",
     };
 }
