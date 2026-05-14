@@ -37,5 +37,18 @@ public record SupplierDto(
     int       OnboardingDaysRemaining,
     bool      IsVerified,
     string    PriorityLevel,
-    string?   Country
+    string?   Country,
+    // Partner page fields
+    string?   Slug,
+    bool      IsPartnerPagePublished,
+    string?   Tagline,
+    string?   LongDescriptionEt,
+    string?   LongDescriptionEn,
+    string?   LongDescriptionRu,
+    string?   LogoUrl,
+    string?   HeroImageUrl,
+    string?   WebsiteUrl,
+    int?      FoundedYear,
+    string?   GooglePlaceId,
+    string?   PartnerPageUrl   // null when no slug, else "/partner/{slug}"
 );

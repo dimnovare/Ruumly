@@ -20,6 +20,7 @@ public record CreateSupplierRequest(
     string? BankName);
 
 public record UpdateSupplierRequest(
+    // Core operational fields
     string? Name,
     string? BillingModel,
     string? Tier,
@@ -37,4 +38,29 @@ public record UpdateSupplierRequest(
     string? Notes,
     string? Iban,
     string? BankAccountName,
-    string? BankName);
+    string? BankName,
+    // Partner page fields (all optional — null = leave unchanged)
+    string?  Slug,
+    bool?    IsPartnerPagePublished,
+    string?  Tagline,
+    string?  LongDescriptionEt,
+    string?  LongDescriptionEn,
+    string?  LongDescriptionRu,
+    string?  LogoUrl,
+    string?  HeroImageUrl,
+    string?  WebsiteUrl,
+    int?     FoundedYear,
+    bool?    FoundingPartner,
+    bool?    IsVerified,
+    string?  GooglePlaceId);
+
+public record UpdateProviderPartnerPageRequest(
+    string? Tagline,
+    string? LongDescriptionEt,
+    string? LongDescriptionEn,
+    string? LongDescriptionRu,
+    string? LogoUrl,
+    string? HeroImageUrl,
+    string? WebsiteUrl,
+    int?    FoundedYear,
+    string? GooglePlaceId);

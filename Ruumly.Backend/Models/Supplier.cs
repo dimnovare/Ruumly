@@ -28,6 +28,12 @@ public class Supplier
     /// <summary>kebab-case, [a-z0-9-], 2..80 chars, globally unique when set.</summary>
     public string? Slug { get; set; }
 
+    /// <summary>
+    /// When false the /partner/:slug page returns 404 even when a slug is set.
+    /// Admin controls publish state; partner can edit content but not publish.
+    /// </summary>
+    public bool IsPartnerPagePublished { get; set; } = false;
+
     /// <summary>Short pitch shown under the partner name. <= 160 chars.</summary>
     public string? Tagline { get; set; }
 

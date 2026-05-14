@@ -67,7 +67,20 @@ internal static class AdminMappers
             : 0,
         IsVerified:          s.IsVerified,
         PriorityLevel:       s.PriorityLevel.ToString(),
-        Country:             s.Country);
+        Country:             s.Country,
+        // Partner page fields
+        Slug:                     s.Slug,
+        IsPartnerPagePublished:   s.IsPartnerPagePublished,
+        Tagline:                  s.Tagline,
+        LongDescriptionEt:        ParseLang(s.LongDescriptionTranslationsJson, "et"),
+        LongDescriptionEn:        ParseLang(s.LongDescriptionTranslationsJson, "en"),
+        LongDescriptionRu:        ParseLang(s.LongDescriptionTranslationsJson, "ru"),
+        LogoUrl:                  s.LogoUrl,
+        HeroImageUrl:             s.HeroImageUrl,
+        WebsiteUrl:               s.WebsiteUrl,
+        FoundedYear:              s.FoundedYear,
+        GooglePlaceId:            s.GooglePlaceId,
+        PartnerPageUrl:           s.Slug != null ? $"/partner/{s.Slug}" : null);
 
     internal static IntegrationSettingsDto MapIntegrationSettings(Models.IntegrationSettings i) => new(
         Id:                  i.Id,
@@ -105,6 +118,22 @@ internal static class AdminMappers
         Target:    a.Target,
         Detail:    a.Detail,
         CreatedAt: a.CreatedAt.ToString("yyyy-MM-dd HH:mm"));
+
+    /// <summary>
+    /// Parses a single language key out of a LongDescriptionTranslationsJson blob.
+    /// Returns null when the JSON is absent, malformed, or the key is missing.
+    /// </summary>
+    internal static string? ParseLang(string? json, string lang)
+    {
+        if (string.IsNullOrEmpty(json)) return null;
+        try
+        {
+            var d = System.Text.Json.JsonSerializer
+                        .Deserialize<System.Collections.Generic.Dictionary<string, string?>>(json);
+            return d?.GetValueOrDefault(lang);
+        }
+        catch { return null; }
+    }
 
     internal static ListingDto MapListing(Models.Listing l) => new(
         Id:          l.Id,

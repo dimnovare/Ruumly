@@ -26,7 +26,7 @@ public class SupplierProfileService(RuumlyDbContext db, IDistributedCache cache)
 
         var supplier = await db.Suppliers
             .Include(s => s.Listings)
-            .FirstOrDefaultAsync(s => s.Slug == slug && s.IsActive, ct);
+            .FirstOrDefaultAsync(s => s.Slug == slug && s.IsActive && s.IsPartnerPagePublished, ct);
         if (supplier is null) return null;
 
         // Single round-trip: locations + each location's active-listing count.

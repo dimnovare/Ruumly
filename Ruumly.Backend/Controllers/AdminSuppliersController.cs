@@ -187,6 +187,69 @@ public class AdminSuppliersController(
         if (body.BankAccountName is not null)  supplier.BankAccountName = body.BankAccountName;
         if (body.BankName is not null)         supplier.BankName = body.BankName;
 
+        // ── Partner page fields ───────────────────────────────────────────────
+        if (body.IsPartnerPagePublished.HasValue)
+            supplier.IsPartnerPagePublished = body.IsPartnerPagePublished.Value;
+        if (body.Tagline is not null)         supplier.Tagline       = body.Tagline;
+        if (body.LogoUrl is not null)         supplier.LogoUrl       = body.LogoUrl;
+        if (body.HeroImageUrl is not null)    supplier.HeroImageUrl  = body.HeroImageUrl;
+        if (body.WebsiteUrl is not null)      supplier.WebsiteUrl    = body.WebsiteUrl;
+        if (body.FoundedYear.HasValue)        supplier.FoundedYear   = body.FoundedYear.Value;
+        if (body.FoundingPartner.HasValue)    supplier.FoundingPartner = body.FoundingPartner.Value;
+        if (body.IsVerified.HasValue)         supplier.IsVerified    = body.IsVerified.Value;
+        if (body.GooglePlaceId is not null)   supplier.GooglePlaceId = body.GooglePlaceId;
+
+        // Long description: merge individual language keys, preserving unlisted ones.
+        if (body.LongDescriptionEt is not null ||
+            body.LongDescriptionEn is not null ||
+            body.LongDescriptionRu is not null)
+        {
+            var existing = new Dictionary<string, string?>();
+            if (!string.IsNullOrEmpty(supplier.LongDescriptionTranslationsJson))
+            {
+                try
+                {
+                    existing = System.Text.Json.JsonSerializer
+                        .Deserialize<Dictionary<string, string?>>(
+                            supplier.LongDescriptionTranslationsJson) ?? existing;
+                }
+                catch { /* leave empty dict */ }
+            }
+            if (body.LongDescriptionEt is not null) existing["et"] = body.LongDescriptionEt;
+            if (body.LongDescriptionEn is not null) existing["en"] = body.LongDescriptionEn;
+            if (body.LongDescriptionRu is not null) existing["ru"] = body.LongDescriptionRu;
+            supplier.LongDescriptionTranslationsJson =
+                System.Text.Json.JsonSerializer.Serialize(existing);
+        }
+
+        // Slug: validate uniqueness + shape, allow clearing.
+        if (body.Slug is not null)
+        {
+            var slugValue = body.Slug.Trim().ToLower();
+            string[] reserved = ["dashboard", "onboarding", "new", "edit", "admin", "api"];
+
+            if (string.IsNullOrWhiteSpace(slugValue))
+            {
+                supplier.Slug = null;
+            }
+            else if (!System.Text.RegularExpressions.Regex.IsMatch(slugValue, "^[a-z0-9-]{2,80}$"))
+            {
+                return BadRequest(Error("Slug must be 2–80 lowercase letters, digits, or hyphens."));
+            }
+            else if (reserved.Contains(slugValue))
+            {
+                return BadRequest(Error($"'{slugValue}' is a reserved slug and cannot be used."));
+            }
+            else
+            {
+                var conflict = await Db.Suppliers
+                    .AnyAsync(s => s.Slug == slugValue && s.Id != id);
+                if (conflict)
+                    return Conflict(Error($"Slug '{slugValue}' is already taken by another supplier."));
+                supplier.Slug = slugValue;
+            }
+        }
+
         supplier.UpdatedAt = DateTime.UtcNow;
         await Audit("supplier.updated", User.GetUserEmail(), supplier.Name, null);
         await Db.SaveChangesAsync();
