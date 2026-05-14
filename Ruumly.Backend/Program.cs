@@ -172,6 +172,14 @@ builder.Services.AddRateLimiter(options =>
             QueueLimit  = 0,
         }));
 
+    options.AddPolicy("user", ctx =>
+        RateLimitPartition.GetFixedWindowLimiter(UserOrIpKey(ctx), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 30,
+            Window      = TimeSpan.FromMinutes(1),
+            QueueLimit  = 0,
+        }));
+
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.OnRejected = async (context, cancellationToken) =>
     {
@@ -445,6 +453,11 @@ using (var scope = app.Services.CreateScope())
         "supplier-polling-dispatcher",
         x => x.ExecuteAsync(),
         "*/5 * * * *");   // every 5 minutes — per-supplier interval governs actual cadence
+
+    recurringJobManager.AddOrUpdate<BackgroundCleanupService>(
+        "prune-polling-logs",
+        x => x.PruneOldPollingLogsAsync(),
+        Cron.Weekly);
 }
 
 app.MapControllers();

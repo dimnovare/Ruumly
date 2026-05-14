@@ -24,6 +24,10 @@ public class ContractService(RuumlyDbContext db) : IContractService
             .FirstOrDefaultAsync(b => b.Id == bookingId, ct)
             ?? throw new KeyNotFoundException($"Booking {bookingId} not found.");
 
+        if (template.SupplierId != booking.SupplierId)
+            throw new InvalidOperationException(
+                "Contract template does not belong to the booking's supplier.");
+
         var listing  = booking.Listing;
         var user     = booking.User;
         var supplier = booking.Supplier;

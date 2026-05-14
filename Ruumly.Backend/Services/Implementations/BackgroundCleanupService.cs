@@ -105,4 +105,19 @@ public class BackgroundCleanupService(
         logger.LogInformation(
             "ExpireReservations: cancelled {Count} expired reservation(s)", expired.Count);
     }
+
+    /// <summary>
+    /// Deletes PollingLog entries older than 90 days.
+    /// Keeps the table from growing unbounded at high polling frequency.
+    /// </summary>
+    public async Task PruneOldPollingLogsAsync()
+    {
+        var cutoff = DateTime.UtcNow.AddDays(-90);
+        var deleted = await db.PollingLogs
+            .Where(p => p.Timestamp < cutoff)
+            .ExecuteDeleteAsync();
+
+        logger.LogInformation(
+            "PruneOldPollingLogs: deleted {Count} log(s) older than 90 days", deleted);
+    }
 }
