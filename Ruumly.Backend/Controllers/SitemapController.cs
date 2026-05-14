@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
@@ -7,6 +8,7 @@ namespace Ruumly.Backend.Controllers;
 
 [ApiController]
 [Route("")]
+[AllowAnonymous]
 public class SitemapController(RuumlyDbContext db) : ControllerBase
 {
     private const string BaseUrl = "https://ruumly.eu";
@@ -39,6 +41,7 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
     [HttpGet("sitemap.xml")]
     [HttpHead("sitemap.xml")]
     [Produces("application/xml")]
+    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
     public async Task<IActionResult> Sitemap()
     {
         var listings = await db.Listings
@@ -111,6 +114,7 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
     [HttpGet("robots.txt")]
     [HttpHead("robots.txt")]
     [Produces("text/plain")]
+    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
     public IActionResult Robots()
     {
         var content =
