@@ -113,7 +113,7 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
 
         sb.AppendLine("</urlset>");
 
-        return Content(sb.ToString(), "application/xml", Encoding.UTF8);
+        return Content(sb.ToString(), "application/xml", new System.Text.UTF8Encoding(false));
     }
 
     [HttpGet("robots.txt")]
