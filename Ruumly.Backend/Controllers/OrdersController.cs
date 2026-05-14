@@ -167,16 +167,26 @@ public class OrdersController(IOrderService orderService, RuumlyDbContext db) : 
     /// Lead summary for the calling provider's supplier (rolling 30-day window).
     /// </summary>
     [HttpGet("lead-summary")]
-    [Authorize(Roles = "Provider")]
+    [Authorize(Roles = "Provider,Admin")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetLeadSummary()
     {
-        var user = await db.Users.FindAsync(User.GetUserId());
-        if (user?.SupplierId is null)
-            return StatusCode(403, new { error = "Forbidden", message = "No supplier linked to your account", statusCode = 403 });
+        Guid supplierId;
 
-        var supplierId = user.SupplierId.Value;
+        if (User.IsInRole("Admin"))
+        {
+            if (!Request.Query.TryGetValue("supplierId", out var sv) ||
+                !Guid.TryParse(sv, out supplierId))
+                return BadRequest(new { error = "Admin must specify ?supplierId=" });
+        }
+        else
+        {
+            var user = await db.Users.FindAsync(User.GetUserId());
+            if (user?.SupplierId is null)
+                return StatusCode(403, new { error = "Forbidden", message = "No supplier linked to your account", statusCode = 403 });
+            supplierId = user.SupplierId.Value;
+        }
         var now        = DateTime.UtcNow;
         var since30    = now.AddDays(-30);
         var since7     = now.AddDays(-7);
