@@ -660,6 +660,9 @@ public class AdminSuppliersController(
             return BadRequest(Error("Template name is required."));
         if (string.IsNullOrWhiteSpace(body.Html))
             return BadRequest(Error("Html is required."));
+        const int MaxTemplateHtmlBytes = 512 * 1024;
+        if (body.Html.Length > MaxTemplateHtmlBytes)
+            return BadRequest(Error("Template HTML must be under 512 KB."));
 
         // Clear any existing default for this supplier before setting a new one.
         if (body.IsDefault == true)
@@ -694,7 +697,13 @@ public class AdminSuppliersController(
         if (template is null) return NotFound(Error("Contract template not found."));
 
         if (body.Name is not null) template.Name         = body.Name.Trim();
-        if (body.Html is not null) template.HtmlTemplate = body.Html;
+        if (body.Html is not null)
+        {
+            const int MaxTemplateHtmlBytes = 512 * 1024;
+            if (body.Html.Length > MaxTemplateHtmlBytes)
+                return BadRequest(Error("Template HTML must be under 512 KB."));
+            template.HtmlTemplate = body.Html;
+        }
         if (body.IsActive.HasValue)        template.IsActive     = body.IsActive.Value;
         if (body.IsDefault == true)
         {

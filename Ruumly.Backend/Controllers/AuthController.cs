@@ -74,15 +74,12 @@ public class AuthController(
         if (string.IsNullOrEmpty(refreshToken))
             return Unauthorized();
 
-        // Validate CSRF token when present. During the 2-week migration window old clients
-        // don't send it — skip validation then. After the window, make it required.
         var csrfHeader = Request.Headers["X-CSRF-Token"].FirstOrDefault();
-        if (csrfHeader is not null)
-        {
-            var expected = authService.ComputeCsrfToken(refreshToken);
-            if (!string.Equals(csrfHeader, expected, StringComparison.Ordinal))
-                return Unauthorized(new { message = "Invalid CSRF token." });
-        }
+        if (string.IsNullOrEmpty(csrfHeader))
+            return Unauthorized(new { message = "CSRF token required." });
+        var expected = authService.ComputeCsrfToken(refreshToken);
+        if (!string.Equals(csrfHeader, expected, StringComparison.Ordinal))
+            return Unauthorized(new { message = "Invalid CSRF token." });
 
         var response = await authService.RefreshAsync(refreshToken);
         SetRefreshCookie(response.RefreshToken, RefreshTokenExpiryDays);
