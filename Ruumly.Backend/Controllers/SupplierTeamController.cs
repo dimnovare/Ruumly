@@ -192,10 +192,12 @@ public class SupplierTeamController(
             .SumAsync(p => (decimal?)p.SupplierAmount) ?? 0m;
 
         var pricingConfig = await pricingConfigService.GetAsync();
+        var listingCount  = await db.Listings.CountAsync(l => l.IsActive && l.SupplierId == supplier.Id);
         var dto           = AdminMappers.MapSupplier(
             supplier,
             ordersTotal:     ordersTotal,
             revenue:         revenue,
+            listingCount:    listingCount,
             includeSettings: true,
             pricingConfig:   pricingConfig);
 

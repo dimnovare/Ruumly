@@ -21,8 +21,8 @@ internal static class AdminMappers
         SupplierId: u.SupplierId);
 
     internal static SupplierDto MapSupplier(
-        Models.Supplier s, int ordersTotal, decimal revenue, bool includeSettings,
-        PricingConfig? pricingConfig = null) => new(
+        Models.Supplier s, int ordersTotal, decimal revenue, int listingCount,
+        bool includeSettings, PricingConfig? pricingConfig = null) => new(
         Id:                  s.Id,
         Name:                s.Name,
         RegistryCode:        s.RegistryCode ?? "",
@@ -46,6 +46,7 @@ internal static class AdminMappers
         UpdatedAt:           s.UpdatedAt.ToString("yyyy-MM-dd"),
         OrdersTotal:         ordersTotal,
         Revenue:             revenue,
+        ListingCount:        listingCount,
         IntegrationSettings: includeSettings && s.IntegrationSettings is not null
             ? MapIntegrationSettings(s.IntegrationSettings)
             : null,

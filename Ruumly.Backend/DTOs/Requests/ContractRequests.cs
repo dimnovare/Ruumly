@@ -2,13 +2,13 @@ namespace Ruumly.Backend.DTOs.Requests;
 
 public record CreateContractTemplateRequest(
     string Name,
-    string HtmlTemplate,
+    string Html,
     bool?  IsDefault
 );
 
 public record UpdateContractTemplateRequest(
     string? Name,
-    string? HtmlTemplate,
+    string? Html,
     bool?   IsActive,
     bool?   IsDefault
 );

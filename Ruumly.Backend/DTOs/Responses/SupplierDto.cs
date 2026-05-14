@@ -24,6 +24,7 @@ public record SupplierDto(
     string  UpdatedAt,
     int     OrdersTotal,
     decimal Revenue,
+    int     ListingCount,
     IntegrationSettingsDto? IntegrationSettings,
     string    BillingModel,
     string    Tier,

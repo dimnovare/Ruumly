@@ -51,12 +51,19 @@ public class AdminSuppliersController(
             .Select(g => new { SupplierId = g.Key, Total = g.Sum(p => p.SupplierAmount) })
             .ToDictionaryAsync(x => x.SupplierId, x => x.Total);
 
+        var listingCounts = await Db.Listings
+            .Where(l => l.IsActive && supplierIds.Contains(l.SupplierId))
+            .GroupBy(l => l.SupplierId)
+            .Select(g => new { SupplierId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.SupplierId, x => x.Count);
+
         var pricingConfig = await pricingConfigService.GetAsync();
         var data = suppliers.Select(s =>
         {
             orderStats.TryGetValue(s.Id, out var stats);
             return AdminMappers.MapSupplier(s, stats?.OrdersTotal ?? 0,
                 revenues.GetValueOrDefault(s.Id, 0m),
+                listingCounts.GetValueOrDefault(s.Id, 0),
                 includeSettings: false, pricingConfig: pricingConfig);
         }).ToList();
 
@@ -83,9 +90,10 @@ public class AdminSuppliersController(
             .Where(p => p.SupplierId == id && p.Status == PayoutStatus.Paid)
             .SumAsync(p => (decimal?)p.SupplierAmount) ?? 0m;
 
+        var listingCount  = await Db.Listings.CountAsync(l => l.IsActive && l.SupplierId == id);
         var pricingConfig = await pricingConfigService.GetAsync();
         return Ok(AdminMappers.MapSupplier(supplier, stats?.OrdersTotal ?? 0, revenue,
-            includeSettings: true, pricingConfig: pricingConfig));
+            listingCount, includeSettings: true, pricingConfig: pricingConfig));
     }
 
     [HttpPost("suppliers")]
@@ -149,7 +157,7 @@ public class AdminSuppliersController(
         await Audit("supplier.created", User.GetUserEmail(), supplier.Name, null);
 
         var pricingConfig = await pricingConfigService.GetAsync();
-        return Ok(AdminMappers.MapSupplier(supplier, 0, 0m, false, pricingConfig));
+        return Ok(AdminMappers.MapSupplier(supplier, 0, 0m, 0, false, pricingConfig));
     }
 
     [HttpPatch("suppliers/{id:guid}")]
@@ -266,7 +274,7 @@ public class AdminSuppliersController(
         await Db.SaveChangesAsync();
 
         var pricingConfig = await pricingConfigService.GetAsync();
-        return Ok(AdminMappers.MapSupplier(supplier, 0, 0m, false, pricingConfig));
+        return Ok(AdminMappers.MapSupplier(supplier, 0, 0m, 0, false, pricingConfig));
     }
 
     [HttpDelete("suppliers/{id:guid}")]
@@ -648,8 +656,8 @@ public class AdminSuppliersController(
     {
         if (string.IsNullOrWhiteSpace(body.Name))
             return BadRequest(Error("Template name is required."));
-        if (string.IsNullOrWhiteSpace(body.HtmlTemplate))
-            return BadRequest(Error("HtmlTemplate is required."));
+        if (string.IsNullOrWhiteSpace(body.Html))
+            return BadRequest(Error("Html is required."));
 
         // Clear any existing default for this supplier before setting a new one.
         if (body.IsDefault == true)
@@ -661,7 +669,7 @@ public class AdminSuppliersController(
         {
             SupplierId   = id,
             Name         = body.Name.Trim(),
-            HtmlTemplate = body.HtmlTemplate,
+            HtmlTemplate = body.Html,
             IsDefault    = body.IsDefault ?? false,
         };
         Db.ContractTemplates.Add(template);
@@ -683,8 +691,8 @@ public class AdminSuppliersController(
             .FirstOrDefaultAsync(t => t.Id == templateId && t.SupplierId == id);
         if (template is null) return NotFound(Error("Contract template not found."));
 
-        if (body.Name is not null)         template.Name         = body.Name.Trim();
-        if (body.HtmlTemplate is not null) template.HtmlTemplate = body.HtmlTemplate;
+        if (body.Name is not null) template.Name         = body.Name.Trim();
+        if (body.Html is not null) template.HtmlTemplate = body.Html;
         if (body.IsActive.HasValue)        template.IsActive     = body.IsActive.Value;
         if (body.IsDefault == true)
         {

@@ -62,7 +62,7 @@ public class ContractController(
         try
         {
             var html = await contractService.RenderAsync(req.ContractTemplateId, req.BookingId);
-            return Content(html, "text/html");
+            return Ok(new { html });
         }
         catch (KeyNotFoundException ex)
         {
