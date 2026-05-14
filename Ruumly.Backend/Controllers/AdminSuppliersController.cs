@@ -542,6 +542,90 @@ public class AdminSuppliersController(
         return Ok(logs);
     }
 
+    // ── Per-supplier integration read/write ───────────────────────────────────
+
+    [HttpGet("suppliers/{id:guid}/integration")]
+    public async Task<IActionResult> GetIntegration(Guid id)
+    {
+        var supplier = await Db.Suppliers
+            .Include(s => s.IntegrationSettings)
+            .FirstOrDefaultAsync(s => s.Id == id);
+        if (supplier is null) return NotFound(Error("Supplier not found."));
+
+        // Backfill IntegrationSettings if missing (same logic as AdminIntegrationsController)
+        if (supplier.IntegrationSettings is null)
+        {
+            var settings = new IntegrationSettings
+            {
+                SupplierId          = id,
+                ApprovalMode        = ApprovalMode.Auto,
+                PostingMode         = (PostingMode)(int)supplier.IntegrationType,
+                FallbackPostingMode = PostingMode.Email,
+                IsActive            = true,
+                UpdatedAt           = DateTime.UtcNow,
+            };
+            Db.IntegrationSettings.Add(settings);
+            await Db.SaveChangesAsync();
+            supplier.IntegrationSettings = settings;
+        }
+
+        return Ok(MapIntegration(supplier));
+    }
+
+    [HttpPatch("suppliers/{id:guid}/integration")]
+    public async Task<IActionResult> UpdateIntegration(
+        Guid id, [FromBody] UpdateSupplierIntegrationRequest body)
+    {
+        var supplier = await Db.Suppliers
+            .Include(s => s.IntegrationSettings)
+            .FirstOrDefaultAsync(s => s.Id == id);
+        if (supplier is null) return NotFound(Error("Supplier not found."));
+
+        // Supplier fields
+        if (body.IntegrationType is not null &&
+            Enum.TryParse<IntegrationType>(body.IntegrationType, true, out var it))
+            supplier.IntegrationType = it;
+
+        if (body.RecipientEmail is not null) supplier.RecipientEmail = body.RecipientEmail;
+        if (body.ApiEndpoint is not null)    supplier.ApiEndpoint    = body.ApiEndpoint;
+        if (body.ApiAuthType is not null)    supplier.ApiAuthType    = body.ApiAuthType;
+        if (!string.IsNullOrWhiteSpace(body.ApiAuthToken))
+            supplier.ApiAuthToken = tokenProtector.Protect(body.ApiAuthToken);
+
+        // Polling
+        if (body.PollingEnabled.HasValue)
+        {
+            supplier.PollingEnabled = body.PollingEnabled.Value;
+            if (body.PollingEnabled.Value && supplier.NextPollAt == null)
+                supplier.NextPollAt = DateTime.UtcNow;
+        }
+        if (body.PollingIntervalMinutes.HasValue &&
+            new[] { 15, 30, 60, 360, 1440 }.Contains(body.PollingIntervalMinutes.Value))
+            supplier.PollingIntervalMinutes = body.PollingIntervalMinutes.Value;
+
+        supplier.UpdatedAt = DateTime.UtcNow;
+
+        // IntegrationSettings
+        if (supplier.IntegrationSettings is not null)
+        {
+            var s = supplier.IntegrationSettings;
+            if (body.ApprovalMode is not null &&
+                Enum.TryParse<ApprovalMode>(body.ApprovalMode, true, out var am))
+                s.ApprovalMode = am;
+            if (body.PostingMode is not null &&
+                Enum.TryParse<PostingMode>(body.PostingMode, true, out var pm))
+                s.PostingMode = pm;
+            if (body.FallbackPostingMode is not null &&
+                Enum.TryParse<PostingMode>(body.FallbackPostingMode, true, out var fpm))
+                s.FallbackPostingMode = fpm;
+            s.UpdatedAt = DateTime.UtcNow;
+        }
+
+        await Audit("supplier.integration.updated", User.GetUserEmail(), supplier.Name, null);
+        await Db.SaveChangesAsync();
+        return Ok(MapIntegration(supplier));
+    }
+
     // ── Contract template management ──────────────────────────────────────────
 
     [HttpGet("suppliers/{id:guid}/contracts")]
@@ -651,5 +735,29 @@ public class AdminSuppliersController(
 
         await Db.SaveChangesAsync();
         return Ok(new { removedSuppliers = demoSuppliers.Count });
+    }
+
+    // ── Mappers ───────────────────────────────────────────────────────────────
+
+    private static SupplierIntegrationDto MapIntegration(Supplier s)
+    {
+        var si = s.IntegrationSettings;
+        return new SupplierIntegrationDto(
+            IntegrationType:        s.IntegrationType.ToString(),
+            ApiEndpoint:            s.ApiEndpoint,
+            ApiAuthType:            s.ApiAuthType,
+            HasApiToken:            !string.IsNullOrEmpty(s.ApiAuthToken),
+            RecipientEmail:         s.RecipientEmail,
+            IntegrationHealth:      s.IntegrationHealth.ToString(),
+            IntegrationSettingsId:  si?.Id ?? Guid.Empty,
+            ApprovalMode:           si?.ApprovalMode.ToString() ?? "Auto",
+            PostingMode:            si?.PostingMode.ToString() ?? "Email",
+            FallbackPostingMode:    si?.FallbackPostingMode.ToString() ?? "Email",
+            PollingEnabled:         s.PollingEnabled,
+            PollingIntervalMinutes: s.PollingIntervalMinutes,
+            NextPollAt:             s.NextPollAt?.ToString("o"),
+            LastPolledAt:           s.LastPolledAt?.ToString("o"),
+            LastPollStatus:         s.LastPollStatus
+        );
     }
 }

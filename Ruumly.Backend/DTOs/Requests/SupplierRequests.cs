@@ -57,6 +57,22 @@ public record UpdateSupplierRequest(
     bool?    PollingEnabled,
     int?     PollingIntervalMinutes);
 
+public record UpdateSupplierIntegrationRequest(
+    // Core integration (mirrors existing UpdateSupplierRequest fields)
+    string? IntegrationType,
+    string? ApiEndpoint,
+    string? ApiAuthType,
+    string? ApiAuthToken,
+    string? RecipientEmail,
+    // IntegrationSettings fields
+    string? ApprovalMode,
+    string? PostingMode,
+    string? FallbackPostingMode,
+    // Polling fields (from Supplier model)
+    bool?   PollingEnabled,
+    int?    PollingIntervalMinutes
+);
+
 public record UpdateProviderPartnerPageRequest(
     string? Tagline,
     string? LongDescriptionEt,

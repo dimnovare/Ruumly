@@ -220,6 +220,42 @@ namespace Ruumly.Backend.Migrations
                     b.ToTable("BookingTimelines");
                 });
 
+            modelBuilder.Entity("Ruumly.Backend.Models.ContractTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("HtmlTemplate")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SupplierId");
+
+                    b.ToTable("ContractTemplates");
+                });
+
             modelBuilder.Entity("Ruumly.Backend.Models.FulfillmentEvent", b =>
                 {
                     b.Property<Guid>("Id")
@@ -898,6 +934,41 @@ namespace Ruumly.Backend.Migrations
                     b.ToTable("PlatformSettings");
                 });
 
+            modelBuilder.Entity("Ruumly.Backend.Models.PollingLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DurationMs")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UnitsRefreshed")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SupplierId", "Timestamp");
+
+                    b.ToTable("PollingLogs");
+                });
+
             modelBuilder.Entity("Ruumly.Backend.Models.RebateInvoice", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1018,6 +1089,54 @@ namespace Ruumly.Backend.Migrations
                     b.ToTable("Reviews");
                 });
 
+            modelBuilder.Entity("Ruumly.Backend.Models.SignedContract", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BookingId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ContractTemplateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RenderedHtml")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SignatureDataUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("SignedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SignedFromIp")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TenantEmail")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TenantIdCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TenantName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId")
+                        .IsUnique();
+
+                    b.ToTable("SignedContracts");
+                });
+
             modelBuilder.Entity("Ruumly.Backend.Models.Supplier", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1071,6 +1190,9 @@ namespace Ruumly.Backend.Migrations
                     b.Property<bool>("FoundingPartner")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("GooglePlaceId")
+                        .HasColumnType("text");
+
                     b.Property<string>("HeroImageUrl")
                         .HasColumnType("text");
 
@@ -1088,8 +1210,17 @@ namespace Ruumly.Backend.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsPartnerPagePublished")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsVerified")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("LastPollStatus")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastPolledAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LogoUrl")
                         .HasColumnType("text");
@@ -1104,6 +1235,9 @@ namespace Ruumly.Backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("NextPollAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Notes")
                         .HasColumnType("text");
 
@@ -1112,6 +1246,12 @@ namespace Ruumly.Backend.Migrations
 
                     b.Property<decimal>("PartnerDiscountRate")
                         .HasColumnType("numeric(18,4)");
+
+                    b.Property<bool>("PollingEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("PollingIntervalMinutes")
+                        .HasColumnType("integer");
 
                     b.Property<int>("PriorityLevel")
                         .HasColumnType("integer");
@@ -1372,6 +1512,17 @@ namespace Ruumly.Backend.Migrations
                     b.Navigation("Booking");
                 });
 
+            modelBuilder.Entity("Ruumly.Backend.Models.ContractTemplate", b =>
+                {
+                    b.HasOne("Ruumly.Backend.Models.Supplier", "Supplier")
+                        .WithMany()
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Supplier");
+                });
+
             modelBuilder.Entity("Ruumly.Backend.Models.FulfillmentEvent", b =>
                 {
                     b.HasOne("Ruumly.Backend.Models.Order", "Order")
@@ -1512,6 +1663,17 @@ namespace Ruumly.Backend.Migrations
                     b.Navigation("Supplier");
                 });
 
+            modelBuilder.Entity("Ruumly.Backend.Models.PollingLog", b =>
+                {
+                    b.HasOne("Ruumly.Backend.Models.Supplier", "Supplier")
+                        .WithMany()
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Supplier");
+                });
+
             modelBuilder.Entity("Ruumly.Backend.Models.RebateInvoice", b =>
                 {
                     b.HasOne("Ruumly.Backend.Models.Supplier", "Supplier")
@@ -1569,6 +1731,17 @@ namespace Ruumly.Backend.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Ruumly.Backend.Models.SignedContract", b =>
+                {
+                    b.HasOne("Ruumly.Backend.Models.Booking", "Booking")
+                        .WithOne("SignedContract")
+                        .HasForeignKey("Ruumly.Backend.Models.SignedContract", "BookingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
+                });
+
             modelBuilder.Entity("Ruumly.Backend.Models.SupplierLocation", b =>
                 {
                     b.HasOne("Ruumly.Backend.Models.Supplier", "Supplier")
@@ -1597,6 +1770,8 @@ namespace Ruumly.Backend.Migrations
                     b.Navigation("Messages");
 
                     b.Navigation("Order");
+
+                    b.Navigation("SignedContract");
 
                     b.Navigation("Timeline");
                 });
