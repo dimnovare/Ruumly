@@ -70,24 +70,25 @@ public class SupplierProfileService(RuumlyDbContext db, IDistributedCache cache)
             r.Loc.AvailableUnitCount)).ToList();
 
         var dto = new SupplierProfileDto(
-            Id:              supplier.Id,
-            Slug:            supplier.Slug!,
-            Name:            supplier.Name,
-            Country:         supplier.Country,
-            Tagline:         supplier.Tagline,
-            LongDescription: longDescription,
-            LogoUrl:         supplier.LogoUrl,
-            HeroImageUrl:    supplier.HeroImageUrl,
-            WebsiteUrl:      supplier.WebsiteUrl,
-            FoundedYear:     supplier.FoundedYear,
-            Rating:          supplier.Rating,
-            ReviewCount:     supplier.ReviewCount,
-            Tier:            supplier.Tier.ToString(),
-            IsVerified:      supplier.IsVerified,
-            FoundingPartner: supplier.FoundingPartner,
-            LocationCount:   locations.Count,
-            ListingCount:    supplier.Listings.Count(l => l.IsActive),
-            Locations:       locations);
+            Id:               supplier.Id,
+            Slug:             supplier.Slug!,
+            Name:             supplier.Name,
+            Country:          supplier.Country,
+            Tagline:          supplier.Tagline,
+            LongDescription:  longDescription,
+            LogoUrl:          supplier.LogoUrl,
+            HeroImageUrl:     supplier.HeroImageUrl,
+            WebsiteUrl:       supplier.WebsiteUrl,
+            FoundedYear:      supplier.FoundedYear,
+            Rating:           supplier.Rating,
+            ReviewCount:      supplier.ReviewCount,
+            Tier:             supplier.Tier.ToString(),
+            IsVerified:       supplier.IsVerified,
+            FoundingPartner:  supplier.FoundingPartner,
+            LocationCount:    locations.Count,
+            ListingCount:     supplier.Listings.Count(l => l.IsActive),
+            Locations:        locations,
+            HasGoogleReviews: !string.IsNullOrEmpty(supplier.GooglePlaceId));
 
         await cache.SetStringAsync(
             cacheKey,

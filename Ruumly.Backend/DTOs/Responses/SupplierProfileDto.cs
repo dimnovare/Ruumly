@@ -18,7 +18,9 @@ public record SupplierProfileDto(
     bool    FoundingPartner,
     int     LocationCount,
     int     ListingCount,
-    List<SupplierProfileLocationDto> Locations);
+    List<SupplierProfileLocationDto> Locations,
+    /// <summary>True when a Google Place ID is configured — lets the frontend decide whether to render the reviews section.</summary>
+    bool    HasGoogleReviews);
 
 public record SupplierProfileLocationDto(
     Guid     Id,

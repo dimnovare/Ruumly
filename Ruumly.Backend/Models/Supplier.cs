@@ -93,6 +93,9 @@ public class Supplier
     public bool IsVerified { get; set; } = false;
     public DateTime? VerifiedAt { get; set; }
 
+    /// <summary>Google Places ID for fetching reviews and ratings via Places API.</summary>
+    public string? GooglePlaceId { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

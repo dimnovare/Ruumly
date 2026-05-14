@@ -1,6 +1,8 @@
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
+using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Services.Interfaces;
 
@@ -10,7 +12,9 @@ namespace Ruumly.Backend.Controllers;
 [Route("api/suppliers")]
 public class SuppliersController(
     IFeaturedPartnersService featuredPartnersService,
-    ISupplierProfileService  supplierProfileService) : ControllerBase
+    ISupplierProfileService  supplierProfileService,
+    IPlacesService           placesService,
+    RuumlyDbContext          db) : ControllerBase
 {
     /// <summary>
     /// Returns up to 6 featured partners (verified Standard/Premium suppliers),
@@ -45,5 +49,31 @@ public class SuppliersController(
 
         var profile = await supplierProfileService.GetBySlugAsync(slug, ct);
         return profile is null ? NotFound() : Ok(profile);
+    }
+
+    /// <summary>
+    /// Returns Google Places rating + up to 5 reviews for the partner identified by slug.
+    /// Returns 204 when no Google Place ID is configured or the feature is disabled.
+    /// Public — no auth required.
+    /// </summary>
+    [HttpGet("by-slug/{slug}/google-reviews")]
+    [EnableRateLimiting("search")]
+    [ProducesResponseType(typeof(GooglePlaceSummaryDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> GetGoogleReviews(
+        string slug,
+        [FromQuery] string lang = "et",
+        CancellationToken ct = default)
+    {
+        if (!Regex.IsMatch(slug, "^[a-z0-9-]{2,80}$")) return NoContent();
+
+        var supplier = await db.Suppliers
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Slug == slug && s.IsActive, ct);
+
+        if (supplier?.GooglePlaceId is null) return NoContent();
+
+        var reviews = await placesService.GetReviewsAsync(supplier.GooglePlaceId, lang, ct);
+        return reviews is null ? NoContent() : Ok(reviews);
     }
 }

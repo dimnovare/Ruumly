@@ -102,9 +102,14 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
             AppendLangUrlSet(sb, path, "0.8", "weekly", lastMod);
         }
 
-        var cityPages = new[] { "tallinn", "riga", "vilnius" };
-        foreach (var city in cityPages)
-            AppendLangUrlSet(sb, $"/storage/{city}", "0.8", "weekly");
+        var cities = await db.Listings
+            .Where(l => l.IsActive && l.City != null)
+            .Select(l => l.City!.ToLower())
+            .Distinct()
+            .ToListAsync();
+
+        foreach (var city in cities)
+            AppendLangUrlSet(sb, $"/storage/{city.Replace(" ", "-")}", "0.8", "weekly");
 
         sb.AppendLine("</urlset>");
 

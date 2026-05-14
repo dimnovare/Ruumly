@@ -285,6 +285,7 @@ builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IFeaturedPartnersService, FeaturedPartnersService>();
 builder.Services.AddScoped<ISupplierProfileService, SupplierProfileService>();
 builder.Services.AddScoped<IPaymentService, MontonioPaymentService>();
+builder.Services.AddScoped<IPlacesService, PlacesService>();
 builder.Services.AddHttpClient();
 
 // ─── Storage service ───

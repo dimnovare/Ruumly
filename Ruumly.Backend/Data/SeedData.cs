@@ -2583,6 +2583,7 @@ public static class SeedData
             Id                = kookonId,
             Name              = "Kookon",
             Slug              = "kookon",
+            GooglePlaceId     = null,   // TODO: add real Place ID once verified with Kookon
             RegistryCode      = null,                          // TODO confirm with Kookon
             ContactName       = "Kookon klienditugi",          // TODO confirm contact person
             ContactEmail      = "info@kookon.ee",
@@ -2852,6 +2853,7 @@ public static class SeedData
             Id                = boxoId,
             Name              = "BOXO",
             Slug              = "boxo",
+            GooglePlaceId     = null,   // TODO: add real Place ID once verified with BOXO
             RegistryCode      = "16794172",
             ContactName       = "BOXO klienditugi",       // TODO confirm
             ContactEmail      = "kliendid@boxo.ee",
