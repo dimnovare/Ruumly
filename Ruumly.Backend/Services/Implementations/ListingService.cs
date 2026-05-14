@@ -31,7 +31,17 @@ public class ListingService(
         var cacheKey = $"listings:search:{HashFilters(f)}:{language ?? "_"}";
         var cached   = await cache.GetStringAsync(cacheKey);
         if (cached is not null)
-            return JsonSerializer.Deserialize<PaginatedResult<ListingDto>>(cached)!;
+        {
+            try
+            {
+                var hit = JsonSerializer.Deserialize<PaginatedResult<ListingDto>>(cached);
+                if (hit is not null) return hit;
+            }
+            catch (JsonException)
+            {
+                await cache.RemoveAsync(cacheKey);
+            }
+        };
 
         var pricingConfig = await pricingConfigService.GetAsync();
 
@@ -179,7 +189,17 @@ public class ListingService(
         var cacheKey = $"listing:{id}:{language ?? "_"}";
         var cached   = await cache.GetStringAsync(cacheKey);
         if (cached is not null)
-            return JsonSerializer.Deserialize<ListingDto>(cached);
+        {
+            try
+            {
+                var hit = JsonSerializer.Deserialize<ListingDto>(cached);
+                if (hit is not null) return hit;
+            }
+            catch (JsonException)
+            {
+                await cache.RemoveAsync(cacheKey);
+            }
+        }
 
         var pricingConfig = await pricingConfigService.GetAsync();
 
@@ -212,7 +232,17 @@ public class ListingService(
         var pricingConfig = await pricingConfigService.GetAsync();
         var cached = await cache.GetStringAsync(cacheKey);
         if (cached is not null)
-            return JsonSerializer.Deserialize<List<ListingDto>>(cached)!;
+        {
+            try
+            {
+                var hit = JsonSerializer.Deserialize<List<ListingDto>>(cached);
+                if (hit is not null) return hit;
+            }
+            catch (JsonException)
+            {
+                await cache.RemoveAsync(cacheKey);
+            }
+        };
 
         // Badge priority: Promoted(4) > BestValue(3) > Closest(2) > Cheapest(1)
         var listings = await db.Listings

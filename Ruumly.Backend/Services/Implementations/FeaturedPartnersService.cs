@@ -20,7 +20,17 @@ public class FeaturedPartnersService(RuumlyDbContext db, IDistributedCache cache
         const string cacheKey = "suppliers:featured-partners";
         var cached = await cache.GetStringAsync(cacheKey);
         if (cached is not null)
-            return JsonSerializer.Deserialize<List<FeaturedPartnerDto>>(cached)!;
+        {
+            try
+            {
+                var hit = JsonSerializer.Deserialize<List<FeaturedPartnerDto>>(cached);
+                if (hit is not null) return hit;
+            }
+            catch (JsonException)
+            {
+                await cache.RemoveAsync(cacheKey);
+            }
+        };
 
         // Eligible: active, verified, Standard or Premium tier
         var candidates = await db.Suppliers

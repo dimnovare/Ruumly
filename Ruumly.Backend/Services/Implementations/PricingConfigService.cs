@@ -15,7 +15,17 @@ public class PricingConfigService(RuumlyDbContext db, IDistributedCache cache) :
     {
         var cached = await cache.GetStringAsync(CacheKey);
         if (cached is not null)
-            return JsonSerializer.Deserialize<PricingConfig>(cached)!;
+        {
+            try
+            {
+                var hit = JsonSerializer.Deserialize<PricingConfig>(cached);
+                if (hit is not null) return hit;
+            }
+            catch (JsonException)
+            {
+                await cache.RemoveAsync(CacheKey);
+            }
+        };
 
         var settings = await db.PlatformSettings
             .ToDictionaryAsync(s => s.Key, s => s.Value);

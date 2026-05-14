@@ -69,17 +69,27 @@ public class AuthController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest? body)
     {
-        // Cookie-first (new flow), body fallback (backward compat for 2-week migration window)
-        var refreshToken = Request.Cookies["ruumly-refresh"] ?? body?.RefreshToken;
+        var tokenFromCookie = Request.Cookies["ruumly-refresh"];
+        var tokenFromBody   = body?.RefreshToken;
+        var refreshToken    = tokenFromCookie ?? tokenFromBody;
         if (string.IsNullOrEmpty(refreshToken))
             return Unauthorized();
 
         var csrfHeader = Request.Headers["X-CSRF-Token"].FirstOrDefault();
-        if (string.IsNullOrEmpty(csrfHeader))
-            return Unauthorized(new { message = "CSRF token required." });
-        var expected = authService.ComputeCsrfToken(refreshToken);
-        if (!string.Equals(csrfHeader, expected, StringComparison.Ordinal))
-            return Unauthorized(new { message = "Invalid CSRF token." });
+
+        // Cookie-sourced refresh can bootstrap without CSRF (token was set by us,
+        // and CORS already prevents cross-origin POST). Body-sourced refresh
+        // always needs CSRF because it's readable by JS.
+        bool needsCsrf = tokenFromBody is not null && tokenFromCookie is null;
+
+        if (needsCsrf || !string.IsNullOrEmpty(csrfHeader))
+        {
+            if (string.IsNullOrEmpty(csrfHeader))
+                return Unauthorized(new { message = "CSRF token required." });
+            var expected = authService.ComputeCsrfToken(refreshToken);
+            if (!string.Equals(csrfHeader, expected, StringComparison.Ordinal))
+                return Unauthorized(new { message = "Invalid CSRF token." });
+        }
 
         var response = await authService.RefreshAsync(refreshToken);
         SetRefreshCookie(response.RefreshToken, RefreshTokenExpiryDays);
