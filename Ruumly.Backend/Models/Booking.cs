@@ -98,6 +98,8 @@ public class Booking
 
     public Order? Order { get; set; }
     public Invoice? Invoice { get; set; }
+    /// <summary>Set once the tenant signs the contract during or after booking.</summary>
+    public SignedContract? SignedContract { get; set; }
     public List<Message> Messages { get; set; } = [];
     public List<BookingTimeline> Timeline { get; set; } = [];
 }

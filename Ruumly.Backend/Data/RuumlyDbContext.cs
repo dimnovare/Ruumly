@@ -31,7 +31,9 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
     public DbSet<PayoutEntry> PayoutEntries => Set<PayoutEntry>();
     public DbSet<RebateInvoice> RebateInvoices => Set<RebateInvoice>();
     public DbSet<BlockedDate> BlockedDates => Set<BlockedDate>();
-    public DbSet<PollingLog> PollingLogs => Set<PollingLog>();
+    public DbSet<PollingLog>        PollingLogs        => Set<PollingLog>();
+    public DbSet<ContractTemplate> ContractTemplates  => Set<ContractTemplate>();
+    public DbSet<SignedContract>   SignedContracts     => Set<SignedContract>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -50,6 +52,7 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
         model.Entity<OrderTimeline>().HasQueryFilter(ot => true);
         model.Entity<FulfillmentEvent>().HasQueryFilter(fe => true);
         model.Entity<PayoutEntry>().HasQueryFilter(pe => true);
+        model.Entity<SignedContract>().HasQueryFilter(sc => true);
 
         // ─── Enums as strings ───
         model.Entity<User>().Property(e => e.Role).HasConversion<string>();
@@ -323,6 +326,27 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
         // ─── BlockedDate ───
         model.Entity<BlockedDate>()
             .HasIndex(b => new { b.LocationId, b.Date })
+            .IsUnique();
+
+        // ─── ContractTemplate → Supplier (cascade delete) ───
+        model.Entity<ContractTemplate>()
+            .HasOne(c => c.Supplier)
+            .WithMany()
+            .HasForeignKey(c => c.SupplierId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        model.Entity<ContractTemplate>()
+            .HasIndex(c => c.SupplierId);
+
+        // ─── SignedContract → Booking (1:1, cascade delete) ───
+        model.Entity<SignedContract>()
+            .HasOne(c => c.Booking)
+            .WithOne(b => b.SignedContract)
+            .HasForeignKey<SignedContract>(c => c.BookingId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        model.Entity<SignedContract>()
+            .HasIndex(c => c.BookingId)
             .IsUnique();
 
         // ─── PollingLog → Supplier (cascade delete) ───

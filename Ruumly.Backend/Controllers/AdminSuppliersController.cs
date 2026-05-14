@@ -542,6 +542,99 @@ public class AdminSuppliersController(
         return Ok(logs);
     }
 
+    // ── Contract template management ──────────────────────────────────────────
+
+    [HttpGet("suppliers/{id:guid}/contracts")]
+    public async Task<IActionResult> GetContractTemplates(Guid id)
+    {
+        var templates = await Db.ContractTemplates
+            .Where(t => t.SupplierId == id)
+            .OrderByDescending(t => t.IsDefault)
+            .ThenBy(t => t.Name)
+            .ToListAsync();
+
+        return Ok(templates.Select(t => new ContractTemplateDto(
+            t.Id, t.Name, t.HtmlTemplate, t.IsActive, t.IsDefault,
+            t.CreatedAt.ToString("o"), t.UpdatedAt.ToString("o"))));
+    }
+
+    [HttpPost("suppliers/{id:guid}/contracts")]
+    public async Task<IActionResult> CreateContractTemplate(
+        Guid id, [FromBody] CreateContractTemplateRequest body)
+    {
+        if (string.IsNullOrWhiteSpace(body.Name))
+            return BadRequest(Error("Template name is required."));
+        if (string.IsNullOrWhiteSpace(body.HtmlTemplate))
+            return BadRequest(Error("HtmlTemplate is required."));
+
+        // Clear any existing default for this supplier before setting a new one.
+        if (body.IsDefault == true)
+            await Db.ContractTemplates
+                .Where(t => t.SupplierId == id && t.IsDefault)
+                .ExecuteUpdateAsync(s => s.SetProperty(t => t.IsDefault, false));
+
+        var template = new ContractTemplate
+        {
+            SupplierId   = id,
+            Name         = body.Name.Trim(),
+            HtmlTemplate = body.HtmlTemplate,
+            IsDefault    = body.IsDefault ?? false,
+        };
+        Db.ContractTemplates.Add(template);
+        await Db.SaveChangesAsync();
+
+        return Created(
+            $"/api/admin/suppliers/{id}/contracts/{template.Id}",
+            new ContractTemplateDto(
+                template.Id, template.Name, template.HtmlTemplate,
+                template.IsActive, template.IsDefault,
+                template.CreatedAt.ToString("o"), template.UpdatedAt.ToString("o")));
+    }
+
+    [HttpPatch("suppliers/{id:guid}/contracts/{templateId:guid}")]
+    public async Task<IActionResult> UpdateContractTemplate(
+        Guid id, Guid templateId, [FromBody] UpdateContractTemplateRequest body)
+    {
+        var template = await Db.ContractTemplates
+            .FirstOrDefaultAsync(t => t.Id == templateId && t.SupplierId == id);
+        if (template is null) return NotFound(Error("Contract template not found."));
+
+        if (body.Name is not null)         template.Name         = body.Name.Trim();
+        if (body.HtmlTemplate is not null) template.HtmlTemplate = body.HtmlTemplate;
+        if (body.IsActive.HasValue)        template.IsActive     = body.IsActive.Value;
+        if (body.IsDefault == true)
+        {
+            await Db.ContractTemplates
+                .Where(t => t.SupplierId == id && t.IsDefault && t.Id != templateId)
+                .ExecuteUpdateAsync(s => s.SetProperty(t => t.IsDefault, false));
+            template.IsDefault = true;
+        }
+        else if (body.IsDefault == false)
+        {
+            template.IsDefault = false;
+        }
+
+        template.UpdatedAt = DateTime.UtcNow;
+        await Db.SaveChangesAsync();
+
+        return Ok(new ContractTemplateDto(
+            template.Id, template.Name, template.HtmlTemplate,
+            template.IsActive, template.IsDefault,
+            template.CreatedAt.ToString("o"), template.UpdatedAt.ToString("o")));
+    }
+
+    [HttpDelete("suppliers/{id:guid}/contracts/{templateId:guid}")]
+    public async Task<IActionResult> DeleteContractTemplate(Guid id, Guid templateId)
+    {
+        var template = await Db.ContractTemplates
+            .FirstOrDefaultAsync(t => t.Id == templateId && t.SupplierId == id);
+        if (template is null) return NotFound(Error("Contract template not found."));
+
+        Db.ContractTemplates.Remove(template);
+        await Db.SaveChangesAsync();
+        return NoContent();
+    }
+
     [HttpDelete("suppliers/demo")]
     public async Task<IActionResult> DeleteDemoSuppliers()
     {

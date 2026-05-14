@@ -2805,6 +2805,22 @@ public static class SeedData
             }
         }
 
+        // ─── Default contract template ─────────────────────────────────────────
+        if (!await db.ContractTemplates.AnyAsync(t => t.SupplierId == kookonId))
+        {
+            db.ContractTemplates.Add(new ContractTemplate
+            {
+                Id           = G("ct-kookon-default"),
+                SupplierId   = kookonId,
+                Name         = "Standard storage agreement",
+                IsDefault    = true,
+                IsActive     = true,
+                HtmlTemplate = DefaultContractHtml("Kookon OÜ"),
+                CreatedAt    = now,
+                UpdatedAt    = now,
+            });
+        }
+
         await db.SaveChangesAsync();
         Console.WriteLine($"[Seed] Kookon partner seeded (Development env): 1 supplier, {locations.Length} locations, {locations.Length * 3} listings.");
     }
@@ -3015,6 +3031,22 @@ public static class SeedData
             }
         }
 
+        // ─── Default contract template ─────────────────────────────────────────
+        if (!await db.ContractTemplates.AnyAsync(t => t.SupplierId == boxoId))
+        {
+            db.ContractTemplates.Add(new ContractTemplate
+            {
+                Id           = G("ct-boxo-default"),
+                SupplierId   = boxoId,
+                Name         = "Standard storage agreement",
+                IsDefault    = true,
+                IsActive     = true,
+                HtmlTemplate = DefaultContractHtml("BOXO OÜ"),
+                CreatedAt    = now,
+                UpdatedAt    = now,
+            });
+        }
+
         await db.SaveChangesAsync();
         Console.WriteLine($"[Seed] BOXO partner seeded (Development env): 1 supplier, {locations.Length} locations, {locations.Length * 3} listings.");
     }
@@ -3024,4 +3056,39 @@ public static class SeedData
     // ─────────────────────────────────────────────────────────────────────────
     private static DateTime Utc(int y, int mo, int d, int h = 0, int mi = 0)
         => new DateTime(y, mo, d, h, mi, 0, DateTimeKind.Utc);
+
+    // Uses a non-interpolated raw string to keep the {{variable}} template placeholders
+    // intact, then substitutes only the supplier name via .Replace().
+    private static string DefaultContractHtml(string supplierName) =>
+        """
+        <div style="font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto; padding: 40px 20px; color: #111;">
+          <h1 style="font-size: 22px; font-weight: bold; border-bottom: 2px solid #111; padding-bottom: 12px;">
+            STORAGE RENTAL AGREEMENT
+          </h1>
+          <p style="margin: 16px 0;"><strong>Service provider:</strong> __SUPPLIER__</p>
+          <p style="margin: 16px 0;"><strong>Tenant:</strong> {{tenant_name}}</p>
+          <p style="margin: 16px 0;"><strong>ID code:</strong> {{tenant_id_code}}</p>
+          <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;" />
+          <h2 style="font-size: 16px;">1. STORAGE UNIT</h2>
+          <p><strong>Unit:</strong> {{unit_title}}</p>
+          <p><strong>Address:</strong> {{unit_address}}</p>
+          <p><strong>Rental price:</strong> {{price}} {{price_unit}}</p>
+          <p><strong>Start date:</strong> {{start_date}}</p>
+          <h2 style="font-size: 16px; margin-top: 20px;">2. TERMS</h2>
+          <p>The tenant agrees to use the storage unit only for storing lawful personal or business goods.
+             Prohibited items include hazardous materials, perishable goods, and items prohibited by
+             Estonian law. The provider reserves the right to terminate this agreement with 30 days
+             written notice.</p>
+          <h2 style="font-size: 16px; margin-top: 20px;">3. PAYMENT</h2>
+          <p>Rent is payable in advance per the agreed billing period. Late payment incurs a
+             0.05% daily penalty on the outstanding amount.</p>
+          <h2 style="font-size: 16px; margin-top: 20px;">4. ACCESS</h2>
+          <p>Access to the storage unit is provided 24/7 via the Ruumly platform or the
+             provider's mobile application.</p>
+          <div style="margin-top: 40px; border-top: 1px solid #ddd; padding-top: 20px;">
+            <p><strong>Signed:</strong> {{signed_date}}</p>
+            <p style="margin-top: 16px;"><strong>Tenant signature:</strong></p>
+          </div>
+        </div>
+        """.Replace("__SUPPLIER__", supplierName);
 }
