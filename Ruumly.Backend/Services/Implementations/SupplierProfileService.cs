@@ -20,9 +20,20 @@ public class SupplierProfileService(RuumlyDbContext db, IDistributedCache cache)
         if (ReservedSlugs.Contains(slug)) return null;
 
         var cacheKey = $"supplier:profile:{slug}";
-        var cached   = await cache.GetStringAsync(cacheKey, ct);
+        var cached = await cache.GetStringAsync(cacheKey, ct);
         if (cached is not null)
-            return JsonSerializer.Deserialize<SupplierProfileDto>(cached);
+        {
+            try
+            {
+                var hit = JsonSerializer.Deserialize<SupplierProfileDto>(cached);
+                if (hit is not null) return hit;
+            }
+            catch (JsonException)
+            {
+                // Stale/incompatible cache entry — fall through to DB fetch.
+                await cache.RemoveAsync(cacheKey, ct);
+            }
+        }
 
         var supplier = await db.Suppliers
             .Include(s => s.Listings)

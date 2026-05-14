@@ -26,19 +26,30 @@ public class PlacesService(
             return null;   // feature disabled — no error surfaced to callers
 
         var cacheKey = $"places:{placeId}:{language}";
-        var cached   = await cache.GetStringAsync(cacheKey, ct);
+        var cached = await cache.GetStringAsync(cacheKey, ct);
         if (cached is not null)
-            return JsonSerializer.Deserialize<GooglePlaceSummaryDto>(cached);
+        {
+            try
+            {
+                var hit = JsonSerializer.Deserialize<GooglePlaceSummaryDto>(cached);
+                if (hit is not null) return hit;
+            }
+            catch (JsonException)
+            {
+                await cache.RemoveAsync(cacheKey, ct);
+            }
+        }
 
         var url = "https://maps.googleapis.com/maps/api/place/details/json" +
                   $"?place_id={Uri.EscapeDataString(placeId)}" +
                   "&fields=rating,user_ratings_total,reviews,url" +
                   $"&language={Uri.EscapeDataString(language)}" +
-                  "&reviews_sort=most_relevant" +
-                  $"&key={apiKey}";
+                  "&reviews_sort=most_relevant";
 
-        using var http     = httpFactory.CreateClient();
-        using var response = await http.GetAsync(url, ct);
+        using var http    = httpFactory.CreateClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Add("X-Goog-Api-Key", apiKey);
+        using var response = await http.SendAsync(request, ct);
         if (!response.IsSuccessStatusCode) return null;
 
         var json = await response.Content.ReadAsStringAsync(ct);

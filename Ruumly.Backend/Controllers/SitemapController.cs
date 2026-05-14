@@ -63,6 +63,7 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
         {
             ("",              "1.0", "daily"),
             ("/search",       "0.9", "daily"),
+            ("/blog",         "0.7", "weekly"),
             ("/about",        "0.6", "monthly"),
             ("/contact",      "0.6", "monthly"),
             ("/how-it-works", "0.7", "monthly"),
@@ -70,6 +71,7 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
             ("/provider",     "0.8", "weekly"),
             ("/terms",        "0.3", "yearly"),
             ("/privacy",      "0.3", "yearly"),
+            ("/cookies",      "0.3", "yearly"),
         };
 
         foreach (var (path, priority, freq) in staticPages)
