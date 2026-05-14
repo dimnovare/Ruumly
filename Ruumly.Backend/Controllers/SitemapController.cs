@@ -91,7 +91,7 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
         }
 
         var partners = await db.Suppliers
-            .Where(s => s.IsActive && s.Slug != null)
+            .Where(s => s.IsActive && s.Slug != null && s.IsPartnerPagePublished)
             .Select(s => new { s.Slug, s.UpdatedAt })
             .ToListAsync();
 
