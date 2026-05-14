@@ -637,10 +637,12 @@ public class AdminSuppliersController(
     // ── Contract template management ──────────────────────────────────────────
 
     [HttpGet("suppliers/{id:guid}/contracts")]
-    public async Task<IActionResult> GetContractTemplates(Guid id)
+    public async Task<IActionResult> GetContractTemplates(
+        Guid id,
+        [FromQuery] bool includeInactive = false)
     {
         var templates = await Db.ContractTemplates
-            .Where(t => t.SupplierId == id)
+            .Where(t => t.SupplierId == id && (includeInactive || t.IsActive))
             .OrderByDescending(t => t.IsDefault)
             .ThenBy(t => t.Name)
             .ToListAsync();

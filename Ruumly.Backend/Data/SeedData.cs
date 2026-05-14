@@ -2605,6 +2605,7 @@ public static class SeedData
             HeroImageUrl      = "https://www.kookon.ee/content/uploads/2021/09/Viimsi_01--450x272.jpg",
             WebsiteUrl        = "https://www.kookon.ee",
             FoundedYear       = 2016,                          // TODO confirm
+            IsPartnerPagePublished = true,
             LongDescriptionTranslationsJson = J(new
             {
                 et = "Kookon on innovaatiline iseteenindusladude lahendus — kontaktivaba rentimine, 24/7 ligipääs läbi mobiilirakenduse, päikeseenergia ja tipptasemel turvalahendused. 9 asukohta üle Tallinna piirkonna teevad sobiva laopinna leidmise lihtsaks. Kookoni Standard-tüüpi laopinnad on köetud, varustatud vee- ja kanalisatsioonivalmidusega ning tasuta internetiga; Light-tüüpi laopinnad on lihtsam ja soodsam lahendus puhtalt ladustamiseks.",
@@ -2890,6 +2891,7 @@ public static class SeedData
             HeroImageUrl      = "https://boxo.ee/_next/static/media/DSC03912.f8ea3d35.webp",
             WebsiteUrl        = "https://boxo.ee",
             FoundedYear       = 2021,
+            IsPartnerPagePublished = true,
             LongDescriptionTranslationsJson = J(new
             {
                 et = "BOXO pakub nutikaid mini-laopindu Tallinnas — täielikult veebis broneeritavad, professionaalse transporditeenusega kohale ja 15-minutilise ligipääsu seadistusega. 6 asukohta üle Tallinna, suurused 1,4 m² kuni 30 m² (XS kuni XL). Kõik laod on köetud, valvesignalisatsiooni ja videovalvega. Tegutseb nii Eestis kui Lätis (Riias).",
