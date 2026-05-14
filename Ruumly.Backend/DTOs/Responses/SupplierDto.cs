@@ -50,5 +50,11 @@ public record SupplierDto(
     string?   WebsiteUrl,
     int?      FoundedYear,
     string?   GooglePlaceId,
-    string?   PartnerPageUrl   // null when no slug, else "/partner/{slug}"
+    string?   PartnerPageUrl,  // null when no slug, else "/partner/{slug}"
+    // Polling fields
+    bool      PollingEnabled,
+    int       PollingIntervalMinutes,
+    string?   NextPollAt,      // ISO-8601, null if not yet scheduled
+    string?   LastPolledAt,    // ISO-8601, null if never polled
+    string?   LastPollStatus   // "ok" | "error" | null
 );

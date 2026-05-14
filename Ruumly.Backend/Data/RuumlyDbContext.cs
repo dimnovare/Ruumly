@@ -31,6 +31,7 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
     public DbSet<PayoutEntry> PayoutEntries => Set<PayoutEntry>();
     public DbSet<RebateInvoice> RebateInvoices => Set<RebateInvoice>();
     public DbSet<BlockedDate> BlockedDates => Set<BlockedDate>();
+    public DbSet<PollingLog> PollingLogs => Set<PollingLog>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -323,6 +324,16 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
         model.Entity<BlockedDate>()
             .HasIndex(b => new { b.LocationId, b.Date })
             .IsUnique();
+
+        // ─── PollingLog → Supplier (cascade delete) ───
+        model.Entity<PollingLog>()
+            .HasOne(p => p.Supplier)
+            .WithMany()
+            .HasForeignKey(p => p.SupplierId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        model.Entity<PollingLog>()
+            .HasIndex(p => new { p.SupplierId, p.Timestamp });
 
         // ─── PlatformSetting primary key ───
         model.Entity<PlatformSetting>().HasKey(s => s.Key);

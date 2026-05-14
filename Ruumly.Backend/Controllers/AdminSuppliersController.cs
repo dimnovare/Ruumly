@@ -20,7 +20,8 @@ public class AdminSuppliersController(
     IHttpClientFactory httpClientFactory,
     ILogger<AdminSuppliersController> logger,
     TokenProtector tokenProtector,
-    IPricingConfigService pricingConfigService) : AdminBaseController(db)
+    IPricingConfigService pricingConfigService,
+    ISupplierPollingService pollingService) : AdminBaseController(db)
 {
     [HttpGet("suppliers")]
     public async Task<IActionResult> GetSuppliers([FromQuery] int page = 1, [FromQuery] int limit = 50)
@@ -221,6 +222,16 @@ public class AdminSuppliersController(
             supplier.LongDescriptionTranslationsJson =
                 System.Text.Json.JsonSerializer.Serialize(existing);
         }
+
+        // ── Polling fields ────────────────────────────────────────────────────
+        if (body.PollingEnabled.HasValue)
+            supplier.PollingEnabled = body.PollingEnabled.Value;
+        if (body.PollingIntervalMinutes.HasValue &&
+            new[] { 15, 30, 60, 360, 1440 }.Contains(body.PollingIntervalMinutes.Value))
+            supplier.PollingIntervalMinutes = body.PollingIntervalMinutes.Value;
+        // When enabling polling, schedule the first poll immediately if not yet scheduled.
+        if (body.PollingEnabled == true && supplier.NextPollAt == null)
+            supplier.NextPollAt = DateTime.UtcNow;
 
         // Slug: validate uniqueness + shape, allow clearing.
         if (body.Slug is not null)
@@ -481,6 +492,54 @@ public class AdminSuppliersController(
             $"Linked to user {user.Email}");
 
         return Ok(new { message = "Supplier approved and user linked as provider." });
+    }
+
+    /// <summary>
+    /// Triggers an immediate API poll for the given supplier, bypassing the schedule.
+    /// Only works for Api-type integrations.
+    /// </summary>
+    [HttpPost("suppliers/{id:guid}/sync")]
+    public async Task<IActionResult> TriggerSync(Guid id)
+    {
+        var supplier = await Db.Suppliers.FindAsync(id);
+        if (supplier is null) return NotFound(Error("Supplier not found."));
+        if (supplier.IntegrationType != IntegrationType.Api)
+            return BadRequest(Error(
+                $"Manual sync is only available for API-type integrations. " +
+                $"This supplier uses '{supplier.IntegrationType}'."));
+
+        var result = await pollingService.PollSupplierAsync(id);
+        return Ok(new
+        {
+            result.Success,
+            result.Status,
+            result.ErrorMessage,
+            result.UnitsRefreshed,
+            result.DurationMs,
+        });
+    }
+
+    /// <summary>
+    /// Returns recent poll log entries for the given supplier, newest first.
+    /// </summary>
+    [HttpGet("suppliers/{id:guid}/poll-log")]
+    public async Task<IActionResult> GetPollLog(Guid id, [FromQuery] int limit = 20)
+    {
+        var logs = await Db.PollingLogs
+            .Where(p => p.SupplierId == id)
+            .OrderByDescending(p => p.Timestamp)
+            .Take(Math.Clamp(limit, 1, 100))
+            .Select(p => new
+            {
+                p.Id,
+                Timestamp      = p.Timestamp.ToString("o"),
+                p.Status,
+                p.ErrorMessage,
+                p.UnitsRefreshed,
+                p.DurationMs,
+            })
+            .ToListAsync();
+        return Ok(logs);
     }
 
     [HttpDelete("suppliers/demo")]

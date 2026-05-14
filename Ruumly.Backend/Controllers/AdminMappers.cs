@@ -80,7 +80,13 @@ internal static class AdminMappers
         WebsiteUrl:               s.WebsiteUrl,
         FoundedYear:              s.FoundedYear,
         GooglePlaceId:            s.GooglePlaceId,
-        PartnerPageUrl:           s.Slug != null ? $"/partner/{s.Slug}" : null);
+        PartnerPageUrl:           s.Slug != null ? $"/partner/{s.Slug}" : null,
+        // Polling fields
+        PollingEnabled:           s.PollingEnabled,
+        PollingIntervalMinutes:   s.PollingIntervalMinutes,
+        NextPollAt:               s.NextPollAt?.ToString("o"),
+        LastPolledAt:             s.LastPolledAt?.ToString("o"),
+        LastPollStatus:           s.LastPollStatus);
 
     internal static IntegrationSettingsDto MapIntegrationSettings(Models.IntegrationSettings i) => new(
         Id:                  i.Id,

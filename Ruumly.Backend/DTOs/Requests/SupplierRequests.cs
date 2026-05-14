@@ -52,7 +52,10 @@ public record UpdateSupplierRequest(
     int?     FoundedYear,
     bool?    FoundingPartner,
     bool?    IsVerified,
-    string?  GooglePlaceId);
+    string?  GooglePlaceId,
+    // Polling fields
+    bool?    PollingEnabled,
+    int?     PollingIntervalMinutes);
 
 public record UpdateProviderPartnerPageRequest(
     string? Tagline,

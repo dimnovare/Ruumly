@@ -286,6 +286,8 @@ builder.Services.AddScoped<IFeaturedPartnersService, FeaturedPartnersService>();
 builder.Services.AddScoped<ISupplierProfileService, SupplierProfileService>();
 builder.Services.AddScoped<IPaymentService, MontonioPaymentService>();
 builder.Services.AddScoped<IPlacesService, PlacesService>();
+builder.Services.AddScoped<ISupplierPollingService, SupplierPollingService>();
+builder.Services.AddScoped<SupplierPollingDispatcherJob>();
 builder.Services.AddHttpClient();
 
 // ─── Storage service ───
@@ -438,7 +440,10 @@ using (var scope = app.Services.CreateScope())
         x => x.ExecuteAsync(),
         "*/15 * * * *");
 
-
+    recurringJobManager.AddOrUpdate<SupplierPollingDispatcherJob>(
+        "supplier-polling-dispatcher",
+        x => x.ExecuteAsync(),
+        "*/5 * * * *");   // every 5 minutes — per-supplier interval governs actual cadence
 }
 
 app.MapControllers();

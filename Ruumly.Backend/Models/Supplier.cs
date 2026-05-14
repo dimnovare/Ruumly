@@ -17,6 +17,23 @@ public class Supplier
     public string? RecipientEmail { get; set; }
     public bool IsActive { get; set; } = true;
     public IntegrationHealth IntegrationHealth { get; set; } = IntegrationHealth.Healthy;
+
+    // ── API polling ───────────────────────────────────────────────────────────
+    /// <summary>Whether the platform should automatically poll this supplier's API.</summary>
+    public bool PollingEnabled { get; set; } = false;
+
+    /// <summary>Minutes between polls. Supported values: 15, 30, 60, 360, 1440.</summary>
+    public int PollingIntervalMinutes { get; set; } = 60;
+
+    /// <summary>When the next scheduled poll should fire. Null = not yet scheduled.</summary>
+    public DateTime? NextPollAt { get; set; }
+
+    /// <summary>When the most recent poll completed (regardless of outcome).</summary>
+    public DateTime? LastPolledAt { get; set; }
+
+    /// <summary>Quick status string for the admin list: "ok" | "error" | null.</summary>
+    public string? LastPollStatus { get; set; }
+
     public decimal PartnerDiscountRate { get; set; } = 0;
     public decimal ClientDiscountRate { get; set; } = 0;
     public string? Notes { get; set; }
