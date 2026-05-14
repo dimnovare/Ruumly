@@ -722,7 +722,12 @@ public class AdminSuppliersController(
             .FirstOrDefaultAsync(t => t.Id == templateId && t.SupplierId == id);
         if (template is null) return NotFound(Error("Contract template not found."));
 
-        Db.ContractTemplates.Remove(template);
+        // Soft-delete: deactivate instead of hard delete.
+        // Hard-deleting a template that has existing SignedContracts would leave
+        // dangling ContractTemplateId references.
+        template.IsActive  = false;
+        template.IsDefault = false;   // clear default so a new template can be set
+        template.UpdatedAt = DateTime.UtcNow;
         await Db.SaveChangesAsync();
         return NoContent();
     }
