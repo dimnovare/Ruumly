@@ -36,6 +36,10 @@ public class PricingConfigService(RuumlyDbContext db, IDistributedCache cache) :
         int I(string key, int fallback) =>
             settings.TryGetValue(key, out var v) && int.TryParse(v, out var i) ? i : fallback;
 
+        var starterCommission  = D("commission.starter",  12m);
+        var standardCommission = D("commission.standard",  8m);
+        var premiumCommission  = D("commission.premium",   6m);
+
         var config = new PricingConfig(
             DefaultPartnerDiscountRate: D("defaultPartnerDiscount", 15m),
             DefaultVatRate:             D("defaultVatRate",          24m),
@@ -44,6 +48,7 @@ public class PricingConfigService(RuumlyDbContext db, IDistributedCache cache) :
             Starter: new TierConfig(
                 CustomerDiscountRate:  D("tier.starter.customerDiscount", 5m),
                 MonthlyFee:            D("tier.starter.monthlyFee",       0m),
+                CommissionRate:        starterCommission,
                 MaxExtras:             I("tier.starter.maxExtras",        2),
                 CanHavePromotedBadge:  false,
                 HasFullAnalytics:      false,
@@ -53,6 +58,7 @@ public class PricingConfigService(RuumlyDbContext db, IDistributedCache cache) :
             Standard: new TierConfig(
                 CustomerDiscountRate:  D("tier.standard.customerDiscount", 5m),
                 MonthlyFee:            D("tier.standard.monthlyFee",       49m),
+                CommissionRate:        standardCommission,
                 MaxExtras:             I("tier.standard.maxExtras",        5),
                 CanHavePromotedBadge:  false,
                 HasFullAnalytics:      true,
@@ -62,6 +68,7 @@ public class PricingConfigService(RuumlyDbContext db, IDistributedCache cache) :
             Premium: new TierConfig(
                 CustomerDiscountRate:  D("tier.premium.customerDiscount", 5m),
                 MonthlyFee:            D("tier.premium.monthlyFee",       99m),
+                CommissionRate:        premiumCommission,
                 MaxExtras:             I("tier.premium.maxExtras",        999),
                 CanHavePromotedBadge:  true,
                 HasFullAnalytics:      true,
@@ -90,17 +97,15 @@ public class PricingConfigService(RuumlyDbContext db, IDistributedCache cache) :
         if (supplier.IsInOnboarding)
             return new EffectivePricing(SubscriptionFee: 0m, CommissionRate: 0m);
 
-        // Commission rate: paid tiers buy down commission
-        // Founding partners get a permanent 2% discount on whatever the base rate is for their tier
-        decimal baseCommission = supplier.Tier switch
-        {
-            SupplierTier.Premium  => 6m,
-            SupplierTier.Standard => 8m,
-            _                     => 12m,  // Starter = free tier
-        };
+        // Commission rate: driven by DB-configured tier rates
+        // Founding partners pay 0% commission as a permanent benefit
         decimal commission = supplier.FoundingPartner
-            ? Math.Max(0, baseCommission - 2m)
-            : baseCommission;
+            ? 0m
+            : supplier.Tier switch {
+                SupplierTier.Premium  => config.Premium.CommissionRate,
+                SupplierTier.Standard => config.Standard.CommissionRate,
+                _                     => config.Starter.CommissionRate,
+              };
 
         // Founding partners get 20% lifetime discount on any paid tier subscription
         decimal subscriptionFee = supplier.FoundingPartner

@@ -2395,6 +2395,9 @@ public static class SeedData
             ["tier.standard.monthlyFee"]       = ("49",  "Standard tier: monthly subscription fee (EUR)"),
             ["tier.premium.customerDiscount"]  = ("12",  "Premium tier: customer discount %"),
             ["tier.premium.monthlyFee"]        = ("99",  "Premium tier: monthly subscription fee (EUR)"),
+            ["commission.starter"]             = ("12",  "Starter tier commission %"),
+            ["commission.standard"]            = ("8",   "Standard tier commission %"),
+            ["commission.premium"]             = ("6",   "Premium tier commission %"),
             ["onboardingWindowDays"]           = ("90",  "Days of free onboarding for new suppliers"),
             // ── About page settings ────────────────────────────────────────
             ["aboutPage.enabled"]    = ("true",  "Controls whether /about renders at all"),

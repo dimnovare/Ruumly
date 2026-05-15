@@ -110,9 +110,9 @@ public class SettingsController(RuumlyDbContext db) : ControllerBase
             defaultVatRate         = c.DefaultVatRate,
             tiers = new
             {
-                starter  = new { c.Starter.CustomerDiscountRate,  c.Starter.MonthlyFee,  commissionRate = 12 },
-                standard = new { c.Standard.CustomerDiscountRate, c.Standard.MonthlyFee, commissionRate = 8  },
-                premium  = new { c.Premium.CustomerDiscountRate,  c.Premium.MonthlyFee,  commissionRate = 6  },
+                starter  = new { c.Starter.CustomerDiscountRate,  c.Starter.MonthlyFee,  commissionRate = (int)c.Starter.CommissionRate  },
+                standard = new { c.Standard.CustomerDiscountRate, c.Standard.MonthlyFee, commissionRate = (int)c.Standard.CommissionRate },
+                premium  = new { c.Premium.CustomerDiscountRate,  c.Premium.MonthlyFee,  commissionRate = (int)c.Premium.CommissionRate  },
             },
         });
     }

@@ -19,7 +19,8 @@ public class AuthController(
     RuumlyDbContext db,
     INotificationService notificationService,
     IConfiguration config,
-    IWebHostEnvironment env) : ControllerBase
+    IWebHostEnvironment env,
+    ILogger<AuthController> logger) : ControllerBase
 {
     // Sets the HttpOnly refresh-token cookie on every successful auth response.
     // SameSite=None because the frontend (ruumly.eu) and API (Railway) are on different origins.
@@ -485,28 +486,26 @@ public class AuthController(
 
     [HttpPost("notify-interest")]
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     public IActionResult NotifyInterest([FromBody] NotifyInterestRequest body)
     {
-        // Log for now — can implement email notification later
+        if (string.IsNullOrWhiteSpace(body.Email) ||
+            !body.Email.Contains('@') ||
+            body.Email.Length > 200)
+            return BadRequest(new { error = "Invalid email." });
+
+        logger.LogInformation("Notify-interest: {Email} for city {City}", body.Email, body.City);
         return Ok(new { success = true });
     }
 
     [HttpPatch("/api/supplier/tier")]
-    [Authorize(Roles = "Provider,Admin")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> ChangeTier([FromBody] ChangeTierRequest body)
     {
-        var userId = User.GetUserId();
-        var user   = await db.Users.FindAsync(userId);
+        if (!body.SupplierId.HasValue)
+            return BadRequest(new { error = "supplierId is required." });
 
-        Guid supplierId;
-        if (body.SupplierId.HasValue && User.GetUserRole() == UserRole.Admin)
-            supplierId = body.SupplierId.Value;
-        else if (user?.SupplierId is not null)
-            supplierId = user.SupplierId.Value;
-        else
-            return BadRequest(new { error = "No supplier linked." });
-
-        var supplier = await db.Suppliers.FindAsync(supplierId);
+        var supplier = await db.Suppliers.FindAsync(body.SupplierId.Value);
         if (supplier is null) return NotFound();
 
         if (!Enum.TryParse<SupplierTier>(body.Tier, ignoreCase: true, out var newTier))
