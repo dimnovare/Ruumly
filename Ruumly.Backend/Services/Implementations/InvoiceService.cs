@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Responses;
@@ -8,8 +9,11 @@ using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Services.Implementations;
 
-public class InvoiceService(RuumlyDbContext db) : IInvoiceService
+public class InvoiceService(RuumlyDbContext db, IHttpContextAccessor http) : IInvoiceService
 {
+    private string Lang => http.HttpContext?.Request.GetLang() ?? "et";
+    private string Msg(string key) => ErrorMessages.Get(key, Lang);
+
     public async Task<List<InvoiceDto>> GetAllAsync(Guid userId, UserRole role)
     {
         var query = db.Invoices
@@ -46,13 +50,13 @@ public class InvoiceService(RuumlyDbContext db) : IInvoiceService
         if (invoice is null) return null;
 
         if (role == UserRole.Customer && invoice.Booking.UserId != userId)
-            throw new ForbiddenException("You do not have access to this invoice.");
+            throw new ForbiddenException(Msg("BOOKING_NOT_FOUND"));
 
         if (role == UserRole.Provider)
         {
             var user = await db.Users.FindAsync(userId);
             if (user?.SupplierId is null || invoice.Booking.SupplierId != user.SupplierId.Value)
-                throw new ForbiddenException("You do not have access to this invoice.");
+                throw new ForbiddenException(Msg("BOOKING_NOT_FOUND"));
         }
 
         return MapToDto(invoice);

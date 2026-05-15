@@ -55,7 +55,7 @@ public class BookingService(
     public async Task<PaginatedResult<BookingDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 50, Guid? supplierId = null)
     {
         page  = Math.Max(1, page);
-        limit = Math.Clamp(limit, 1, 100);
+        limit = Math.Clamp(limit, 1, 200);
 
         var query = db.Bookings
             .Include(b => b.Listing).ThenInclude(l => l!.Location)
@@ -538,7 +538,10 @@ public class BookingService(
         InvoiceId: invoiceId,
         ReservedUntil: b.ReservedUntil?.ToString("yyyy-MM-ddTHH:mm:ssZ"),
         IsReservation: b.Status == BookingStatus.Reserved,
-        HasReview:     hasReview
+        HasReview:     hasReview,
+        ContactName:   b.ContactName,
+        ContactEmail:  b.ContactEmail,
+        ContactPhone:  b.ContactPhone
     );
 
     private static OrderSummaryDto MapOrderToDto(Order o) => new(

@@ -191,19 +191,31 @@ public class OrdersController(IOrderService orderService, RuumlyDbContext db) : 
         var since30    = now.AddDays(-30);
         var since7     = now.AddDays(-7);
 
-        var orders = await db.Orders
+        var counts = await db.Orders
             .Where(o => o.SupplierId == supplierId && o.CreatedAt > since30)
-            .Select(o => new { o.LeadStatus, o.CreatedAt })
+            .GroupBy(o => o.LeadStatus)
+            .Select(g => new { status = g.Key, count = g.Count() })
             .ToListAsync();
+
+        var statusMap = counts.ToDictionary(x => x.status, x => x.count);
+
+        var wonThisWeek  = await db.Orders
+            .CountAsync(o => o.SupplierId == supplierId
+                          && o.LeadStatus == LeadStatus.Won
+                          && o.CreatedAt > since7);
+        var lostThisWeek = await db.Orders
+            .CountAsync(o => o.SupplierId == supplierId
+                          && o.LeadStatus == LeadStatus.Lost
+                          && o.CreatedAt > since7);
 
         return Ok(new
         {
-            newCount       = orders.Count(o => o.LeadStatus == LeadStatus.New),
-            contactedCount = orders.Count(o => o.LeadStatus == LeadStatus.Contacted),
-            wonCount       = orders.Count(o => o.LeadStatus == LeadStatus.Won),
-            lostCount      = orders.Count(o => o.LeadStatus == LeadStatus.Lost),
-            wonThisWeek    = orders.Count(o => o.LeadStatus == LeadStatus.Won  && o.CreatedAt > since7),
-            lostThisWeek   = orders.Count(o => o.LeadStatus == LeadStatus.Lost && o.CreatedAt > since7),
+            newCount       = statusMap.GetValueOrDefault(LeadStatus.New,       0),
+            contactedCount = statusMap.GetValueOrDefault(LeadStatus.Contacted, 0),
+            wonCount       = statusMap.GetValueOrDefault(LeadStatus.Won,       0),
+            lostCount      = statusMap.GetValueOrDefault(LeadStatus.Lost,      0),
+            wonThisWeek,
+            lostThisWeek,
         });
     }
 }

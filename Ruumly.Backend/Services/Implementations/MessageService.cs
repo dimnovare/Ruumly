@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
@@ -9,8 +10,14 @@ using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Services.Implementations;
 
-public class MessageService(RuumlyDbContext db, INotificationService notificationService) : IMessageService
+public class MessageService(
+    RuumlyDbContext db,
+    INotificationService notificationService,
+    IHttpContextAccessor http) : IMessageService
 {
+    private string Lang => http.HttpContext?.Request.GetLang() ?? "et";
+    private string Msg(string key) => ErrorMessages.Get(key, Lang);
+
     public async Task<List<MessageDto>> GetByBookingIdAsync(Guid bookingId, Guid userId, UserRole role)
     {
         await VerifyAccessAsync(bookingId, userId, role);
@@ -174,7 +181,7 @@ public class MessageService(RuumlyDbContext db, INotificationService notificatio
         if (role == UserRole.Customer)
         {
             if (booking.UserId != userId)
-                throw new ForbiddenException("You do not have access to this booking.");
+                throw new ForbiddenException(Msg("BOOKING_NOT_FOUND"));
             return;
         }
 
@@ -187,7 +194,7 @@ public class MessageService(RuumlyDbContext db, INotificationService notificatio
                 : null;
 
         if (supplier is null || booking.SupplierId != supplier.Id)
-            throw new ForbiddenException("You do not have access to this booking.");
+            throw new ForbiddenException(Msg("BOOKING_NOT_FOUND"));
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
