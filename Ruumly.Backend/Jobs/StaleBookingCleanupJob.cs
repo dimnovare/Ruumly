@@ -28,6 +28,7 @@ public class StaleBookingCleanupJob(RuumlyDbContext db, ILogger<StaleBookingClea
                 Id        = Guid.NewGuid(),
                 BookingId = booking.Id,
                 Event     = "Auto-cancelled: no payment within 24h",
+                Status    = BookingStatus.Cancelled,
                 CreatedAt = DateTime.UtcNow,
             });
 

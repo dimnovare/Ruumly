@@ -48,6 +48,12 @@ public class BackgroundCleanupService(
 
         if (expired.Count == 0) return;
 
+        // Batch-load users to avoid N+1 queries
+        var userIds = expired.Select(b => b.UserId).Distinct().ToList();
+        var users   = await db.Users
+            .Where(u => userIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id);
+
         foreach (var booking in expired)
         {
             booking.Status    = BookingStatus.Cancelled;
@@ -65,27 +71,16 @@ public class BackgroundCleanupService(
             // Send expiry notification email
             if (!string.IsNullOrWhiteSpace(booking.ContactEmail))
             {
-                var bookingUser = await db.Users.FindAsync(booking.UserId);
-                var lang        = bookingUser?.Language ?? "et";
-                var t           = EmailTranslations.For(lang);
+                var lang         = users.GetValueOrDefault(booking.UserId)?.Language ?? "et";
+                var t            = EmailTranslations.For(lang);
                 var bookAgainUrl = $"{config["AppUrl"]}/listings";
                 var listingTitle = booking.Listing?.Title ?? "your listing";
 
-                var subject = lang == "et"
-                    ? $"Broneering #{booking.Id.ToString()[..8].ToUpper()} aegus"
-                    : $"Reservation #{booking.Id.ToString()[..8].ToUpper()} expired";
-
-                var body = lang == "et"
-                    ? $"Tere {booking.ContactName},\n\n"
-                      + $"Teie broneering teenusele \"{listingTitle}\" aegus, "
-                      + "kuna makset ei laekunud 24 tunni jooksul.\n\n"
-                      + $"Broneerige uuesti: {bookAgainUrl}\n\n"
-                      + "Ruumly\ninfo@ruumly.eu"
-                    : $"Hi {booking.ContactName},\n\n"
-                      + $"Your reservation for \"{listingTitle}\" has expired "
-                      + "because payment was not received within 24 hours.\n\n"
-                      + $"Book again: {bookAgainUrl}\n\n"
-                      + "Ruumly\ninfo@ruumly.eu";
+                var subject = $"Ruumly: {t.ReservationExpiredSubject}";
+                var body    = $"{t.ReservationExpiredGreeting.Replace("{name}", booking.ContactName)}\n\n"
+                            + $"{t.ReservationExpiredBody.Replace("{listing}", listingTitle)}\n\n"
+                            + $"{t.ReservationExpiredCta}: {bookAgainUrl}\n\n"
+                            + "Ruumly\ninfo@ruumly.eu";
 
                 try
                 {

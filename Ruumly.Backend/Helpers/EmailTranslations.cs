@@ -96,7 +96,12 @@ public static class EmailTranslations
         string AbandonedBody,
         string AbandonedService,
         string AbandonedTotal,
-        string AbandonedCta
+        string AbandonedCta,
+        // Reservation expired
+        string ReservationExpiredSubject,
+        string ReservationExpiredGreeting,
+        string ReservationExpiredBody,
+        string ReservationExpiredCta
     );
 
     private static readonly EmailStrings Et = new(
@@ -190,7 +195,11 @@ public static class EmailTranslations
         AbandonedBody:                 "Märkasime, et alustasite broneeringut, kuid makse on veel tegemata.",
         AbandonedService:              "Teenus",
         AbandonedTotal:                "Summa",
-        AbandonedCta:                  "Lõpetage broneering"
+        AbandonedCta:                  "Lõpetage broneering",
+        ReservationExpiredSubject:     "Broneering aegus",
+        ReservationExpiredGreeting:    "Tere {name},",
+        ReservationExpiredBody:        "Teie broneering teenusele \"{listing}\" aegus, kuna makset ei laekunud 24 tunni jooksul.",
+        ReservationExpiredCta:         "Broneerige uuesti"
     );
 
     private static readonly EmailStrings En = new(
@@ -284,7 +293,11 @@ public static class EmailTranslations
         AbandonedBody:                 "We noticed you started a booking but haven't completed payment yet.",
         AbandonedService:              "Service",
         AbandonedTotal:                "Total",
-        AbandonedCta:                  "Complete your booking"
+        AbandonedCta:                  "Complete your booking",
+        ReservationExpiredSubject:     "Reservation expired",
+        ReservationExpiredGreeting:    "Hi {name},",
+        ReservationExpiredBody:        "Your reservation for \"{listing}\" has expired because payment was not received within 24 hours.",
+        ReservationExpiredCta:         "Book again"
     );
 
     private static readonly EmailStrings Ru = new(
@@ -377,7 +390,11 @@ public static class EmailTranslations
         AbandonedBody:                 "Мы заметили, что вы начали бронирование, но ещё не оплатили.",
         AbandonedService:              "Услуга",
         AbandonedTotal:                "Сумма",
-        AbandonedCta:                  "Завершить бронирование"
+        AbandonedCta:                  "Завершить бронирование",
+        ReservationExpiredSubject:     "Бронирование истекло",
+        ReservationExpiredGreeting:    "Здравствуйте, {name},",
+        ReservationExpiredBody:        "Срок вашего бронирования \"{listing}\" истёк, так как оплата не поступила в течение 24 часов.",
+        ReservationExpiredCta:         "Забронировать снова"
     );
 
     private static readonly EmailStrings Lv = new(
@@ -471,7 +488,11 @@ public static class EmailTranslations
         AbandonedBody:                 "Mēs pamanījām, ka sākāt rezervāciju, bet vēl neesat veikuši maksājumu.",
         AbandonedService:              "Pakalpojums",
         AbandonedTotal:                "Summa",
-        AbandonedCta:                  "Pabeigt rezervāciju"
+        AbandonedCta:                  "Pabeigt rezervāciju",
+        ReservationExpiredSubject:     "Rezervācija beigusies",
+        ReservationExpiredGreeting:    "Sveiki, {name},",
+        ReservationExpiredBody:        "Jūsu rezervācija \"{listing}\" ir beigusies, jo maksājums netika saņemts 24 stundu laikā.",
+        ReservationExpiredCta:         "Rezervēt vēlreiz"
     );
 
     private static readonly EmailStrings Lt = new(
@@ -565,7 +586,11 @@ public static class EmailTranslations
         AbandonedBody:                 "Pastebėjome, kad pradėjote rezervaciją, bet dar neįvykdėte mokėjimo.",
         AbandonedService:              "Paslauga",
         AbandonedTotal:                "Suma",
-        AbandonedCta:                  "Užbaigti rezervaciją"
+        AbandonedCta:                  "Užbaigti rezervaciją",
+        ReservationExpiredSubject:     "Rezervacija baigėsi",
+        ReservationExpiredGreeting:    "Sveiki, {name},",
+        ReservationExpiredBody:        "Jūsų rezervacija \"{listing}\" baigėsi, nes mokėjimas negautas per 24 valandas.",
+        ReservationExpiredCta:         "Rezervuoti vėl"
     );
 
     public static EmailStrings For(string? lang) =>

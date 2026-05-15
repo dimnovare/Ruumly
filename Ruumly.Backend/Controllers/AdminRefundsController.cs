@@ -50,7 +50,7 @@ public class AdminRefundsController(
         {
             Id        = Guid.NewGuid(),
             BookingId = booking.Id,
-            Event     = "Tagastus algatatud",
+            Event     = "Refund initiated",
             Status    = booking.Status,
             CreatedAt = DateTime.UtcNow,
         });
@@ -61,8 +61,8 @@ public class AdminRefundsController(
         await notificationService.CreateAsync(
             userId:     booking.UserId,
             type:       NotificationType.Payment,
-            title:      "Tagastus algatatud",
-            desc:       $"Teie broneeringu #{booking.Id.ToString()[..8].ToUpper()} tagastus on algatatud. Summa kantakse teie kontole 3–5 tööpäeva jooksul.",
+            title:      "Refund initiated",
+            desc:       $"A refund for booking #{booking.Id.ToString()[..8].ToUpper()} has been initiated. The amount will be transferred to your account within 3–5 business days.",
             actionUrl:  $"/account?tab=bookings",
             entityId:   booking.Id.ToString(),
             entityType: "booking");
@@ -79,7 +79,7 @@ public class AdminRefundsController(
             invoiceId = invoice.Id,
             amount    = invoice.Amount,
             status    = invoice.Status.ToString().ToLower(),
-            message   = "Tagastus algatatud. Arve on märgitud ootel tagastuseks.",
+            message   = "Refund initiated. Invoice marked as pending refund.",
         });
     }
 

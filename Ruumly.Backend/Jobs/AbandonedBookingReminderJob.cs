@@ -26,11 +26,16 @@ public class AbandonedBookingReminderJob(
                      && !string.IsNullOrEmpty(b.ContactEmail))
             .ToListAsync();
 
+        // Batch-load users to avoid N+1 queries
+        var userIds = abandoned.Select(b => b.UserId).Distinct().ToList();
+        var users   = await db.Users
+            .Where(u => userIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id);
+
         foreach (var booking in abandoned)
         {
-            var user = await db.Users.FindAsync(booking.UserId);
-            var lang = user?.Language ?? "et";
-            var t    = EmailTranslations.For(lang);
+            var lang       = users.GetValueOrDefault(booking.UserId)?.Language ?? "et";
+            var t          = EmailTranslations.For(lang);
             var bookingUrl = $"{config["AppUrl"]}/account?tab=bookings";
 
             var subject = $"Ruumly: {t.AbandonedSubject}";
@@ -41,9 +46,18 @@ public class AbandonedBookingReminderJob(
                           $"{t.AbandonedCta}: {bookingUrl}\n\n" +
                           $"Ruumly\ninfo@ruumly.eu";
 
-            await emailSender.SendAsync(booking.ContactEmail!, subject, body);
-            logger.LogInformation("Abandoned booking reminder sent to {Email} for {Id}",
-                booking.ContactEmail, booking.Id);
+            try
+            {
+                await emailSender.SendAsync(booking.ContactEmail!, subject, body);
+                logger.LogInformation("Abandoned booking reminder sent to {Email} for {Id}",
+                    booking.ContactEmail, booking.Id);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex,
+                    "Failed to send abandoned booking reminder for booking {BookingId}",
+                    booking.Id);
+            }
         }
 
         logger.LogInformation("Abandoned booking check: {Count} reminders sent", abandoned.Count);
