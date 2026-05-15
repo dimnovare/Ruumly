@@ -184,14 +184,21 @@ public class AdminRebateController(RuumlyDbContext db) : AdminBaseController(db)
     [Authorize(Roles = "Provider,Admin")]
     public async Task<IActionResult> GetForSupplier()
     {
-        var userId     = User.GetUserId();
-        var supplierId = User.IsInRole("Admin")
-            ? (HttpContext.Request.Query.TryGetValue("supplierId", out var sv)
-                ? Guid.Parse(sv!) : (Guid?)null)
-            : (await Db.Users.FindAsync(userId))?.SupplierId;
+        Guid? supplierId;
+        if (User.IsInRole("Admin"))
+        {
+            var sv = Request.Query["supplierId"].FirstOrDefault();
+            supplierId = sv is not null ? Guid.Parse(sv) : null;
+        }
+        else
+        {
+            var userId = User.GetUserId();
+            var user   = await Db.Users.FindAsync(userId);
+            supplierId = user?.SupplierId;
+        }
 
         if (supplierId is null)
-            return BadRequest(new { error = "No supplier linked." });
+            return BadRequest(Error("No supplier linked."));
 
         var invoices = await Db.RebateInvoices
             .Where(r => r.SupplierId == supplierId)

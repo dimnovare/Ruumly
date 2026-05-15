@@ -4,7 +4,7 @@ public static class LangExtensions
 {
     /// <summary>
     /// Reads the Accept-Language header from the
-    /// request and returns "et", "en", or "ru".
+    /// request and returns "et", "en", "ru", "lv", or "lt".
     /// </summary>
     public static string GetLang(this HttpRequest request)
     {
@@ -12,6 +12,6 @@ public static class LangExtensions
         if (string.IsNullOrWhiteSpace(header))
             return "et";
         var primary = header.Split(',')[0].Split('-')[0].Trim().ToLower();
-        return primary is "en" or "ru" ? primary : "et";
+        return primary is "en" or "ru" or "lv" or "lt" ? primary : "et";
     }
 }

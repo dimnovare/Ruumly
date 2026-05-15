@@ -74,7 +74,8 @@ public class AuthService(
             PasswordHash              = BC.HashPassword(request.Password, workFactor: 12),
             Role                      = UserRole.Customer,
             Status                    = UserStatus.Active,
-            Language                  = request.Language is "en" or "ru" ? request.Language : "et",
+            Language                  = request.Language is "en" or "ru" or "lv" or "lt"
+                                        ? request.Language : "et",
             RegisteredAt              = DateTime.UtcNow,
             EmailVerified             = false,
             EmailVerificationToken    = HashToken(verifyToken),

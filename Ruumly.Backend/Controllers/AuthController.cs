@@ -156,7 +156,7 @@ public class AuthController(
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
     {
         await authService.ChangePasswordAsync(User.GetUserId(), request);
-        return Ok(new { message = "Parool uuendatud." });
+        return Ok(new { message = "Password updated successfully." });
     }
 
     /// <summary>Update the authenticated user's own profile (name, phone, company).</summary>
@@ -208,9 +208,9 @@ public class AuthController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateLanguage([FromBody] UpdateLanguageRequest request)
     {
-        var validLangs = new[] { "et", "en", "ru" };
+        var validLangs = new[] { "et", "en", "ru", "lv", "lt" };
         if (!validLangs.Contains(request.Language))
-            return BadRequest(new { message = "Invalid language. Use et, en, or ru." });
+            return BadRequest(new { message = "Invalid language. Use et, en, ru, lv, or lt." });
 
         await authService.UpdateLanguageAsync(User.GetUserId(), request.Language);
         return NoContent();
@@ -343,7 +343,7 @@ public class AuthController(
     {
         var userId = User.GetUserId();
         await authService.ResendVerificationEmailAsync(userId);
-        return Ok(new { message = "Kinnitusmeil on uuesti saadetud." });
+        return Ok(new { message = "Verification email resent." });
     }
 
     [HttpDelete("account")]
