@@ -120,6 +120,7 @@ else
 {
     builder.Services.AddDistributedMemoryCache();
 }
+builder.Services.AddResponseCaching();
 
 // ─── Rate limiting (per-client partitioned) ───
 static string IpKey(HttpContext ctx) =>
@@ -401,6 +402,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("Frontend");
+app.UseResponseCaching();
 app.UseSentryTracing();
 app.UseAuthentication();
 app.UseAuthorization();
