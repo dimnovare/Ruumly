@@ -755,13 +755,68 @@ public class AdminSuppliersController(
             .Where(s => s.Name.StartsWith("[Demo]"))
             .ToListAsync();
 
-        foreach (var supplier in demoSuppliers)
+        var supplierIds = demoSuppliers.Select(s => s.Id).ToList();
+
+        // Collect IDs needed for child-table deletes
+        var locationIds = await Db.SupplierLocations
+            .Where(l => supplierIds.Contains(l.SupplierId))
+            .Select(l => l.Id).ToListAsync();
+
+        var listingIds = await Db.Listings
+            .Where(l => supplierIds.Contains(l.SupplierId))
+            .Select(l => l.Id).ToListAsync();
+
+        var bookingIds = listingIds.Count == 0 ? [] : await Db.Bookings
+            .IgnoreQueryFilters()
+            .Where(b => listingIds.Contains(b.ListingId))
+            .Select(b => b.Id).ToListAsync();
+
+        var orderIds = await Db.Orders
+            .IgnoreQueryFilters()
+            .Where(o => supplierIds.Contains(o.SupplierId))
+            .Select(o => o.Id).ToListAsync();
+
+        // Delete leaf → root
+        if (locationIds.Count > 0)
+            await Db.BlockedDates.Where(b => locationIds.Contains(b.LocationId)).ExecuteDeleteAsync();
+
+        if (bookingIds.Count > 0)
         {
-            var listings = await Db.Listings.Where(l => l.SupplierId == supplier.Id).ToListAsync();
-            Db.Listings.RemoveRange(listings);
-            Db.Suppliers.Remove(supplier);
+            await Db.SignedContracts.Where(sc => bookingIds.Contains(sc.BookingId)).ExecuteDeleteAsync();
+            await Db.Messages.Where(m => bookingIds.Contains(m.BookingId)).ExecuteDeleteAsync();
+            await Db.Reviews.Where(r => bookingIds.Contains(r.BookingId)).ExecuteDeleteAsync();
+            await Db.Invoices.Where(i => bookingIds.Contains(i.BookingId)).ExecuteDeleteAsync();
+            await Db.BookingTimelines.Where(bt => bookingIds.Contains(bt.BookingId)).ExecuteDeleteAsync();
         }
 
+        if (orderIds.Count > 0)
+        {
+            await Db.FulfillmentEvents.Where(fe => orderIds.Contains(fe.OrderId)).ExecuteDeleteAsync();
+            await Db.OrderTimelines.Where(ot => orderIds.Contains(ot.OrderId)).ExecuteDeleteAsync();
+            await Db.Orders.IgnoreQueryFilters()
+                .Where(o => orderIds.Contains(o.Id)).ExecuteDeleteAsync();
+        }
+
+        if (bookingIds.Count > 0)
+            await Db.Bookings.IgnoreQueryFilters()
+                .Where(b => bookingIds.Contains(b.Id)).ExecuteDeleteAsync();
+
+        if (listingIds.Count > 0)
+        {
+            await Db.ListingExtras.Where(le => listingIds.Contains(le.ListingId)).ExecuteDeleteAsync();
+            await Db.Listings.Where(l => listingIds.Contains(l.Id)).ExecuteDeleteAsync();
+        }
+
+        await Db.PayoutEntries.Where(pe => supplierIds.Contains(pe.SupplierId)).ExecuteDeleteAsync();
+        await Db.RebateInvoices.Where(ri => supplierIds.Contains(ri.SupplierId)).ExecuteDeleteAsync();
+        await Db.PollingLogs.Where(pl => supplierIds.Contains(pl.SupplierId)).ExecuteDeleteAsync();
+        await Db.OrderRoutingRules
+            .Where(rr => rr.SupplierId.HasValue && supplierIds.Contains(rr.SupplierId.Value))
+            .ExecuteDeleteAsync();
+        await Db.ContractTemplates.Where(ct => supplierIds.Contains(ct.SupplierId)).ExecuteDeleteAsync();
+        await Db.SupplierLocations.Where(sl => supplierIds.Contains(sl.SupplierId)).ExecuteDeleteAsync();
+        await Db.IntegrationSettings.Where(si => supplierIds.Contains(si.SupplierId)).ExecuteDeleteAsync();
+        Db.Suppliers.RemoveRange(demoSuppliers);
         await Db.SaveChangesAsync();
         return Ok(new { removedSuppliers = demoSuppliers.Count });
     }

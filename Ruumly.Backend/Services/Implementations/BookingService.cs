@@ -198,6 +198,30 @@ public class BookingService(
                 .FirstOrDefaultAsync(l => l.Id == request.ListingId && l.IsActive)
                 ?? throw new NotFoundException(Msg("LISTING_NOT_FOUND"));
 
+            // 1a. BlockedDates check — reject if any day in the range is blocked for this location
+            if (listing.LocationId.HasValue &&
+                DateOnly.TryParseExact(request.StartDate, "yyyy-MM-dd",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None,
+                    out var bookingStartDate))
+            {
+                var bookingEndDate = (!string.IsNullOrEmpty(request.EndDate) &&
+                    DateOnly.TryParseExact(request.EndDate, "yyyy-MM-dd",
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        System.Globalization.DateTimeStyles.None,
+                        out var parsedEnd))
+                    ? parsedEnd
+                    : bookingStartDate;
+
+                var hasBlockedDate = await db.BlockedDates.AnyAsync(b =>
+                    b.LocationId == listing.LocationId.Value &&
+                    b.Date >= bookingStartDate &&
+                    b.Date <= bookingEndDate);
+
+                if (hasBlockedDate)
+                    throw new ConflictException(Msg("DATES_BLOCKED"));
+            }
+
             // 1b. Check for overlapping confirmed/active bookings on this listing
             // Moving-type listings are one-time services with no date range — skip overlap check.
             if (listing.Type != ListingType.Moving &&
