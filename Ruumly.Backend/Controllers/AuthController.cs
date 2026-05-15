@@ -398,6 +398,7 @@ public class AuthController(
 
     [HttpGet("account/export")]
     [Authorize]
+    [EnableRateLimiting("auth")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> ExportData()
     {
@@ -419,6 +420,8 @@ public class AuthController(
 
         var messages = await db.Messages
             .Where(m => m.UserId == userId)
+            .OrderByDescending(m => m.CreatedAt)
+            .Take(500)
             .ToListAsync();
 
         var reviews = await db.Reviews

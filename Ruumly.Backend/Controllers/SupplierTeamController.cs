@@ -212,6 +212,7 @@ public class SupplierTeamController(
     // PATCH /api/supplier/profile
     [HttpPatch("profile")]
     [Authorize(Roles = "Provider")]
+    [EnableRateLimiting("user")]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateSupplierProfileRequest body)
     {
         var userId = User.GetUserId();
@@ -240,8 +241,20 @@ public class SupplierTeamController(
             supplier.RegistryCode = string.IsNullOrEmpty(trimmed) ? null : trimmed;
         }
 
-        if (body.ContactName  is not null) supplier.ContactName  = body.ContactName;
-        if (body.ContactEmail is not null) supplier.ContactEmail = body.ContactEmail;
+        if (body.ContactName is not null) supplier.ContactName = body.ContactName;
+
+        if (body.ContactEmail is not null)
+        {
+            var email = body.ContactEmail.Trim();
+            if (email.Length > 0)
+            {
+                if (!email.Contains('@') || email.Length > 320 ||
+                    !System.Net.Mail.MailAddress.TryCreate(email, out _))
+                    return BadRequest(new { error = "Invalid contact email format." });
+                supplier.ContactEmail = email;
+            }
+        }
+
         if (body.ContactPhone is not null) supplier.ContactPhone = body.ContactPhone;
 
         supplier.UpdatedAt = DateTime.UtcNow;
@@ -277,6 +290,16 @@ public class SupplierTeamController(
             if (supplierId is null)
                 return BadRequest(new { error = "No supplier linked." });
             effectiveSupplierId = supplierId;
+        }
+
+        // Tier gate — non-admin providers on Starter tier cannot access analytics
+        if (User.GetUserRole() != UserRole.Admin && effectiveSupplierId.HasValue)
+        {
+            var analyticsSupplier = await db.Suppliers.FindAsync(effectiveSupplierId.Value);
+            var analyticsConfig   = await pricingConfigService.GetAsync();
+            if (analyticsSupplier is not null &&
+                !analyticsConfig.ForTier(analyticsSupplier.Tier).HasFullAnalytics)
+                return Forbid();
         }
 
         var sixMonthsAgo = DateTime.UtcNow.AddMonths(-6);
@@ -329,6 +352,15 @@ public class SupplierTeamController(
                    (b.Status == BookingStatus.Reserved || b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Active))
             .ToListAsync();
 
+        // Strip CRLF/newlines from user-supplied iCal fields to prevent injection
+        static string IcalSafe(string? value, int maxLen = 150)
+        {
+            var s = (value ?? string.Empty)
+                .Replace("\r\n", " ").Replace("\r", " ").Replace("\n", " ")
+                .Trim();
+            return s[..Math.Min(s.Length, maxLen)];
+        }
+
         var sb = new StringBuilder();
         sb.AppendLine("BEGIN:VCALENDAR");
         sb.AppendLine("VERSION:2.0");
@@ -340,8 +372,8 @@ public class SupplierTeamController(
             sb.AppendLine($"UID:{b.Id}@ruumly.eu");
             sb.AppendLine($"DTSTART;VALUE=DATE:{b.StartDate:yyyyMMdd}");
             if (b.EndDate.HasValue) sb.AppendLine($"DTEND;VALUE=DATE:{b.EndDate.Value:yyyyMMdd}");
-            sb.AppendLine($"SUMMARY:{b.Listing?.Title ?? "Booking"} - {b.ContactName}");
-            sb.AppendLine($"DESCRIPTION:Booking #{b.Id}\\nCustomer: {b.ContactName}\\n{b.ContactEmail}\\n{b.ContactPhone}");
+            sb.AppendLine($"SUMMARY:{IcalSafe(b.Listing?.Title ?? "Booking")} - {IcalSafe(b.ContactName)}");
+            sb.AppendLine($"DESCRIPTION:Booking #{b.Id}\\nCustomer: {IcalSafe(b.ContactName)}\\n{IcalSafe(b.ContactEmail)}\\n{IcalSafe(b.ContactPhone)}");
             sb.AppendLine("STATUS:CONFIRMED");
             sb.AppendLine("END:VEVENT");
         }
