@@ -476,7 +476,7 @@ public class AdminSuppliersController(
         return Ok(new { supplierId = supplier.Id, priorityLevel = level.ToString() });
     }
 
-    [HttpPost("suppliers/{id}/approve-application")]
+    [HttpPost("suppliers/{id:guid}/approve-application")]
     public async Task<IActionResult> ApproveApplication(Guid id, [FromQuery] Guid userId)
     {
         var supplier = await Db.Suppliers.FindAsync(id);

@@ -61,6 +61,7 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
     /// Customer can only cancel their own bookings.
     /// </summary>
     [HttpPatch("{id:guid}/cancel")]
+    [EnableRateLimiting("user")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
