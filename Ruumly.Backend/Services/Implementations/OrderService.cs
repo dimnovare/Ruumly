@@ -102,6 +102,12 @@ public class OrderService(
         var order = await LoadOrder(id)
             ?? throw new NotFoundException(Msg("ORDER_NOT_FOUND"));
 
+        // Ownership check — Provider can only act on their own supplier's orders
+        var approver = await db.Users.FindAsync(approvedByUserId);
+        if (approver?.Role == UserRole.Provider &&
+            approver.SupplierId != order.SupplierId)
+            throw new ForbiddenException(Msg("ORDER_NOT_FOUND"));
+
         if (order.Status != OrderStatus.Created && order.Status != OrderStatus.Sending)
             throw new ArgumentException(Msg("ORDER_WRONG_STATUS"));
 
@@ -113,7 +119,6 @@ public class OrderService(
             && invoice.Status != InvoiceStatus.Paid)
             throw new ArgumentException(Msg("INVOICE_NOT_PAID"));
 
-        var approver = await db.Users.FindAsync(approvedByUserId);
         var approverName = approver?.Name ?? approvedByUserId.ToString();
 
         var tl = EmailTranslations.For((await db.Users.FindAsync(order.Booking?.UserId))?.Language);
@@ -192,7 +197,12 @@ public class OrderService(
         var order = await LoadOrder(id)
             ?? throw new NotFoundException(Msg("ORDER_NOT_FOUND"));
 
+        // Ownership check — Provider can only act on their own supplier's orders
         var rejecter = await db.Users.FindAsync(rejectedByUserId);
+        if (rejecter?.Role == UserRole.Provider &&
+            rejecter.SupplierId != order.SupplierId)
+            throw new ForbiddenException(Msg("ORDER_NOT_FOUND"));
+
         var rejecterName = rejecter?.Name ?? rejectedByUserId.ToString();
 
         var tl = EmailTranslations.For((await db.Users.FindAsync(order.Booking?.UserId))?.Language);
@@ -261,7 +271,12 @@ public class OrderService(
         var order = await LoadOrder(id)
             ?? throw new NotFoundException(Msg("ORDER_NOT_FOUND"));
 
-        var confirmer     = await db.Users.FindAsync(confirmedByUserId);
+        // Ownership check — Provider can only act on their own supplier's orders
+        var confirmer = await db.Users.FindAsync(confirmedByUserId);
+        if (confirmer?.Role == UserRole.Provider &&
+            confirmer.SupplierId != order.SupplierId)
+            throw new ForbiddenException(Msg("ORDER_NOT_FOUND"));
+
         var confirmerName = confirmer?.Name ?? "Partner";
 
         var tl = EmailTranslations.For((await db.Users.FindAsync(order.Booking?.UserId))?.Language);

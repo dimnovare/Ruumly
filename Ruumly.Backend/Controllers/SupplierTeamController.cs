@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
@@ -67,6 +68,7 @@ public class SupplierTeamController(
 
     // POST /api/supplier/team/invite
     [HttpPost("team/invite")]
+    [EnableRateLimiting("user")]
     public async Task<IActionResult> InviteMember([FromBody] InviteTeamMemberRequest request)
     {
         var userId     = User.GetUserId();
@@ -89,6 +91,9 @@ public class SupplierTeamController(
         {
             if (existing.SupplierId == supplierId)
                 return Conflict(new { message = "User is already a member of this team." });
+
+            if (existing.SupplierId.HasValue && existing.SupplierId != supplierId)
+                return Conflict(new { message = "This user is already linked to another supplier." });
 
             existing.SupplierId = supplierId;
             existing.Role       = UserRole.Provider;
