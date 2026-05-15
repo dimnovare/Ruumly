@@ -118,8 +118,15 @@ public class MessageService(RuumlyDbContext db, INotificationService notificatio
         await db.SaveChangesAsync();
     }
 
-    public async Task<int> GetUnreadCountAsync(Guid userId, UserRole role, string callerFrom)
+    public async Task<int> GetUnreadCountAsync(Guid userId, UserRole role)
     {
+        var callerSender = role switch
+        {
+            UserRole.Provider => MessageSender.Provider,
+            UserRole.Admin    => MessageSender.Admin,
+            _                 => MessageSender.Customer,
+        };
+
         if (role == UserRole.Customer)
         {
             var bookingIds = await db.Bookings
@@ -130,7 +137,7 @@ public class MessageService(RuumlyDbContext db, INotificationService notificatio
             return await db.Messages
                 .CountAsync(m => bookingIds.Contains(m.BookingId)
                               && !m.Read
-                              && m.From.ToString().ToLower() != callerFrom);
+                              && m.From != callerSender);
         }
 
         // Provider/Admin: messages on their supplier's bookings
@@ -145,7 +152,7 @@ public class MessageService(RuumlyDbContext db, INotificationService notificatio
         return await db.Messages
             .CountAsync(m => supplierBookingIds.Contains(m.BookingId)
                           && !m.Read
-                          && m.From.ToString().ToLower() != callerFrom);
+                          && m.From != callerSender);
     }
 
     // ─── Access guard ─────────────────────────────────────────────────────────

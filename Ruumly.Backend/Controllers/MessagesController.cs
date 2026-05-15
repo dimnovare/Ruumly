@@ -54,16 +54,9 @@ public class MessagesController(IMessageService messageService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUnreadCount()
     {
-        var userId     = User.GetUserId();
-        var role       = User.GetUserRole();
-        var callerFrom = role switch
-        {
-            UserRole.Provider => "provider",
-            UserRole.Admin    => "admin",
-            _                 => "customer",
-        };
-
-        var count = await messageService.GetUnreadCountAsync(userId, role, callerFrom);
+        var userId = User.GetUserId();
+        var role   = User.GetUserRole();
+        var count  = await messageService.GetUnreadCountAsync(userId, role);
         return Ok(new { count });
     }
 

@@ -3,14 +3,18 @@ using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Models.Enums;
+using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Controllers;
 
 [Route("api/admin/dashboard")]
-public class AdminDashboardController(RuumlyDbContext db) : AdminBaseController(db)
+public class AdminDashboardController(
+    RuumlyDbContext db,
+    IPricingConfigService pricingConfigService) : AdminBaseController(db)
 {
     // ── GET /api/admin/dashboard/stats ─────────────────────────────────────────
     [HttpGet("stats")]
+    [ResponseCache(Duration = 60)]
     public async Task<IActionResult> GetStats()
     {
         var monthStart = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -74,6 +78,9 @@ public class AdminDashboardController(RuumlyDbContext db) : AdminBaseController(
             _      => new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc),
         };
 
+        var pricingConfig      = await pricingConfigService.GetAsync();
+        var defaultSupplierRate = 1m - (pricingConfig.DefaultPartnerDiscountRate / 100m);
+
         var query = Db.Bookings
             .Where(b => !b.IsDeleted && b.CreatedAt >= periodStart);
 
@@ -90,7 +97,9 @@ public class AdminDashboardController(RuumlyDbContext db) : AdminBaseController(
                 gmv              = g.Sum(b => b.Total),
                 customerPaid     = g.Sum(b => b.PlatformPrice + b.ExtrasTotal),
                 avgMarginPercent = g.Average(b =>
-                    b.BasePrice > 0 ? (b.PlatformPrice - b.BasePrice * 0.85m) / b.BasePrice * 100 : 0),
+                    b.BasePrice > 0
+                        ? (b.PlatformPrice - b.BasePrice * defaultSupplierRate) / b.BasePrice * 100
+                        : 0m),
             })
             .OrderByDescending(x => x.gmv)
             .ToListAsync();

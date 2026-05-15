@@ -9,5 +9,5 @@ public interface IMessageService
     Task<List<MessageDto>> GetByBookingIdAsync(Guid bookingId, Guid userId, UserRole role);
     Task<MessageDto>       SendAsync(Guid bookingId, SendMessageRequest request, Guid userId, UserRole role);
     Task                   MarkReadAsync(Guid bookingId, Guid userId, UserRole role);
-    Task<int>              GetUnreadCountAsync(Guid userId, UserRole role, string callerFrom);
+    Task<int>              GetUnreadCountAsync(Guid userId, UserRole role);
 }
