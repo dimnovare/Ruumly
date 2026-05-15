@@ -111,7 +111,7 @@ public class OrderService(
         if (invoice is not null
             && invoice.PaymentMethod != "later"
             && invoice.Status != InvoiceStatus.Paid)
-            throw new ArgumentException("Cannot dispatch — invoice not paid yet.");
+            throw new ArgumentException(Msg("INVOICE_NOT_PAID"));
 
         var approver = await db.Users.FindAsync(approvedByUserId);
         var approverName = approver?.Name ?? approvedByUserId.ToString();

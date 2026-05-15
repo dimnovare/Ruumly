@@ -2,6 +2,7 @@ using Asp.Versioning;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Npgsql;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs;
@@ -21,7 +22,8 @@ public class AdminSuppliersController(
     ILogger<AdminSuppliersController> logger,
     TokenProtector tokenProtector,
     IPricingConfigService pricingConfigService,
-    ISupplierPollingService pollingService) : AdminBaseController(db)
+    ISupplierPollingService pollingService,
+    IDistributedCache cache) : AdminBaseController(db)
 {
     [HttpGet("suppliers")]
     public async Task<IActionResult> GetSuppliers([FromQuery] int page = 1, [FromQuery] int limit = 50)
@@ -272,6 +274,9 @@ public class AdminSuppliersController(
         supplier.UpdatedAt = DateTime.UtcNow;
         await Audit("supplier.updated", User.GetUserEmail(), supplier.Name, null);
         await Db.SaveChangesAsync();
+
+        if (supplier.Slug is not null)
+            await cache.RemoveAsync($"supplier:profile:{supplier.Slug}");
 
         var pricingConfig = await pricingConfigService.GetAsync();
         return Ok(AdminMappers.MapSupplier(supplier, 0, 0m, 0, false, pricingConfig));

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.Helpers;
@@ -10,7 +11,7 @@ namespace Ruumly.Backend.Controllers;
 [ApiController]
 [Route("api/provider")]
 [Authorize(Roles = "Provider,Admin")]
-public class ProviderPartnerPageController(RuumlyDbContext db) : ControllerBase
+public class ProviderPartnerPageController(RuumlyDbContext db, IDistributedCache cache) : ControllerBase
 {
     // Resolve the supplier for the caller: admin must pass ?supplierId=, provider uses own link.
     private async Task<Guid?> ResolveSupplierIdAsync()
@@ -59,6 +60,8 @@ public class ProviderPartnerPageController(RuumlyDbContext db) : ControllerBase
             LongDescriptionEt  = AdminMappers.ParseLang(s.LongDescriptionTranslationsJson, "et"),
             LongDescriptionEn  = AdminMappers.ParseLang(s.LongDescriptionTranslationsJson, "en"),
             LongDescriptionRu  = AdminMappers.ParseLang(s.LongDescriptionTranslationsJson, "ru"),
+            LongDescriptionLv  = AdminMappers.ParseLang(s.LongDescriptionTranslationsJson, "lv"),
+            LongDescriptionLt  = AdminMappers.ParseLang(s.LongDescriptionTranslationsJson, "lt"),
             s.LogoUrl,
             s.HeroImageUrl,
             s.WebsiteUrl,
@@ -107,7 +110,9 @@ public class ProviderPartnerPageController(RuumlyDbContext db) : ControllerBase
 
         if (body.LongDescriptionEt is not null ||
             body.LongDescriptionEn is not null ||
-            body.LongDescriptionRu is not null)
+            body.LongDescriptionRu is not null ||
+            body.LongDescriptionLv is not null ||
+            body.LongDescriptionLt is not null)
         {
             var existing = new Dictionary<string, string?>();
             if (!string.IsNullOrEmpty(s.LongDescriptionTranslationsJson))
@@ -123,12 +128,17 @@ public class ProviderPartnerPageController(RuumlyDbContext db) : ControllerBase
             if (body.LongDescriptionEt is not null) existing["et"] = body.LongDescriptionEt;
             if (body.LongDescriptionEn is not null) existing["en"] = body.LongDescriptionEn;
             if (body.LongDescriptionRu is not null) existing["ru"] = body.LongDescriptionRu;
+            if (body.LongDescriptionLv is not null) existing["lv"] = body.LongDescriptionLv;
+            if (body.LongDescriptionLt is not null) existing["lt"] = body.LongDescriptionLt;
             s.LongDescriptionTranslationsJson =
                 System.Text.Json.JsonSerializer.Serialize(existing);
         }
 
         s.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
+
+        if (s.Slug is not null)
+            await cache.RemoveAsync($"supplier:profile:{s.Slug}");
 
         return Ok(new { message = "Partner page updated." });
     }

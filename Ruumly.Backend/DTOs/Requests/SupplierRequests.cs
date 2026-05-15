@@ -78,6 +78,8 @@ public record UpdateProviderPartnerPageRequest(
     string? LongDescriptionEt,
     string? LongDescriptionEn,
     string? LongDescriptionRu,
+    string? LongDescriptionLv,
+    string? LongDescriptionLt,
     string? LogoUrl,
     string? HeroImageUrl,
     string? WebsiteUrl,

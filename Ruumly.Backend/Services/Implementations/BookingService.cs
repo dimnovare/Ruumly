@@ -434,7 +434,7 @@ public class BookingService(
         }
 
         if (booking.Status is BookingStatus.Cancelled or BookingStatus.Completed)
-            throw new ArgumentException("Booking is already finalised and cannot be cancelled.");
+            throw new ArgumentException(Msg("BOOKING_ALREADY_FINALISED"));
 
         var tl  = EmailTranslations.For((await db.Users.FindAsync(booking.UserId))?.Language);
         var now = DateTime.UtcNow;

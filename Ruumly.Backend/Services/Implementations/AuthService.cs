@@ -444,7 +444,7 @@ public class AuthService(
         if (user.EmailVerificationExpiry.HasValue &&
             user.EmailVerificationExpiry.Value > throttleUntil)
         {
-            throw new ArgumentException("Palun oota 2 minutit enne uuesti saatmist.");
+            throw new ArgumentException(Msg("EMAIL_RESEND_THROTTLE"));
         }
 
         var verifyToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));

@@ -59,6 +59,9 @@ public static class ErrorMessages
         ["NO_SUPPLIER_LINKED"]          = "Teie kontoga ei ole seotud ühtegi partnerit.",
         ["REGISTRY_CODE_DUPLICATE"]     = "Selle registrikoodiga partner on juba olemas.",
         ["SUPPLIER_NAME_REQUIRED"]      = "Partneri nimi on kohustuslik.",
+        ["EMAIL_RESEND_THROTTLE"]       = "Palun oota 2 minutit enne uuesti saatmist.",
+        ["BOOKING_ALREADY_FINALISED"]   = "Broneering on lõpetatud ja seda ei saa tühistada.",
+        ["INVOICE_NOT_PAID"]            = "Arvet ei ole tasutud.",
     };
 
     private static readonly Dictionary<string, string> En = new()
@@ -96,6 +99,9 @@ public static class ErrorMessages
         ["NO_SUPPLIER_LINKED"]          = "No supplier linked to your account.",
         ["REGISTRY_CODE_DUPLICATE"]     = "A partner with this registry code already exists.",
         ["SUPPLIER_NAME_REQUIRED"]      = "Partner name is required.",
+        ["EMAIL_RESEND_THROTTLE"]       = "Please wait 2 minutes before resending.",
+        ["BOOKING_ALREADY_FINALISED"]   = "Booking is already finalised and cannot be cancelled.",
+        ["INVOICE_NOT_PAID"]            = "Invoice has not been paid.",
     };
 
     private static readonly Dictionary<string, string> Ru = new()
@@ -133,6 +139,9 @@ public static class ErrorMessages
         ["NO_SUPPLIER_LINKED"]          = "К вашему аккаунту не привязан ни один поставщик.",
         ["REGISTRY_CODE_DUPLICATE"]     = "Партнёр с этим регистрационным кодом уже существует.",
         ["SUPPLIER_NAME_REQUIRED"]      = "Имя партнёра обязательно.",
+        ["EMAIL_RESEND_THROTTLE"]       = "Пожалуйста, подождите 2 минуты перед повторной отправкой.",
+        ["BOOKING_ALREADY_FINALISED"]   = "Бронирование уже завершено и не может быть отменено.",
+        ["INVOICE_NOT_PAID"]            = "Счёт не оплачен.",
     };
 
     private static readonly Dictionary<string, string> Lv = new()
@@ -170,6 +179,9 @@ public static class ErrorMessages
         ["NO_SUPPLIER_LINKED"]          = "Jūsu kontam nav piesaistīts neviens piegādātājs.",
         ["REGISTRY_CODE_DUPLICATE"]     = "Partneris ar šo reģistrācijas kodu jau eksistē.",
         ["SUPPLIER_NAME_REQUIRED"]      = "Partnera nosaukums ir obligāts.",
+        ["EMAIL_RESEND_THROTTLE"]       = "Lūdzu, pagaidiet 2 minūtes pirms atkārtotas nosūtīšanas.",
+        ["BOOKING_ALREADY_FINALISED"]   = "Rezervācija jau ir pabeigta un to nevar atcelt.",
+        ["INVOICE_NOT_PAID"]            = "Rēķins nav apmaksāts.",
     };
 
     private static readonly Dictionary<string, string> Lt = new()
@@ -207,5 +219,8 @@ public static class ErrorMessages
         ["NO_SUPPLIER_LINKED"]          = "Su jūsų paskyra nesusietas joks tiekėjas.",
         ["REGISTRY_CODE_DUPLICATE"]     = "Partneris su šiuo registracijos kodu jau egzistuoja.",
         ["SUPPLIER_NAME_REQUIRED"]      = "Partnerio pavadinimas yra privalomas.",
+        ["EMAIL_RESEND_THROTTLE"]       = "Prašome palaukti 2 minutes prieš pakartotinį siuntimą.",
+        ["BOOKING_ALREADY_FINALISED"]   = "Rezervacija jau baigta ir negali būti atšaukta.",
+        ["INVOICE_NOT_PAID"]            = "Sąskaita neapmokėta.",
     };
 }
