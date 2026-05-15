@@ -25,6 +25,24 @@ public class AdminPayoutsController(RuumlyDbContext db) : AdminBaseController(db
         if (supplierId.HasValue)
             query = query.Where(p => p.SupplierId == supplierId);
 
+        // Compute summary from the FULL (untruncated) filtered dataset
+        var summaryQuery = Db.PayoutEntries.AsQueryable();
+        if (!string.IsNullOrEmpty(status) && Enum.TryParse<PayoutStatus>(status, true, out var sv))
+            summaryQuery = summaryQuery.Where(p => p.Status == sv);
+        if (supplierId.HasValue)
+            summaryQuery = summaryQuery.Where(p => p.SupplierId == supplierId);
+
+        var totalPending = await summaryQuery
+            .Where(p => p.Status == PayoutStatus.Pending)
+            .SumAsync(p => (decimal?)p.SupplierAmount) ?? 0m;
+        var totalPaid    = await summaryQuery
+            .Where(p => p.Status == PayoutStatus.Paid)
+            .SumAsync(p => (decimal?)p.SupplierAmount) ?? 0m;
+        var totalMargin  = await summaryQuery
+            .SumAsync(p => (decimal?)p.PlatformMargin) ?? 0m;
+
+        var summary = new { totalPending, totalPaid, totalMargin };
+
         var entries = await query
             .OrderByDescending(p => p.CreatedAt)
             .Take(200)
@@ -41,12 +59,6 @@ public class AdminPayoutsController(RuumlyDbContext db) : AdminBaseController(db
                 p.CreatedAt,
             })
             .ToListAsync();
-
-        var summary = new {
-            totalPending = entries.Where(e => e.status == "pending").Sum(e => e.SupplierAmount),
-            totalPaid    = entries.Where(e => e.status == "paid").Sum(e => e.SupplierAmount),
-            totalMargin  = entries.Sum(e => e.PlatformMargin),
-        };
 
         return Ok(new { entries, summary });
     }

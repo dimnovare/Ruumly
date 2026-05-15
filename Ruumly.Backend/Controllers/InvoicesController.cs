@@ -41,6 +41,20 @@ public class InvoicesController(IInvoiceService invoiceService, RuumlyDbContext 
     }
 
     /// <summary>
+    /// Returns only the id and status for the invoice linked to a booking.
+    /// Lightweight alternative to the full GET when only payment status is needed.
+    /// </summary>
+    [HttpGet("by-booking/{bookingId:guid}/status")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetStatus(Guid bookingId)
+    {
+        var invoice = await invoiceService.GetByBookingIdAsync(bookingId, User.GetUserId(), User.GetUserRole());
+        if (invoice is null) return NotFound();
+        return Ok(new { invoice.Id, invoice.Status });
+    }
+
+    /// <summary>
     /// Manually generates (or returns existing) invoice for a booking.
     /// Useful for edge cases where auto-generation failed.
     /// </summary>
