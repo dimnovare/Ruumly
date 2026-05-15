@@ -131,15 +131,17 @@ public class AdminRebateController(RuumlyDbContext db) : AdminBaseController(db)
             .Select(r => new {
                 r.Id,
                 r.SupplierId,
-                supplierName = r.Supplier.Name,
-                period       = r.Period.ToString("yyyy-MM"),
-                r.TotalMargin,
-                r.OrderCount,
-                status       = r.Status.ToString().ToLower(),
-                sentAt       = r.SentAt,
-                paidAt       = r.PaidAt,
+                supplierName      = r.Supplier.Name,
+                period            = r.Period.ToString("yyyy-MM"),
+                bookingsCount     = r.OrderCount,
+                bookingCount      = r.OrderCount,
+                totalValue        = (decimal?)null,
+                rebateAmount      = r.TotalMargin,
+                status            = r.Status.ToString().ToLower(),
+                sentAt            = r.SentAt,
+                paidAt            = r.PaidAt,
                 r.Notes,
-                r.CreatedAt,
+                createdAt         = r.CreatedAt.ToString("yyyy-MM-dd"),
             })
             .ToListAsync();
 

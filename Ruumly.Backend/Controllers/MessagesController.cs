@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.Helpers;
+using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Controllers;
@@ -44,6 +45,26 @@ public class MessagesController(IMessageService messageService) : ControllerBase
             nameof(GetByBookingId),
             new { bookingId = message.BookingId },
             message);
+    }
+
+    /// <summary>
+    /// Returns the total count of unread messages for the authenticated user.
+    /// </summary>
+    [HttpGet("unread-count")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetUnreadCount()
+    {
+        var userId     = User.GetUserId();
+        var role       = User.GetUserRole();
+        var callerFrom = role switch
+        {
+            UserRole.Provider => "provider",
+            UserRole.Admin    => "admin",
+            _                 => "customer",
+        };
+
+        var count = await messageService.GetUnreadCountAsync(userId, role, callerFrom);
+        return Ok(new { count });
     }
 
     /// <summary>

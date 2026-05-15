@@ -118,6 +118,36 @@ public class MessageService(RuumlyDbContext db, INotificationService notificatio
         await db.SaveChangesAsync();
     }
 
+    public async Task<int> GetUnreadCountAsync(Guid userId, UserRole role, string callerFrom)
+    {
+        if (role == UserRole.Customer)
+        {
+            var bookingIds = await db.Bookings
+                .Where(b => b.UserId == userId)
+                .Select(b => b.Id)
+                .ToListAsync();
+
+            return await db.Messages
+                .CountAsync(m => bookingIds.Contains(m.BookingId)
+                              && !m.Read
+                              && m.From.ToString().ToLower() != callerFrom);
+        }
+
+        // Provider/Admin: messages on their supplier's bookings
+        var user = await db.Users.FindAsync(userId);
+        if (user?.SupplierId is null) return 0;
+
+        var supplierBookingIds = await db.Bookings
+            .Where(b => b.SupplierId == user.SupplierId)
+            .Select(b => b.Id)
+            .ToListAsync();
+
+        return await db.Messages
+            .CountAsync(m => supplierBookingIds.Contains(m.BookingId)
+                          && !m.Read
+                          && m.From.ToString().ToLower() != callerFrom);
+    }
+
     // ─── Access guard ─────────────────────────────────────────────────────────
 
     private async Task VerifyAccessAsync(Guid bookingId, Guid userId, UserRole role)

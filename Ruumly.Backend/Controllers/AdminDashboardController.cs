@@ -75,16 +75,13 @@ public class AdminDashboardController(RuumlyDbContext db) : AdminBaseController(
         };
 
         var query = Db.Bookings
-            .Include(b => b.Supplier)
             .Where(b => !b.IsDeleted && b.CreatedAt >= periodStart);
 
         if (supplierId.HasValue)
             query = query.Where(b => b.SupplierId == supplierId.Value);
 
-        var bookings = await query.ToListAsync();
-
-        var supplierBreakdown = bookings
-            .GroupBy(b => new { b.SupplierId, b.Supplier.Name })
+        var supplierBreakdown = await query
+            .GroupBy(b => new { b.SupplierId, Name = b.Supplier!.Name })
             .Select(g => new
             {
                 supplierId       = g.Key.SupplierId,
@@ -92,12 +89,14 @@ public class AdminDashboardController(RuumlyDbContext db) : AdminBaseController(
                 bookingCount     = g.Count(),
                 gmv              = g.Sum(b => b.Total),
                 customerPaid     = g.Sum(b => b.PlatformPrice + b.ExtrasTotal),
-                avgMarginPercent = g.Average(b => b.BasePrice > 0
-                    ? (b.PlatformPrice - b.BasePrice * 0.85m) / b.BasePrice * 100
-                    : 0),
+                avgMarginPercent = g.Average(b =>
+                    b.BasePrice > 0 ? (b.PlatformPrice - b.BasePrice * 0.85m) / b.BasePrice * 100 : 0),
             })
             .OrderByDescending(x => x.gmv)
-            .ToList();
+            .ToListAsync();
+
+        var totalBookings = await query.CountAsync();
+        var totalGmv      = await query.SumAsync(b => (decimal?)b.Total) ?? 0m;
 
         var subscriptionRevenue = await Db.Suppliers
             .Where(s => s.IsActive)
@@ -106,8 +105,8 @@ public class AdminDashboardController(RuumlyDbContext db) : AdminBaseController(
         return Ok(new
         {
             period,
-            totalBookings    = bookings.Count,
-            totalGmv         = bookings.Sum(b => b.Total),
+            totalBookings,
+            totalGmv,
             subscriptionMrr  = subscriptionRevenue,
             supplierBreakdown,
         });
