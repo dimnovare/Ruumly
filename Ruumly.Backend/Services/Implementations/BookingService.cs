@@ -94,8 +94,17 @@ public class BookingService(
         var invoiceIds = await db.Invoices
             .Where(i => bookingIds.Contains(i.BookingId))
             .ToDictionaryAsync(i => i.BookingId, i => (Guid?)i.Id);
+        var reviewedBookingIds = (await db.Reviews
+            .Where(r => bookingIds.Contains(r.BookingId))
+            .Select(r => r.BookingId)
+            .ToListAsync())
+            .ToHashSet();
 
-        var data = bookings.Select(b => MapToDto(b, invoiceIds.GetValueOrDefault(b.Id))).ToList();
+        var data = bookings.Select(b => MapToDto(
+            b,
+            invoiceIds.GetValueOrDefault(b.Id),
+            reviewedBookingIds.Contains(b.Id)
+        )).ToList();
         return new PaginatedResult<BookingDto>(data, total, page, limit, (page - 1) * limit + data.Count < total);
     }
 
@@ -473,7 +482,7 @@ public class BookingService(
 
     // ─── Mapping ──────────────────────────────────────────────────────────────
 
-    private static BookingDto MapToDto(Booking b, Guid? invoiceId) => new(
+    private static BookingDto MapToDto(Booking b, Guid? invoiceId, bool hasReview = false) => new(
         Id:           b.Id,
         ListingId:    b.ListingId,
         ListingTitle: b.Listing?.Title ?? string.Empty,
@@ -501,7 +510,8 @@ public class BookingService(
         Order:     b.Order is null ? null : MapOrderToDto(b.Order),
         InvoiceId: invoiceId,
         ReservedUntil: b.ReservedUntil?.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-        IsReservation: b.Status == BookingStatus.Reserved
+        IsReservation: b.Status == BookingStatus.Reserved,
+        HasReview:     hasReview
     );
 
     private static OrderSummaryDto MapOrderToDto(Order o) => new(

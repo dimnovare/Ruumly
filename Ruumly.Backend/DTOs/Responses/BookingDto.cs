@@ -41,5 +41,6 @@ public record BookingDto(
     OrderSummaryDto? Order,
     Guid? InvoiceId,
     string? ReservedUntil,
-    bool IsReservation
+    bool IsReservation,
+    bool HasReview
 );

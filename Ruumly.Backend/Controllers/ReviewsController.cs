@@ -87,6 +87,7 @@ public class ReviewsController(RuumlyDbContext db) : ControllerBase
     // ──────────────────────────────────────────────────────────────────────────
 
     [HttpGet]
+    [EnableRateLimiting("search")]
     public async Task<IActionResult> GetReviews(
         [FromQuery] Guid? listingId,
         [FromQuery] Guid? supplierId)
@@ -105,6 +106,7 @@ public class ReviewsController(RuumlyDbContext db) : ControllerBase
 
         var reviews = await query
             .OrderByDescending(r => r.CreatedAt)
+            .Take(50)
             .ToListAsync();
 
         return Ok(reviews.Select(r => MapToDto(r, r.User?.Name ?? "Anonymous")));
