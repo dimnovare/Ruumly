@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Services.Interfaces;
@@ -29,6 +30,7 @@ public class MessagesController(IMessageService messageService) : ControllerBase
     /// Sends a message in a booking thread.
     /// </summary>
     [HttpPost]
+    [EnableRateLimiting("user")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

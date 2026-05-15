@@ -206,11 +206,15 @@ public class AdminRebateController(RuumlyDbContext db) : AdminBaseController(db)
             .Take(24)   // last 2 years of monthly invoices
             .Select(r => new {
                 r.Id,
-                period      = r.Period.ToString("yyyy-MM"),
-                totalMargin = r.TotalMargin,
-                status      = r.Status.ToString().ToLower(),
-                r.SentAt,
-                r.PaidAt,
+                period        = r.Period.ToString("yyyy-MM"),
+                bookingsCount = r.OrderCount,
+                totalValue    = (decimal?)null,   // not tracked in model; can add later
+                rebateAmount  = r.TotalMargin,
+                status        = r.Status.ToString().ToLower(),
+                dueDate       = (string?)null,    // not in model; add to RebateInvoice if needed
+                sentAt        = r.SentAt,
+                paidAt        = r.PaidAt,
+                createdAt     = r.CreatedAt.ToString("yyyy-MM-dd"),
             })
             .ToListAsync();
 

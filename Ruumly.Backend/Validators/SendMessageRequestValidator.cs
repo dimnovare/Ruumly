@@ -8,7 +8,7 @@ public class SendMessageRequestValidator : AbstractValidator<SendMessageRequest>
     public SendMessageRequestValidator()
     {
         RuleFor(x => x.Text)
-            .NotEmpty().WithMessage("Sõnumi tekst on kohustuslik")
-            .MaximumLength(2000).WithMessage("Sõnum ei tohi olla pikem kui 2000 tähemärki");
+            .NotEmpty().WithMessage("Message text is required.")
+            .MaximumLength(2000).WithMessage("Message must not exceed 2000 characters.");
     }
 }
