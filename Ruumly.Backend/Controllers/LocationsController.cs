@@ -526,40 +526,56 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         return (totalAvailable, totalAvailable == 0);
     }
 
-    private static SupplierLocationDto MapToDto(SupplierLocation l, int availableUnits, bool fullyBooked) => new(
-        Id:             l.Id,
-        SupplierId:     l.SupplierId,
-        SupplierName:   l.Supplier?.Name ?? "",
-        Name:           l.Name,
-        Address:        l.Address,
-        City:           l.City,
-        Lat:            l.Lat,
-        Lng:            l.Lng,
-        Notes:          l.Notes,
-        Images:         l.Images,
-        Description:    l.Description,
-        OpeningHours:   l.OpeningHours,
-        UnitCount:      l.Listings.Count(u => u.IsActive),
-        AvailableUnits: availableUnits,
-        FullyBooked:    fullyBooked,
-        PriceFrom:      l.Listings.Where(u => u.IsActive).Select(u => (decimal?)u.PriceFrom).Min(),
-        CreatedAt:      l.CreatedAt.ToString("yyyy-MM-dd"),
-        Units:          l.Listings
-                         .Where(u => u.IsActive)
-                         .OrderBy(u => u.PriceFrom)
-                         .Select(u => new ListingDto(
-                             u.Id, u.Type.ToString().ToLower(), u.Title,
-                             l.Supplier?.Name ?? "", l.Address, l.City,
-                             l.Lat, l.Lng, u.PriceFrom, u.PriceUnit, u.AvailableNow,
-                             u.Badge?.ToString().ToLower(), u.Rating, u.ReviewCount,
-                             u.Description, u.Images, u.Features,
-                             u.PartnerDiscountRateOverride, u.ClientDiscountRateOverride,
-                             l.Supplier?.ClientDiscountRate,
-                             null, null,  // EffectiveCustomerDiscount, EffectivePartnerDiscount — not computed in nested location view
-                             u.VatRate, u.PricesIncludeVat, u.SupplierId,
-                             u.SizeM2, u.QuantityTotal, u.LocationId, u.ViewCount,
-                             l.Supplier?.IsVerified ?? false,
-                             l.Supplier?.FoundingPartner ?? false))
-                         .ToList()
-    );
+    private static SupplierLocationDto MapToDto(SupplierLocation l, int availableUnits, bool fullyBooked)
+    {
+        var activeUnits  = l.Listings.Where(u => u.IsActive).ToList();
+        var ratedUnits   = activeUnits.Where(u => u.ReviewCount > 0).ToList();
+        var avgRating    = ratedUnits.Any()
+            ? Math.Round(ratedUnits.Average(u => u.Rating), 1) : 0m;
+        var totalReviews = activeUnits.Sum(u => u.ReviewCount);
+        var bestDiscount = activeUnits
+            .Select(u => u.ClientDiscountRateOverride ?? l.Supplier?.ClientDiscountRate ?? 0)
+            .Where(d => d > 0)
+            .DefaultIfEmpty(0)
+            .Max();
+
+        return new SupplierLocationDto(
+            Id:             l.Id,
+            SupplierId:     l.SupplierId,
+            SupplierName:   l.Supplier?.Name ?? "",
+            Name:           l.Name,
+            Address:        l.Address,
+            City:           l.City,
+            Lat:            l.Lat,
+            Lng:            l.Lng,
+            Notes:          l.Notes,
+            Images:         l.Images,
+            Description:    l.Description,
+            OpeningHours:   l.OpeningHours,
+            UnitCount:      activeUnits.Count,
+            AvailableUnits: availableUnits,
+            FullyBooked:    fullyBooked,
+            PriceFrom:      activeUnits.Select(u => (decimal?)u.PriceFrom).Min(),
+            CreatedAt:      l.CreatedAt.ToString("yyyy-MM-dd"),
+            Units:          activeUnits
+                             .OrderBy(u => u.PriceFrom)
+                             .Select(u => new ListingDto(
+                                 u.Id, u.Type.ToString().ToLower(), u.Title,
+                                 l.Supplier?.Name ?? "", l.Address, l.City,
+                                 l.Lat, l.Lng, u.PriceFrom, u.PriceUnit, u.AvailableNow,
+                                 u.Badge?.ToString().ToLower(), u.Rating, u.ReviewCount,
+                                 u.Description, u.Images, u.Features,
+                                 u.PartnerDiscountRateOverride, u.ClientDiscountRateOverride,
+                                 l.Supplier?.ClientDiscountRate,
+                                 null, null,  // EffectiveCustomerDiscount, EffectivePartnerDiscount — not computed in nested location view
+                                 u.VatRate, u.PricesIncludeVat, u.SupplierId,
+                                 u.SizeM2, u.QuantityTotal, u.LocationId, u.ViewCount,
+                                 l.Supplier?.IsVerified ?? false,
+                                 l.Supplier?.FoundingPartner ?? false))
+                             .ToList(),
+            Rating:               avgRating,
+            ReviewCount:          totalReviews,
+            BestCustomerDiscount: bestDiscount > 0 ? (decimal?)bestDiscount : null
+        );
+    }
 }

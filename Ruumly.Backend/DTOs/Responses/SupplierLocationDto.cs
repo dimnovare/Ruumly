@@ -18,5 +18,8 @@ public record SupplierLocationDto(
     bool              FullyBooked,
     decimal?          PriceFrom,
     string            CreatedAt,
-    List<ListingDto>  Units
+    List<ListingDto>  Units,
+    decimal           Rating,
+    int               ReviewCount,
+    decimal?          BestCustomerDiscount
 );

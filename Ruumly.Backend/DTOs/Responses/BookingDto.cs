@@ -45,5 +45,6 @@ public record BookingDto(
     bool HasReview,
     string? ContactName,
     string? ContactEmail,
-    string? ContactPhone
+    string? ContactPhone,
+    string? Notes
 );

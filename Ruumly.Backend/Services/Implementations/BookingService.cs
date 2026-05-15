@@ -541,7 +541,8 @@ public class BookingService(
         HasReview:     hasReview,
         ContactName:   b.ContactName,
         ContactEmail:  b.ContactEmail,
-        ContactPhone:  b.ContactPhone
+        ContactPhone:  b.ContactPhone,
+        Notes:         b.Notes
     );
 
     private static OrderSummaryDto MapOrderToDto(Order o) => new(
