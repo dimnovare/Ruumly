@@ -32,10 +32,20 @@ public class SupplierPollingDispatcherJob(
 
         foreach (var id in dueSupplierIds)
         {
-            var result = await pollingService.PollSupplierAsync(id);
-            logger.LogInformation(
-                "Poll {SupplierId}: status={Status} units={Units} ms={Ms}",
-                id, result.Status, result.UnitsRefreshed, result.DurationMs);
+            try
+            {
+                var result = await pollingService.PollSupplierAsync(id);
+                logger.LogInformation(
+                    "Poll {SupplierId}: status={Status} units={Units} ms={Ms}",
+                    id, result.Status, result.UnitsRefreshed, result.DurationMs);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex,
+                    "PollingDispatcher: unexpected error polling supplier {SupplierId} — continuing with next",
+                    id);
+                // Continue to next supplier rather than aborting the whole batch
+            }
         }
     }
 }

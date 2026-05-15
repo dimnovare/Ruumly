@@ -75,6 +75,7 @@ public class IntegrationDispatchService(
         }
 
         var client = httpClientFactory.CreateClient();
+        client.Timeout = TimeSpan.FromSeconds(30);
 
         // Decrypt stored token before use in HTTP header
         string? plainToken = null;
