@@ -179,28 +179,35 @@ public class AdminRebateController(RuumlyDbContext db) : AdminBaseController(db)
         return Ok(new { invoice.Id, status = "paid" });
     }
 
-    /// <summary>Provider's own rebate invoices.</summary>
+    /// <summary>Provider's own rebate invoices. Admin may pass ?supplierId= to view any supplier.</summary>
     [HttpGet("/api/supplier/rebate-invoices")]
-    [Authorize(Roles = "Provider")]
-    public async Task<IActionResult> GetSupplierRebates()
+    [Authorize(Roles = "Provider,Admin")]
+    public async Task<IActionResult> GetForSupplier()
     {
-        var userId = User.GetUserId();
-        var user   = await Db.Users.FindAsync(userId);
-        if (user?.SupplierId is null) return Ok(Array.Empty<object>());
+        var userId     = User.GetUserId();
+        var supplierId = User.IsInRole("Admin")
+            ? (HttpContext.Request.Query.TryGetValue("supplierId", out var sv)
+                ? Guid.Parse(sv!) : (Guid?)null)
+            : (await Db.Users.FindAsync(userId))?.SupplierId;
+
+        if (supplierId is null)
+            return BadRequest(new { error = "No supplier linked." });
 
         var invoices = await Db.RebateInvoices
-            .Where(r => r.SupplierId == user.SupplierId.Value)
-            .OrderByDescending(r => r.CreatedAt)
+            .Where(r => r.SupplierId == supplierId)
+            .OrderByDescending(r => r.Period)
+            .Take(24)   // last 2 years of monthly invoices
+            .Select(r => new {
+                r.Id,
+                period      = r.Period.ToString("yyyy-MM"),
+                totalMargin = r.TotalMargin,
+                status      = r.Status.ToString().ToLower(),
+                r.SentAt,
+                r.PaidAt,
+            })
             .ToListAsync();
 
-        return Ok(invoices.Select(r => new {
-            r.Id,
-            r.SupplierId,
-            period    = r.Period.ToString("yyyy-MM"),
-            amount    = r.TotalMargin,
-            status    = r.Status.ToString().ToLower(),
-            createdAt = r.CreatedAt.ToString("yyyy-MM-dd"),
-        }));
+        return Ok(invoices);
     }
 }
 
