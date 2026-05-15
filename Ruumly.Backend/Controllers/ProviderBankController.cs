@@ -1,16 +1,20 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.Helpers;
+using Ruumly.Backend.Models;
 
 namespace Ruumly.Backend.Controllers;
 
 [ApiController]
 [Route("api/provider")]
 [Authorize(Roles = "Provider,Admin")]
-public class ProviderBankController(RuumlyDbContext db) : ControllerBase
+public class ProviderBankController(
+    RuumlyDbContext db,
+    ILogger<ProviderBankController> logger) : ControllerBase
 {
     // Admin: ?supplierId= query param. Provider: own user.SupplierId.
     private async Task<Guid?> ResolveSupplierIdAsync()
@@ -56,6 +60,7 @@ public class ProviderBankController(RuumlyDbContext db) : ControllerBase
 
     [HttpPatch("bank-details")]
     [HttpPatch("/api/admin/my-bank-details")]  // backward compat
+    [EnableRateLimiting("user")]
     public async Task<IActionResult> UpdateBankDetails([FromBody] UpdateBankDetailsRequest body)
     {
         var supplierId = await ResolveSupplierIdAsync();
@@ -88,6 +93,24 @@ public class ProviderBankController(RuumlyDbContext db) : ControllerBase
             supplier.BankName = body.BankName.Trim();
 
         supplier.UpdatedAt = DateTime.UtcNow;
+
+        if (!string.IsNullOrWhiteSpace(body.Iban))
+        {
+            logger.LogInformation(
+                "IBAN updated for supplier {SupplierId} by user {UserId}",
+                supplierId, User.GetUserId());
+
+            db.AuditLogs.Add(new AuditLog
+            {
+                Id        = Guid.NewGuid(),
+                Action    = "bank_details.iban_updated",
+                Actor     = User.GetUserEmail(),
+                Target    = supplierId.Value.ToString(),
+                Detail    = $"IBAN ending ...{supplier.Iban?[^4..]}",
+                CreatedAt = DateTime.UtcNow,
+            });
+        }
+
         await db.SaveChangesAsync();
 
         return Ok(new

@@ -479,7 +479,8 @@ public class BookingService(
             .Select(i => (Guid?)i.Id)
             .FirstOrDefaultAsync();
 
-        return MapToDto(booking, invoiceId);
+        var hasReview = await db.Reviews.AnyAsync(r => r.BookingId == booking.Id);
+        return MapToDto(booking, invoiceId, hasReview);
     }
 
     // ─── Mapping ──────────────────────────────────────────────────────────────
