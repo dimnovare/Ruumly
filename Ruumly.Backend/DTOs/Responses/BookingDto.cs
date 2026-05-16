@@ -26,6 +26,7 @@ public record BookingDto(
     string ListingType,
     string Provider,
     string City,
+    string? LocationId,
     string StartDate,
     string? EndDate,
     string Duration,

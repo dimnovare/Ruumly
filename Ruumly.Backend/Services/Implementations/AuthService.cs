@@ -225,6 +225,7 @@ public class AuthService(
                     Avatar        = payload.Picture,
                     RegisteredAt  = DateTime.UtcNow,
                     EmailVerified = true,
+                    Language      = Lang,
                 };
                 db.Users.Add(user);
             }

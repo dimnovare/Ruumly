@@ -516,6 +516,7 @@ public class BookingService(
         ListingType:  b.Listing?.Type.ToString().ToLower() ?? string.Empty,
         Provider:     b.Supplier?.Name ?? string.Empty,
         City:         b.Listing?.Location?.City ?? b.Listing?.City ?? string.Empty,
+        LocationId:   b.Listing?.LocationId?.ToString(),
         StartDate:    b.StartDate.ToString("yyyy-MM-dd"),
         EndDate:      b.EndDate?.ToString("yyyy-MM-dd"),
         Duration:     b.Duration,
