@@ -5,6 +5,7 @@ using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.Helpers;
+using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 
 namespace Ruumly.Backend.Controllers;
@@ -13,14 +14,26 @@ namespace Ruumly.Backend.Controllers;
 public class AdminUsersController(RuumlyDbContext db) : AdminBaseController(db)
 {
     [HttpGet("users")]
-    public async Task<IActionResult> GetUsers([FromQuery] int page = 1, [FromQuery] int limit = 50)
+    public async Task<IActionResult> GetUsers(
+        [FromQuery] int     page  = 1,
+        [FromQuery] int     limit = 50,
+        [FromQuery] string? q     = null)
     {
         page  = Math.Max(1, page);
-        limit = Math.Clamp(limit, 1, 100);
+        limit = Math.Clamp(limit, 1, 200);
 
-        var total = await Db.Users.CountAsync();
-        var users = await Db.Users
-            .OrderByDescending(u => u.RegisteredAt)
+        IQueryable<User> query = Db.Users.OrderByDescending(u => u.RegisteredAt);
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var lq = q.ToLower();
+            query = query.Where(u =>
+                u.Email.ToLower().Contains(lq) ||
+                u.Name.ToLower().Contains(lq));
+        }
+
+        var total = await query.CountAsync();
+        var users = await query
             .Skip((page - 1) * limit)
             .Take(limit)
             .ToListAsync();
