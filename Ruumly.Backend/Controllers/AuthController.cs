@@ -40,7 +40,7 @@ public class AuthController(
     }
 
     private int RefreshTokenExpiryDays =>
-        int.Parse(config["Jwt:RefreshTokenExpiryDays"] ?? "7");
+        int.TryParse(config["Jwt:RefreshTokenExpiryDays"], out var days) ? days : 7;
 
     [HttpPost("register")]
     [EnableRateLimiting("auth")]
@@ -66,6 +66,7 @@ public class AuthController(
     }
 
     [HttpPost("refresh")]
+    [EnableRateLimiting("auth")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest? body)

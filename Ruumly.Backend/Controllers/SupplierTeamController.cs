@@ -34,7 +34,7 @@ public class SupplierTeamController(
                 {
                     error   = "supplier_context_required",
                     message = "Admin must specify ?supplierId= to view this resource.",
-                    hint    = "Pick a supplier from /admin/suppliers and pass its id as a query param.",
+                    hint    = "Pass ?supplierId=<guid> to act on behalf of a supplier team.",
                 });
             return NotFound(new { message = "No supplier linked to this account." });
         }
@@ -80,7 +80,7 @@ public class SupplierTeamController(
                 {
                     error   = "supplier_context_required",
                     message = "Admin must specify ?supplierId= to view this resource.",
-                    hint    = "Pick a supplier from /admin/suppliers and pass its id as a query param.",
+                    hint    = "Pass ?supplierId=<guid> to act on behalf of a supplier team.",
                 });
             return NotFound(new { message = "No supplier linked to this account." });
         }
@@ -134,7 +134,7 @@ public class SupplierTeamController(
                 {
                     error   = "supplier_context_required",
                     message = "Admin must specify ?supplierId= to view this resource.",
-                    hint    = "Pick a supplier from /admin/suppliers and pass its id as a query param.",
+                    hint    = "Pass ?supplierId=<guid> to act on behalf of a supplier team.",
                 });
             return NotFound(new { message = "No supplier linked to this account." });
         }
@@ -177,7 +177,7 @@ public class SupplierTeamController(
                 {
                     error   = "supplier_context_required",
                     message = "Admin must specify ?supplierId= to view this resource.",
-                    hint    = "Pick a supplier from /admin/suppliers and pass its id as a query param.",
+                    hint    = "Pass ?supplierId=<guid> to act on behalf of a supplier team.",
                 });
             return NotFound(new { message = "No supplier profile linked to this account." });
         }
@@ -385,11 +385,12 @@ public class SupplierTeamController(
 
     // ── helpers ──────────────────────────────────────────────────────────────
 
-    private async Task<Guid?> GetSupplierIdAsync(Guid userId)
+    private async Task<Guid?> GetSupplierIdAsync(Guid userId, Guid? supplierIdOverride = null)
     {
-        // Admin: must pass ?supplierId= query param to act on behalf of a supplier
+        // Admin: optional direct override from caller, then fall back to ?supplierId= query param
         if (User.IsInRole("Admin"))
         {
+            if (supplierIdOverride.HasValue) return supplierIdOverride;
             if (Request.Query.TryGetValue("supplierId", out var sv) &&
                 Guid.TryParse(sv, out var sid))
                 return sid;

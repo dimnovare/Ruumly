@@ -26,10 +26,10 @@ public class ListingService(
     private static readonly DistributedCacheEntryOptions FeaturedTtl =
         new() { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) };
 
-    public async Task<PaginatedResult<ListingDto>> SearchAsync(ListingSearchRequest f, string? language = null)
+    public async Task<PaginatedResult<ListingDto>> SearchAsync(ListingSearchRequest f, string? language = null, CancellationToken ct = default)
     {
         var cacheKey = $"listings:search:{HashFilters(f)}:{language ?? "_"}";
-        var cached   = await cache.GetStringAsync(cacheKey);
+        var cached   = await cache.GetStringAsync(cacheKey, ct);
         if (cached is not null)
         {
             try
@@ -39,7 +39,7 @@ public class ListingService(
             }
             catch (JsonException)
             {
-                await cache.RemoveAsync(cacheKey);
+                await cache.RemoveAsync(cacheKey, ct);
             }
         };
 
@@ -164,13 +164,13 @@ public class ListingService(
         };
 
         // ── Pagination ────────────────────────────────────────────────────────
-        var total = await query.CountAsync();
+        var total = await query.CountAsync(ct);
         var page  = Math.Max(1, f.Page);
         var limit = Math.Clamp(f.Limit, 1, 200);
         var items = await query
             .Skip((page - 1) * limit)
             .Take(limit)
-            .ToListAsync();
+            .ToListAsync(ct);
 
         var result = new PaginatedResult<ListingDto>(
             items.Select(l => MapToDto(l, language, pricingConfig)).ToList(),
@@ -180,7 +180,7 @@ public class ListingService(
             (page - 1) * limit + items.Count < total
         );
 
-        await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(result), SearchTtl);
+        await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(result), SearchTtl, ct);
         return result;
     }
 

@@ -30,28 +30,7 @@ public class Order
     [NotMapped]
     public List<BookingExtraSnapshot> ExtrasSnapshot
     {
-        get
-        {
-            if (string.IsNullOrWhiteSpace(ExtrasJson) || ExtrasJson == "[]")
-                return [];
-
-            try
-            {
-                return JsonSerializer.Deserialize<List<BookingExtraSnapshot>>(ExtrasJson) ?? [];
-            }
-            catch (JsonException)
-            {
-                try
-                {
-                    var keys = JsonSerializer.Deserialize<List<string>>(ExtrasJson) ?? [];
-                    return keys.Select(k => new BookingExtraSnapshot(k, k, 0, 0, 0)).ToList();
-                }
-                catch
-                {
-                    return [];
-                }
-            }
-        }
+        get => BookingExtraSnapshotHelper.Deserialize(ExtrasJson);
         set => ExtrasJson = JsonSerializer.Serialize(value);
     }
 

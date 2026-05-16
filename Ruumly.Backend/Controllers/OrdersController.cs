@@ -26,7 +26,7 @@ public class OrdersController(IOrderService orderService, RuumlyDbContext db) : 
         [FromQuery] int   limit      = 50,
         [FromQuery] Guid? supplierId = null)
     {
-        var result = await orderService.GetAllAsync(User.GetUserId(), User.GetUserRole(), page, limit, supplierId);
+        var result = await orderService.GetAllAsync(User.GetUserId(), User.GetUserRole(), page, limit, supplierId, HttpContext.RequestAborted);
         return Ok(result);
     }
 
@@ -52,7 +52,7 @@ public class OrdersController(IOrderService orderService, RuumlyDbContext db) : 
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetByBookingId(Guid bookingId)
     {
-        var order = await orderService.GetByBookingIdAsync(bookingId);
+        var order = await orderService.GetByBookingIdAsync(bookingId, User.GetUserId(), User.GetUserRole());
         if (order is null) return NotFound(new { error = "Not Found", message = "Order not found for this booking", statusCode = 404 });
         return Ok(order);
     }

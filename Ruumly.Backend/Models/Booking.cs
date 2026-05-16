@@ -48,30 +48,7 @@ public class Booking
     [NotMapped]
     public List<BookingExtraSnapshot> ExtrasSnapshot
     {
-        get
-        {
-            if (string.IsNullOrWhiteSpace(ExtrasJson) || ExtrasJson == "[]")
-                return [];
-
-            try
-            {
-                // Try new format first: array of BookingExtraSnapshot objects
-                return JsonSerializer.Deserialize<List<BookingExtraSnapshot>>(ExtrasJson) ?? [];
-            }
-            catch (JsonException)
-            {
-                // Fall back to old format: plain string array ["key1","key2"]
-                try
-                {
-                    var keys = JsonSerializer.Deserialize<List<string>>(ExtrasJson) ?? [];
-                    return keys.Select(k => new BookingExtraSnapshot(k, k, 0, 0, 0)).ToList();
-                }
-                catch
-                {
-                    return [];
-                }
-            }
-        }
+        get => BookingExtraSnapshotHelper.Deserialize(ExtrasJson);
         set => ExtrasJson = JsonSerializer.Serialize(value);
     }
 

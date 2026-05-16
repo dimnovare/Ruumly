@@ -27,7 +27,7 @@ public class ListingsController(IListingService listingService, RuumlyDbContext 
         [FromQuery(Name = "lang")] string? language = null)
     {
         language ??= ResolveLanguageFromHeader();
-        var result = await listingService.SearchAsync(filters, language);
+        var result = await listingService.SearchAsync(filters, language, HttpContext.RequestAborted);
         return Ok(result);
     }
 

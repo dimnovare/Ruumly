@@ -154,7 +154,12 @@ public class MontonioPaymentService(
 
             if (string.IsNullOrEmpty(ref_)
                 || status != "paid")
+            {
+                logger.LogWarning(
+                    "Webhook JWT missing merchant_reference or non-paid status: ref={Ref} status={Status}",
+                    ref_, status);
                 return false;
+            }
 
             var invoice = await db.Invoices
                 .FirstOrDefaultAsync(i =>

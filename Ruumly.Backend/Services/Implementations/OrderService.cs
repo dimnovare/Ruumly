@@ -26,7 +26,7 @@ public class OrderService(
 
     // ─── Queries ──────────────────────────────────────────────────────────────
 
-    public async Task<PaginatedResult<OrderDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 50, Guid? supplierId = null)
+    public async Task<PaginatedResult<OrderDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 50, Guid? supplierId = null, CancellationToken ct = default)
     {
         page  = Math.Max(1, page);
         limit = Math.Clamp(limit, 1, 100);
@@ -59,7 +59,7 @@ public class OrderService(
             query = query.Where(o => o.SupplierId == supplierId.Value);
         }
 
-        var total = await query.CountAsync();
+        var total = await query.CountAsync(ct);
 
         // Admin inbox: surface high-priority suppliers first
         var sorted = role == UserRole.Admin
@@ -70,7 +70,7 @@ public class OrderService(
         var orders = await sorted
             .Skip((page - 1) * limit)
             .Take(limit)
-            .ToListAsync();
+            .ToListAsync(ct);
 
         var data = orders.Select(MapToDto).ToList();
         return new PaginatedResult<OrderDto>(data, total, page, limit, (page - 1) * limit + data.Count < total);
@@ -82,7 +82,7 @@ public class OrderService(
         return order is null ? null : MapToDto(order);
     }
 
-    public async Task<OrderDto?> GetByBookingIdAsync(Guid bookingId)
+    public async Task<OrderDto?> GetByBookingIdAsync(Guid bookingId, Guid callerId, UserRole callerRole)
     {
         var order = await db.Orders
             .Include(o => o.Supplier)
@@ -92,7 +92,20 @@ public class OrderService(
             .AsSplitQuery()
             .FirstOrDefaultAsync(o => o.BookingId == bookingId);
 
-        return order is null ? null : MapToDto(order);
+        if (order is null) return null;
+
+        // Ownership check — Admin always passes; same message as not-found to avoid enumeration
+        if (callerRole == UserRole.Customer && order.Booking?.UserId != callerId)
+            throw new ForbiddenException(Msg("ORDER_NOT_FOUND"));
+
+        if (callerRole == UserRole.Provider)
+        {
+            var caller = await db.Users.FindAsync(callerId);
+            if (caller?.SupplierId != order.SupplierId)
+                throw new ForbiddenException(Msg("ORDER_NOT_FOUND"));
+        }
+
+        return MapToDto(order);
     }
 
     // ─── Approve ──────────────────────────────────────────────────────────────
@@ -121,7 +134,7 @@ public class OrderService(
 
         var approverName = approver?.Name ?? approvedByUserId.ToString();
 
-        var tl = EmailTranslations.For((await db.Users.FindAsync(order.Booking?.UserId))?.Language);
+        var tl = EmailTranslations.For(order.Booking?.User?.Language);
 
         order.Status     = OrderStatus.Sent;
         order.ApprovedBy = approverName;
@@ -205,7 +218,7 @@ public class OrderService(
 
         var rejecterName = rejecter?.Name ?? rejectedByUserId.ToString();
 
-        var tl = EmailTranslations.For((await db.Users.FindAsync(order.Booking?.UserId))?.Language);
+        var tl = EmailTranslations.For(order.Booking?.User?.Language);
 
         order.Status    = OrderStatus.Rejected;
         order.Notes     = string.IsNullOrWhiteSpace(reason) ? order.Notes : reason;
@@ -279,7 +292,7 @@ public class OrderService(
 
         var confirmerName = confirmer?.Name ?? "Partner";
 
-        var tl = EmailTranslations.For((await db.Users.FindAsync(order.Booking?.UserId))?.Language);
+        var tl = EmailTranslations.For(order.Booking?.User?.Language);
 
         order.Status      = OrderStatus.Confirmed;
         order.ConfirmedAt = DateTime.UtcNow;
@@ -351,7 +364,7 @@ public class OrderService(
         if (!Enum.TryParse<OrderStatus>(request.Status, ignoreCase: true, out var newStatus))
             throw new ArgumentException(Msg("ORDER_WRONG_STATUS"));
 
-        var tl = EmailTranslations.For((await db.Users.FindAsync(order.Booking?.UserId))?.Language);
+        var tl = EmailTranslations.For(order.Booking?.User?.Language);
 
         order.Status    = newStatus;
         order.UpdatedAt = DateTime.UtcNow;
@@ -479,7 +492,7 @@ public class OrderService(
             .Include(o => o.Supplier)
             .Include(o => o.FulfillmentEvents.OrderBy(e => e.CreatedAt))
             .Include(o => o.Timeline.OrderBy(t => t.CreatedAt))
-            .Include(o => o.Booking)
+            .Include(o => o.Booking).ThenInclude(b => b!.User)
             .AsSplitQuery()
             .FirstOrDefaultAsync(o => o.Id == id);
 

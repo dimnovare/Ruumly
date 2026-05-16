@@ -52,7 +52,7 @@ public class BookingService(
         return result;
     }
 
-    public async Task<PaginatedResult<BookingDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 50, Guid? supplierId = null)
+    public async Task<PaginatedResult<BookingDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 50, Guid? supplierId = null, CancellationToken ct = default)
     {
         page  = Math.Max(1, page);
         limit = Math.Clamp(limit, 1, 200);
@@ -83,21 +83,21 @@ public class BookingService(
         }
         // Admin without supplierId → no filter, sees everything (existing behavior)
 
-        var total    = await query.CountAsync();
+        var total    = await query.CountAsync(ct);
         var bookings = await query
             .OrderByDescending(b => b.CreatedAt)
             .Skip((page - 1) * limit)
             .Take(limit)
-            .ToListAsync();
+            .ToListAsync(ct);
 
         var bookingIds = bookings.Select(b => b.Id).ToList();
         var invoiceIds = await db.Invoices
             .Where(i => bookingIds.Contains(i.BookingId))
-            .ToDictionaryAsync(i => i.BookingId, i => (Guid?)i.Id);
+            .ToDictionaryAsync(i => i.BookingId, i => (Guid?)i.Id, ct);
         var reviewedBookingIds = (await db.Reviews
             .Where(r => bookingIds.Contains(r.BookingId))
             .Select(r => r.BookingId)
-            .ToListAsync())
+            .ToListAsync(ct))
             .ToHashSet();
 
         var data = bookings.Select(b => MapToDto(

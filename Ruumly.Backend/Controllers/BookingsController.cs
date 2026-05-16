@@ -34,7 +34,7 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
         var role   = User.GetUserRole();
         // When personal=true, always filter by UserId regardless of role
         var effectiveRole = personal ? UserRole.Customer : role;
-        var result = await bookingService.GetAllAsync(userId, effectiveRole, page, limit, supplierId);
+        var result = await bookingService.GetAllAsync(userId, effectiveRole, page, limit, supplierId, HttpContext.RequestAborted);
         return Ok(result);
     }
 
