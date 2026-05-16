@@ -44,14 +44,18 @@ public class FeaturedPartnersService(RuumlyDbContext db, IDistributedCache cache
             .OrderBy(s => HashForRotation(s.Id, daySeed))
             .Take(6)
             .Select(s => new FeaturedPartnerDto(
-                Id:           s.Id,
-                Name:         s.Name,
-                Country:      s.Country,
-                Rating:       s.Rating,
-                ReviewCount:  s.ReviewCount,
-                Tier:         s.Tier.ToString(),
-                IsVerified:   s.IsVerified,
-                ListingCount: s.Listings.Count(l => l.IsActive)))
+                Id:            s.Id,
+                Slug:          s.Slug,
+                Name:          s.Name,
+                Tagline:       s.Tagline,
+                LogoUrl:       s.LogoUrl,
+                Country:       s.Country,
+                Rating:        s.Rating,
+                ReviewCount:   s.ReviewCount,
+                Tier:          s.Tier.ToString(),
+                IsVerified:    s.IsVerified,
+                LocationCount: s.Listings.Count(l => l.IsActive),
+                ListingCount:  s.Listings.Count(l => l.IsActive)))
             .ToList();
 
         await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(result), CacheTtl);
