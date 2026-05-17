@@ -4,3 +4,10 @@ obj/
 *.user
 null
 logs/
+
+# Local / environment-specific appsettings (may contain connection strings or API keys)
+# Use dotnet user-secrets (`dotnet user-secrets set`) or environment variables for local overrides.
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.local.json
+secrets.json

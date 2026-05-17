@@ -365,3 +365,14 @@ FodyWeavers.xsd
 # Uploaded images (local disk storage — not committed to source control)
 /app/uploads/
 uploads/
+
+# Claude Code AI assistant (project-local settings and history — not for source control)
+.claude/
+.claude/settings.local.json
+
+# Local / environment-specific appsettings (may contain connection strings or API keys)
+# Use dotnet user-secrets (`dotnet user-secrets set`) or environment variables for local overrides.
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.local.json
+secrets.json

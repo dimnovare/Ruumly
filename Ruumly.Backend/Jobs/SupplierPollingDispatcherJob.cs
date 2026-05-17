@@ -14,6 +14,8 @@ public class SupplierPollingDispatcherJob(
     ISupplierPollingService                  pollingService,
     ILogger<SupplierPollingDispatcherJob>    logger)
 {
+    private const int MaxConcurrentPolls = 3;
+
     public async Task ExecuteAsync()
     {
         var now = DateTime.UtcNow;
@@ -28,10 +30,14 @@ public class SupplierPollingDispatcherJob(
         if (dueSupplierIds.Count == 0) return;
 
         logger.LogInformation(
-            "PollingDispatcher: {Count} supplier(s) due for polling", dueSupplierIds.Count);
+            "PollingDispatcher: {Count} supplier(s) due for polling (max {Max} concurrent)",
+            dueSupplierIds.Count, MaxConcurrentPolls);
 
-        foreach (var id in dueSupplierIds)
+        var semaphore = new SemaphoreSlim(MaxConcurrentPolls);
+
+        var tasks = dueSupplierIds.Select(async id =>
         {
+            await semaphore.WaitAsync();
             try
             {
                 var result = await pollingService.PollSupplierAsync(id);
@@ -44,8 +50,14 @@ public class SupplierPollingDispatcherJob(
                 logger.LogError(ex,
                     "PollingDispatcher: unexpected error polling supplier {SupplierId} — continuing with next",
                     id);
-                // Continue to next supplier rather than aborting the whole batch
+                // Individual failures do not abort the rest of the batch
             }
-        }
+            finally
+            {
+                semaphore.Release();
+            }
+        });
+
+        await Task.WhenAll(tasks);
     }
 }

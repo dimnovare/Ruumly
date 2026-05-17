@@ -25,6 +25,7 @@ using Asp.Versioning.ApiExplorer;
 using Hangfire;
 using Hangfire.Dashboard;
 using Hangfire.PostgreSql;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using Serilog;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -123,9 +124,26 @@ else
 }
 builder.Services.AddResponseCaching();
 
+// ─── Forwarded headers (Cloudflare → Railway proxy chain) ───
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // Trust ALL upstream proxies — Cloudflare's egress IPs rotate constantly;
+    // an IP allowlist would break on every Cloudflare expansion.
+    // Real client IP is read from CF-Connecting-IP (set by Cloudflare, not forgeable downstream).
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 // ─── Rate limiting (per-client partitioned) ───
-static string IpKey(HttpContext ctx) =>
-    ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+static string IpKey(HttpContext ctx)
+{
+    // CF-Connecting-IP is injected by Cloudflare and unavailable to clients directly.
+    // Fall back to X-Forwarded-For (populated by UseForwardedHeaders above) or socket IP.
+    var cfIp = ctx.Request.Headers["CF-Connecting-IP"].FirstOrDefault();
+    if (!string.IsNullOrWhiteSpace(cfIp)) return cfIp;
+    return ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+}
 
 static string UserOrIpKey(HttpContext ctx) =>
     ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
@@ -402,6 +420,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.UseForwardedHeaders();   // must be before UseRouting, UseAuthentication, UseRateLimiter
 app.UseCors("Frontend");
 app.UseResponseCaching();
 app.UseSentryTracing();
