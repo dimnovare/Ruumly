@@ -148,6 +148,7 @@ public class AdminSuppliersController(
             UpdatedAt           = DateTime.UtcNow,
         });
 
+        Audit("supplier.created", User.GetUserEmail(), supplier.Name, null);
         try
         {
             await Db.SaveChangesAsync();
@@ -156,7 +157,6 @@ public class AdminSuppliersController(
         {
             return Conflict(new { error = ErrorMessages.Get("REGISTRY_CODE_DUPLICATE", Request.GetLang()) });
         }
-        await Audit("supplier.created", User.GetUserEmail(), supplier.Name, null);
 
         var pricingConfig = await pricingConfigService.GetAsync();
         return Ok(AdminMappers.MapSupplier(supplier, 0, 0m, 0, false, pricingConfig));
@@ -272,7 +272,7 @@ public class AdminSuppliersController(
         }
 
         supplier.UpdatedAt = DateTime.UtcNow;
-        await Audit("supplier.updated", User.GetUserEmail(), supplier.Name, null);
+        Audit("supplier.updated", User.GetUserEmail(), supplier.Name, null);
         await Db.SaveChangesAsync();
 
         if (supplier.Slug is not null)
@@ -290,7 +290,7 @@ public class AdminSuppliersController(
 
         supplier.IsActive  = false;
         supplier.UpdatedAt = DateTime.UtcNow;
-        await Audit("supplier.deleted", User.GetUserEmail(), supplier.Name, null);
+        Audit("supplier.deleted", User.GetUserEmail(), supplier.Name, null);
         await Db.SaveChangesAsync();
 
         return NoContent();
@@ -310,7 +310,7 @@ public class AdminSuppliersController(
         if (body.IsActive && wasInactive && supplier.OnboardingStartedAt is null)
             supplier.OnboardingStartedAt = DateTime.UtcNow;
 
-        await Audit("supplier.status_changed", User.GetUserEmail(),
+        Audit("supplier.status_changed", User.GetUserEmail(),
             supplier.Name, $"isActive → {body.IsActive}");
         await Db.SaveChangesAsync();
 
@@ -404,10 +404,9 @@ public class AdminSuppliersController(
 
         supplier.FoundingPartner = true;
         supplier.UpdatedAt       = DateTime.UtcNow;
-        await Db.SaveChangesAsync();
-
-        await Audit("supplier.founding_partner_granted", User.GetUserEmail(),
+        Audit("supplier.founding_partner_granted", User.GetUserEmail(),
             supplier.Name, "permanent status granted");
+        await Db.SaveChangesAsync();
 
         return Ok(new { supplierId = supplier.Id, foundingPartner = true });
     }
@@ -420,10 +419,9 @@ public class AdminSuppliersController(
 
         supplier.FoundingPartner = false;
         supplier.UpdatedAt       = DateTime.UtcNow;
-        await Db.SaveChangesAsync();
-
-        await Audit("supplier.founding_partner_revoked", User.GetUserEmail(),
+        Audit("supplier.founding_partner_revoked", User.GetUserEmail(),
             supplier.Name, "status revoked");
+        await Db.SaveChangesAsync();
 
         return Ok(new { supplierId = supplier.Id, foundingPartner = false });
     }
@@ -437,9 +435,8 @@ public class AdminSuppliersController(
         supplier.IsVerified = true;
         supplier.VerifiedAt = DateTime.UtcNow;
         supplier.UpdatedAt  = DateTime.UtcNow;
+        Audit("supplier.verified", User.GetUserEmail(), supplier.Name, null);
         await Db.SaveChangesAsync();
-
-        await Audit("supplier.verified", User.GetUserEmail(), supplier.Name, null);
         return Ok(new { supplierId = supplier.Id, isVerified = true, verifiedAt = supplier.VerifiedAt });
     }
 
@@ -452,9 +449,8 @@ public class AdminSuppliersController(
         supplier.IsVerified = false;
         supplier.VerifiedAt = null;
         supplier.UpdatedAt  = DateTime.UtcNow;
+        Audit("supplier.unverified", User.GetUserEmail(), supplier.Name, null);
         await Db.SaveChangesAsync();
-
-        await Audit("supplier.unverified", User.GetUserEmail(), supplier.Name, null);
         return Ok(new { supplierId = supplier.Id, isVerified = false });
     }
 
@@ -469,10 +465,9 @@ public class AdminSuppliersController(
 
         supplier.PriorityLevel = level;
         supplier.UpdatedAt     = DateTime.UtcNow;
-        await Db.SaveChangesAsync();
-
-        await Audit("supplier.priority_changed", User.GetUserEmail(),
+        Audit("supplier.priority_changed", User.GetUserEmail(),
             supplier.Name, $"priorityLevel → {level}");
+        await Db.SaveChangesAsync();
         return Ok(new { supplierId = supplier.Id, priorityLevel = level.ToString() });
     }
 
@@ -495,14 +490,13 @@ public class AdminSuppliersController(
         user.SupplierId    = supplier.Id;
         user.Role          = UserRole.Provider;
 
-        await Db.SaveChangesAsync();
-
         var actorName = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "admin";
-        await Audit(
+        Audit(
             "approve_supplier_application",
             actorName,
             $"Supplier:{supplier.Id}",
             $"Linked to user {user.Email}");
+        await Db.SaveChangesAsync();
 
         return Ok(new { message = "Supplier approved and user linked as provider." });
     }
@@ -634,7 +628,7 @@ public class AdminSuppliersController(
             s.UpdatedAt = DateTime.UtcNow;
         }
 
-        await Audit("supplier.integration.updated", User.GetUserEmail(), supplier.Name, null);
+        Audit("supplier.integration.updated", User.GetUserEmail(), supplier.Name, null);
         await Db.SaveChangesAsync();
         return Ok(MapIntegration(supplier));
     }

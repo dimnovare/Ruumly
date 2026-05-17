@@ -51,7 +51,7 @@ public class AdminRoutingController(RuumlyDbContext db) : AdminBaseController(db
         };
 
         Db.OrderRoutingRules.Add(rule);
-        await Audit("routing_rule.created", User.GetUserEmail(), body.Name, null);
+        Audit("routing_rule.created", User.GetUserEmail(), body.Name, null);
         await Db.SaveChangesAsync();
 
         return CreatedAtAction(nameof(GetRoutingRules), new { }, AdminMappers.MapRoutingRule(rule));
@@ -81,7 +81,7 @@ public class AdminRoutingController(RuumlyDbContext db) : AdminBaseController(db
             rule.PostingChannel = pc;
 
         rule.UpdatedAt = DateTime.UtcNow;
-        await Audit("routing_rule.updated", User.GetUserEmail(), rule.Name, null);
+        Audit("routing_rule.updated", User.GetUserEmail(), rule.Name, null);
         await Db.SaveChangesAsync();
 
         return Ok(AdminMappers.MapRoutingRule(rule));
@@ -94,7 +94,7 @@ public class AdminRoutingController(RuumlyDbContext db) : AdminBaseController(db
         if (rule is null) return NotFound(Error("Routing rule not found"));
 
         Db.OrderRoutingRules.Remove(rule);
-        await Audit("routing_rule.deleted", User.GetUserEmail(), rule.Name, null);
+        Audit("routing_rule.deleted", User.GetUserEmail(), rule.Name, null);
         await Db.SaveChangesAsync();
 
         return NoContent();

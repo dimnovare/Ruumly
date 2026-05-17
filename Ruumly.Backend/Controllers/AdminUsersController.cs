@@ -26,6 +26,8 @@ public class AdminUsersController(RuumlyDbContext db) : AdminBaseController(db)
 
         if (!string.IsNullOrWhiteSpace(q))
         {
+            q = q.Trim();
+            if (q.Length > 200) q = q[..200];
             var lq = q.ToLower();
             query = query.Where(u =>
                 u.Email.ToLower().Contains(lq) ||
@@ -63,7 +65,7 @@ public class AdminUsersController(RuumlyDbContext db) : AdminBaseController(db)
 
         var prev = user.Status;
         user.Status = status;
-        await Audit("user.status_changed", User.GetUserEmail(),
+        Audit("user.status_changed", User.GetUserEmail(),
             user.Name, $"{prev} → {status}");
         await Db.SaveChangesAsync();
 
@@ -90,9 +92,18 @@ public class AdminUsersController(RuumlyDbContext db) : AdminBaseController(db)
             user.EmailVerified = body.EmailVerified.Value;
 
         if (body.SupplierId.HasValue)
-            user.SupplierId = body.SupplierId.Value == Guid.Empty ? null : body.SupplierId.Value;
+        {
+            var newSupplierId = body.SupplierId.Value == Guid.Empty ? (Guid?)null : body.SupplierId.Value;
+            if (newSupplierId.HasValue)
+            {
+                var supplierExists = await Db.Suppliers.AnyAsync(s => s.Id == newSupplierId.Value);
+                if (!supplierExists)
+                    return NotFound(Error($"Supplier {newSupplierId} not found."));
+            }
+            user.SupplierId = newSupplierId;
+        }
 
-        await Audit("user.updated", User.GetUserEmail(), user.Name, null);
+        Audit("user.updated", User.GetUserEmail(), user.Name, null);
         await Db.SaveChangesAsync();
 
         return Ok(new
@@ -117,7 +128,7 @@ public class AdminUsersController(RuumlyDbContext db) : AdminBaseController(db)
         if (supplier is null) return NotFound(Error("Supplier not found"));
 
         user.SupplierId = supplierId;
-        await Audit("user.supplier_assigned", User.GetUserEmail(),
+        Audit("user.supplier_assigned", User.GetUserEmail(),
             user.Name, $"Assigned to {supplier.Name}");
         await Db.SaveChangesAsync();
 

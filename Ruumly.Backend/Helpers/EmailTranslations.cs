@@ -101,7 +101,10 @@ public static class EmailTranslations
         string ReservationExpiredSubject,
         string ReservationExpiredGreeting,
         string ReservationExpiredBody,
-        string ReservationExpiredCta
+        string ReservationExpiredCta,
+        // Refund initiated notification
+        string RefundInitiatedTitle,
+        string RefundInitiatedDesc
     );
 
     private static readonly EmailStrings Et = new(
@@ -199,7 +202,9 @@ public static class EmailTranslations
         ReservationExpiredSubject:     "Broneering aegus",
         ReservationExpiredGreeting:    "Tere {name},",
         ReservationExpiredBody:        "Teie broneering teenusele \"{listing}\" aegus, kuna makset ei laekunud 24 tunni jooksul.",
-        ReservationExpiredCta:         "Broneerige uuesti"
+        ReservationExpiredCta:         "Broneerige uuesti",
+        RefundInitiatedTitle:          "Tagasimakse algatatud",
+        RefundInitiatedDesc:           "Tagasimakse broneeringu #{bookingRef} jaoks on algatatud. Summa kantakse teie kontole 3–5 tööpäeva jooksul."
     );
 
     private static readonly EmailStrings En = new(
@@ -297,7 +302,9 @@ public static class EmailTranslations
         ReservationExpiredSubject:     "Reservation expired",
         ReservationExpiredGreeting:    "Hi {name},",
         ReservationExpiredBody:        "Your reservation for \"{listing}\" has expired because payment was not received within 24 hours.",
-        ReservationExpiredCta:         "Book again"
+        ReservationExpiredCta:         "Book again",
+        RefundInitiatedTitle:          "Refund initiated",
+        RefundInitiatedDesc:           "A refund for booking #{bookingRef} has been initiated. The amount will be transferred to your account within 3–5 business days."
     );
 
     private static readonly EmailStrings Ru = new(
@@ -394,7 +401,9 @@ public static class EmailTranslations
         ReservationExpiredSubject:     "Бронирование истекло",
         ReservationExpiredGreeting:    "Здравствуйте, {name},",
         ReservationExpiredBody:        "Срок вашего бронирования \"{listing}\" истёк, так как оплата не поступила в течение 24 часов.",
-        ReservationExpiredCta:         "Забронировать снова"
+        ReservationExpiredCta:         "Забронировать снова",
+        RefundInitiatedTitle:          "Возврат инициирован",
+        RefundInitiatedDesc:           "Возврат средств для бронирования #{bookingRef} инициирован. Сумма будет переведена на ваш счёт в течение 3–5 рабочих дней."
     );
 
     private static readonly EmailStrings Lv = new(
@@ -492,7 +501,9 @@ public static class EmailTranslations
         ReservationExpiredSubject:     "Rezervācija beigusies",
         ReservationExpiredGreeting:    "Sveiki, {name},",
         ReservationExpiredBody:        "Jūsu rezervācija \"{listing}\" ir beigusies, jo maksājums netika saņemts 24 stundu laikā.",
-        ReservationExpiredCta:         "Rezervēt vēlreiz"
+        ReservationExpiredCta:         "Rezervēt vēlreiz",
+        RefundInitiatedTitle:          "Atmaksa uzsākta",
+        RefundInitiatedDesc:           "Atmaksa rezervācijai #{bookingRef} ir uzsākta. Summa tiks pārskaitīta uz jūsu kontu 3–5 darba dienu laikā."
     );
 
     private static readonly EmailStrings Lt = new(
@@ -590,7 +601,9 @@ public static class EmailTranslations
         ReservationExpiredSubject:     "Rezervacija baigėsi",
         ReservationExpiredGreeting:    "Sveiki, {name},",
         ReservationExpiredBody:        "Jūsų rezervacija \"{listing}\" baigėsi, nes mokėjimas negautas per 24 valandas.",
-        ReservationExpiredCta:         "Rezervuoti vėl"
+        ReservationExpiredCta:         "Rezervuoti vėl",
+        RefundInitiatedTitle:          "Grąžinimas pradėtas",
+        RefundInitiatedDesc:           "Grąžinimas rezervacijos #{bookingRef} buvo pradėtas. Suma bus pervesta į jūsų sąskaitą per 3–5 darbo dienas."
     );
 
     public static EmailStrings For(string? lang) =>

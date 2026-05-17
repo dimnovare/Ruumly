@@ -50,7 +50,7 @@ public class AdminIntegrationsController(RuumlyDbContext db) : AdminBaseControll
 
         settings.UpdatedAt = DateTime.UtcNow;
 
-        await Audit("integration.updated", User.GetUserEmail(),
+        Audit("integration.updated", User.GetUserEmail(),
             settings.Supplier.Name, "Settings updated");
         await Db.SaveChangesAsync();
 

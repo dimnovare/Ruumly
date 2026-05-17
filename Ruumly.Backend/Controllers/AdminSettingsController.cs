@@ -64,7 +64,7 @@ public class AdminSettingsController(
         }
 
         booking.UpdatedAt = DateTime.UtcNow;
-        await Audit("inquiry.updated", User.GetUserEmail(),
+        Audit("inquiry.updated", User.GetUserEmail(),
             id.ToString(), body.Status);
         await Db.SaveChangesAsync();
 
@@ -122,7 +122,7 @@ public class AdminSettingsController(
             }
         }
 
-        await Audit("settings.updated", actor,
+        Audit("settings.updated", actor,
             string.Join(", ", updates.Keys), null);
         await Db.SaveChangesAsync();
         await pricingConfigService.InvalidateCacheAsync();
@@ -303,7 +303,7 @@ public class AdminSettingsController(
         };
 
         Db.Listings.Add(listing);
-        await Audit("listing.created", User.GetUserEmail(), listing.Title, null);
+        Audit("listing.created", User.GetUserEmail(), listing.Title, null);
         await Db.SaveChangesAsync();
         await listingService.InvalidateListingAsync(listing.Id);
 
@@ -363,7 +363,7 @@ public class AdminSettingsController(
         }
 
         listing.UpdatedAt = DateTime.UtcNow;
-        await Audit("listing.updated", User.GetUserEmail(), listing.Title, null);
+        Audit("listing.updated", User.GetUserEmail(), listing.Title, null);
         await Db.SaveChangesAsync();
         await listingService.InvalidateListingAsync(id);
 
@@ -381,7 +381,7 @@ public class AdminSettingsController(
 
         listing.ImagesJson = System.Text.Json.JsonSerializer.Serialize(body.Images);
         listing.UpdatedAt  = DateTime.UtcNow;
-        await Audit("listing.images_updated", User.GetUserEmail(), listing.Title, null);
+        Audit("listing.images_updated", User.GetUserEmail(), listing.Title, null);
         await Db.SaveChangesAsync();
         await listingService.InvalidateListingAsync(id);
 
@@ -395,7 +395,7 @@ public class AdminSettingsController(
         if (listing is null) return NotFound(Error("Listing not found"));
 
         Db.Listings.Remove(listing);
-        await Audit("listing.deleted", User.GetUserEmail(), listing.Title, null);
+        Audit("listing.deleted", User.GetUserEmail(), listing.Title, null);
         await Db.SaveChangesAsync();
         await listingService.InvalidateListingAsync(id);
 

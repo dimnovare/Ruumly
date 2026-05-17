@@ -55,23 +55,26 @@ public class AdminRefundsController(
             CreatedAt = DateTime.UtcNow,
         });
 
-        await Db.SaveChangesAsync();
-
-        // Notify the customer
-        await notificationService.CreateAsync(
-            userId:     booking.UserId,
-            type:       NotificationType.Payment,
-            title:      "Refund initiated",
-            desc:       $"A refund for booking #{booking.Id.ToString()[..8].ToUpper()} has been initiated. The amount will be transferred to your account within 3–5 business days.",
-            actionUrl:  $"/account?tab=bookings",
-            entityId:   booking.Id.ToString(),
-            entityType: "booking");
-
-        await Audit(
+        // Queue audit log before saving so entity + log commit atomically.
+        Audit(
             action: "booking.refund_initiated",
             actor:  User.Identity?.Name ?? "admin",
             target: booking.Id.ToString(),
             detail: $"Invoice {invoice.Id}, amount €{invoice.Amount:F2}");
+
+        await Db.SaveChangesAsync();
+
+        // Notify the customer in their preferred language.
+        var tl         = EmailTranslations.For(booking.User?.Language ?? "et");
+        var bookingRef = booking.Id.ToString()[..8].ToUpper();
+        await notificationService.CreateAsync(
+            userId:     booking.UserId,
+            type:       NotificationType.Payment,
+            title:      tl.RefundInitiatedTitle,
+            desc:       tl.RefundInitiatedDesc.Replace("{bookingRef}", bookingRef),
+            actionUrl:  "/account?tab=bookings",
+            entityId:   booking.Id.ToString(),
+            entityType: "booking");
 
         return Ok(new
         {
