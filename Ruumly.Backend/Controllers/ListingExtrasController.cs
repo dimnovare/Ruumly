@@ -160,13 +160,18 @@ public class ListingExtrasController(
             if (body.PartnerDiscountRate.Value < 0)
                 extra.PartnerDiscountRate = null;   // negative = reset to supplier default
             else
-                extra.PartnerDiscountRate = body.PartnerDiscountRate.Value;  // 0 = no discount
+                extra.PartnerDiscountRate =
+                    Math.Min(body.PartnerDiscountRate.Value, 100m);  // max 100%
         }
 
         if (body.CustomerPriceOverride.HasValue)
-            extra.CustomerPriceOverride = body.CustomerPriceOverride.Value < 0
-                ? null   // negative = clear override, use auto
-                : body.CustomerPriceOverride.Value;
+        {
+            if (body.CustomerPriceOverride.Value < 0)
+                extra.CustomerPriceOverride = null;  // negative = clear override, use auto
+            else
+                extra.CustomerPriceOverride =
+                    Math.Max(0m, body.CustomerPriceOverride.Value);  // must be non-negative
+        }
 
         // Recalculate derived prices whenever anything changes
         var config   = await pricingConfigService.GetAsync();
