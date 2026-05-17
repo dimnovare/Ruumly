@@ -12,6 +12,7 @@ public class StaleBookingCleanupJob(RuumlyDbContext db, ILogger<StaleBookingClea
         var cutoff = DateTime.UtcNow.AddHours(-24);
 
         var staleBookings = await db.Bookings
+            .Include(b => b.Order)
             .Where(b => b.Status == BookingStatus.Pending
                      && b.CreatedAt < cutoff
                      && !db.Invoices.Any(i => i.BookingId == b.Id
@@ -22,6 +23,13 @@ public class StaleBookingCleanupJob(RuumlyDbContext db, ILogger<StaleBookingClea
         {
             booking.Status    = BookingStatus.Cancelled;
             booking.UpdatedAt = DateTime.UtcNow;
+
+            if (booking.Order is not null &&
+                booking.Order.Status != OrderStatus.Cancelled)
+            {
+                booking.Order.Status    = OrderStatus.Cancelled;
+                booking.Order.UpdatedAt = DateTime.UtcNow;
+            }
 
             db.BookingTimelines.Add(new BookingTimeline
             {

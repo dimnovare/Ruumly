@@ -57,6 +57,13 @@ public class AdminSettingsController(
         if (!string.IsNullOrWhiteSpace(body.Notes))
             booking.Notes = body.Notes;
 
+        if (!string.IsNullOrWhiteSpace(body.Status) &&
+            Enum.TryParse<BookingStatus>(body.Status, ignoreCase: true, out var parsedStatus))
+        {
+            booking.Status = parsedStatus;
+        }
+
+        booking.UpdatedAt = DateTime.UtcNow;
         await Audit("inquiry.updated", User.GetUserEmail(),
             id.ToString(), body.Status);
         await Db.SaveChangesAsync();

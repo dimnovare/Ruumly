@@ -23,7 +23,8 @@ public class AbandonedBookingReminderJob(
             .Where(b => b.Status == BookingStatus.Pending
                      && b.CreatedAt < cutoff1h
                      && b.CreatedAt > cutoff2h
-                     && !string.IsNullOrEmpty(b.ContactEmail))
+                     && !string.IsNullOrEmpty(b.ContactEmail)
+                     && b.AbandonedReminderSentAt == null)
             .ToListAsync();
 
         // Batch-load users to avoid N+1 queries
@@ -32,6 +33,7 @@ public class AbandonedBookingReminderJob(
             .Where(u => userIds.Contains(u.Id))
             .ToDictionaryAsync(u => u.Id);
 
+        var anySent = false;
         foreach (var booking in abandoned)
         {
             var lang       = users.GetValueOrDefault(booking.UserId)?.Language ?? "et";
@@ -49,6 +51,8 @@ public class AbandonedBookingReminderJob(
             try
             {
                 await emailSender.SendAsync(booking.ContactEmail!, subject, body);
+                booking.AbandonedReminderSentAt = DateTime.UtcNow;
+                anySent = true;
                 logger.LogInformation("Abandoned booking reminder sent to {Email} for {Id}",
                     booking.ContactEmail, booking.Id);
             }
@@ -59,6 +63,9 @@ public class AbandonedBookingReminderJob(
                     booking.Id);
             }
         }
+
+        if (anySent)
+            await db.SaveChangesAsync();
 
         logger.LogInformation("Abandoned booking check: {Count} reminders sent", abandoned.Count);
     }

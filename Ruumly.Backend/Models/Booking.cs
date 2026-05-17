@@ -72,6 +72,7 @@ public class Booking
     public DateTime? DeletedAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? AbandonedReminderSentAt { get; set; }
 
     public Order? Order { get; set; }
     public Invoice? Invoice { get; set; }

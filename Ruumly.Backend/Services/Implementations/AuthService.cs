@@ -312,7 +312,7 @@ public class AuthService(
         var accessToken   = GenerateJwt(user);
         var refreshToken  = GenerateRawRefreshToken();
         var tokenHash     = HashToken(refreshToken);
-        var expiryDays    = int.Parse(config["Jwt:RefreshTokenExpiryDays"]!);
+        var expiryDays    = int.TryParse(config["Jwt:RefreshTokenExpiryDays"], out var ed) ? ed : 7;
 
         db.RefreshTokens.Add(new RefreshToken
         {
@@ -341,7 +341,8 @@ public class AuthService(
     {
         var key     = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Secret"]!));
         var creds   = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var expires = DateTime.UtcNow.AddMinutes(int.Parse(config["Jwt:AccessTokenExpiryMinutes"]!));
+        var expiryMinutes = int.TryParse(config["Jwt:AccessTokenExpiryMinutes"], out var em) ? em : 60;
+        var expires       = DateTime.UtcNow.AddMinutes(expiryMinutes);
 
         var claims = new[]
         {

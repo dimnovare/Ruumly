@@ -38,16 +38,16 @@ public class OrderRoutingService(
             return;
         }
 
-        // 4. Calculate supplier price and margin
-        // Use the SAME discount cascade as BookingService:
-        // listing override → supplier rate → platform default
-        var partnerDiscountRate = listing.PartnerDiscountRateOverride
-                                  ?? supplier.PartnerDiscountRate;
-        if (partnerDiscountRate == 0)
-        {
-            var config = await pricingConfigService.GetAsync();
-            partnerDiscountRate = config.DefaultPartnerDiscountRate;
-        }
+        // 4. Load pricing config and calculate supplier price via PricingHelpers
+        // — same discount cascade as BookingService and ListingService;
+        //   honours listing.ClientDiscountRateOverride to prevent margin drift
+        var pricingConfig = await pricingConfigService.GetAsync();
+        var (partnerDiscountRate, _) = PricingHelpers.ComputeEffectiveDiscounts(
+            listingPartnerOverride:  listing.PartnerDiscountRateOverride,
+            listingCustomerOverride: listing.ClientDiscountRateOverride,
+            supplierPartnerRate:     supplier.PartnerDiscountRate,
+            defaultPartnerDiscount:  pricingConfig.DefaultPartnerDiscountRate,
+            ruumlyMinMargin:         pricingConfig.RuumlyMinMarginRate);
         var supplierPrice = Math.Round(booking.BasePrice * (1m - partnerDiscountRate / 100m));
 
         // Extras supplier total (from the snapshot stored on the booking)
@@ -65,7 +65,8 @@ public class OrderRoutingService(
                 "Negative margin on booking {BookingId}: base margin {BaseMargin}, " +
                 "extras margin {ExtrasMargin}. PartnerDiscount={PD}%, CustomerDiscount={CD}%",
                 booking.Id, baseMargin, extrasMargin,
-                partnerDiscountRate, booking.PlatformPrice / booking.BasePrice * 100);
+                partnerDiscountRate,
+                booking.BasePrice > 0 ? Math.Round(booking.PlatformPrice / booking.BasePrice * 100, 1) : 0m);
 
         // 5. Determine posting channel
         // If IntegrationSettings exists and is deactivated, force Manual mode.

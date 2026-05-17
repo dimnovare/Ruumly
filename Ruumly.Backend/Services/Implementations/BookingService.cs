@@ -71,11 +71,15 @@ public class BookingService(
         }
         else if (role == UserRole.Provider)
         {
-            var user = await db.Users.FindAsync(userId);
-            if (user?.SupplierId is null)
+            var supplierIdForUser = await db.Users
+                .Where(u => u.Id == userId)
+                .Select(u => u.SupplierId)
+                .FirstOrDefaultAsync(ct);
+
+            if (supplierIdForUser is null)
                 return new PaginatedResult<BookingDto>([], 0, page, limit, false);
 
-            query = query.Where(b => b.SupplierId == user.SupplierId);
+            query = query.Where(b => b.SupplierId == supplierIdForUser.Value);
         }
         else if (role == UserRole.Admin && supplierId.HasValue)
         {
@@ -125,9 +129,12 @@ public class BookingService(
 
         if (role == UserRole.Provider)
         {
-            var user = await db.Users.FindAsync(userId);
-            if (user?.SupplierId is null ||
-                booking.SupplierId != user.SupplierId)
+            var supplierIdForUser = await db.Users
+                .Where(u => u.Id == userId)
+                .Select(u => u.SupplierId)
+                .FirstOrDefaultAsync();
+
+            if (supplierIdForUser is null || booking.SupplierId != supplierIdForUser.Value)
                 throw new ForbiddenException(Msg("BOOKING_NOT_FOUND"));
         }
 
@@ -463,8 +470,12 @@ public class BookingService(
 
         if (role == UserRole.Provider)
         {
-            var user = await db.Users.FindAsync(userId);
-            if (user?.SupplierId is null || booking.SupplierId != user.SupplierId)
+            var supplierIdForUser = await db.Users
+                .Where(u => u.Id == userId)
+                .Select(u => u.SupplierId)
+                .FirstOrDefaultAsync();
+
+            if (supplierIdForUser is null || booking.SupplierId != supplierIdForUser.Value)
                 throw new ForbiddenException(Msg("BOOKING_NOT_FOUND"));
         }
 
