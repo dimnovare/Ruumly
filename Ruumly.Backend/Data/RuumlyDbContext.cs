@@ -234,6 +234,14 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
         model.Entity<Listing>()
             .HasIndex(l => new { l.IsActive, l.City });
 
+        // GIN trigram index — enables fast ILike '%...%' partial-match on City.
+        // Requires: CREATE EXTENSION IF NOT EXISTS pg_trgm (handled at startup).
+        model.Entity<Listing>()
+            .HasIndex(l => l.City)
+            .HasMethod("gin")
+            .HasOperators("gin_trgm_ops")
+            .HasDatabaseName("IX_Listings_City_Trgm");
+
         model.Entity<Listing>()
             .HasIndex(l => l.PriceFrom);
 

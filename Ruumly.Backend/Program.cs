@@ -219,19 +219,19 @@ builder.Services.AddCors(options =>
     options.AddPolicy("Frontend", policy =>
         policy.SetIsOriginAllowed(origin =>
         {
-            // Always allow configured origins (ruumly.eu, www.ruumly.eu, localhost)
             if (allowedOrigins.Contains(origin)) return true;
 
-            // Allow Vercel preview deployments
-            if (Uri.TryCreate(origin, UriKind.Absolute, out var uri))
-            {
-                // Only allow Ruumly's own Vercel deployments, not any vercel.app subdomain
-                return uri.Host.EndsWith(".vercel.app") &&
-                       (uri.Host.StartsWith("ruumly-") ||
-                        uri.Host.StartsWith("estonia-space-hub"));
-            }
+            if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri)) return false;
+            if (!uri.Host.EndsWith(".vercel.app")) return false;
 
-            return false;
+            // Only allow exact Ruumly Vercel project slugs.
+            // Preview URLs follow the pattern: {projectName}-{hash}-{teamSlug}.vercel.app
+            // Using a broad prefix like "ruumly-" would let any attacker register
+            // "ruumly-evil.vercel.app" and make credentialed cross-origin requests.
+            var host = uri.Host;
+            return host.StartsWith("estonia-space-hub-") ||
+                   host == "estonia-space-hub.vercel.app";
+            // Add future project slugs explicitly — never use a short prefix alone.
         })
         .AllowAnyHeader()
         .AllowAnyMethod()
@@ -534,6 +534,7 @@ if (app.Environment.IsProduction())
     // Required by SearchVector trigger and ListingService for diacritic-folding.
     // Idempotent — no-op if already installed.
     await db.Database.ExecuteSqlRawAsync("CREATE EXTENSION IF NOT EXISTS unaccent;");
+    await db.Database.ExecuteSqlRawAsync("CREATE EXTENSION IF NOT EXISTS pg_trgm;");
 }
 
 if (app.Environment.IsDevelopment())
@@ -549,6 +550,7 @@ if (app.Environment.IsDevelopment())
             await db.Database.MigrateAsync();
         }
         await db.Database.ExecuteSqlRawAsync("CREATE EXTENSION IF NOT EXISTS unaccent;");
+    await db.Database.ExecuteSqlRawAsync("CREATE EXTENSION IF NOT EXISTS pg_trgm;");
         await SeedData.SeedAsync(db);
     }
     catch (Exception ex)

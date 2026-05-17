@@ -98,10 +98,12 @@ public class ListingService(
         }
 
         // ── City filter (case-insensitive) ────────────────────────────────────
+        // EF.Functions.ILike maps to PostgreSQL's native ILIKE operator, which avoids
+        // the LOWER() function call on the column side and allows a pg_trgm GIN index.
         if (!string.IsNullOrWhiteSpace(f.City))
         {
-            var city = f.City.ToLower();
-            query = query.Where(l => l.City.ToLower().Contains(city));
+            var city = f.City.Trim();
+            query = query.Where(l => EF.Functions.ILike(l.City, $"%{city}%"));
         }
 
         // ── PriceMax filter ───────────────────────────────────────────────────
@@ -122,9 +124,19 @@ public class ListingService(
         if (!string.IsNullOrWhiteSpace(f.Q))
         {
             var searchTerm = RemoveDiacritics(f.Q.Trim());
-            query = query.Where(l =>
-                l.SearchVector != null &&
-                l.SearchVector.Matches(EF.Functions.PlainToTsQuery("simple", searchTerm)));
+            // Strip tsquery operator characters (&, |, !, :, *, (, ), <, >) to prevent
+            // plainto_tsquery parse errors on special-character input.
+            searchTerm = System.Text.RegularExpressions.Regex.Replace(
+                searchTerm, @"[&|!:()*<>]", " ");
+            searchTerm = System.Text.RegularExpressions.Regex.Replace(
+                searchTerm, @"\s+", " ").Trim();
+
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                query = query.Where(l =>
+                    l.SearchVector != null &&
+                    l.SearchVector.Matches(EF.Functions.PlainToTsQuery("simple", searchTerm)));
+            }
         }
 
         // ── Sort ──────────────────────────────────────────────────────────────
