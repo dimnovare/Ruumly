@@ -15,9 +15,11 @@ public class AdminUsersController(RuumlyDbContext db) : AdminBaseController(db)
 {
     [HttpGet("users")]
     public async Task<IActionResult> GetUsers(
-        [FromQuery] int     page  = 1,
-        [FromQuery] int     limit = 50,
-        [FromQuery] string? q     = null)
+        [FromQuery] int     page   = 1,
+        [FromQuery] int     limit  = 50,
+        [FromQuery] string? q      = null,
+        [FromQuery] string? role   = null,
+        [FromQuery] string? status = null)
     {
         page  = Math.Max(1, page);
         limit = Math.Clamp(limit, 1, 200);
@@ -33,6 +35,14 @@ public class AdminUsersController(RuumlyDbContext db) : AdminBaseController(db)
                 u.Email.ToLower().Contains(lq) ||
                 u.Name.ToLower().Contains(lq));
         }
+
+        if (!string.IsNullOrWhiteSpace(role) &&
+            Enum.TryParse<UserRole>(role, ignoreCase: true, out var parsedRole))
+            query = query.Where(u => u.Role == parsedRole);
+
+        if (!string.IsNullOrWhiteSpace(status) &&
+            Enum.TryParse<UserStatus>(status, ignoreCase: true, out var parsedStatus))
+            query = query.Where(u => u.Status == parsedStatus);
 
         var total = await query.CountAsync();
         var users = await query
