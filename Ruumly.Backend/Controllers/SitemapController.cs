@@ -140,6 +140,8 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
             "Disallow: /*/provider/dashboard\n" +
             "Disallow: /*/provider/onboarding\n" +
             "Disallow: /*/book\n" +
+            "Disallow: /payment\n" +
+            "Disallow: /*/payment\n" +
             "\n" +
             "# AI training crawlers — blocked\n" +
             "User-agent: Amazonbot\n" +

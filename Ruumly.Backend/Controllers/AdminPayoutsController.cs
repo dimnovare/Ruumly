@@ -10,42 +10,39 @@ public class AdminPayoutsController(RuumlyDbContext db) : AdminBaseController(db
 {
     [HttpGet("payouts")]
     public async Task<IActionResult> GetPayouts(
-        [FromQuery] string? status = null,
-        [FromQuery] Guid? supplierId = null)
+        [FromQuery] string? status     = null,
+        [FromQuery] Guid?   supplierId = null,
+        [FromQuery] int     page       = 1,
+        [FromQuery] int     limit      = 100)
     {
-        var query = Db.PayoutEntries
-            .Include(p => p.Supplier)
-            .Include(p => p.Order)
-            .AsQueryable();
+        page  = Math.Max(1, page);
+        limit = Math.Clamp(limit, 1, 500);
 
-        if (!string.IsNullOrEmpty(status) &&
-            Enum.TryParse<PayoutStatus>(status, true, out var s))
-            query = query.Where(p => p.Status == s);
-
+        // Build the base filter ONCE — summary totals and paginated entries
+        // both derive from this so they can never diverge.
+        var baseQuery = Db.PayoutEntries.AsQueryable();
+        if (!string.IsNullOrEmpty(status) && Enum.TryParse<PayoutStatus>(status, true, out var s))
+            baseQuery = baseQuery.Where(p => p.Status == s);
         if (supplierId.HasValue)
-            query = query.Where(p => p.SupplierId == supplierId);
+            baseQuery = baseQuery.Where(p => p.SupplierId == supplierId);
 
-        // Compute summary from the FULL (untruncated) filtered dataset
-        var summaryQuery = Db.PayoutEntries.AsQueryable();
-        if (!string.IsNullOrEmpty(status) && Enum.TryParse<PayoutStatus>(status, true, out var sv))
-            summaryQuery = summaryQuery.Where(p => p.Status == sv);
-        if (supplierId.HasValue)
-            summaryQuery = summaryQuery.Where(p => p.SupplierId == supplierId);
-
-        var totalPending = await summaryQuery
+        // Summary uses the full filtered set (no pagination).
+        var totalPending = await baseQuery
             .Where(p => p.Status == PayoutStatus.Pending)
             .SumAsync(p => (decimal?)p.SupplierAmount) ?? 0m;
-        var totalPaid    = await summaryQuery
+        var totalPaid    = await baseQuery
             .Where(p => p.Status == PayoutStatus.Paid)
             .SumAsync(p => (decimal?)p.SupplierAmount) ?? 0m;
-        var totalMargin  = await summaryQuery
+        var totalMargin  = await baseQuery
             .SumAsync(p => (decimal?)p.PlatformMargin) ?? 0m;
 
-        var summary = new { totalPending, totalPaid, totalMargin };
-
-        var entries = await query
+        var total   = await baseQuery.CountAsync();
+        var entries = await baseQuery
+            .Include(p => p.Supplier)
+            .Include(p => p.Order)
             .OrderByDescending(p => p.CreatedAt)
-            .Take(200)
+            .Skip((page - 1) * limit)
+            .Take(limit)
             .Select(p => new {
                 p.Id,
                 p.SupplierId,
@@ -60,7 +57,14 @@ public class AdminPayoutsController(RuumlyDbContext db) : AdminBaseController(db
             })
             .ToListAsync();
 
-        return Ok(new { entries, summary });
+        return Ok(new {
+            entries,
+            summary = new { totalPending, totalPaid, totalMargin },
+            total,
+            page,
+            limit,
+            hasMore = (page - 1) * limit + entries.Count < total,
+        });
     }
 
     [HttpPatch("payouts/{id:guid}/mark-paid")]
