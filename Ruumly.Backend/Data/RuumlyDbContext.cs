@@ -119,6 +119,17 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
             .IsUnique()
             .HasFilter("\"IdempotencyKey\" IS NOT NULL");
 
+        model.Entity<Booking>()
+            .HasIndex(b => b.SupplierId);
+
+        // Composite for date-scoped supplier queries (provider dashboard, stats)
+        model.Entity<Booking>()
+            .HasIndex(b => new { b.SupplierId, b.CreatedAt });
+
+        // Composite for status-filtered queries (ExpireReservations, cleanup jobs)
+        model.Entity<Booking>()
+            .HasIndex(b => new { b.SupplierId, b.Status });
+
         model.Entity<RefreshToken>()
             .HasIndex(t => new { t.TokenHash, t.IsRevoked });
 

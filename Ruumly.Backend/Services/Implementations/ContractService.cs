@@ -39,15 +39,15 @@ public class ContractService(RuumlyDbContext db) : IContractService
                     + (listing.Location?.City ?? listing.City);
 
         var html = template.HtmlTemplate
-            .Replace("{{tenant_name}}",    user?.Name   ?? "")
+            .Replace("{{tenant_name}}",    HttpUtility.HtmlEncode(user?.Name   ?? ""))
             .Replace("{{tenant_id_code}}", "")           // filled at sign-time by request
-            .Replace("{{unit_title}}",     listing.Title)
-            .Replace("{{unit_address}}",   address)
+            .Replace("{{unit_title}}",     HttpUtility.HtmlEncode(listing.Title))
+            .Replace("{{unit_address}}",   HttpUtility.HtmlEncode(address))
             .Replace("{{price}}",          "€" + listing.PriceFrom.ToString("0.##"))
-            .Replace("{{price_unit}}",     listing.PriceUnit)
+            .Replace("{{price_unit}}",     HttpUtility.HtmlEncode(listing.PriceUnit))
             .Replace("{{start_date}}",     booking.StartDate.ToString("dd.MM.yyyy"))
             .Replace("{{signed_date}}",    DateTime.UtcNow.ToString("dd.MM.yyyy"))
-            .Replace("{{supplier_name}}",  supplier?.Name ?? "");
+            .Replace("{{supplier_name}}",  HttpUtility.HtmlEncode(supplier?.Name ?? ""));
 
         return html;
     }

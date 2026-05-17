@@ -8,11 +8,11 @@ namespace Ruumly.Backend.Services.Interfaces;
 public interface IOrderService
 {
     Task<PaginatedResult<OrderDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 50, Guid? supplierId = null, CancellationToken ct = default);
-    Task<OrderDto?>       GetByIdAsync(Guid id);
-    Task<OrderDto?>       GetByBookingIdAsync(Guid bookingId, Guid callerId, UserRole callerRole);
-    Task<OrderDto>        ApproveAsync(Guid id, Guid approvedByUserId);
-    Task<OrderDto>        RejectAsync(Guid id, string reason, Guid rejectedByUserId);
-    Task<OrderDto>        ConfirmAsync(Guid id, Guid confirmedByUserId);
-    Task<OrderDto>        UpdateStatusAsync(Guid id, UpdateOrderStatusRequest request);
+    Task<OrderDto?>       GetByIdAsync(Guid id, CancellationToken ct = default);
+    Task<OrderDto?>       GetByBookingIdAsync(Guid bookingId, Guid callerId, UserRole callerRole, CancellationToken ct = default);
+    Task<OrderDto>        ApproveAsync(Guid id, Guid approvedByUserId, CancellationToken ct = default);
+    Task<OrderDto>        RejectAsync(Guid id, string reason, Guid rejectedByUserId, CancellationToken ct = default);
+    Task<OrderDto>        ConfirmAsync(Guid id, Guid confirmedByUserId, CancellationToken ct = default);
+    Task<OrderDto>        UpdateStatusAsync(Guid id, UpdateOrderStatusRequest request, CancellationToken ct = default);
     OrderDto              MapToDto(Models.Order order);
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
+using Ruumly.Backend.Models;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Helpers;
@@ -27,10 +28,7 @@ public class ContractController(
         var booking = await db.Bookings.FindAsync(bookingId);
         if (booking is null) return NotFound();
 
-        var userId = User.GetUserId();
-        if (booking.UserId != userId &&
-            !User.IsInRole("Admin") &&
-            !User.IsInRole("Provider"))
+        if (!await CanAccessBookingAsync(booking))
             return Forbid();
 
         var templates = await db.ContractTemplates
@@ -53,10 +51,7 @@ public class ContractController(
         var booking = await db.Bookings.FindAsync(req.BookingId);
         if (booking is null) return NotFound();
 
-        var userId = User.GetUserId();
-        if (booking.UserId != userId &&
-            !User.IsInRole("Admin") &&
-            !User.IsInRole("Provider"))
+        if (!await CanAccessBookingAsync(booking))
             return Forbid();
 
         try
@@ -111,10 +106,7 @@ public class ContractController(
         var booking = await db.Bookings.FindAsync(bookingId);
         if (booking is null) return NotFound();
 
-        var userId = User.GetUserId();
-        if (booking.UserId != userId &&
-            !User.IsInRole("Admin") &&
-            !User.IsInRole("Provider"))
+        if (!await CanAccessBookingAsync(booking))
             return Forbid();
 
         var contract = await db.SignedContracts
@@ -125,5 +117,27 @@ public class ContractController(
             contract.Id, contract.BookingId, contract.RenderedHtml,
             contract.TenantName, contract.TenantIdCode, contract.TenantEmail,
             contract.SignedAt.ToString("o")));
+    }
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// True if the calling user is allowed to read this booking's contract data.
+    /// Admin always passes; the booking's customer always passes; a Provider
+    /// passes only if their supplier owns the booking.
+    /// </summary>
+    private async Task<bool> CanAccessBookingAsync(Booking booking)
+    {
+        if (User.IsInRole("Admin")) return true;
+        if (booking.UserId == User.GetUserId()) return true;
+        if (User.IsInRole("Provider"))
+        {
+            var supplierId = await db.Users
+                .Where(u => u.Id == User.GetUserId())
+                .Select(u => u.SupplierId)
+                .FirstOrDefaultAsync();
+            return supplierId == booking.SupplierId;
+        }
+        return false;
     }
 }

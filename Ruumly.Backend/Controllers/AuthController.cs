@@ -243,6 +243,7 @@ public class AuthController(
 
     [HttpPost("apply-provider")]
     [Authorize]
+    [EnableRateLimiting("auth")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -279,23 +280,41 @@ public class AuthController(
             UpdatedAt    = DateTime.UtcNow,
         };
 
-        user.Role       = UserRole.Provider;
-        user.SupplierId = supplier.Id;
-
-        db.Suppliers.Add(supplier);
-        db.IntegrationSettings.Add(integrationSettings);
-
-        db.AuditLogs.Add(new AuditLog
+        await using var tx = await db.Database.BeginTransactionAsync();
+        try
         {
-            Id        = Guid.NewGuid(),
-            Action    = "supplier.application_submitted",
-            Actor     = user.Email,
-            Target    = supplier.Name,
-            Detail    = $"RegistryCode: {supplier.RegistryCode}",
-            CreatedAt = DateTime.UtcNow,
-        });
+            // Re-check inside the transaction to handle concurrent double-apply
+            var freshUser = await db.Users
+                .Where(u => u.Id == userId)
+                .Select(u => new { u.Role, u.SupplierId })
+                .FirstOrDefaultAsync();
+            if (freshUser?.SupplierId.HasValue == true || freshUser?.Role == UserRole.Provider)
+                return Conflict(new { message = "User is already a provider." });
 
-        await db.SaveChangesAsync();
+            user.Role       = UserRole.Provider;
+            user.SupplierId = supplier.Id;
+
+            db.Suppliers.Add(supplier);
+            db.IntegrationSettings.Add(integrationSettings);
+
+            db.AuditLogs.Add(new AuditLog
+            {
+                Id        = Guid.NewGuid(),
+                Action    = "supplier.application_submitted",
+                Actor     = user.Email,
+                Target    = supplier.Name,
+                Detail    = $"RegistryCode: {supplier.RegistryCode}",
+                CreatedAt = DateTime.UtcNow,
+            });
+
+            await db.SaveChangesAsync();
+            await tx.CommitAsync();
+        }
+        catch
+        {
+            await tx.RollbackAsync();
+            throw;
+        }
 
         // Notify all admins
         var adminIds = await db.Users

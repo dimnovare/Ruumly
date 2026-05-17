@@ -39,7 +39,7 @@ public class OrdersController(IOrderService orderService, RuumlyDbContext db) : 
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
     {
-        var order = await orderService.GetByIdAsync(id);
+        var order = await orderService.GetByIdAsync(id, HttpContext.RequestAborted);
         if (order is null) return NotFound(new { error = "Not Found", message = "Order not found", statusCode = 404 });
         return Ok(order);
     }
@@ -52,7 +52,7 @@ public class OrdersController(IOrderService orderService, RuumlyDbContext db) : 
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetByBookingId(Guid bookingId)
     {
-        var order = await orderService.GetByBookingIdAsync(bookingId, User.GetUserId(), User.GetUserRole());
+        var order = await orderService.GetByBookingIdAsync(bookingId, User.GetUserId(), User.GetUserRole(), HttpContext.RequestAborted);
         if (order is null) return NotFound(new { error = "Not Found", message = "Order not found for this booking", statusCode = 404 });
         return Ok(order);
     }
@@ -67,7 +67,7 @@ public class OrdersController(IOrderService orderService, RuumlyDbContext db) : 
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Approve(Guid id)
     {
-        var order = await orderService.ApproveAsync(id, User.GetUserId());
+        var order = await orderService.ApproveAsync(id, User.GetUserId(), HttpContext.RequestAborted);
         return Ok(order);
     }
 
@@ -80,7 +80,7 @@ public class OrdersController(IOrderService orderService, RuumlyDbContext db) : 
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Reject(Guid id, [FromBody] RejectOrderRequest body)
     {
-        var order = await orderService.RejectAsync(id, body.Reason, User.GetUserId());
+        var order = await orderService.RejectAsync(id, body.Reason, User.GetUserId(), HttpContext.RequestAborted);
         return Ok(order);
     }
 
@@ -93,7 +93,7 @@ public class OrdersController(IOrderService orderService, RuumlyDbContext db) : 
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Confirm(Guid id)
     {
-        var order = await orderService.ConfirmAsync(id, User.GetUserId());
+        var order = await orderService.ConfirmAsync(id, User.GetUserId(), HttpContext.RequestAborted);
         return Ok(order);
     }
 
@@ -107,7 +107,7 @@ public class OrdersController(IOrderService orderService, RuumlyDbContext db) : 
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateOrderStatusRequest request)
     {
-        var order = await orderService.UpdateStatusAsync(id, request);
+        var order = await orderService.UpdateStatusAsync(id, request, HttpContext.RequestAborted);
         return Ok(order);
     }
     /// <summary>

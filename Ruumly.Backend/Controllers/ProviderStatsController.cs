@@ -13,6 +13,7 @@ namespace Ruumly.Backend.Controllers;
 public class ProviderStatsController(RuumlyDbContext db) : ControllerBase
 {
     [HttpGet("stats")]
+    [ResponseCache(Duration = 30, VaryByQueryKeys = new[] { "supplierId" })]
     public async Task<IActionResult> GetStats([FromQuery] Guid? supplierId = null)
     {
         bool aggregateAllSuppliers = false;
@@ -38,26 +39,35 @@ public class ProviderStatsController(RuumlyDbContext db) : ControllerBase
         if (!aggregateAllSuppliers)
             baseQuery = baseQuery.Where(b => b.SupplierId == effectiveId);
 
-        // All aggregations pushed server-side — no ToList() on bookings
-        var totalBookings     = await baseQuery.CountAsync();
-        var thisMonthBookings = await baseQuery.CountAsync(b => b.CreatedAt >= monthStart);
-        var thisMonthRevenue  = await baseQuery
-            .Where(b => b.CreatedAt >= monthStart)
-            .SumAsync(b => (decimal?)b.Total) ?? 0m;
-        var activeBookings    = await baseQuery
-            .CountAsync(b => b.Status == BookingStatus.Reserved
-                          || b.Status == BookingStatus.Confirmed
-                          || b.Status == BookingStatus.Active);
-        var totalRevenue      = await baseQuery
-            .Where(b => b.Status != BookingStatus.Cancelled)
-            .SumAsync(b => (decimal?)b.Total) ?? 0m;
-        var bookedListingIds  = await baseQuery
-            .Where(b => b.Status == BookingStatus.Reserved
-                     || b.Status == BookingStatus.Confirmed
-                     || b.Status == BookingStatus.Active)
-            .Select(b => b.ListingId)
-            .Distinct()
-            .CountAsync();
+        // Collapse all booking aggregations into one round trip
+        var stats = await baseQuery
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                TotalBookings     = g.Count(),
+                ThisMonthBookings = g.Count(b => b.CreatedAt >= monthStart),
+                ThisMonthRevenue  = (decimal?)g.Where(b => b.CreatedAt >= monthStart)
+                                               .Sum(b => b.Total),
+                ActiveBookings    = g.Count(b => b.Status == BookingStatus.Reserved
+                                              || b.Status == BookingStatus.Confirmed
+                                              || b.Status == BookingStatus.Active),
+                TotalRevenue      = (decimal?)g.Where(b => b.Status != BookingStatus.Cancelled)
+                                               .Sum(b => b.Total),
+                BookedListingCount = g.Where(b => b.Status == BookingStatus.Reserved
+                                               || b.Status == BookingStatus.Confirmed
+                                               || b.Status == BookingStatus.Active)
+                                      .Select(b => b.ListingId)
+                                      .Distinct()
+                                      .Count(),
+            })
+            .FirstOrDefaultAsync();
+
+        var totalBookings     = stats?.TotalBookings ?? 0;
+        var thisMonthBookings = stats?.ThisMonthBookings ?? 0;
+        var thisMonthRevenue  = stats?.ThisMonthRevenue ?? 0m;
+        var activeBookings    = stats?.ActiveBookings ?? 0;
+        var totalRevenue      = stats?.TotalRevenue ?? 0m;
+        var bookedListingIds  = stats?.BookedListingCount ?? 0;
 
         var listingsQuery = db.Listings.Where(l => l.IsActive);
         if (!aggregateAllSuppliers)
@@ -75,8 +85,11 @@ public class ProviderStatsController(RuumlyDbContext db) : ControllerBase
         }
         else
         {
-            var supplier = await db.Suppliers.FindAsync(effectiveId);
-            hasFullAnalytics = supplier?.Tier >= SupplierTier.Standard;
+            var tier = await db.Suppliers
+                .Where(s => s.Id == effectiveId)
+                .Select(s => s.Tier)
+                .FirstOrDefaultAsync();
+            hasFullAnalytics = tier >= SupplierTier.Standard;
         }
 
         return Ok(new

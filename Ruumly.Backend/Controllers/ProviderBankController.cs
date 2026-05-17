@@ -16,6 +16,29 @@ public class ProviderBankController(
     RuumlyDbContext db,
     ILogger<ProviderBankController> logger) : ControllerBase
 {
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Validates an IBAN using the ISO 13616 mod-97 checksum.
+    /// Expects a pre-cleaned, uppercased string (no spaces).
+    /// </summary>
+    private static bool IsValidIban(string iban)
+    {
+        if (iban.Length < 15 || iban.Length > 34) return false;
+        if (!System.Text.RegularExpressions.Regex.IsMatch(iban, @"^[A-Z]{2}\d{2}[A-Z0-9]+$"))
+            return false;
+
+        // Move first 4 chars to end, convert letters to digits, check mod 97 == 1
+        var rearranged = iban[4..] + iban[..4];
+        var numeric = string.Concat(rearranged.Select(c =>
+            char.IsLetter(c) ? (c - 'A' + 10).ToString() : c.ToString()));
+
+        var remainder = numeric.Aggregate(0, (acc, c) =>
+            (int)((acc * 10 + (c - '0')) % 97));
+
+        return remainder == 1;
+    }
+
     // Admin: ?supplierId= query param. Provider: own user.SupplierId.
     private async Task<Guid?> ResolveSupplierIdAsync()
     {
@@ -82,8 +105,8 @@ public class ProviderBankController(
         if (!string.IsNullOrWhiteSpace(body.Iban))
         {
             var cleanIban = body.Iban.Replace(" ", "").ToUpper();
-            if (cleanIban.Length < 15 || cleanIban.Length > 34)
-                return BadRequest(new { error = "Invalid IBAN format." });
+            if (!IsValidIban(cleanIban))
+                return BadRequest(new { error = "Invalid IBAN — please check the account number." });
             supplier.Iban = cleanIban;
         }
 

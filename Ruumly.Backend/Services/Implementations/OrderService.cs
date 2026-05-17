@@ -41,7 +41,10 @@ public class OrderService(
 
         if (role == UserRole.Provider)
         {
-            var user = await db.Users.FindAsync(userId);
+            var user = await db.Users
+                .Where(u => u.Id == userId)
+                .Select(u => new { u.SupplierId, u.Email })
+                .FirstOrDefaultAsync(ct);
             if (user is not null)
             {
                 if (user.SupplierId.HasValue)
@@ -76,13 +79,13 @@ public class OrderService(
         return new PaginatedResult<OrderDto>(data, total, page, limit, (page - 1) * limit + data.Count < total);
     }
 
-    public async Task<OrderDto?> GetByIdAsync(Guid id)
+    public async Task<OrderDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
-        var order = await LoadOrder(id);
+        var order = await LoadOrder(id, ct);
         return order is null ? null : MapToDto(order);
     }
 
-    public async Task<OrderDto?> GetByBookingIdAsync(Guid bookingId, Guid callerId, UserRole callerRole)
+    public async Task<OrderDto?> GetByBookingIdAsync(Guid bookingId, Guid callerId, UserRole callerRole, CancellationToken ct = default)
     {
         var order = await db.Orders
             .Include(o => o.Supplier)
@@ -90,7 +93,7 @@ public class OrderService(
             .Include(o => o.Timeline.OrderBy(t => t.CreatedAt))
             .Include(o => o.Booking)
             .AsSplitQuery()
-            .FirstOrDefaultAsync(o => o.BookingId == bookingId);
+            .FirstOrDefaultAsync(o => o.BookingId == bookingId, ct);
 
         if (order is null) return null;
 
@@ -100,8 +103,11 @@ public class OrderService(
 
         if (callerRole == UserRole.Provider)
         {
-            var caller = await db.Users.FindAsync(callerId);
-            if (caller?.SupplierId != order.SupplierId)
+            var callerSupplierId = await db.Users
+                .Where(u => u.Id == callerId)
+                .Select(u => u.SupplierId)
+                .FirstOrDefaultAsync(ct);
+            if (callerSupplierId != order.SupplierId)
                 throw new ForbiddenException(Msg("ORDER_NOT_FOUND"));
         }
 
@@ -110,13 +116,16 @@ public class OrderService(
 
     // ─── Approve ──────────────────────────────────────────────────────────────
 
-    public async Task<OrderDto> ApproveAsync(Guid id, Guid approvedByUserId)
+    public async Task<OrderDto> ApproveAsync(Guid id, Guid approvedByUserId, CancellationToken ct = default)
     {
-        var order = await LoadOrder(id)
+        var order = await LoadOrder(id, ct)
             ?? throw new NotFoundException(Msg("ORDER_NOT_FOUND"));
 
         // Ownership check — Provider can only act on their own supplier's orders
-        var approver = await db.Users.FindAsync(approvedByUserId);
+        var approver = await db.Users
+            .Where(u => u.Id == approvedByUserId)
+            .Select(u => new { u.Name, u.Role, u.SupplierId })
+            .FirstOrDefaultAsync(ct);
         if (approver?.Role == UserRole.Provider &&
             approver.SupplierId != order.SupplierId)
             throw new ForbiddenException(Msg("ORDER_NOT_FOUND"));
@@ -126,11 +135,12 @@ public class OrderService(
 
         // Gate: invoice must be paid before dispatching — unless payment method is "later"
         var invoice = await db.Invoices
-            .FirstOrDefaultAsync(i => i.BookingId == order.BookingId);
+            .FirstOrDefaultAsync(i => i.BookingId == order.BookingId, ct);
         if (invoice is not null
             && invoice.PaymentMethod != "later"
             && invoice.Status != InvoiceStatus.Paid)
             throw new ArgumentException(Msg("INVOICE_NOT_PAID"));
+
 
         var approverName = approver?.Name ?? approvedByUserId.ToString();
 
@@ -162,7 +172,7 @@ public class OrderService(
             CreatedAt = DateTime.UtcNow,
         });
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
         // For API/Email: trigger automatic dispatch.
         // For Manual: the approval itself IS the notification — skip re-dispatch.
@@ -172,7 +182,8 @@ public class OrderService(
         // Update linked booking
         var booking = await db.Bookings
             .Include(b => b.Listing)
-            .FirstOrDefaultAsync(b => b.Id == order.BookingId);
+            .Include(b => b.User)
+            .FirstOrDefaultAsync(b => b.Id == order.BookingId, ct);
 
         if (booking is not null)
         {
@@ -195,23 +206,26 @@ public class OrderService(
                 emailSubject:      tl.BookingStatusConfirmedSubject,
                 emailBody:         tl.BookingStatusConfirmedBody);
 
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(ct);
         }
 
         // Reload for fresh DTO
-        var fresh = await LoadOrder(id);
+        var fresh = await LoadOrder(id, ct);
         return MapToDto(fresh!);
     }
 
     // ─── Reject ───────────────────────────────────────────────────────────────
 
-    public async Task<OrderDto> RejectAsync(Guid id, string reason, Guid rejectedByUserId)
+    public async Task<OrderDto> RejectAsync(Guid id, string reason, Guid rejectedByUserId, CancellationToken ct = default)
     {
-        var order = await LoadOrder(id)
+        var order = await LoadOrder(id, ct)
             ?? throw new NotFoundException(Msg("ORDER_NOT_FOUND"));
 
         // Ownership check — Provider can only act on their own supplier's orders
-        var rejecter = await db.Users.FindAsync(rejectedByUserId);
+        var rejecter = await db.Users
+            .Where(u => u.Id == rejectedByUserId)
+            .Select(u => new { u.Name, u.Role, u.SupplierId })
+            .FirstOrDefaultAsync(ct);
         if (rejecter?.Role == UserRole.Provider &&
             rejecter.SupplierId != order.SupplierId)
             throw new ForbiddenException(Msg("ORDER_NOT_FOUND"));
@@ -247,7 +261,8 @@ public class OrderService(
 
         var booking = await db.Bookings
             .Include(b => b.Listing)
-            .FirstOrDefaultAsync(b => b.Id == order.BookingId);
+            .Include(b => b.User)
+            .FirstOrDefaultAsync(b => b.Id == order.BookingId, ct);
 
         if (booking is not null)
         {
@@ -271,21 +286,24 @@ public class OrderService(
                 emailBody:         tl.BookingStatusRejectedBody);
         }
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
-        var fresh = await LoadOrder(id);
+        var fresh = await LoadOrder(id, ct);
         return MapToDto(fresh!);
     }
 
     // ─── Confirm (webhook / admin manual) ────────────────────────────────────
 
-    public async Task<OrderDto> ConfirmAsync(Guid id, Guid confirmedByUserId)
+    public async Task<OrderDto> ConfirmAsync(Guid id, Guid confirmedByUserId, CancellationToken ct = default)
     {
-        var order = await LoadOrder(id)
+        var order = await LoadOrder(id, ct)
             ?? throw new NotFoundException(Msg("ORDER_NOT_FOUND"));
 
         // Ownership check — Provider can only act on their own supplier's orders
-        var confirmer = await db.Users.FindAsync(confirmedByUserId);
+        var confirmer = await db.Users
+            .Where(u => u.Id == confirmedByUserId)
+            .Select(u => new { u.Name, u.Role, u.SupplierId })
+            .FirstOrDefaultAsync(ct);
         if (confirmer?.Role == UserRole.Provider &&
             confirmer.SupplierId != order.SupplierId)
             throw new ForbiddenException(Msg("ORDER_NOT_FOUND"));
@@ -321,7 +339,8 @@ public class OrderService(
 
         var booking = await db.Bookings
             .Include(b => b.Listing)
-            .FirstOrDefaultAsync(b => b.Id == order.BookingId);
+            .Include(b => b.User)
+            .FirstOrDefaultAsync(b => b.Id == order.BookingId, ct);
 
         if (booking is not null)
         {
@@ -348,17 +367,17 @@ public class OrderService(
             await invoiceService.GenerateAsync(booking.Id);
         }
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
-        var fresh = await LoadOrder(id);
+        var fresh = await LoadOrder(id, ct);
         return MapToDto(fresh!);
     }
 
     // ─── Admin status override ────────────────────────────────────────────────
 
-    public async Task<OrderDto> UpdateStatusAsync(Guid id, UpdateOrderStatusRequest request)
+    public async Task<OrderDto> UpdateStatusAsync(Guid id, UpdateOrderStatusRequest request, CancellationToken ct = default)
     {
-        var order = await LoadOrder(id)
+        var order = await LoadOrder(id, ct)
             ?? throw new NotFoundException(Msg("ORDER_NOT_FOUND"));
 
         if (!Enum.TryParse<OrderStatus>(request.Status, ignoreCase: true, out var newStatus))
@@ -393,7 +412,8 @@ public class OrderService(
         {
             var booking = await db.Bookings
                 .Include(b => b.Listing)
-                .FirstOrDefaultAsync(b => b.Id == order.BookingId);
+                .Include(b => b.User)
+                .FirstOrDefaultAsync(b => b.Id == order.BookingId, ct);
 
             if (booking is not null)
             {
@@ -429,9 +449,9 @@ public class OrderService(
             }
         }
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
 
-        var fresh = await LoadOrder(id);
+        var fresh = await LoadOrder(id, ct);
         return MapToDto(fresh!);
     }
 
@@ -465,8 +485,7 @@ public class OrderService(
             try
             {
                 var accountUrl = $"{config["AppUrl"]}/account?tab=bookings";
-                var user = await db.Users.FindAsync(booking.UserId);
-                var t    = EmailTranslations.For(user?.Language);
+                var t = EmailTranslations.For(booking.User?.Language);
 
                 var textBody =
                     $"Tere {booking.ContactName},\n\n" +
@@ -487,14 +506,14 @@ public class OrderService(
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
-    private Task<Order?> LoadOrder(Guid id) =>
+    private Task<Order?> LoadOrder(Guid id, CancellationToken ct = default) =>
         db.Orders
             .Include(o => o.Supplier)
             .Include(o => o.FulfillmentEvents.OrderBy(e => e.CreatedAt))
             .Include(o => o.Timeline.OrderBy(t => t.CreatedAt))
             .Include(o => o.Booking).ThenInclude(b => b!.User)
             .AsSplitQuery()
-            .FirstOrDefaultAsync(o => o.Id == id);
+            .FirstOrDefaultAsync(o => o.Id == id, ct);
 
     public OrderDto MapToDto(Order o) => MapOrderToDto(o);
 
