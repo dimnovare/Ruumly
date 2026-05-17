@@ -30,11 +30,12 @@ public class InvoiceService(RuumlyDbContext db, IHttpContextAccessor http) : IIn
         }
         else if (role == UserRole.Provider)
         {
-            var user = await db.Users.FindAsync(userId);
-            if (user?.SupplierId is not null)
-                query = query.Where(i => i.Booking.SupplierId == user.SupplierId.Value);
-            else
-                return new PaginatedResult<InvoiceDto>([], 0, page, limit, false);
+            var supplierId = await db.Users
+                .Where(u => u.Id == userId)
+                .Select(u => u.SupplierId)
+                .FirstOrDefaultAsync();
+            if (supplierId is null) return new PaginatedResult<InvoiceDto>([], 0, page, limit, false);
+            query = query.Where(i => i.Booking.SupplierId == supplierId.Value);
         }
         // Admin: no filter
 
@@ -63,8 +64,11 @@ public class InvoiceService(RuumlyDbContext db, IHttpContextAccessor http) : IIn
 
         if (role == UserRole.Provider)
         {
-            var user = await db.Users.FindAsync(userId);
-            if (user?.SupplierId is null || invoice.Booking.SupplierId != user.SupplierId.Value)
+            var supplierId = await db.Users
+                .Where(u => u.Id == userId)
+                .Select(u => u.SupplierId)
+                .FirstOrDefaultAsync();
+            if (supplierId is null || invoice.Booking.SupplierId != supplierId.Value)
                 throw new ForbiddenException(Msg("BOOKING_NOT_FOUND"));
         }
 
