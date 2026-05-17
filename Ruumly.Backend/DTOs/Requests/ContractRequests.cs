@@ -1,14 +1,16 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Ruumly.Backend.DTOs.Requests;
 
 public record CreateContractTemplateRequest(
-    string Name,
-    string Html,
+    [MaxLength(200)]     string  Name,
+    [MaxLength(500_000)] string  Html,   // ~500 KB — generous for real contracts
     bool?  IsDefault
 );
 
 public record UpdateContractTemplateRequest(
-    string? Name,
-    string? Html,
+    [MaxLength(200)]     string? Name,
+    [MaxLength(500_000)] string? Html,
     bool?   IsActive,
     bool?   IsDefault
 );

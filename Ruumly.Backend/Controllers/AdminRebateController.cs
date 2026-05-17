@@ -48,28 +48,40 @@ public class AdminRebateController(RuumlyDbContext db) : AdminBaseController(db)
             .Where(s => s.BillingModel == BillingModel.Rebate && s.IsActive)
             .ToListAsync();
 
+        // Pre-load in two batch queries instead of 2 queries × N suppliers in a loop.
+        var supplierIds = rebateSuppliers.Select(s => s.Id).ToList();
+
+        // Which suppliers already have an invoice for this period? (idempotency check)
+        var existingInvoiceSupplierIds = (await Db.RebateInvoices
+            .Where(r => supplierIds.Contains(r.SupplierId) && r.Period == period)
+            .Select(r => r.SupplierId)
+            .ToListAsync())
+            .ToHashSet();
+
+        // Aggregate payout stats for all due suppliers in one round trip.
+        var payoutStats = await Db.PayoutEntries
+            .Where(p => supplierIds.Contains(p.SupplierId)
+                     && p.CreatedAt >= period
+                     && p.CreatedAt < periodEnd
+                     && p.Status != PayoutStatus.Cancelled)
+            .GroupBy(p => p.SupplierId)
+            .Select(g => new
+            {
+                SupplierId  = g.Key,
+                TotalMargin = g.Sum(p => p.PlatformMargin),
+                OrderCount  = g.Count(),
+            })
+            .ToDictionaryAsync(x => x.SupplierId);
+
+        // Iterate in memory — zero additional DB calls inside the loop.
         var created = new List<object>();
 
         foreach (var supplier in rebateSuppliers)
         {
-            // Skip if already generated for this period
-            var existing = await Db.RebateInvoices
-                .FirstOrDefaultAsync(r => r.SupplierId == supplier.Id && r.Period == period);
-            if (existing is not null)
-                continue;
+            if (existingInvoiceSupplierIds.Contains(supplier.Id)) continue;
 
-            // Sum margin from PayoutEntries in this period
-            var stats = await Db.PayoutEntries
-                .Where(p => p.SupplierId == supplier.Id &&
-                            p.CreatedAt >= period &&
-                            p.CreatedAt < periodEnd &&
-                            p.Status != PayoutStatus.Cancelled)
-                .GroupBy(p => p.SupplierId)
-                .Select(g => new { TotalMargin = g.Sum(p => p.PlatformMargin), OrderCount = g.Count() })
-                .FirstOrDefaultAsync();
-
-            if (stats is null || stats.OrderCount == 0)
-                continue;
+            if (!payoutStats.TryGetValue(supplier.Id, out var stats)
+                || stats.OrderCount == 0) continue;
 
             var invoice = new RebateInvoice
             {

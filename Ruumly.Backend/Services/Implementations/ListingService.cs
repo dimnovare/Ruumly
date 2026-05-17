@@ -28,6 +28,13 @@ public class ListingService(
 
     public async Task<PaginatedResult<ListingDto>> SearchAsync(ListingSearchRequest f, string? language = null, CancellationToken ct = default)
     {
+        // Defence-in-depth: reject oversized inputs even if the [MaxLength] annotation
+        // on the DTO was bypassed (e.g. called directly from another service).
+        if (!string.IsNullOrWhiteSpace(f.Q)    && f.Q.Length    > 200)
+            return PaginatedResult<ListingDto>.Empty(f.Page, f.Limit);
+        if (!string.IsNullOrWhiteSpace(f.City) && f.City.Length > 100)
+            return PaginatedResult<ListingDto>.Empty(f.Page, f.Limit);
+
         var cacheKey = $"listings:search:{HashFilters(f)}:{language ?? "_"}";
         var cached   = await cache.GetStringAsync(cacheKey, ct);
         if (cached is not null)
