@@ -15,6 +15,15 @@ public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddlewa
         }
         catch (Exception ex)
         {
+            // Client disconnected — no point logging a 500 or writing a response
+            if (ex is OperationCanceledException or TaskCanceledException
+                && context.RequestAborted.IsCancellationRequested)
+            {
+                logger.LogDebug("Request cancelled by client: {Method} {Path}",
+                    context.Request.Method, context.Request.Path);
+                return;
+            }
+
             var (statusCodeForLog, _) = ex switch
             {
                 ConflictException           => (409, ""),

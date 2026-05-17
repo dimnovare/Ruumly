@@ -101,10 +101,29 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
                 .ToList();
         }
 
+        // Batch booking counts for all listings to avoid N+1 queries
+        var allListingIds = locations
+            .SelectMany(l => l.Listings.Where(u => u.IsActive).Select(u => u.Id))
+            .Distinct().ToList();
+        var nowUtc = DateTime.UtcNow;
+        Dictionary<Guid, int> bookedCounts = [];
+        if (allListingIds.Count > 0)
+        {
+            bookedCounts = await db.Bookings
+                .Where(b => allListingIds.Contains(b.ListingId)
+                         && (b.Status == BookingStatus.Confirmed
+                             || b.Status == BookingStatus.Active
+                             || b.Status == BookingStatus.Reserved)
+                         && b.StartDate <= nowUtc
+                         && (!b.EndDate.HasValue || b.EndDate.Value > nowUtc))
+                .GroupBy(b => b.ListingId)
+                .ToDictionaryAsync(g => g.Key, g => g.Count());
+        }
+
         var dtos = new List<SupplierLocationDto>();
         foreach (var loc in locations)
         {
-            var (available, fullyBooked) = await ComputeAvailability(loc);
+            var (available, fullyBooked) = ComputeAvailability(loc, bookedCounts);
             dtos.Add(MapToDto(loc, available, fullyBooked));
         }
         return Ok(dtos);
@@ -135,7 +154,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
             if (!await CanAccess(location.SupplierId))
                 return Forbid();
 
-        var (available, fullyBooked) = await ComputeAvailability(location);
+        var (available, fullyBooked) = ComputeAvailability(location, await LoadBookedCountsAsync(location));
         return Ok(MapToDto(location, available, fullyBooked));
     }
 
@@ -188,7 +207,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         await db.SaveChangesAsync();
 
         location.Supplier = supplier;
-        var (availableC, fullyBookedC) = await ComputeAvailability(location);
+        var (availableC, fullyBookedC) = ComputeAvailability(location, await LoadBookedCountsAsync(location));
         return CreatedAtAction(nameof(GetById), new { id = location.Id }, MapToDto(location, availableC, fullyBookedC));
     }
 
@@ -221,7 +240,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         location.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
-        var (availableP, fullyBookedP) = await ComputeAvailability(location);
+        var (availableP, fullyBookedP) = ComputeAvailability(location, await LoadBookedCountsAsync(location));
         return Ok(MapToDto(location, availableP, fullyBookedP));
     }
 
@@ -506,22 +525,34 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         return user?.SupplierId == supplierId;
     }
 
-    private async Task<(int available, bool fullyBooked)> ComputeAvailability(SupplierLocation loc)
+    private async Task<Dictionary<Guid, int>> LoadBookedCountsAsync(SupplierLocation loc)
     {
-        var now            = DateTime.UtcNow;
+        var listingIds = loc.Listings.Where(u => u.IsActive).Select(u => u.Id).ToList();
+        if (listingIds.Count == 0) return [];
+        var now = DateTime.UtcNow;
+        return await db.Bookings
+            .Where(b => listingIds.Contains(b.ListingId)
+                     && (b.Status == BookingStatus.Confirmed
+                         || b.Status == BookingStatus.Active
+                         || b.Status == BookingStatus.Reserved)
+                     && b.StartDate <= now
+                     && (!b.EndDate.HasValue || b.EndDate.Value > now))
+            .GroupBy(b => b.ListingId)
+            .ToDictionaryAsync(g => g.Key, g => g.Count());
+    }
+
+    private static (int available, bool fullyBooked) ComputeAvailability(
+        SupplierLocation loc, Dictionary<Guid, int> bookedCounts)
+    {
         var activeListings = loc.Listings.Where(u => u.IsActive).ToList();
         if (activeListings.Count == 0) return (0, false);
 
-        int totalAvailable = 0;
+        var totalAvailable = 0;
         foreach (var listing in activeListings)
         {
             var capacity       = listing.QuantityTotal ?? 1;
-            var activeBookings = await db.Bookings.CountAsync(b =>
-                b.ListingId == listing.Id &&
-                (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Active || b.Status == BookingStatus.Reserved) &&
-                b.StartDate <= now &&
-                (!b.EndDate.HasValue || b.EndDate.Value > now));
-            totalAvailable += Math.Max(0, capacity - activeBookings);
+            var activeBookings = bookedCounts.GetValueOrDefault(listing.Id, 0);
+            totalAvailable    += Math.Max(0, capacity - activeBookings);
         }
         return (totalAvailable, totalAvailable == 0);
     }

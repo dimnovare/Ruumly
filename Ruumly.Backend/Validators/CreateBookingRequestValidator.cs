@@ -40,7 +40,7 @@ public class CreateBookingRequestValidator : AbstractValidator<CreateBookingRequ
                 if (!DateTime.TryParse(endDate, out var end)) return true;
                 return end > start;
             })
-            .WithMessage("Lõppkuupäev peab olema alguskuupäevast hiljem.")
+            .WithMessage("End date must be after start date.")
             .When(x => !string.IsNullOrEmpty(x.EndDate));
 
         RuleFor(x => x.Notes)

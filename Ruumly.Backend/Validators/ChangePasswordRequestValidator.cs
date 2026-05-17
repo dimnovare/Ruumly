@@ -10,11 +10,11 @@ public class ChangePasswordRequestValidator : AbstractValidator<ChangePasswordRe
         RuleFor(x => x.NewPassword)
             .NotEmpty()
             .MinimumLength(8)
-            .WithMessage("Parool peab olema vähemalt 8 tähemärki.");
+            .WithMessage("Password must be at least 8 characters.");
 
         RuleFor(x => x.ConfirmPassword)
             .NotEmpty()
             .Equal(x => x.NewPassword)
-            .WithMessage("Paroolid ei ühti.");
+            .WithMessage("Passwords do not match.");
     }
 }

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
+using Ruumly.Backend.DTOs;
 using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
@@ -14,8 +15,11 @@ public class InvoiceService(RuumlyDbContext db, IHttpContextAccessor http) : IIn
     private string Lang => http.HttpContext?.Request.GetLang() ?? "et";
     private string Msg(string key) => ErrorMessages.Get(key, Lang);
 
-    public async Task<List<InvoiceDto>> GetAllAsync(Guid userId, UserRole role)
+    public async Task<PaginatedResult<InvoiceDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 100)
     {
+        page  = Math.Max(1, page);
+        limit = Math.Clamp(limit, 1, 200);
+
         var query = db.Invoices
             .Include(i => i.Booking)
             .AsQueryable();
@@ -30,15 +34,20 @@ public class InvoiceService(RuumlyDbContext db, IHttpContextAccessor http) : IIn
             if (user?.SupplierId is not null)
                 query = query.Where(i => i.Booking.SupplierId == user.SupplierId.Value);
             else
-                return [];
+                return new PaginatedResult<InvoiceDto>([], 0, page, limit, false);
         }
         // Admin: no filter
 
+        var total    = await query.CountAsync();
         var invoices = await query
             .OrderByDescending(i => i.IssuedAt)
+            .Skip((page - 1) * limit)
+            .Take(limit)
             .ToListAsync();
 
-        return invoices.Select(MapToDto).ToList();
+        var data = invoices.Select(MapToDto).ToList();
+        return new PaginatedResult<InvoiceDto>(data, total, page, limit,
+            (page - 1) * limit + data.Count < total);
     }
 
     public async Task<InvoiceDto?> GetByBookingIdAsync(Guid bookingId, Guid userId, UserRole role)

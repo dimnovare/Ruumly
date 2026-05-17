@@ -41,6 +41,7 @@ public class BackgroundCleanupService(
 
         var expired = await db.Bookings
             .Include(b => b.Listing)
+            .Include(b => b.Order)
             .Where(b => b.Status == BookingStatus.Reserved
                      && b.ReservedUntil.HasValue
                      && b.ReservedUntil.Value < now)
@@ -58,6 +59,12 @@ public class BackgroundCleanupService(
         {
             booking.Status    = BookingStatus.Cancelled;
             booking.UpdatedAt = now;
+
+            if (booking.Order is not null && booking.Order.Status != OrderStatus.Cancelled)
+            {
+                booking.Order.Status    = OrderStatus.Cancelled;
+                booking.Order.UpdatedAt = now;
+            }
 
             db.BookingTimelines.Add(new BookingTimeline
             {

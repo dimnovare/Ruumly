@@ -23,6 +23,7 @@ using Ruumly.Backend.DTOs.Requests;
 using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
 using Hangfire;
+using Hangfire.Dashboard;
 using Hangfire.PostgreSql;
 using Microsoft.Extensions.Options;
 using Serilog;
@@ -425,7 +426,10 @@ if (app.Environment.IsDevelopment())
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseHangfireDashboard("/hangfire");
+    app.UseHangfireDashboard("/hangfire", new DashboardOptions
+    {
+        Authorization = [new LocalRequestsOnlyAuthorizationFilter()],
+    });
 }
 
 using (var scope = app.Services.CreateScope())

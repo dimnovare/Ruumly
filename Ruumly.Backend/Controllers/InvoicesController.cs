@@ -19,9 +19,9 @@ public class InvoicesController(IInvoiceService invoiceService, RuumlyDbContext 
     /// </summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int limit = 100)
     {
-        var result = await invoiceService.GetAllAsync(User.GetUserId(), User.GetUserRole());
+        var result = await invoiceService.GetAllAsync(User.GetUserId(), User.GetUserRole(), page, limit);
         return Ok(result);
     }
 

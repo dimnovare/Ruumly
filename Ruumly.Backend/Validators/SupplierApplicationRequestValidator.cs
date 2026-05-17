@@ -13,7 +13,7 @@ public class SupplierApplicationRequestValidator : AbstractValidator<SupplierApp
 
         RuleFor(x => x.RegistryCode)
             .NotEmpty().WithMessage("Registry code is required.")
-            .Matches(@"^\d{8}$").WithMessage("Registry code must be exactly 8 digits.");
+            .Matches(@"^\d{8,11}$").WithMessage("Registry code must be 8–11 digits (EE: 8 digits, LT: 9 digits, LV: 11 digits).");
 
         RuleFor(x => x.ContactName)
             .NotEmpty().WithMessage("Contact name is required.")

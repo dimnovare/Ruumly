@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.DTOs.Responses;
@@ -65,7 +66,6 @@ public class ReviewsController(RuumlyDbContext db) : ControllerBase
         };
 
         db.Reviews.Add(review);
-        await db.SaveChangesAsync();
 
         // 6. Recalculate listing aggregate (weighted average)
         await RecalculateListingRatingAsync(booking.ListingId);
@@ -73,7 +73,14 @@ public class ReviewsController(RuumlyDbContext db) : ControllerBase
         // 7. Recalculate supplier aggregate
         await RecalculateSupplierRatingAsync(booking.SupplierId);
 
-        await db.SaveChangesAsync();
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: "23505" })
+        {
+            return Conflict(new { error = "You have already reviewed this booking." });
+        }
 
         var user = await db.Users.FindAsync(userId);
         return CreatedAtAction(
