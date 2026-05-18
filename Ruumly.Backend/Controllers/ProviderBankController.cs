@@ -106,7 +106,7 @@ public class ProviderBankController(
         {
             var cleanIban = body.Iban.Replace(" ", "").ToUpper();
             if (!IsValidIban(cleanIban))
-                return BadRequest(new { error = "Invalid IBAN — please check the account number." });
+                return BadRequest(new { error = ErrorMessages.Get("INVALID_IBAN", Request.GetLang()) });
             supplier.Iban = cleanIban;
         }
 

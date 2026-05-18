@@ -63,6 +63,7 @@ public static class ErrorMessages
         ["EMAIL_RESEND_THROTTLE"]       = "Palun oota 2 minutit enne uuesti saatmist.",
         ["BOOKING_ALREADY_FINALISED"]   = "Broneering on lõpetatud ja seda ei saa tühistada.",
         ["INVOICE_NOT_PAID"]            = "Arvet ei ole tasutud.",
+        ["INVALID_IBAN"]                = "Vale IBAN — palun kontrollige kontonumbrit.",
     };
 
     private static readonly Dictionary<string, string> En = new()
@@ -104,6 +105,7 @@ public static class ErrorMessages
         ["EMAIL_RESEND_THROTTLE"]       = "Please wait 2 minutes before resending.",
         ["BOOKING_ALREADY_FINALISED"]   = "Booking is already finalised and cannot be cancelled.",
         ["INVOICE_NOT_PAID"]            = "Invoice has not been paid.",
+        ["INVALID_IBAN"]                = "Invalid IBAN — please check the account number.",
     };
 
     private static readonly Dictionary<string, string> Ru = new()
@@ -145,6 +147,7 @@ public static class ErrorMessages
         ["EMAIL_RESEND_THROTTLE"]       = "Пожалуйста, подождите 2 минуты перед повторной отправкой.",
         ["BOOKING_ALREADY_FINALISED"]   = "Бронирование уже завершено и не может быть отменено.",
         ["INVOICE_NOT_PAID"]            = "Счёт не оплачен.",
+        ["INVALID_IBAN"]                = "Неверный IBAN — проверьте номер счёта.",
     };
 
     private static readonly Dictionary<string, string> Lv = new()
@@ -186,6 +189,7 @@ public static class ErrorMessages
         ["EMAIL_RESEND_THROTTLE"]       = "Lūdzu, pagaidiet 2 minūtes pirms atkārtotas nosūtīšanas.",
         ["BOOKING_ALREADY_FINALISED"]   = "Rezervācija jau ir pabeigta un to nevar atcelt.",
         ["INVOICE_NOT_PAID"]            = "Rēķins nav apmaksāts.",
+        ["INVALID_IBAN"]                = "Nepareizs IBAN — lūdzu pārbaudiet konta numuru.",
     };
 
     private static readonly Dictionary<string, string> Lt = new()
@@ -227,5 +231,6 @@ public static class ErrorMessages
         ["EMAIL_RESEND_THROTTLE"]       = "Prašome palaukti 2 minutes prieš pakartotinį siuntimą.",
         ["BOOKING_ALREADY_FINALISED"]   = "Rezervacija jau baigta ir negali būti atšaukta.",
         ["INVOICE_NOT_PAID"]            = "Sąskaita neapmokėta.",
+        ["INVALID_IBAN"]                = "Neteisingas IBAN — patikrinkite sąskaitos numerį.",
     };
 }
