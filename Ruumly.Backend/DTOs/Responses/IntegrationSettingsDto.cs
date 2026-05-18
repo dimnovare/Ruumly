@@ -8,6 +8,7 @@ public record IntegrationSettingsDto(
     string  PostingMode,
     string  FallbackPostingMode,
     string? MappingProfile,
+    string? PollMappingProfile,
     string? LastTestedAt,
     string? LastTestResult,
     bool    IsActive,

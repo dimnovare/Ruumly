@@ -46,13 +46,17 @@ public class SupplierPollingService(
                     db, supplierId, new PollingResult(false, "error", msg, 0, 0), ct);
             }
 
+            var endpoint = !string.IsNullOrWhiteSpace(supplier.PollingEndpoint)
+                ? supplier.PollingEndpoint
+                : supplier.ApiEndpoint;
+
             // 3b. SSRF guard — reject loopback, private ranges, non-HTTP(S) schemes
-            if (!IsAllowedEndpoint(supplier.ApiEndpoint))
+            if (!IsAllowedEndpoint(endpoint))
             {
                 const string msg = "API endpoint rejected: private IP address or disallowed scheme.";
                 logger.LogWarning(
                     "SSRF guard blocked endpoint '{Endpoint}' for supplier {SupplierId}",
-                    supplier.ApiEndpoint, supplierId);
+                    endpoint, supplierId);
                 supplier.LastPollStatus    = "error";
                 supplier.LastPolledAt      = DateTime.UtcNow;
                 supplier.IntegrationHealth = IntegrationHealth.Degraded;
@@ -83,7 +87,7 @@ public class SupplierPollingService(
             HttpResponseMessage response;
             try
             {
-                response = await client.GetAsync(supplier.ApiEndpoint, ct);
+                response = await client.GetAsync(endpoint, ct);
             }
             catch (Exception ex)
             {
@@ -120,26 +124,61 @@ public class SupplierPollingService(
             int unitsRefreshed = 0;
             try
             {
-                using var doc  = System.Text.Json.JsonDocument.Parse(json);
+                using var doc = System.Text.Json.JsonDocument.Parse(json);
                 var root = doc.RootElement;
                 if (root.ValueKind == System.Text.Json.JsonValueKind.Array)
                 {
+                    // Load field name mappings from PollMappingProfile
+                    var settingsForPoll = await db.IntegrationSettings
+                        .FirstOrDefaultAsync(s => s.SupplierId == supplierId, ct);
+                    string idField        = "id";
+                    string availableField = "available";
+                    string totalField     = "total";
+                    if (!string.IsNullOrWhiteSpace(settingsForPoll?.PollMappingProfile))
+                    {
+                        try
+                        {
+                            using var mapDoc = System.Text.Json.JsonDocument.Parse(settingsForPoll.PollMappingProfile);
+                            var mapRoot = mapDoc.RootElement;
+                            if (mapRoot.TryGetProperty("id",        out var mId))  idField        = mId.GetString()  ?? idField;
+                            if (mapRoot.TryGetProperty("available", out var mAv))  availableField = mAv.GetString()  ?? availableField;
+                            if (mapRoot.TryGetProperty("total",     out var mTot)) totalField     = mTot.GetString() ?? totalField;
+                        }
+                        catch { /* malformed mapping — use defaults */ }
+                    }
+
+                    // Load locations for this supplier that have an ExternalId set
+                    var locations = await db.SupplierLocations
+                        .Where(l => l.SupplierId == supplierId && l.ExternalId != null)
+                        .ToListAsync(ct);
+                    var locByExtId = locations.ToDictionary(l => l.ExternalId!, l => l);
+
                     foreach (var item in root.EnumerateArray())
                     {
-                        if (!item.TryGetProperty("id", out var idProp)) continue;
+                        if (!item.TryGetProperty(idField, out var idProp)) continue;
                         var externalId = idProp.GetString();
                         if (string.IsNullOrEmpty(externalId)) continue;
+                        if (!locByExtId.TryGetValue(externalId, out var loc)) continue;
 
-                        if (!item.TryGetProperty("available", out _)) continue;
-                        // TODO: add Listing.ExternalId in a follow-up migration to enable
-                        // per-listing availability updates from this payload.
-                        unitsRefreshed++;
+                        if (item.TryGetProperty(availableField, out var av) &&
+                            av.TryGetInt32(out var available))
+                        {
+                            loc.AvailableUnitCount = available;
+                            unitsRefreshed++;
+                        }
+                        if (item.TryGetProperty(totalField, out var tot) &&
+                            tot.TryGetInt32(out var total))
+                            loc.TotalUnitCount = total;
                     }
+
+                    if (unitsRefreshed > 0)
+                        await db.SaveChangesAsync(ct);
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Non-conforming format — endpoint is reachable, just record success.
+                logger.LogWarning(ex, "Failed to parse availability response for supplier {Id}", supplierId);
+                // Non-conforming format — endpoint reachable, still record success
             }
 
             sw.Stop();

@@ -57,5 +57,6 @@ public record SupplierDto(
     int       PollingIntervalMinutes,
     string?   NextPollAt,      // ISO-8601, null if not yet scheduled
     string?   LastPolledAt,    // ISO-8601, null if never polled
-    string?   LastPollStatus   // "ok" | "error" | null
+    string?   LastPollStatus,  // "ok" | "error" | null
+    string?   PollingEndpoint  // override URL; falls back to ApiEndpoint when null
 );

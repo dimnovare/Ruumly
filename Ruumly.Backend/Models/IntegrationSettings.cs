@@ -11,6 +11,7 @@ public class IntegrationSettings
     public PostingMode PostingMode { get; set; }
     public PostingMode FallbackPostingMode { get; set; }
     public string? MappingProfile { get; set; }
+    public string? PollMappingProfile { get; set; }
     public DateTime? LastTestedAt { get; set; }
     public string? LastTestResult { get; set; }
     public bool IsActive { get; set; } = true;

@@ -242,6 +242,9 @@ public class AdminSuppliersController(
         // When enabling polling, schedule the first poll immediately if not yet scheduled.
         if (body.PollingEnabled == true && supplier.NextPollAt == null)
             supplier.NextPollAt = DateTime.UtcNow;
+        if (body.PollingEndpoint is not null)
+            supplier.PollingEndpoint = string.IsNullOrWhiteSpace(body.PollingEndpoint)
+                ? null : body.PollingEndpoint;
 
         // Slug: validate uniqueness + shape, allow clearing.
         if (body.Slug is not null)

@@ -5,5 +5,6 @@ public record PatchIntegrationSettingsRequest(
     string? PostingMode         = null,
     string? FallbackPostingMode = null,
     string? MappingProfile      = null,
+    string? PollMappingProfile  = null,
     bool?   IsActive            = null
 );

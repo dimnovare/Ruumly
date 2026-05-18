@@ -45,6 +45,10 @@ public class AdminIntegrationsController(RuumlyDbContext db) : AdminBaseControll
         if (body.MappingProfile is not null)
             settings.MappingProfile = body.MappingProfile;
 
+        if (body.PollMappingProfile is not null)
+            settings.PollMappingProfile = string.IsNullOrWhiteSpace(body.PollMappingProfile)
+                ? null : body.PollMappingProfile;
+
         if (body.IsActive.HasValue)
             settings.IsActive = body.IsActive.Value;
 

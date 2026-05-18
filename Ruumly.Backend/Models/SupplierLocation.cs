@@ -43,5 +43,8 @@ public class SupplierLocation
     /// <summary>Currently available units at this site (e.g. 2 in "2/27 available").</summary>
     public int? AvailableUnitCount { get; set; }
 
+    /// <summary>Identifier used to match this location in supplier API polling responses.</summary>
+    public string? ExternalId { get; set; }
+
     public List<Listing> Listings { get; set; } = [];
 }

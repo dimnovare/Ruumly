@@ -22,5 +22,6 @@ public record PatchLocationRequest(
     string?       Notes,
     List<string>? Images,
     string?       Description,
-    string?       OpeningHours
+    string?       OpeningHours,
+    string?       ExternalId
 );

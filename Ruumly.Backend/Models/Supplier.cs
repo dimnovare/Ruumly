@@ -34,6 +34,9 @@ public class Supplier
     /// <summary>Quick status string for the admin list: "ok" | "error" | null.</summary>
     public string? LastPollStatus { get; set; }
 
+    /// <summary>Override URL for availability polling. Falls back to ApiEndpoint when null.</summary>
+    public string? PollingEndpoint { get; set; }
+
     public decimal PartnerDiscountRate { get; set; } = 0;
     public decimal ClientDiscountRate { get; set; } = 0;
     public string? Notes { get; set; }

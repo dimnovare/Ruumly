@@ -2179,10 +2179,48 @@ public static class SeedData
 
         await db.Bookings.AddRangeAsync(bookings);
         await db.Orders.AddRangeAsync(orders);
+        var historicalOrders = orders;
         await db.SaveChangesAsync();
 
         Console.WriteLine(
-            $"[Seed] Bookings done. ({bookings.Count} bookings, {orders.Count} historical orders across {supplierBookingCount} suppliers.)");
+            $"[Seed] Bookings done. ({bookings.Count} bookings, {historicalOrders.Count} historical orders across {supplierBookingCount} suppliers.)");
+
+        if (!await db.PayoutEntries.AnyAsync())
+        {
+            var payoutEntries = historicalOrders.Select(o => new PayoutEntry
+            {
+                Id             = Guid.NewGuid(),
+                OrderId        = o.Id,
+                SupplierId     = o.SupplierId,
+                SupplierAmount = o.SupplierPrice,
+                PlatformMargin = o.Margin,
+                Status         = PayoutStatus.Pending,
+                CreatedAt      = o.CreatedAt,
+            }).ToList();
+
+            await db.PayoutEntries.AddRangeAsync(payoutEntries);
+            await db.SaveChangesAsync();
+            Console.WriteLine($"[Seed] PayoutEntries done. ({payoutEntries.Count} created)");
+        }
+
+        if (!await db.Invoices.AnyAsync())
+        {
+            var invoices = historicalOrders.Select(o => new Invoice
+            {
+                Id            = Guid.NewGuid(),
+                BookingId     = o.BookingId,
+                Amount        = o.Total,
+                Status        = InvoiceStatus.Paid,
+                PaymentMethod = "bank",
+                IssuedAt      = o.CreatedAt,
+                PaidAt        = o.CreatedAt.AddDays(1),
+                CreatedAt     = o.CreatedAt,
+            }).ToList();
+
+            await db.Invoices.AddRangeAsync(invoices);
+            await db.SaveChangesAsync();
+            Console.WriteLine($"[Seed] Invoices done. ({invoices.Count} created)");
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────

@@ -87,7 +87,8 @@ internal static class AdminMappers
         PollingIntervalMinutes:   s.PollingIntervalMinutes,
         NextPollAt:               s.NextPollAt?.ToString("o"),
         LastPolledAt:             s.LastPolledAt?.ToString("o"),
-        LastPollStatus:           s.LastPollStatus);
+        LastPollStatus:           s.LastPollStatus,
+        PollingEndpoint:          s.PollingEndpoint);
 
     internal static IntegrationSettingsDto MapIntegrationSettings(Models.IntegrationSettings i) => new(
         Id:                  i.Id,
@@ -97,6 +98,7 @@ internal static class AdminMappers
         PostingMode:         i.PostingMode.ToString().ToLower(),
         FallbackPostingMode: i.FallbackPostingMode.ToString().ToLower(),
         MappingProfile:      i.MappingProfile,
+        PollMappingProfile:  i.PollMappingProfile,
         LastTestedAt:        i.LastTestedAt?.ToString("yyyy-MM-dd HH:mm"),
         LastTestResult:      i.LastTestResult,
         IsActive:            i.IsActive,

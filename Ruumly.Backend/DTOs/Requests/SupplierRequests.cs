@@ -55,7 +55,8 @@ public record UpdateSupplierRequest(
     string?  GooglePlaceId,
     // Polling fields
     bool?    PollingEnabled,
-    int?     PollingIntervalMinutes);
+    int?     PollingIntervalMinutes,
+    string?  PollingEndpoint);
 
 public record UpdateSupplierIntegrationRequest(
     // Core integration (mirrors existing UpdateSupplierRequest fields)

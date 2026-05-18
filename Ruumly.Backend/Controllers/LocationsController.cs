@@ -236,6 +236,9 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         if (body.Description is not null) location.Description = body.Description;
         if (body.OpeningHours is not null) location.OpeningHours = body.OpeningHours;
         if (body.Images      is not null) location.Images      = body.Images;
+        if (body.ExternalId  is not null)
+            location.ExternalId = string.IsNullOrWhiteSpace(body.ExternalId)
+                ? null : body.ExternalId;
 
         location.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
