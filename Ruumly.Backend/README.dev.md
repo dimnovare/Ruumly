@@ -3,7 +3,7 @@
 ## Prerequisites
 - .NET 8 SDK
 - Node.js 20+
-- Docker Desktop
+- Docker Desktop (for Postgres)
 
 ## Quick Start
 
@@ -12,16 +12,14 @@
 docker run -d --name ruumly-postgres \
   -e POSTGRES_PASSWORD=postgres \
   -e POSTGRES_DB=ruumly \
-  -p 5433:5432 \
-  postgres:16
+  -p 5433:5432 postgres:16
 
 # On subsequent starts:
 docker start ruumly-postgres
 ```
 
 ### 2. Create appsettings.Development.json
-
-Create this file in `Ruumly.Backend/` (gitignored — never commit it):
+Create this file in `Ruumly.Backend/` (gitignored — never commit):
 
 ```json
 {
@@ -43,59 +41,49 @@ Create this file in `Ruumly.Backend/` (gitignored — never commit it):
 }
 ```
 
-> ⚠️ **`AllowedOrigins` is required.** Without it the CORS policy only includes
-> production URLs. The frontend on `localhost:8080` will receive a CORS error
-> and show a blank page.
+> ⚠️ **`AllowedOrigins` array is REQUIRED.**
+> Without it CORS blocks `localhost:8080` and the frontend shows a blank page.
 
-### 3. Apply migrations and run
-
+### 3. Start backend
 ```bash
 cd Ruumly.Backend
-dotnet ef database update
 dotnet run --launch-profile http
-# API → http://localhost:3000
-# Swagger → http://localhost:3000/swagger
+# → http://localhost:3000
+# → Swagger: http://localhost:3000/swagger
 ```
 
-Seed data runs automatically on first startup (suppliers, listings, bookings,
-PayoutEntries, Invoices, demo users).
+Migrations and seed data run automatically on first startup.
 
-### 4. Start the frontend
+### 4. Start frontend
+Create `estonia-space-hub/.env.local` (gitignored):
 
+```
+VITE_API_URL=http://localhost:3000/api
+VITE_ENABLE_PAYMENTS=false
+```
+
+Then:
 ```bash
 cd estonia-space-hub
-# Create .env.local (gitignored):
-echo "VITE_API_URL=http://localhost:3000/api" > .env.local
-echo "VITE_ENABLE_PAYMENTS=false" >> .env.local
 npm run dev
 # → http://localhost:8080/et
 ```
 
-## Seed Accounts
+## Test Accounts  (password: demo1234)
+| Role     | Email                  |
+|----------|------------------------|
+| Admin    | peeter@ruumly.eu       |
+| Provider | maria@laopind.ee       |
+| Customer | andres@email.com       |
+| Customer | liina@email.com (blocked) |
 
-Password for all accounts: **`demo1234`**
-
-| Role     | Email                | Notes                         |
-|----------|----------------------|-------------------------------|
-| Admin    | peeter@ruumly.eu     | Full admin access             |
-| Provider | maria@laopind.ee     | Laobox OÜ — supplier ID sup-1 |
-| Customer | andres@email.com     | Has historical bookings       |
-| Customer | liina@email.com      | Blocked account (for testing) |
-
-## Testing the Booking Flow Locally
-
-Use **"Pay later"** on the booking page — this skips the Montonio payment
-gateway and creates the full Booking → Order → Invoice → PayoutEntry chain
-immediately, so you can test the provider dashboard and admin payouts without
-a live payment integration.
+## Testing Booking Flow Locally
+Select **"Pay later"** on the booking page — skips Montonio entirely and
+creates the full Booking → Order → Invoice → PayoutEntry chain without
+a payment gateway.
 
 ## Adding a New Migration
-
 ```bash
 dotnet ef migrations add <MigrationName>
 dotnet ef database update
 ```
-
-Migrations are applied automatically on startup in Development via
-`MigrateAsync()`, so re-running `dotnet run` after adding a migration is
-sufficient for local testing.
