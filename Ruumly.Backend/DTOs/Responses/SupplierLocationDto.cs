@@ -21,5 +21,6 @@ public record SupplierLocationDto(
     List<ListingDto>  Units,
     decimal           Rating,
     int               ReviewCount,
-    decimal?          BestCustomerDiscount
+    decimal?          BestCustomerDiscount,
+    string?           ExternalId
 );

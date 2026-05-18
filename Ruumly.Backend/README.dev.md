@@ -1,8 +1,27 @@
 # Local Development Setup
 
-## appsettings.Development.json
+## Prerequisites
+- .NET 8 SDK
+- Node.js 20+
+- Docker Desktop
 
-Create `appsettings.Development.json` in `Ruumly.Backend/` (gitignored — do not commit):
+## Quick Start
+
+### 1. Start Postgres
+```bash
+docker run -d --name ruumly-postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=ruumly \
+  -p 5433:5432 \
+  postgres:16
+
+# On subsequent starts:
+docker start ruumly-postgres
+```
+
+### 2. Create appsettings.Development.json
+
+Create this file in `Ruumly.Backend/` (gitignored — never commit it):
 
 ```json
 {
@@ -24,30 +43,59 @@ Create `appsettings.Development.json` in `Ruumly.Backend/` (gitignored — do no
 }
 ```
 
-> **The `AllowedOrigins` array is required.** Without it the CORS policy only
-> uses the database platform settings which contain only the production URL.
-> The frontend on localhost:8080 will receive a CORS error and show a blank page.
+> ⚠️ **`AllowedOrigins` is required.** Without it the CORS policy only includes
+> production URLs. The frontend on `localhost:8080` will receive a CORS error
+> and show a blank page.
 
-## Start order
-
-1. `docker start ruumly-postgres` — PostgreSQL on port 5433
-2. `dotnet run --launch-profile http` — API on port 3000
-3. `npm run dev` — Frontend on port 8080 (in `estonia-space-hub/`)
-
-## Database
+### 3. Apply migrations and run
 
 ```bash
-# Apply all pending migrations
+cd Ruumly.Backend
 dotnet ef database update
-
-# Add a new migration
-dotnet ef migrations add <MigrationName>
+dotnet run --launch-profile http
+# API → http://localhost:3000
+# Swagger → http://localhost:3000/swagger
 ```
 
-## Seeding
+Seed data runs automatically on first startup (suppliers, listings, bookings,
+PayoutEntries, Invoices, demo users).
 
-`SeedData.SeedAsync(db)` runs automatically on startup in the Development environment. It creates:
-- 3 suppliers, locations, listings
-- Historical bookings and orders
-- PayoutEntries and Invoices (seeded from historical orders)
-- Demo users (see main README for credentials)
+### 4. Start the frontend
+
+```bash
+cd estonia-space-hub
+# Create .env.local (gitignored):
+echo "VITE_API_URL=http://localhost:3000/api" > .env.local
+echo "VITE_ENABLE_PAYMENTS=false" >> .env.local
+npm run dev
+# → http://localhost:8080/et
+```
+
+## Seed Accounts
+
+Password for all accounts: **`demo1234`**
+
+| Role     | Email                | Notes                         |
+|----------|----------------------|-------------------------------|
+| Admin    | peeter@ruumly.eu     | Full admin access             |
+| Provider | maria@laopind.ee     | Laobox OÜ — supplier ID sup-1 |
+| Customer | andres@email.com     | Has historical bookings       |
+| Customer | liina@email.com      | Blocked account (for testing) |
+
+## Testing the Booking Flow Locally
+
+Use **"Pay later"** on the booking page — this skips the Montonio payment
+gateway and creates the full Booking → Order → Invoice → PayoutEntry chain
+immediately, so you can test the provider dashboard and admin payouts without
+a live payment integration.
+
+## Adding a New Migration
+
+```bash
+dotnet ef migrations add <MigrationName>
+dotnet ef database update
+```
+
+Migrations are applied automatically on startup in Development via
+`MigrateAsync()`, so re-running `dotnet run` after adding a migration is
+sufficient for local testing.

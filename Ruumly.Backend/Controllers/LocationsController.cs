@@ -609,7 +609,8 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
                              .ToList(),
             Rating:               avgRating,
             ReviewCount:          totalReviews,
-            BestCustomerDiscount: bestDiscount > 0 ? (decimal?)bestDiscount : null
+            BestCustomerDiscount: bestDiscount > 0 ? (decimal?)bestDiscount : null,
+            ExternalId:           l.ExternalId
         );
     }
 }
