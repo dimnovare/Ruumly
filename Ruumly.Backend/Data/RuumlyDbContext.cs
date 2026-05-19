@@ -34,6 +34,7 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
     public DbSet<PollingLog>        PollingLogs        => Set<PollingLog>();
     public DbSet<ContractTemplate> ContractTemplates  => Set<ContractTemplate>();
     public DbSet<SignedContract>   SignedContracts     => Set<SignedContract>();
+    public DbSet<DemandLead>       DemandLeads        => Set<DemandLead>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -377,6 +378,14 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
 
         model.Entity<PollingLog>()
             .HasIndex(p => new { p.SupplierId, p.Timestamp });
+
+        // ─── DemandLead ───
+        model.Entity<DemandLead>(e =>
+        {
+            e.HasIndex(d => d.Email);
+            e.Property(d => d.Category).HasConversion<string>();
+            e.Property(d => d.Status).HasConversion<string>();
+        });
 
         // ─── PlatformSetting primary key ───
         model.Entity<PlatformSetting>().HasKey(s => s.Key);

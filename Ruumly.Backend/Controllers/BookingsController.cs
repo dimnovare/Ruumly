@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Ruumly.Backend.DTOs.Requests;
+using Ruumly.Backend.Filters;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
@@ -88,6 +89,7 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
     /// <summary>
     /// Creates a new booking, routes an order, and dispatches to the supplier.
     /// </summary>
+    [RequireEmailVerified]
     [HttpPost]
     [EnableRateLimiting("booking")]
     [ProducesResponseType(StatusCodes.Status201Created)]

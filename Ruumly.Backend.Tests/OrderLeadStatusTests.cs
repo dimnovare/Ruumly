@@ -24,14 +24,14 @@ public class OrderLeadStatusTests
 
     private sealed class StubOrderService : IOrderService
     {
-        public Task<DTOs.PaginatedResult<DTOs.Responses.OrderDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 50, Guid? supplierId = null)
+        public Task<DTOs.PaginatedResult<DTOs.Responses.OrderDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 50, Guid? supplierId = null, CancellationToken ct = default)
             => throw new NotImplementedException();
-        public Task<DTOs.Responses.OrderDto?> GetByIdAsync(Guid id) => throw new NotImplementedException();
-        public Task<DTOs.Responses.OrderDto?> GetByBookingIdAsync(Guid bookingId) => throw new NotImplementedException();
-        public Task<DTOs.Responses.OrderDto> ApproveAsync(Guid id, Guid approvedByUserId) => throw new NotImplementedException();
-        public Task<DTOs.Responses.OrderDto> RejectAsync(Guid id, string reason, Guid rejectedByUserId) => throw new NotImplementedException();
-        public Task<DTOs.Responses.OrderDto> ConfirmAsync(Guid id, Guid confirmedByUserId) => throw new NotImplementedException();
-        public Task<DTOs.Responses.OrderDto> UpdateStatusAsync(Guid id, UpdateOrderStatusRequest request) => throw new NotImplementedException();
+        public Task<DTOs.Responses.OrderDto?> GetByIdAsync(Guid id, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<DTOs.Responses.OrderDto?> GetByBookingIdAsync(Guid bookingId, Guid callerId, UserRole callerRole, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<DTOs.Responses.OrderDto> ApproveAsync(Guid id, Guid approvedByUserId, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<DTOs.Responses.OrderDto> RejectAsync(Guid id, string reason, Guid rejectedByUserId, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<DTOs.Responses.OrderDto> ConfirmAsync(Guid id, Guid confirmedByUserId, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<DTOs.Responses.OrderDto> UpdateStatusAsync(Guid id, UpdateOrderStatusRequest request, CancellationToken ct = default) => throw new NotImplementedException();
 
         public DTOs.Responses.OrderDto MapToDto(Order o) => new(
             Id: o.Id, BookingId: o.BookingId, ListingId: o.ListingId,

@@ -11,4 +11,5 @@ public class SupplierApplicationRequest
     public string[] ServiceTypes { get; set; } = [];
     public string[] ServiceAreas { get; set; } = [];
     public string? Notes         { get; set; }
+    public string? Language      { get; set; }
 }

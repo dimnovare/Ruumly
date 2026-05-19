@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
@@ -816,6 +817,48 @@ public class AdminSuppliersController(
         Db.Suppliers.RemoveRange(demoSuppliers);
         await Db.SaveChangesAsync();
         return Ok(new { removedSuppliers = demoSuppliers.Count });
+    }
+
+    [HttpPost("suppliers/{id:guid}/approve")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ApproveSupplier(Guid id)
+    {
+        var supplier = await Db.Suppliers.FindAsync(id);
+        if (supplier is null) return NotFound(Error("Supplier not found."));
+
+        if (supplier.IsActive)
+            return Conflict(Error("Supplier is already active."));
+
+        // Find the linked user
+        var user = await Db.Users.FirstOrDefaultAsync(u => u.SupplierId == id);
+
+        supplier.IsActive            = true;
+        supplier.OnboardingStartedAt = DateTime.UtcNow;
+        supplier.UpdatedAt           = DateTime.UtcNow;
+
+        if (user is not null)
+            user.Role = UserRole.Provider;
+
+        Audit("supplier.approved", User.GetUserEmail() ?? "admin", supplier.Name, $"SupplierId: {id}");
+
+        await Db.SaveChangesAsync();
+
+        // Send welcome email
+        if (user is not null)
+        {
+            var emailSender = HttpContext.RequestServices.GetRequiredService<IEmailSender>();
+            _ = emailSender.SendAsync(
+                to:       supplier.ContactEmail,
+                subject:  "Welcome to Ruumly!",
+                textBody: $"Hi {supplier.ContactName},\n\nYour application has been approved. You can now log in and start managing your listings.\n\nWelcome aboard!\n\nThe Ruumly team");
+        }
+
+        return Ok(new
+        {
+            supplierId = supplier.Id,
+            name       = supplier.Name,
+            isActive   = supplier.IsActive,
+        });
     }
 
     // ── Mappers ───────────────────────────────────────────────────────────────

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
+using Ruumly.Backend.Filters;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
@@ -20,7 +21,8 @@ public class AuthController(
     INotificationService notificationService,
     IConfiguration config,
     IWebHostEnvironment env,
-    ILogger<AuthController> logger) : ControllerBase
+    ILogger<AuthController> logger,
+    IEmailSender emailSender) : ControllerBase
 {
     // Sets the HttpOnly refresh-token cookie on every successful auth response.
     // SameSite=None because the frontend (ruumly.eu) and API (Railway) are on different origins.
@@ -241,6 +243,7 @@ public class AuthController(
         return Ok(response);
     }
 
+    [RequireEmailVerified]
     [HttpPost("apply-provider")]
     [Authorize]
     [EnableRateLimiting("auth")]
@@ -291,7 +294,6 @@ public class AuthController(
             if (freshUser?.SupplierId.HasValue == true || freshUser?.Role == UserRole.Provider)
                 return Conflict(new { message = "User is already a provider." });
 
-            user.Role       = UserRole.Provider;
             user.SupplierId = supplier.Id;
 
             db.Suppliers.Add(supplier);
@@ -355,6 +357,132 @@ public class AuthController(
             parts.Add(r.Notes);
         return string.Join("\n", parts);
     }
+
+    [HttpPost("apply-provider-public")]
+    [AllowAnonymous]
+    [EnableRateLimiting("auth")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> ApplyProviderPublic([FromBody] SupplierApplicationRequest request)
+    {
+        // Validate required fields
+        if (string.IsNullOrWhiteSpace(request.CompanyName))
+            return BadRequest(new { error = "Company name is required." });
+        if (string.IsNullOrWhiteSpace(request.ContactEmail) || !request.ContactEmail.Contains('@'))
+            return BadRequest(new { error = "Valid contact email is required." });
+
+        var lang = request.Language ?? "et";
+
+        await using var tx = await db.Database.BeginTransactionAsync();
+        try
+        {
+            // Check if user with ContactEmail already exists
+            var existingUser = await db.Users
+                .Include(u => u.Supplier)
+                .FirstOrDefaultAsync(u => u.Email == request.ContactEmail);
+
+            Guid supplierId;
+            Guid userId;
+
+            if (existingUser is not null)
+            {
+                // User exists and already has a supplier
+                if (existingUser.SupplierId.HasValue)
+                    return Conflict(new { error = "An application for this email already exists." });
+
+                // User exists but no supplier — create supplier linked to existing user
+                userId = existingUser.Id;
+                var supplier = CreateSupplier(request);
+                supplierId = supplier.Id;
+
+                existingUser.SupplierId = supplierId;
+
+                var integrationSettings = CreateIntegrationSettings(supplier.Id);
+                db.Suppliers.Add(supplier);
+                db.IntegrationSettings.Add(integrationSettings);
+            }
+            else
+            {
+                // New user — create User (Customer role, EmailVerified=false) + Supplier
+                var supplier = CreateSupplier(request);
+                supplierId = supplier.Id;
+
+                var newUser = new User
+                {
+                    Id            = Guid.NewGuid(),
+                    Name          = request.ContactName,
+                    Email         = request.ContactEmail,
+                    PasswordHash  = "",
+                    Role          = UserRole.Customer,
+                    Status        = UserStatus.Active,
+                    Language      = lang,
+                    SupplierId    = supplierId,
+                    RegisteredAt  = DateTime.UtcNow,
+                    EmailVerified = false,
+                };
+                userId = newUser.Id;
+
+                var integrationSettings = CreateIntegrationSettings(supplier.Id);
+                db.Users.Add(newUser);
+                db.Suppliers.Add(supplier);
+                db.IntegrationSettings.Add(integrationSettings);
+            }
+
+            db.AuditLogs.Add(new AuditLog
+            {
+                Id        = Guid.NewGuid(),
+                Action    = "supplier.public_application_submitted",
+                Actor     = request.ContactEmail,
+                Target    = request.CompanyName,
+                Detail    = $"RegistryCode: {request.RegistryCode}",
+                CreatedAt = DateTime.UtcNow,
+            });
+
+            await db.SaveChangesAsync();
+            await tx.CommitAsync();
+
+            // Send verification/info email to applicant
+            _ = authService.ResendVerificationEmailAsync(userId);
+
+            // Notify admin
+            _ = emailSender.SendAsync(
+                to:       "admin@ruumly.eu",
+                subject:  $"New provider application: {request.CompanyName}",
+                textBody: $"Company: {request.CompanyName}\nContact: {request.ContactName} <{request.ContactEmail}>\nPhone: {request.ContactPhone}\nRegistry: {request.RegistryCode}");
+
+            return Ok(new { applicationId = supplierId, message = "Application received. Please check your email." });
+        }
+        catch
+        {
+            await tx.RollbackAsync();
+            throw;
+        }
+    }
+
+    private Supplier CreateSupplier(SupplierApplicationRequest r) => new()
+    {
+        Id           = Guid.NewGuid(),
+        Name         = r.CompanyName,
+        RegistryCode = r.RegistryCode,
+        ContactName  = r.ContactName,
+        ContactEmail = r.ContactEmail,
+        ContactPhone = r.ContactPhone,
+        Notes        = BuildNotes(r),
+        IsActive     = false,
+        CreatedAt    = DateTime.UtcNow,
+        UpdatedAt    = DateTime.UtcNow,
+    };
+
+    private static IntegrationSettings CreateIntegrationSettings(Guid supplierId) => new()
+    {
+        Id           = Guid.NewGuid(),
+        SupplierId   = supplierId,
+        ApprovalMode = ApprovalMode.Auto,
+        PostingMode  = PostingMode.Email,
+        IsActive     = false,
+        UpdatedAt    = DateTime.UtcNow,
+    };
 
     [HttpPost("resend-verification")]
     [EnableRateLimiting("auth")]
@@ -510,16 +638,69 @@ public class AuthController(
     [HttpPost("notify-interest")]
     [AllowAnonymous]
     [EnableRateLimiting("auth")]
-    public IActionResult NotifyInterest([FromBody] NotifyInterestRequest body)
+    public async Task<IActionResult> NotifyInterest([FromBody] NotifyInterestRequest body)
     {
         if (string.IsNullOrWhiteSpace(body.Email) ||
             !body.Email.Contains('@') ||
             body.Email.Length > 200)
             return BadRequest(new { error = "Invalid email." });
 
-        logger.LogInformation("Notify-interest: {Email} for city {City}", body.Email, body.City);
-        return Ok(new { success = true });
+        var city = (body.City ?? "").Trim();
+
+        // Deduplicate: same email + city in last 7 days
+        // Wrap dedup check + insert in transaction to prevent race conditions
+        await using var tx = await db.Database.BeginTransactionAsync();
+        try
+        {
+            var recent = await db.DemandLeads.AnyAsync(d =>
+                d.Email == body.Email &&
+                d.City == city &&
+                d.CreatedAt >= DateTime.UtcNow.AddDays(-7));
+
+            if (recent)
+            {
+                await tx.RollbackAsync();
+                return Ok(new { success = true });
+            }
+
+            var lead = new DemandLead
+            {
+                Id        = Guid.NewGuid(),
+                Email     = body.Email,
+                City      = city,
+                Category  = ParseCategory(body.Category),
+                Query     = body.Query,
+                Language  = body.Language ?? "et",
+                CreatedAt = DateTime.UtcNow,
+                Status    = DemandLeadStatus.New,
+            };
+
+            db.DemandLeads.Add(lead);
+            await db.SaveChangesAsync();
+            await tx.CommitAsync();
+
+            // Notify admin (after transaction commits)
+            _ = emailSender.SendAsync(
+                to:       "admin@ruumly.eu",
+                subject:  $"New demand lead: {body.Email} ({city})",
+                textBody: $"Email: {body.Email}\nCity: {city}\nCategory: {lead.Category}\nQuery: {lead.Query}");
+
+            return Ok(new { success = true });
+        }
+        catch
+        {
+            await tx.RollbackAsync();
+            throw;
+        }
     }
+
+    private static DemandLeadCategory ParseCategory(string? cat) => cat?.ToLowerInvariant() switch
+    {
+        "warehouse" => DemandLeadCategory.Warehouse,
+        "moving"    => DemandLeadCategory.Moving,
+        "trailer"   => DemandLeadCategory.Trailer,
+        _           => DemandLeadCategory.Any,
+    };
 
     [HttpPatch("/api/supplier/tier")]
     [Authorize(Roles = "Admin")]
@@ -559,4 +740,4 @@ public class AuthController(
 // RefreshToken is optional: cookie-based refresh sends no body
 public record RefreshTokenRequest(string? RefreshToken = null);
 public record VerifyEmailRequest(string Token);
-public record NotifyInterestRequest(string Email, string City);
+public record NotifyInterestRequest(string Email, string City, string? Category = null, string? Query = null, string? Language = null);

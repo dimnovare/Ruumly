@@ -26,15 +26,15 @@ public class BookingPaymentFlowTests
         DefaultVatRate:              0m,
         ExtrasMarginRate:            20m,
         RuumlyMinMarginRate:         8m,
-        Starter:  new TierConfig(5m,  0m,     2,   false, false, false, "standard",  "email_48h"),
-        Standard: new TierConfig(8m,  49m,  10,   false, true,  false, "boosted",   "email_24h"),
-        Premium:  new TierConfig(12m, 99m, 999,   true,  true,  true,  "priority",  "priority_4h"));
+        Starter:  new TierConfig(5m,  0m,   12m,   2,   false, false, false, "standard",  "email_48h"),
+        Standard: new TierConfig(8m,  49m,   8m,  10,   false, true,  false, "boosted",   "email_24h"),
+        Premium:  new TierConfig(12m, 99m,   6m, 999,   true,  true,  true,  "priority",  "priority_4h"));
 
     private static BookingService MakeBookingService(RuumlyDbContext db) =>
         new(db,
             new NoOpRouting(),
             new NoOpPricing(),
-            new InvoiceService(db),   // real: exercises invoice creation in DB
+            new InvoiceService(db, new NoOpHttp()),   // real: exercises invoice creation in DB
             new NoOpHttp(),
             new NoOpCache(),
             Microsoft.Extensions.Logging.Abstractions.NullLogger<BookingService>.Instance);
@@ -43,7 +43,7 @@ public class BookingPaymentFlowTests
         new(db,
             new NoOpDispatch(),
             new NoOpNotifications(),
-            new InvoiceService(db),
+            new InvoiceService(db, new NoOpHttp()),
             new NoOpEmail(),
             new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string?>

@@ -7,6 +7,7 @@ using Npgsql;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.DTOs.Responses;
+using Ruumly.Backend.Filters;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
@@ -21,6 +22,7 @@ public class ReviewsController(RuumlyDbContext db) : ControllerBase
     // POST /api/reviews  — authenticated customers only
     // ──────────────────────────────────────────────────────────────────────────
 
+    [RequireEmailVerified]
     [HttpPost]
     [Authorize]
     [EnableRateLimiting("booking")]

@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Ruumly.Backend.Data;
+using Ruumly.Backend.DTOs;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Models;
@@ -27,9 +28,9 @@ public class OverlapDetectionTests
         DefaultVatRate:              0m,
         ExtrasMarginRate:            20m,
         RuumlyMinMarginRate:         8m,
-        Starter:  new TierConfig(5m,  0m,     2,   false, false, false, "standard",  "email_48h"),
-        Standard: new TierConfig(8m,  49m,  10,   false, true,  false, "boosted",   "email_24h"),
-        Premium:  new TierConfig(12m, 99m, 999,   true,  true,  true,  "priority",  "priority_4h"));
+        Starter:  new TierConfig(5m,  0m,   12m,   2,   false, false, false, "standard",  "email_48h"),
+        Standard: new TierConfig(8m,  49m,   8m,  10,   false, true,  false, "boosted",   "email_24h"),
+        Premium:  new TierConfig(12m, 99m,   6m, 999,   true,  true,  true,  "priority",  "priority_4h"));
 
     private static BookingService MakeService(RuumlyDbContext db) =>
         new(db,
@@ -55,7 +56,7 @@ public class OverlapDetectionTests
 
     private sealed class NoOpInvoice : IInvoiceService
     {
-        public Task<List<InvoiceDto>> GetAllAsync(Guid userId, UserRole role) => Task.FromResult(new List<InvoiceDto>());
+        public Task<PaginatedResult<InvoiceDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 100) => Task.FromResult(new PaginatedResult<InvoiceDto>(new List<InvoiceDto>(), 0, page, limit, false));
         public Task<InvoiceDto?> GetByBookingIdAsync(Guid bookingId, Guid userId, UserRole role) => Task.FromResult<InvoiceDto?>(null);
         public Task<InvoiceDto> GenerateAsync(Guid bookingId) =>
             Task.FromResult(new InvoiceDto(bookingId, bookingId, 0m, "pending", "2026-01-01", null, ""));

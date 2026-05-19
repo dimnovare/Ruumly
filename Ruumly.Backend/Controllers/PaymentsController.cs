@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
+using Ruumly.Backend.Filters;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
@@ -24,6 +25,7 @@ public class PaymentsController(
     /// Returns the URL to redirect the user to.
     /// Empty paymentUrl means "pay later" — no redirect.
     /// </summary>
+    [RequireEmailVerified]
     [HttpPost("initiate")]
     [Authorize]
     [EnableRateLimiting("payment")]
