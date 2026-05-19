@@ -443,13 +443,13 @@ public class AuthController(
             await tx.CommitAsync();
 
             // Send verification/info email to applicant
-            _ = authService.ResendVerificationEmailAsync(userId);
+            authService.ResendVerificationEmailAsync(userId).FireAndForget(logger, "verification-email");
 
             // Notify admin
-            _ = emailSender.SendAsync(
+            emailSender.SendAsync(
                 to:       "admin@ruumly.eu",
                 subject:  $"New provider application: {request.CompanyName}",
-                textBody: $"Company: {request.CompanyName}\nContact: {request.ContactName} <{request.ContactEmail}>\nPhone: {request.ContactPhone}\nRegistry: {request.RegistryCode}");
+                textBody: $"Company: {request.CompanyName}\nContact: {request.ContactName} <{request.ContactEmail}>\nPhone: {request.ContactPhone}\nRegistry: {request.RegistryCode}").FireAndForget(logger, "admin-notification");
 
             return Ok(new { applicationId = supplierId, message = "Application received. Please check your email." });
         }
@@ -680,10 +680,10 @@ public class AuthController(
             await tx.CommitAsync();
 
             // Notify admin (after transaction commits)
-            _ = emailSender.SendAsync(
+            emailSender.SendAsync(
                 to:       "admin@ruumly.eu",
                 subject:  $"New demand lead: {body.Email} ({city})",
-                textBody: $"Email: {body.Email}\nCity: {city}\nCategory: {lead.Category}\nQuery: {lead.Query}");
+                textBody: $"Email: {body.Email}\nCity: {city}\nCategory: {lead.Category}\nQuery: {lead.Query}").FireAndForget(logger, "demand-lead-notification");
 
             return Ok(new { success = true });
         }

@@ -101,6 +101,32 @@ public class IntegrationDispatchService(
                 client.DefaultRequestHeaders.Add("X-API-Key", plainToken);
         }
 
+        if (!OutboundEndpointValidator.IsAllowed(supplier.ApiEndpoint))
+        {
+            logger.LogWarning(
+                "Refusing to dispatch order {OrderId} to supplier {SupplierId} — endpoint failed SSRF validation: {Endpoint}",
+                order.Id, supplier.Id, supplier.ApiEndpoint);
+
+            db.FulfillmentEvents.Add(new FulfillmentEvent
+            {
+                Id        = Guid.NewGuid(),
+                OrderId   = order.Id,
+                Status    = FulfillmentStatus.Failed,
+                Actor     = "system",
+                ActorRole = UserRole.Admin,
+                Channel   = PostingMode.Api,
+                Detail    = $"Endpoint rejected by SSRF guard, falling back to {fallback}",
+                CreatedAt = DateTime.UtcNow,
+            });
+            await db.SaveChangesAsync();
+
+            if (fallback == PostingMode.Email)
+                await DispatchEmailAsync(order, supplier);
+            else
+                await DispatchManualAsync(order);
+            return;
+        }
+
         var payloadJson = await BuildPayloadJson(order, supplier);
         var content = new StringContent(payloadJson, Encoding.UTF8, "application/json");
 

@@ -847,10 +847,10 @@ public class AdminSuppliersController(
         if (user is not null)
         {
             var emailSender = HttpContext.RequestServices.GetRequiredService<IEmailSender>();
-            _ = emailSender.SendAsync(
+            emailSender.SendAsync(
                 to:       supplier.ContactEmail,
                 subject:  "Welcome to Ruumly!",
-                textBody: $"Hi {supplier.ContactName},\n\nYour application has been approved. You can now log in and start managing your listings.\n\nWelcome aboard!\n\nThe Ruumly team");
+                textBody: $"Hi {supplier.ContactName},\n\nYour application has been approved. You can now log in and start managing your listings.\n\nWelcome aboard!\n\nThe Ruumly team").FireAndForget(logger, "supplier-welcome-email");
         }
 
         return Ok(new

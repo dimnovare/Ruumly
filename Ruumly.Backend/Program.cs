@@ -602,5 +602,5 @@ static string ParseDatabaseUrl(string databaseUrl)
     var userInfo = uri.UserInfo.Split(':');
     var username = userInfo[0];
     var password = userInfo.Length > 1 ? userInfo[1] : string.Empty;
-    return $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true;Maximum Pool Size=20;Minimum Pool Size=2;Connection Idle Lifetime=300;Connection Pruning Interval=10";
+    return $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true;Maximum Pool Size=100;Minimum Pool Size=2;Connection Idle Lifetime=300;Connection Pruning Interval=10";
 }
