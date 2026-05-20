@@ -846,11 +846,13 @@ public class AdminSuppliersController(
         // Send welcome email
         if (user is not null)
         {
+            var tl        = EmailTranslations.For(user.Language);
             var emailSender = HttpContext.RequestServices.GetRequiredService<IEmailSender>();
             emailSender.SendAsync(
                 to:       supplier.ContactEmail,
-                subject:  "Welcome to Ruumly!",
-                textBody: $"Hi {supplier.ContactName},\n\nYour application has been approved. You can now log in and start managing your listings.\n\nWelcome aboard!\n\nThe Ruumly team").FireAndForget(logger, "supplier-welcome-email");
+                subject:  tl.SupplierWelcomeSubject,
+                textBody: tl.SupplierWelcomeBody(supplier.ContactName)
+            ).FireAndForget(logger, "supplier-welcome-email");
         }
 
         return Ok(new

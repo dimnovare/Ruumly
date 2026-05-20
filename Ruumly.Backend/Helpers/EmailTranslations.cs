@@ -104,8 +104,15 @@ public static class EmailTranslations
         string ReservationExpiredCta,
         // Refund initiated notification
         string RefundInitiatedTitle,
-        string RefundInitiatedDesc
-    );
+        string RefundInitiatedDesc,
+        // Supplier approval welcome
+        string SupplierWelcomeSubject,
+        string SupplierWelcomeBodyTpl
+    )
+    {
+        public string SupplierWelcomeBody(string name) =>
+            SupplierWelcomeBodyTpl.Replace("{name}", name);
+    }
 
     private static readonly EmailStrings Et = new(
         PasswordResetSubject:       "Ruumly — parooli taastamine",
@@ -204,7 +211,9 @@ public static class EmailTranslations
         ReservationExpiredBody:        "Teie broneering teenusele \"{listing}\" aegus, kuna makset ei laekunud 24 tunni jooksul.",
         ReservationExpiredCta:         "Broneerige uuesti",
         RefundInitiatedTitle:          "Tagasimakse algatatud",
-        RefundInitiatedDesc:           "Tagasimakse broneeringu #{bookingRef} jaoks on algatatud. Summa kantakse teie kontole 3–5 tööpäeva jooksul."
+        RefundInitiatedDesc:           "Tagasimakse broneeringu #{bookingRef} jaoks on algatatud. Summa kantakse teie kontole 3–5 tööpäeva jooksul.",
+        SupplierWelcomeSubject:        "Tere tulemast Ruumlysse!",
+        SupplierWelcomeBodyTpl:        "Tere {name}!\n\nTeie taotlus on heaks kiidetud. Saate nüüd sisse logida ja oma kuulutusi hallata.\n\nTeretulemast!\n\nRuumly meeskond"
     );
 
     private static readonly EmailStrings En = new(
@@ -304,7 +313,9 @@ public static class EmailTranslations
         ReservationExpiredBody:        "Your reservation for \"{listing}\" has expired because payment was not received within 24 hours.",
         ReservationExpiredCta:         "Book again",
         RefundInitiatedTitle:          "Refund initiated",
-        RefundInitiatedDesc:           "A refund for booking #{bookingRef} has been initiated. The amount will be transferred to your account within 3–5 business days."
+        RefundInitiatedDesc:           "A refund for booking #{bookingRef} has been initiated. The amount will be transferred to your account within 3–5 business days.",
+        SupplierWelcomeSubject:        "Welcome to Ruumly!",
+        SupplierWelcomeBodyTpl:        "Hi {name},\n\nYour application has been approved. You can now log in and start managing your listings.\n\nWelcome aboard!\n\nThe Ruumly team"
     );
 
     private static readonly EmailStrings Ru = new(
@@ -403,7 +414,9 @@ public static class EmailTranslations
         ReservationExpiredBody:        "Срок вашего бронирования \"{listing}\" истёк, так как оплата не поступила в течение 24 часов.",
         ReservationExpiredCta:         "Забронировать снова",
         RefundInitiatedTitle:          "Возврат инициирован",
-        RefundInitiatedDesc:           "Возврат средств для бронирования #{bookingRef} инициирован. Сумма будет переведена на ваш счёт в течение 3–5 рабочих дней."
+        RefundInitiatedDesc:           "Возврат средств для бронирования #{bookingRef} инициирован. Сумма будет переведена на ваш счёт в течение 3–5 рабочих дней.",
+        SupplierWelcomeSubject:        "Добро пожаловать в Ruumly!",
+        SupplierWelcomeBodyTpl:        "Здравствуйте, {name}!\n\nВаша заявка одобрена. Теперь вы можете войти и управлять своими объявлениями.\n\nДобро пожаловать!\n\nКоманда Ruumly"
     );
 
     private static readonly EmailStrings Lv = new(
@@ -503,7 +516,9 @@ public static class EmailTranslations
         ReservationExpiredBody:        "Jūsu rezervācija \"{listing}\" ir beigusies, jo maksājums netika saņemts 24 stundu laikā.",
         ReservationExpiredCta:         "Rezervēt vēlreiz",
         RefundInitiatedTitle:          "Atmaksa uzsākta",
-        RefundInitiatedDesc:           "Atmaksa rezervācijai #{bookingRef} ir uzsākta. Summa tiks pārskaitīta uz jūsu kontu 3–5 darba dienu laikā."
+        RefundInitiatedDesc:           "Atmaksa rezervācijai #{bookingRef} ir uzsākta. Summa tiks pārskaitīta uz jūsu kontu 3–5 darba dienu laikā.",
+        SupplierWelcomeSubject:        "Laipni lūgti Ruumly!",
+        SupplierWelcomeBodyTpl:        "Sveiki, {name}!\n\nJūsu pieteikums ir apstiprināts. Tagad varat pieteikties un sākt pārvaldīt savus sludinājumus.\n\nLaipni lūdzam!\n\nRuumly komanda"
     );
 
     private static readonly EmailStrings Lt = new(
@@ -603,7 +618,9 @@ public static class EmailTranslations
         ReservationExpiredBody:        "Jūsų rezervacija \"{listing}\" baigėsi, nes mokėjimas negautas per 24 valandas.",
         ReservationExpiredCta:         "Rezervuoti vėl",
         RefundInitiatedTitle:          "Grąžinimas pradėtas",
-        RefundInitiatedDesc:           "Grąžinimas rezervacijos #{bookingRef} buvo pradėtas. Suma bus pervesta į jūsų sąskaitą per 3–5 darbo dienas."
+        RefundInitiatedDesc:           "Grąžinimas rezervacijos #{bookingRef} buvo pradėtas. Suma bus pervesta į jūsų sąskaitą per 3–5 darbo dienas.",
+        SupplierWelcomeSubject:        "Sveiki atvykę į Ruumly!",
+        SupplierWelcomeBodyTpl:        "Sveiki, {name}!\n\nJūsų paraiška buvo patvirtinta. Dabar galite prisijungti ir pradėti tvarkyti savo skelbimus.\n\nSveikiname prisijungus!\n\nRuumly komanda"
     );
 
     public static EmailStrings For(string? lang) =>
