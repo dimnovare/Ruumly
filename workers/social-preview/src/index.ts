@@ -57,6 +57,24 @@ const OG_LOCALE: Record<Lang, string> = {
   lt: "lt_LT",
 };
 
+// ── City page copy per language ───────────────────────────────────────────────
+
+const CITY_TITLE: Record<Lang, (city: string) => string> = {
+  et: (c) => `${c} ladustamine`,
+  en: (c) => `Storage in ${c}`,
+  ru: (c) => `Хранение в ${c}`,
+  lv: (c) => `Glabāšana ${c}`,
+  lt: (c) => `Sandėliavimas ${c}`,
+};
+
+const CITY_DESC: Record<Lang, (city: string) => string> = {
+  et: (c) => `Leia laopindu, kolimis- ja haagiseteenuseid ${c} piirkonnas Ruumly kaudu.`,
+  en: (c) => `Find warehouse storage, moving services, and trailer rentals in ${c} on Ruumly.`,
+  ru: (c) => `Найдите складские помещения, услуги переезда и аренду прицепов в ${c} на Ruumly.`,
+  lv: (c) => `Atrodi noliktavu, pārvākšanās un piekabju nomas pakalpojumus ${c} ar Ruumly.`,
+  lt: (c) => `Raskite sandėliavimą, perkraustymo paslaugas ir priekabų nuomą ${c} su Ruumly.`,
+};
+
 function parseLang(segment: string | undefined): Lang {
   return SUPPORTED_LANGS.includes(segment as Lang) ? (segment as Lang) : "et";
 }
@@ -220,8 +238,8 @@ async function resolveOgData(
       const image = firstImage(locs[0].images);
       return {
         lang,
-        title:       `${city} ladustamine`,
-        description: `Leia laopindu, kolimis- ja haagiseteenuseid ${city} piirkonnas Ruumly kaudu.`,
+        title:       CITY_TITLE[lang](city),
+        description: CITY_DESC[lang](city),
         image,
       };
     }
@@ -257,7 +275,7 @@ async function resolveOgData(
 
   // ── Blog post ───────────────────────────────────────────────────────────────
   if (section === "blog") {
-    const settings = await apiFetch<ApiSettings>(`${api}/api/settings`);
+    const settings = await apiFetch<ApiSettings>(`${api}/api/settings/public`);
     return {
       lang,
       title:       `Blog — ${settings?.siteName ?? SITE_NAME}`,
@@ -268,7 +286,7 @@ async function resolveOgData(
 
   // ── Homepage ────────────────────────────────────────────────────────────────
   if (!section) {
-    const settings = await apiFetch<ApiSettings>(`${api}/api/settings`);
+    const settings = await apiFetch<ApiSettings>(`${api}/api/settings/public`);
     return {
       lang,
       title:       settings?.siteName ?? SITE_NAME,
