@@ -1,0 +1,5 @@
+node_modules/
+.wrangler/
+dist/
+# Numbered wrangler deploy artefacts
+[0-9]*.json
