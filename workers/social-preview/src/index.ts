@@ -230,7 +230,8 @@ async function resolveOgData(
 
   // ── City / storage ──────────────────────────────────────────────────────────
   if (section === "storage" && param) {
-    const data = await apiFetch<unknown>(`${api}/api/locations?city=${encodeURIComponent(param)}&limit=1`);
+    const cityParam = capitalize(param); // "tallinn" → "Tallinn"
+    const data = await apiFetch<unknown>(`${api}/api/locations?city=${encodeURIComponent(cityParam)}&limit=1`);
     const locs = unwrapArray<ApiLocation>(data);
 
     if (locs.length > 0) {
