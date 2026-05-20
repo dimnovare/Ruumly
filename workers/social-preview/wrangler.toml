@@ -12,9 +12,9 @@ SITE_URL     = "https://ruumly.eu"
 # step with `wrangler deploy`. Alternatively, attach via the Cloudflare dashboard:
 #   Workers & Pages → ruumly-social-preview → Triggers → Routes → ruumly.eu/*
 #
-# [[routes]]
-# pattern  = "ruumly.eu/*"
-# zone_name = "ruumly.eu"
+[[routes]]
+pattern  = "ruumly.eu/*"
+zone_name = "ruumly.eu"
 
 # ── Local dev override ─────────────────────────────────────────────────────────
 # wrangler dev passes requests to the real API; the Vercel origin is unreachable
