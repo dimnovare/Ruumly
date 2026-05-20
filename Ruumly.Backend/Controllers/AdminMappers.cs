@@ -60,6 +60,8 @@ internal static class AdminMappers
                              ?? TierRules.HasFullAnalytics(s.Tier),
         CanHavePromotedBadge: pricingConfig?.ForTier(s.Tier).CanHavePromotedBadge
                              ?? TierRules.CanHavePromotedBadge(s.Tier),
+        HasCalendarSync:     pricingConfig?.ForTier(s.Tier).HasCalendarSync
+                             ?? TierRules.HasCalendarSync(s.Tier),
         FoundingPartner:     s.FoundingPartner,
         OnboardingStartedAt: s.OnboardingStartedAt,
         IsInOnboarding:      s.IsInOnboarding,

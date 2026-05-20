@@ -32,6 +32,7 @@ public record SupplierDto(
     decimal   MonthlyFee,
     bool      HasFullAnalytics,
     bool      CanHavePromotedBadge,
+    bool      HasCalendarSync,
     bool      FoundingPartner,
     DateTime? OnboardingStartedAt,
     bool      IsInOnboarding,

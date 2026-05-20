@@ -64,6 +64,7 @@ public static class SeedData
                 ApiEndpoint         = "https://api.laobox.ee/v1/orders",
                 ApiAuthType         = "bearer",
                 IsActive            = true,
+                Tier                = SupplierTier.Premium,
                 IntegrationHealth   = IntegrationHealth.Healthy,
                 PartnerDiscountRate = 10m,
                 ClientDiscountRate  = 5m,

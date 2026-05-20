@@ -38,4 +38,7 @@ public static class TierRules
 
     public static bool HasFullAnalytics(SupplierTier tier)
         => tier >= SupplierTier.Standard;
+
+    public static bool HasCalendarSync(SupplierTier tier)
+        => tier == SupplierTier.Premium;
 }
