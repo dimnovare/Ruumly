@@ -309,13 +309,70 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+// ── Dev-mode debug page ───────────────────────────────────────────────────────
+
+function renderDevDebugPage(url: URL): string {
+  const path = url.pathname + url.search;
+  return `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Ruumly Social Preview Worker — Dev Mode</title>
+    <style>
+      body { font-family: -apple-system, system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
+      code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-size: 0.92em; }
+      pre { background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; overflow-x: auto; }
+      .pill { display: inline-block; background: #e8f4ff; color: #0066cc; padding: 2px 8px; border-radius: 12px; font-size: 0.85em; }
+    </style>
+  </head>
+  <body>
+    <h1>🤖 Ruumly Social Preview Worker</h1>
+    <p class="pill">Running in dev mode at ${escHtml(url.host)}</p>
+    <p>This worker only serves HTML to <strong>social crawlers</strong>. Regular browser
+    requests are forwarded to the Vercel origin in production — but in <code>wrangler dev</code>
+    there is no real origin to forward to, so you're seeing this debug page instead.</p>
+
+    <h2>Test the worker with crawler user-agents</h2>
+    <p>Open a new terminal and run any of these — you'll get the rendered OG HTML:</p>
+
+    <pre><code>curl -A "facebookexternalhit/1.1" "http://${escHtml(url.host)}${escHtml(path)}"</code></pre>
+    <pre><code>curl -A "Twitterbot/1.0" "http://${escHtml(url.host)}/et/"</code></pre>
+    <pre><code>curl -A "TelegramBot (like TwitterBot)" "http://${escHtml(url.host)}/en/storage/tallinn"</code></pre>
+    <pre><code>curl -A "LinkedInBot/1.0" "http://${escHtml(url.host)}/ru/partner/laobox"</code></pre>
+
+    <h2>What you should see</h2>
+    <p>Every command above should return a small HTML document with proper
+    <code>&lt;meta property="og:title"&gt;</code>, <code>og:description</code>, and
+    <code>og:image</code> tags — possibly fetched from the live api.ruumly.eu backend.</p>
+
+    <h2>Detected crawlers</h2>
+    <p>facebookexternalhit, LinkedInBot, Twitterbot, TelegramBot, WhatsApp, Slackbot,
+    Discordbot, SkypeUriPreview, vkShare, redditbot, applebot.</p>
+
+    <h2>Going to production</h2>
+    <p>Run <code>npm run deploy</code>, then attach the route
+    <code>ruumly.eu/*</code> in the Cloudflare dashboard. Once attached,
+    non-crawlers will be forwarded to Vercel automatically (Cloudflare prevents loops).</p>
+  </body>
+</html>`;
+}
+
 // ── Worker entry point ────────────────────────────────────────────────────────
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const userAgent = request.headers.get("User-Agent") ?? "";
+    const url       = new URL(request.url);
+    const isDev     = url.hostname === "localhost" || url.hostname === "127.0.0.1";
 
-    // ── Non-crawlers: pass straight to Vercel origin ────────────────────────
+    // ── Non-crawlers in DEV: return a debug page (origin not reachable from wrangler dev) ──
+    if (!isCrawler(userAgent) && isDev) {
+      return new Response(renderDevDebugPage(url), {
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+      });
+    }
+
+    // ── Non-crawlers in PRODUCTION: pass straight to Vercel origin ──────────
     if (!isCrawler(userAgent)) {
       return fetch(request);
     }
@@ -329,7 +386,7 @@ export default {
     if (cached) return cached;
 
     // 2. Resolve metadata from API
-    const url  = new URL(request.url);
+    // (url already declared above)
     const ogBase = await resolveOgData(url, env);
     const og: OgData = {
       ...ogBase,
