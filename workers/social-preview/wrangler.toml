@@ -1,0 +1,23 @@
+name            = "ruumly-social-preview"
+main            = "src/index.ts"
+compatibility_date = "2024-09-23"
+
+# ── Environment variables ──────────────────────────────────────────────────────
+[vars]
+API_BASE_URL = "https://api.ruumly.eu"
+SITE_URL     = "https://ruumly.eu"
+
+# ── Workers Route ──────────────────────────────────────────────────────────────
+# Uncomment and fill in your zone_id to bind this worker to ruumly.eu in one
+# step with `wrangler deploy`. Alternatively, attach via the Cloudflare dashboard:
+#   Workers & Pages → ruumly-social-preview → Triggers → Routes → ruumly.eu/*
+#
+# [[routes]]
+# pattern  = "ruumly.eu/*"
+# zone_name = "ruumly.eu"
+
+# ── Local dev override ─────────────────────────────────────────────────────────
+# wrangler dev passes requests to the real API; the Vercel origin is unreachable
+# from a local Worker, so non-crawler requests are returned with a 204 stub.
+[dev]
+port = 8787
