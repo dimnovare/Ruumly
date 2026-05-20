@@ -75,6 +75,24 @@ const CITY_DESC: Record<Lang, (city: string) => string> = {
   lt: (c) => `Raskite sandėliavimą, perkraustymo paslaugas ir priekabų nuomą ${c} su Ruumly.`,
 };
 
+// ── Homepage copy per language ─────────────────────────────────────────────────
+
+const HOME_TITLE: Record<Lang, string> = {
+  et: "Ruumly — Laopinnad, kolimine ja haagised Eestis",
+  en: "Ruumly — Storage, Moving & Trailer Services",
+  ru: "Ruumly — Склады, переезд и прицепы в Прибалтике",
+  lv: "Ruumly — Noliktavas, pārcelšanās un piekabe Baltijā",
+  lt: "Ruumly — Sandėliai, kraustymasis ir priekabos Baltijos šalyse",
+};
+
+const HOME_DESC: Record<Lang, string> = {
+  et: "Leia ja broneeri laopindu, kolimisteenuseid ja haagiseid üle Eesti ja Baltikumi.",
+  en: "Find and book warehouse storage, moving services, and trailer rentals across Estonia and the Baltics.",
+  ru: "Найдите и забронируйте склады, услуги переезда и аренду прицепов в странах Балтии.",
+  lv: "Atrodi un rezervē noliktavas, pārcelšanās pakalpojumus un piekabju nomu Baltijā.",
+  lt: "Raskite ir užsisakykite sandėliavimą, perkraustymo paslaugas ir priekabų nuomą Baltijos šalyse.",
+};
+
 function parseLang(segment: string | undefined): Lang {
   return SUPPORTED_LANGS.includes(segment as Lang) ? (segment as Lang) : "et";
 }
@@ -280,18 +298,17 @@ async function resolveOgData(
     return {
       lang,
       title:       `Blog — ${settings?.siteName ?? SITE_NAME}`,
-      description: truncate(settings?.heroSubtitle ?? DEFAULT_DESC),
+      description: truncate(settings?.heroSubtitle || DEFAULT_DESC),
       image:       DEFAULT_IMAGE,
     };
   }
 
   // ── Homepage ────────────────────────────────────────────────────────────────
   if (!section) {
-    const settings = await apiFetch<ApiSettings>(`${api}/api/settings/public`);
     return {
       lang,
-      title:       settings?.siteName ?? SITE_NAME,
-      description: truncate(settings?.heroSubtitle ?? DEFAULT_DESC),
+      title:       HOME_TITLE[lang],
+      description: HOME_DESC[lang],
       image:       DEFAULT_IMAGE,
     };
   }
