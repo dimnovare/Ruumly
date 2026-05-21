@@ -2419,6 +2419,8 @@ public static class SeedData
             ["openHoursSat"]        = ("",               "Saturday hours (leave empty to hide)"),
             ["inviteCodeRequired"]  = ("true",           "Set to true to require invite code at registration"),
             ["inviteCode"]           = ("RUUMLY2026", "The invite code users must enter to register"),
+            ["showMovingService"]    = ("true",       "Show Moving service publicly (navbar, search, homepage)"),
+            ["showTrailerService"]   = ("true",       "Show Trailer rental publicly (navbar, search, homepage)"),
             ["showFeaturedListings"] = ("true",       "Show featured listings section on homepage"),
             ["showHowItWorks"]       = ("true",       "Show how-it-works section on homepage"),
             ["showProviderCta"]      = ("true",       "Show provider CTA section on homepage"),

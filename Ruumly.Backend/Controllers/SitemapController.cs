@@ -77,9 +77,18 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
         foreach (var (path, priority, freq) in staticPages)
             AppendLangUrlSet(sb, path, priority, freq);
 
+        var showMoving  = await db.PlatformSettings
+            .Where(s => s.Key == "showMovingService")
+            .Select(s => s.Value).FirstOrDefaultAsync() != "false";
+        var showTrailer = await db.PlatformSettings
+            .Where(s => s.Key == "showTrailerService")
+            .Select(s => s.Value).FirstOrDefaultAsync() != "false";
+
         foreach (var listing in listings)
         {
             var type    = listing.Type.ToString().ToLower();
+            if (type == "moving"  && !showMoving)  continue;
+            if (type == "trailer" && !showTrailer) continue;
             var path    = $"/{type}/{listing.Id}";
             var lastMod = listing.UpdatedAt.ToString("yyyy-MM-dd");
             AppendLangUrlSet(sb, path, "0.8", "weekly", lastMod);
