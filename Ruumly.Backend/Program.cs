@@ -108,6 +108,20 @@ if (string.IsNullOrWhiteSpace(googleClientId))
         "Google login will be unavailable.");
 }
 
+// ─── Montonio config validation ───
+// Keys are empty strings by default; they must be set via Railway env vars:
+//   MONTONIO__ACCESSKEY, MONTONIO__SECRETKEY
+// For sandbox testing set MONTONIO__USESANDBOX=true and use sandbox key pair.
+var montonioAccessKey = builder.Configuration["Montonio:AccessKey"];
+var montonioSecretKey = builder.Configuration["Montonio:SecretKey"];
+if (string.IsNullOrWhiteSpace(montonioAccessKey) || string.IsNullOrWhiteSpace(montonioSecretKey))
+{
+    Console.WriteLine(
+        "[Ruumly] WARNING: Montonio:AccessKey or Montonio:SecretKey not configured. " +
+        "Payment initiation and webhook verification will fail. " +
+        "Set MONTONIO__ACCESSKEY and MONTONIO__SECRETKEY in Railway env vars.");
+}
+
 // ─── Distributed cache (Redis in prod, in-memory fallback for dev) ───
 var redisConn = Environment.GetEnvironmentVariable("REDIS_URL") ?? "";
 if (!string.IsNullOrEmpty(redisConn))

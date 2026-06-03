@@ -1,3 +1,4 @@
+using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -5,6 +6,7 @@ using Ruumly.Backend.Data;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
+using Ruumly.Backend.Services.Implementations;
 using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Controllers;
@@ -115,5 +117,124 @@ public class AdminRefundsController(
         }
 
         return Ok(new { invoice.Id, status = "refunded" });
+    }
+
+    // ── POST /api/admin/invoices/{id}/mark-paid ────────────────────────────────
+    /// <summary>
+    /// Admin fallback: manually marks an invoice as paid.
+    /// Triggers order dispatch (if AutoDispatch) exactly as the Montonio webhook would.
+    /// Use this when Montonio is not connected or the webhook was missed.
+    /// </summary>
+    [HttpPost("/api/admin/invoices/{id:guid}/mark-paid")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> AdminMarkInvoicePaid(
+        Guid id,
+        [FromServices] IInvoiceService invoiceService)
+    {
+        try
+        {
+            var invoice = await invoiceService.MarkPaidAsync(id);
+
+            Audit(
+                action: "invoice.manual_mark_paid",
+                actor:  User.Identity?.Name ?? "admin",
+                target: id.ToString(),
+                detail: "Invoice manually marked as paid by admin");
+            await Db.SaveChangesAsync();
+
+            return Ok(invoice);
+        }
+        catch (NotFoundException)
+        {
+            return NotFound(Error("Invoice not found"));
+        }
+    }
+
+    // ── POST /api/admin/orders/{id}/cancel-and-refund ─────────────────────────
+    /// <summary>
+    /// Admin operation: cancels a booking + order and transitions the invoice to
+    /// the correct refund state. Does NOT call Montonio's refund API yet —
+    /// bank refund is manual. Correct state machine:
+    ///   Paid invoice     → PendingRefund (admin processes bank transfer manually)
+    ///   Unpaid invoice   → Refunded (voided — no money was taken)
+    ///   Payout entry     → Cancelled
+    ///   Booking / Order  → Cancelled
+    /// </summary>
+    [HttpPost("/api/admin/orders/{id:guid}/cancel-and-refund")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> CancelAndRefund(Guid id)
+    {
+        var order = await Db.Orders
+            .Include(o => o.Booking)
+                .ThenInclude(b => b.Invoice)
+            .FirstOrDefaultAsync(o => o.Id == id);
+
+        if (order is null)
+            return NotFound(Error("Order not found"));
+
+        if (order.Status == OrderStatus.Cancelled)
+            return BadRequest(Error("Order is already cancelled"));
+
+        var now     = DateTime.UtcNow;
+        var booking = order.Booking;
+        var invoice = booking?.Invoice;
+
+        // Cancel the order
+        order.Status    = OrderStatus.Cancelled;
+        order.UpdatedAt = now;
+
+        // Cancel payout entry
+        var payout = await Db.PayoutEntries
+            .FirstOrDefaultAsync(p => p.OrderId == order.Id
+                                   && p.Status == PayoutStatus.Pending);
+        if (payout is not null)
+            payout.Status = PayoutStatus.Cancelled;
+
+        // Transition invoice state machine
+        if (invoice is not null)
+        {
+            if (invoice.Status == InvoiceStatus.Paid)
+                invoice.Status = InvoiceStatus.PendingRefund;  // money taken — needs bank refund
+            else if (invoice.Status != InvoiceStatus.Refunded
+                  && invoice.Status != InvoiceStatus.PendingRefund)
+                invoice.Status = InvoiceStatus.Refunded;  // not yet paid — void immediately
+        }
+
+        // Cancel booking if present
+        if (booking is not null && booking.Status != BookingStatus.Cancelled)
+        {
+            booking.Status    = BookingStatus.Cancelled;
+            booking.UpdatedAt = now;
+
+            Db.BookingTimelines.Add(new BookingTimeline
+            {
+                Id        = Guid.NewGuid(),
+                BookingId = booking.Id,
+                Event     = "Booking cancelled and refund initiated by admin",
+                Status    = BookingStatus.Cancelled,
+                CreatedAt = now,
+            });
+        }
+
+        Audit(
+            action: "order.cancel_and_refund",
+            actor:  User.Identity?.Name ?? "admin",
+            target: order.Id.ToString(),
+            detail: $"BookingId={booking?.Id}, InvoiceId={invoice?.Id}, Amount={invoice?.Amount:F2}");
+
+        await Db.SaveChangesAsync();
+
+        return Ok(new
+        {
+            orderId       = order.Id,
+            orderStatus   = order.Status.ToString().ToLower(),
+            bookingId     = booking?.Id,
+            invoiceId     = invoice?.Id,
+            invoiceStatus = invoice?.Status.ToString().ToLower(),
+            payoutCancelled = payout is not null,
+            message = invoice?.Status == InvoiceStatus.PendingRefund
+                ? "Order cancelled. Invoice marked PendingRefund — process bank refund manually."
+                : "Order cancelled. Invoice voided (no payment taken).",
+        });
     }
 }

@@ -1,3 +1,4 @@
+using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
@@ -10,7 +11,10 @@ using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Services.Implementations;
 
-public class InvoiceService(RuumlyDbContext db, IHttpContextAccessor http) : IInvoiceService
+public class InvoiceService(
+    RuumlyDbContext db,
+    IHttpContextAccessor http,
+    ILogger<InvoiceService> logger) : IInvoiceService
 {
     private string Lang => http.HttpContext?.Request.GetLang() ?? "et";
     private string Msg(string key) => ErrorMessages.Get(key, Lang);
@@ -110,9 +114,51 @@ public class InvoiceService(RuumlyDbContext db, IHttpContextAccessor http) : IIn
         var invoice = await db.Invoices.FindAsync(id)
             ?? throw new NotFoundException($"Invoice {id} not found.");
 
+        // Idempotent — if already paid, return without side effects.
+        if (invoice.Status == InvoiceStatus.Paid)
+            return MapToDto(invoice);
+
         invoice.Status = InvoiceStatus.Paid;
         invoice.PaidAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
+
+        logger.LogInformation(
+            "Invoice {InvoiceId} manually marked as paid. BookingId={BookingId} Amount={Amount}",
+            invoice.Id, invoice.BookingId, invoice.Amount);
+
+        // Trigger order dispatch — same logic as the Montonio webhook confirms payment.
+        // This ensures the admin mark-paid path is functionally equivalent to a webhook.
+        var order = await db.Orders
+            .FirstOrDefaultAsync(o => o.BookingId == invoice.BookingId);
+
+        if (order is not null && order.AutoDispatch
+            && order.Status == OrderStatus.Created)
+        {
+            order.Status    = OrderStatus.Sending;
+            order.UpdatedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+
+            BackgroundJob.Enqueue<BackgroundOrderDispatchService>(
+                x => x.DispatchOrderAsync(order.Id));
+
+            logger.LogInformation(
+                "Invoice {InvoiceId} manually marked paid — dispatching order {OrderId}",
+                invoice.Id, order.Id);
+        }
+        else if (order is not null && !order.AutoDispatch
+                 && order.Status == OrderStatus.Created)
+        {
+            // Needs manual approval — log only; admins handle dispatch
+            logger.LogInformation(
+                "Invoice {InvoiceId} manually marked paid — order {OrderId} awaits admin approval",
+                invoice.Id, order.Id);
+        }
+        else if (order is null)
+        {
+            logger.LogWarning(
+                "Invoice {InvoiceId} manually marked paid but no Order found for booking {BookingId}",
+                invoice.Id, invoice.BookingId);
+        }
 
         return MapToDto(invoice);
     }

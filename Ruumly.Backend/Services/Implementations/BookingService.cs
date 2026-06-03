@@ -505,6 +505,25 @@ public class BookingService(
             booking.Order.Status    = OrderStatus.Cancelled;
             booking.Order.UpdatedAt = now;
             // Order also stays visible — only set IsDeleted for hard-delete.
+
+            // Cancel the pending payout entry so the supplier is not paid for a cancelled order.
+            var payout = await db.PayoutEntries
+                .FirstOrDefaultAsync(p => p.OrderId == booking.Order.Id
+                                       && p.Status == PayoutStatus.Pending);
+            if (payout is not null)
+                payout.Status = PayoutStatus.Cancelled;
+        }
+
+        // Cancel the invoice if it hasn't been fully refunded yet.
+        var invoice = await db.Invoices
+            .FirstOrDefaultAsync(i => i.BookingId == booking.Id);
+        if (invoice is not null
+            && invoice.Status != InvoiceStatus.Refunded
+            && invoice.Status != InvoiceStatus.PendingRefund)
+        {
+            invoice.Status = invoice.Status == InvoiceStatus.Paid
+                ? InvoiceStatus.PendingRefund   // paid → needs manual refund
+                : InvoiceStatus.Refunded;        // pending/awaiting → void immediately
         }
 
         await db.SaveChangesAsync();
