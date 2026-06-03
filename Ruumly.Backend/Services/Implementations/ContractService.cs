@@ -4,12 +4,17 @@ using System.Web;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
+using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Services.Implementations;
 
-public class ContractService(RuumlyDbContext db) : IContractService
+public class ContractService(
+    RuumlyDbContext db,
+    IEmailSender emailSender,
+    IConfiguration configuration,
+    ILogger<ContractService> logger) : IContractService
 {
     private const int MaxSignatureSizeBytes = 500 * 1024; // 500 KB
 
@@ -105,6 +110,48 @@ public class ContractService(RuumlyDbContext db) : IContractService
 
         db.SignedContracts.Add(signed);
         await db.SaveChangesAsync(ct);
+
+        // Send confirmation email — never fail the signing transaction if email fails
+        try
+        {
+            var booking = await db.Bookings
+                .Include(b => b.User)
+                .Include(b => b.Listing)
+                .FirstOrDefaultAsync(b => b.Id == req.BookingId, ct);
+
+            if (booking is not null && !string.IsNullOrWhiteSpace(tenantEmail))
+            {
+                var lang       = booking.User?.Language ?? "et";
+                var t          = EmailTranslations.For(lang);
+                var appUrl     = configuration["AppUrl"] ?? "https://ruumly.eu";
+                var downloadUrl = $"{appUrl}/account?tab=bookings";
+                var shortId    = booking.Id.ToString()[..8].ToUpper();
+                var subject    = $"Ruumly — {(lang == "et" ? "Leping allkirjastatud" : lang == "ru" ? "Договор подписан" : lang == "lv" ? "Līgums parakstīts" : lang == "lt" ? "Sutartis pasirašyta" : "Contract signed")} #{shortId}";
+                var body       =
+                    $"{t.BookingConfirmGreeting} {req.TenantName},\n\n" +
+                    (lang == "et" ? "Teie leping on edukalt allkirjastatud."
+                   : lang == "ru" ? "Ваш договор успешно подписан."
+                   : lang == "lv" ? "Jūsu līgums ir veiksmīgi parakstīts."
+                   : lang == "lt" ? "Jūsų sutartis sėkmingai pasirašyta."
+                   : "Your contract has been successfully signed.") +
+                    $"\n\n{t.BookingConfirmService}: {booking.Listing?.Title ?? shortId}" +
+                    $"\n\n{t.BookingStatusViewLink}: {downloadUrl}\n\n" +
+                    $"Ruumly\ninfo@ruumly.eu";
+
+                await emailSender.SendAsync(tenantEmail, subject, body);
+                logger.LogInformation(
+                    "Contract signed confirmation email sent to {Email} for booking {Id}",
+                    tenantEmail, req.BookingId);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex,
+                "Failed to send contract signed email to {Email} for booking {Id}",
+                tenantEmail, req.BookingId);
+            Sentry.SentrySdk.CaptureException(ex);
+        }
+
         return signed;
     }
 }

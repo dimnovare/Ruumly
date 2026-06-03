@@ -1,3 +1,5 @@
+using Sentry;
+
 namespace Ruumly.Backend.Helpers;
 
 public static class TaskExtensions
@@ -7,7 +9,10 @@ public static class TaskExtensions
         _ = task.ContinueWith(t =>
         {
             if (t.IsFaulted)
+            {
                 logger.LogError(t.Exception, "Background task '{Operation}' failed", opName);
+                SentrySdk.CaptureException(t.Exception!.GetBaseException());
+            }
         }, TaskContinuationOptions.OnlyOnFaulted);
     }
 }

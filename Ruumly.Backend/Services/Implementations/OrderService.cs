@@ -488,7 +488,7 @@ public class OrderService(
                 var t = EmailTranslations.For(booking.User?.Language);
 
                 var textBody =
-                    $"Tere {booking.ContactName},\n\n" +
+                    $"{t.BookingConfirmGreeting} {booking.ContactName},\n\n" +
                     $"{body}\n\n" +
                     $"{t.BookingStatusViewLink}: {accountUrl}\n\n" +
                     $"Ruumly\ninfo@ruumly.eu";
@@ -497,9 +497,10 @@ public class OrderService(
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex,
+                logger.LogError(ex,
                     "Failed to send booking status email to {Email} for booking {Id}",
                     booking.ContactEmail, booking.Id);
+                Sentry.SentrySdk.CaptureException(ex);
             }
         }
     }

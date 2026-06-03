@@ -10,7 +10,7 @@ namespace Ruumly.Backend.Controllers;
 /// All endpoints require Admin role (inherited from AdminBaseController).
 /// </summary>
 [Route("api/admin/ops")]
-public class AdminOpsController(RuumlyDbContext db) : AdminBaseController(db)
+public class AdminOpsController(RuumlyDbContext db, IConfiguration configuration) : AdminBaseController(db)
 {
     // ── GET /api/admin/ops/stuck ───────────────────────────────────────────────
     /// <summary>
@@ -114,6 +114,57 @@ public class AdminOpsController(RuumlyDbContext db) : AdminBaseController(db)
             pendingRefunds,
             failedEmailsLast24h = 0,   // no dedicated email-failure table yet
             lastHangfireJobAt,
+        });
+    }
+
+    // ── GET /api/admin/ops/email-health ───────────────────────────────────────
+    /// <summary>
+    /// Verifies Resend configuration and that all 5 languages have email templates
+    /// defined in the static EmailTranslations helper.
+    /// Returns a summary safe to expose to admins.
+    /// </summary>
+    [HttpGet("email-health")]
+    public IActionResult GetEmailHealth()
+    {
+        var resendApiKey  = configuration["Resend:ApiKey"];
+        var fromAddress   = configuration["Email:FromAddress"] ?? "noreply@ruumly.eu";
+        var resendConfigured = !string.IsNullOrWhiteSpace(resendApiKey);
+
+        // EmailTranslations is a static in-code helper — verify all 5 languages
+        // are reachable and that the key template fields are non-empty.
+        var languages = new[] { "et", "en", "ru", "lv", "lt" };
+
+        // Template types we care about for launch
+        var templateChecks = new Dictionary<string, Func<Ruumly.Backend.Helpers.EmailTranslations.EmailStrings, string>>
+        {
+            ["password-reset"]       = t => t.PasswordResetSubject,
+            ["email-verify"]         = t => t.EmailVerifySubject,
+            ["booking-confirm"]      = t => t.BookingConfirmSubject,
+            ["booking-status"]       = t => t.BookingStatusConfirmedSubject,
+            ["supplier-welcome"]     = t => t.SupplierWelcomeSubject,
+            ["abandoned-reminder"]   = t => t.AbandonedSubject,
+            ["reservation-expired"]  = t => t.ReservationExpiredSubject,
+        };
+
+        var missingTemplates = new List<object>();
+
+        foreach (var lang in languages)
+        {
+            var strings = Ruumly.Backend.Helpers.EmailTranslations.For(lang);
+            foreach (var (templateType, getValue) in templateChecks)
+            {
+                var value = getValue(strings);
+                if (string.IsNullOrWhiteSpace(value))
+                    missingTemplates.Add(new { templateType, lang });
+            }
+        }
+
+        return Ok(new
+        {
+            resendConfigured,
+            fromAddress,
+            templateLanguagesComplete = missingTemplates.Count == 0,
+            missingTemplates,
         });
     }
 }

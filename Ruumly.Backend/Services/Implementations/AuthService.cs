@@ -22,7 +22,8 @@ public class AuthService(
     RuumlyDbContext db,
     IConfiguration config,
     IEmailSender emailSender,
-    IHttpContextAccessor http) : IAuthService
+    IHttpContextAccessor http,
+    ILogger<AuthService> logger) : IAuthService
 {
     private string Lang => http.HttpContext?.Request.GetLang() ?? "et";
     private string Msg(string key) => ErrorMessages.Get(key, Lang);
@@ -98,9 +99,11 @@ public class AuthService(
                 $"Ruumly\ninfo@ruumly.eu";
             await emailSender.SendAsync(user.Email, t.EmailVerifySubject, body);
         }
-        catch
+        catch (Exception ex)
         {
-            // Don't fail registration if email sending fails
+            // Don't fail registration if email sending fails, but capture for observability
+            logger.LogError(ex, "Failed to send verification email to {Email} during registration", user.Email);
+            Sentry.SentrySdk.CaptureException(ex);
         }
 
         return await GenerateAuthResponseAsync(user);
@@ -467,9 +470,11 @@ public class AuthService(
                 $"Ruumly\ninfo@ruumly.eu";
             await emailSender.SendAsync(user.Email, t.EmailVerifySubject, body);
         }
-        catch
+        catch (Exception ex)
         {
-            // Don't fail the request if email sending fails
+            // Don't fail the request if email sending fails, but capture for observability
+            logger.LogError(ex, "Failed to resend verification email to {Email}", user.Email);
+            Sentry.SentrySdk.CaptureException(ex);
         }
     }
 
