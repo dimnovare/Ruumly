@@ -149,8 +149,8 @@ public class BookingServiceTests
 
     private static CreateBookingRequest MakeBookingRequest(
         Guid listingId,
-        string startDate  = "2026-05-01",
-        string? endDate   = "2026-06-01",
+        string startDate  = "2027-09-01",
+        string? endDate   = null,
         List<string>? extras = null) =>
         new()
         {
@@ -244,8 +244,8 @@ public class BookingServiceTests
             UserId     = user.Id,
             ListingId  = listing.Id,
             SupplierId = supplier.Id,
-            StartDate  = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc),
-            EndDate    = new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+            StartDate  = new DateTime(2027, 9, 1, 0, 0, 0, DateTimeKind.Utc),
+            EndDate    = new DateTime(2027, 10, 1, 0, 0, 0, DateTimeKind.Utc),
             Duration   = "1 kuu",
             Status     = BookingStatus.Confirmed,
         });
@@ -253,7 +253,7 @@ public class BookingServiceTests
         var service = MakeService(db);
 
         var act = async () => await service.CreateAsync(
-            MakeBookingRequest(listing.Id, startDate: "2026-05-15", endDate: "2026-05-25"),
+            MakeBookingRequest(listing.Id, startDate: "2027-09-15", endDate: "2027-09-25"),
             user.Id);
 
         await act.Should().ThrowAsync<ArgumentException>();

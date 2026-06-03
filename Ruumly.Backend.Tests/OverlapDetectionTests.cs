@@ -171,16 +171,16 @@ public class OverlapDetectionTests
     [Fact]
     public async Task Overlap_SameUnit_OverlappingDates_IsRejected()
     {
-        // Jan 1–31 already confirmed; trying Jan 15–Feb 15 overlaps → reject.
+        // Jan 1–31 2027 already confirmed; trying Jan 15–Feb 15 overlaps → reject.
         var db = CreateDb();
         var (supplier, listing, user) = await SeedAsync(db, quantityTotal: 1);
 
         await SeedConfirmedBookingAsync(db, listing.Id, supplier.Id, user.Id,
-            new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-            new DateTime(2026, 1, 31, 0, 0, 0, DateTimeKind.Utc));
+            new DateTime(2027, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2027, 1, 31, 0, 0, 0, DateTimeKind.Utc));
 
         var act = async () => await MakeService(db).CreateAsync(
-            MakeRequest(listing.Id, "2026-01-15", "2026-02-15"), user.Id);
+            MakeRequest(listing.Id, "2027-01-15", "2027-02-15"), user.Id);
 
         await act.Should().ThrowAsync<ArgumentException>("unit is fully booked for the overlapping period");
     }
@@ -188,16 +188,16 @@ public class OverlapDetectionTests
     [Fact]
     public async Task Overlap_SameUnit_AdjacentDates_Succeeds()
     {
-        // Jan 1–31 confirmed; trying Feb 1–28 is adjacent (no overlap) → succeed.
+        // Jan 1–31 2027 confirmed; trying Feb 1–28 is adjacent (no overlap) → succeed.
         var db = CreateDb();
         var (supplier, listing, user) = await SeedAsync(db, quantityTotal: 1);
 
         await SeedConfirmedBookingAsync(db, listing.Id, supplier.Id, user.Id,
-            new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-            new DateTime(2026, 1, 31, 0, 0, 0, DateTimeKind.Utc));
+            new DateTime(2027, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2027, 1, 31, 0, 0, 0, DateTimeKind.Utc));
 
         var act = async () => await MakeService(db).CreateAsync(
-            MakeRequest(listing.Id, "2026-02-01", "2026-02-28"), user.Id);
+            MakeRequest(listing.Id, "2027-02-01", "2027-02-28"), user.Id);
 
         await act.Should().NotThrowAsync("Feb 1 does not overlap with a booking that ends Jan 31");
     }
@@ -205,17 +205,17 @@ public class OverlapDetectionTests
     [Fact]
     public async Task Overlap_TwoUnits_BothBooked_Succeed()
     {
-        // QuantityTotal=2; one unit already confirmed Jan 1–31.
+        // QuantityTotal=2; one unit already confirmed Jan 1–31 2027.
         // Second booking for the same dates should succeed (1 < 2).
         var db = CreateDb();
         var (supplier, listing, user) = await SeedAsync(db, quantityTotal: 2);
 
         await SeedConfirmedBookingAsync(db, listing.Id, supplier.Id, user.Id,
-            new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-            new DateTime(2026, 1, 31, 0, 0, 0, DateTimeKind.Utc));
+            new DateTime(2027, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2027, 1, 31, 0, 0, 0, DateTimeKind.Utc));
 
         var act = async () => await MakeService(db).CreateAsync(
-            MakeRequest(listing.Id, "2026-01-01", "2026-01-31"), user.Id);
+            MakeRequest(listing.Id, "2027-01-01", "2027-01-31"), user.Id);
 
         await act.Should().NotThrowAsync("one slot is free out of two total units");
     }
@@ -223,21 +223,21 @@ public class OverlapDetectionTests
     [Fact]
     public async Task Overlap_TwoUnits_AtCapacity_ThirdBookingRejected()
     {
-        // QuantityTotal=2; two units already confirmed Jan 1–31.
+        // QuantityTotal=2; two units already confirmed Jan 1–31 2027.
         // Third booking for the same dates must be rejected (2 >= 2).
         var db = CreateDb();
         var (supplier, listing, user) = await SeedAsync(db, quantityTotal: 2);
 
         await SeedConfirmedBookingAsync(db, listing.Id, supplier.Id, user.Id,
-            new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-            new DateTime(2026, 1, 31, 0, 0, 0, DateTimeKind.Utc));
+            new DateTime(2027, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2027, 1, 31, 0, 0, 0, DateTimeKind.Utc));
 
         await SeedConfirmedBookingAsync(db, listing.Id, supplier.Id, user.Id,
-            new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-            new DateTime(2026, 1, 31, 0, 0, 0, DateTimeKind.Utc));
+            new DateTime(2027, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2027, 1, 31, 0, 0, 0, DateTimeKind.Utc));
 
         var act = async () => await MakeService(db).CreateAsync(
-            MakeRequest(listing.Id, "2026-01-01", "2026-01-31"), user.Id);
+            MakeRequest(listing.Id, "2027-01-01", "2027-01-31"), user.Id);
 
         await act.Should().ThrowAsync<ArgumentException>("both units are already taken");
     }
