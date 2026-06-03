@@ -262,8 +262,9 @@ public class BookingService(
                 var bookedCount = await db.Bookings
                     .CountAsync(b =>
                         b.ListingId == request.ListingId &&
-                        (b.Status == BookingStatus.Confirmed ||
-                         b.Status == BookingStatus.Active ||
+                        (b.Status == BookingStatus.Pending   ||   // guard: back+resubmit without idempotency key
+                         b.Status == BookingStatus.Confirmed ||
+                         b.Status == BookingStatus.Active    ||
                          b.Status == BookingStatus.Reserved) &&
                         b.EndDate.HasValue &&
                         b.StartDate < endUtc &&

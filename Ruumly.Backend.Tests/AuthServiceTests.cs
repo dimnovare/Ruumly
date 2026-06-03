@@ -33,7 +33,8 @@ public class AuthServiceTests
             .Build();
 
     private static AuthService MakeService(RuumlyDbContext db) =>
-        new(db, MakeConfig(), new NoOpEmailSender(), new NoOpHttpContextAccessor());
+        new(db, MakeConfig(), new NoOpEmailSender(), new NoOpHttpContextAccessor(),
+            NullLogger<AuthService>.Instance);
 
     private sealed class NoOpEmailSender : IEmailSender
     {

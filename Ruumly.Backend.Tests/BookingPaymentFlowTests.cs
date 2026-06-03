@@ -34,7 +34,7 @@ public class BookingPaymentFlowTests
         new(db,
             new NoOpRouting(),
             new NoOpPricing(),
-            new InvoiceService(db, new NoOpHttp()),   // real: exercises invoice creation in DB
+            new InvoiceService(db, new NoOpHttp(), NullLogger<InvoiceService>.Instance),   // real: exercises invoice creation in DB
             new NoOpHttp(),
             new NoOpCache(),
             Microsoft.Extensions.Logging.Abstractions.NullLogger<BookingService>.Instance);
@@ -43,7 +43,7 @@ public class BookingPaymentFlowTests
         new(db,
             new NoOpDispatch(),
             new NoOpNotifications(),
-            new InvoiceService(db, new NoOpHttp()),
+            new InvoiceService(db, new NoOpHttp(), NullLogger<InvoiceService>.Instance),
             new NoOpEmail(),
             new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string?>
