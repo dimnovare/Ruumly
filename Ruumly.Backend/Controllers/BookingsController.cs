@@ -7,6 +7,7 @@ using Ruumly.Backend.Filters;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
+using Sentry;
 
 namespace Ruumly.Backend.Controllers;
 
@@ -97,8 +98,21 @@ public class BookingsController(IBookingService bookingService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Create([FromBody] CreateBookingRequest request)
     {
-        var userId  = User.GetUserId();
-        var booking = await bookingService.CreateAsync(request, userId);
-        return CreatedAtAction(nameof(GetById), new { id = booking.Id }, booking);
+        var userId = User.GetUserId();
+        try
+        {
+            var booking = await bookingService.CreateAsync(request, userId);
+            return CreatedAtAction(nameof(GetById), new { id = booking.Id }, booking);
+        }
+        catch (Exception ex)
+        {
+            SentrySdk.CaptureException(ex, scope =>
+            {
+                scope.SetTag("user_id", userId.ToString());
+                scope.SetExtra("listing_id", request.ListingId.ToString());
+                scope.SetExtra("start_date", request.StartDate);
+            });
+            throw;
+        }
     }
 }

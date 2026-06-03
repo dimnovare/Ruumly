@@ -8,6 +8,7 @@ using Ruumly.Backend.Filters;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
+using Sentry;
 
 namespace Ruumly.Backend.Controllers;
 
@@ -74,16 +75,53 @@ public class PaymentsController(
         [FromBody] MontonioWebhookPayload payload)
     {
         if (string.IsNullOrWhiteSpace(payload.Data))
+        {
+            SentrySdk.CaptureMessage(
+                "Montonio webhook received with empty payload",
+                scope =>
+                {
+                    scope.Level = SentryLevel.Warning;
+                    scope.SetTag("webhook", "montonio");
+                    scope.SetExtra("remote_ip",
+                        http.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "unknown");
+                });
             return BadRequest();
+        }
 
-        var ok = await paymentService
-            .HandleWebhookAsync(payload.Data);
+        try
+        {
+            var ok = await paymentService.HandleWebhookAsync(payload.Data);
 
-        if (!ok)
-            logger.LogWarning(
-                "Montonio webhook rejected or invalid");
+            if (!ok)
+            {
+                logger.LogWarning("Montonio webhook rejected or invalid");
+                SentrySdk.CaptureMessage(
+                    "Montonio webhook rejected: JWT verification or status check failed",
+                    scope =>
+                    {
+                        scope.Level = SentryLevel.Warning;
+                        scope.SetTag("webhook", "montonio");
+                        // Avoid logging the raw JWT — it may contain sensitive payment data.
+                        scope.SetExtra("payload_length", payload.Data.Length);
+                    });
+            }
 
-        return Ok();
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            SentrySdk.CaptureException(ex, scope =>
+            {
+                scope.SetTag("webhook", "montonio");
+                scope.SetExtra("payload_length", payload.Data.Length);
+                scope.SetExtra("remote_ip",
+                    http.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "unknown");
+            });
+            // Webhook handlers must return 200 so Montonio does not retry indefinitely.
+            // The exception is captured; swallow it here after alerting Sentry.
+            logger.LogError(ex, "Unhandled exception in Montonio webhook handler");
+            return Ok();
+        }
     }
 
     public record InitiatePaymentRequest(
