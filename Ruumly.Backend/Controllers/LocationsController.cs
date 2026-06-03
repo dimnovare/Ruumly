@@ -485,6 +485,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
     public async Task<IActionResult> Publish(Guid id)
     {
         var location = await db.SupplierLocations
+            .Include(l => l.Supplier)
             .Include(l => l.Listings)
             .FirstOrDefaultAsync(l => l.Id == id);
 
@@ -493,6 +494,10 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
 
         if (!await CanAccess(location.SupplierId))
             return Forbid();
+
+        // Supplier must be approved (active) before any location can go live
+        if (location.Supplier is null || !location.Supplier.IsActive)
+            return BadRequest(new { error = "Supplier account must be approved before publishing a location." });
 
         var hasUnit = location.Listings.Any(u => u.IsActive && u.PriceFrom > 0);
         if (!hasUnit)
