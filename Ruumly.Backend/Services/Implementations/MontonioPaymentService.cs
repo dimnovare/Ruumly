@@ -136,6 +136,13 @@ public class MontonioPaymentService(
         invoice.Status         = InvoiceStatus.AwaitingPayment;
         await db.SaveChangesAsync();
 
+        // TODO(cleanup): Bookings/invoices that stay in AwaitingPayment because the user
+        // abandoned the Montonio checkout should be expired after ~24 h. A Hangfire recurring
+        // job should query invoices WHERE Status = AwaitingPayment AND UpdatedAt < UtcNow - 24h,
+        // mark them Refunded/Pending, and cancel the associated booking if it was still Pending.
+        // Not required for launch (Montonio order TTL handles re-entry; booking stays Pending
+        // and does not block inventory unless the listing has strict availability locking).
+
         string paymentUrl;
         try
         {
@@ -249,11 +256,74 @@ public class MontonioPaymentService(
 
             merchantReference = ref_;
 
-            if (string.IsNullOrEmpty(ref_) || status != "paid")
+            if (string.IsNullOrEmpty(ref_))
             {
                 logger.LogWarning(
-                    "Montonio webhook: missing merchant_reference or non-paid status. ref={Ref} status={Status}",
-                    ref_, status);
+                    "Montonio webhook: missing merchant_reference. status={Status}",
+                    status);
+                return false;
+            }
+
+            // Handle cancellation / refund — update invoice and booking accordingly.
+            if (status == "cancelled" || status == "refunded")
+            {
+                logger.LogInformation(
+                    "Montonio webhook: payment {Status} for merchant_reference {Ref}",
+                    status, ref_);
+
+                var cancelledInvoice = await db.Invoices
+                    .Include(i => i.Booking)
+                    .FirstOrDefaultAsync(i => i.PaymentOrderId == ref_);
+
+                if (cancelledInvoice is not null)
+                {
+                    cancelledInvoice.Status = status == "refunded"
+                        ? InvoiceStatus.Refunded
+                        : InvoiceStatus.Refunded; // cancelled order = treat as voided/refunded
+
+                    if (cancelledInvoice.Booking is not null
+                        && cancelledInvoice.Booking.Status != BookingStatus.Cancelled)
+                    {
+                        cancelledInvoice.Booking.Status    = BookingStatus.Cancelled;
+                        cancelledInvoice.Booking.UpdatedAt = DateTime.UtcNow;
+                    }
+
+                    await db.SaveChangesAsync();
+
+                    SentrySdk.CaptureMessage(
+                        $"Montonio payment {status} — invoice {cancelledInvoice.Id} voided, booking cancelled",
+                        scope =>
+                        {
+                            scope.Level = SentryLevel.Info;
+                            scope.SetExtra("invoiceId",         cancelledInvoice.Id.ToString());
+                            scope.SetExtra("bookingId",         cancelledInvoice.BookingId.ToString());
+                            scope.SetExtra("merchantReference", ref_);
+                            scope.SetExtra("montonioStatus",    status);
+                        });
+                }
+                else
+                {
+                    logger.LogWarning(
+                        "Montonio webhook: {Status} for unknown merchant_reference {Ref}",
+                        status, ref_);
+                }
+
+                return true;
+            }
+
+            if (status != "paid")
+            {
+                logger.LogWarning(
+                    "Montonio webhook: unexpected status '{Status}' for ref={Ref}",
+                    status, ref_);
+                SentrySdk.CaptureMessage(
+                    $"Unknown Montonio payment status: {status}",
+                    scope =>
+                    {
+                        scope.Level = SentryLevel.Warning;
+                        scope.SetExtra("merchantReference", ref_);
+                        scope.SetExtra("status",            status);
+                    });
                 return false;
             }
 
@@ -333,9 +403,21 @@ public class MontonioPaymentService(
             logger.LogWarning(ex,
                 "Montonio webhook JWT verification failed. merchantReference={Ref}",
                 merchantReference);
-            SentrySdk.CaptureException(ex, scope =>
-                scope.SetExtra("merchantReference", merchantReference ?? "unknown"));
-            return false;
+            // Use CaptureMessage (not CaptureException) — a bad JWT is a warning-level
+            // event (possible replay attack or misconfiguration), not an application error.
+            // Include only the first 20 chars of the token to aid debugging without leaking data.
+            SentrySdk.CaptureMessage(
+                "Montonio webhook JWT validation failed",
+                scope =>
+                {
+                    scope.Level = SentryLevel.Warning;
+                    scope.SetExtra("tokenPrefix",       token.Length > 20 ? token[..20] : token);
+                    scope.SetExtra("merchantReference", merchantReference ?? "unknown");
+                    scope.SetExtra("exceptionMessage",  ex.Message);
+                });
+            // Throw so the controller can return 400 — a bad JWT should not receive a 200
+            // (which would suppress Montonio retries for a request that was never legitimate).
+            throw new WebhookSignatureException("Montonio webhook JWT validation failed.");
         }
         catch (Exception ex)
         {

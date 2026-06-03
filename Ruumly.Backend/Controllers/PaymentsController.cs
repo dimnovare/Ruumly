@@ -54,12 +54,39 @@ public class PaymentsController(
         if (invoice.Booking.Supplier?.BillingModel == BillingModel.Rebate)
             return BadRequest(new { error = "Payment is not processed through Ruumly for this supplier." });
 
-        var paymentUrl =
-            await paymentService.CreatePaymentOrderAsync(
+        string paymentUrl;
+        try
+        {
+            paymentUrl = await paymentService.CreatePaymentOrderAsync(
                 request.InvoiceId,
                 request.PaymentMethod,
                 request.CustomerEmail,
                 request.Locale ?? "et");
+        }
+        catch (InvalidOperationException ex)
+        {
+            // Montonio rejected the request or returned an error (already captured in service).
+            // Surface a user-friendly message; avoid leaking internal details.
+            SentrySdk.CaptureException(ex, scope =>
+            {
+                scope.SetExtra("invoiceId", request.InvoiceId.ToString());
+                scope.SetExtra("paymentMethod", request.PaymentMethod);
+                scope.SetTag("payment", "initiate_failed");
+            });
+            return StatusCode(StatusCodes.Status502BadGateway,
+                new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            SentrySdk.CaptureException(ex, scope =>
+            {
+                scope.SetExtra("invoiceId", request.InvoiceId.ToString());
+                scope.SetExtra("paymentMethod", request.PaymentMethod);
+                scope.SetTag("payment", "initiate_error");
+            });
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                new { error = "Payment initiation failed. Please try again." });
+        }
 
         return Ok(new { paymentUrl });
     }
@@ -94,9 +121,9 @@ public class PaymentsController(
 
             if (!ok)
             {
-                logger.LogWarning("Montonio webhook rejected or invalid");
+                logger.LogWarning("Montonio webhook rejected: missing reference or unhandled status");
                 SentrySdk.CaptureMessage(
-                    "Montonio webhook rejected: JWT verification or status check failed",
+                    "Montonio webhook rejected: missing merchant_reference or unhandled status",
                     scope =>
                     {
                         scope.Level = SentryLevel.Warning;
@@ -108,6 +135,13 @@ public class PaymentsController(
 
             return Ok();
         }
+        catch (WebhookSignatureException ex)
+        {
+            // JWT signature is invalid — this is not a transient Montonio retry scenario.
+            // Return 400 so the caller knows the token was rejected; already captured in service.
+            logger.LogWarning(ex, "Montonio webhook rejected: invalid JWT signature");
+            return BadRequest(new { error = "Webhook signature verification failed." });
+        }
         catch (Exception ex)
         {
             SentrySdk.CaptureException(ex, scope =>
@@ -117,8 +151,8 @@ public class PaymentsController(
                 scope.SetExtra("remote_ip",
                     http.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "unknown");
             });
-            // Webhook handlers must return 200 so Montonio does not retry indefinitely.
-            // The exception is captured; swallow it here after alerting Sentry.
+            // For genuine processing errors, return 200 so Montonio retries the webhook.
+            // The exception is already captured in Sentry above.
             logger.LogError(ex, "Unhandled exception in Montonio webhook handler");
             return Ok();
         }
