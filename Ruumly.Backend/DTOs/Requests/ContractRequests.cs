@@ -28,3 +28,11 @@ public record PreviewContractRequest(
     Guid BookingId,
     Guid ContractTemplateId
 );
+
+public record InitiateDokobitSigningRequest(
+    Guid   BookingId,
+    Guid   ContractTemplateId,
+    [MaxLength(200)] string SignerName,
+    [MaxLength(20)]  string SignerIdCode,
+    [MaxLength(200)] string SignerEmail
+);

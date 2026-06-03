@@ -332,6 +332,9 @@ builder.Services.AddScoped<ISupplierPollingService, SupplierPollingService>();
 builder.Services.AddScoped<IContractService, ContractService>();
 builder.Services.AddScoped<SupplierPollingDispatcherJob>();
 builder.Services.AddHttpClient();
+// Dokobit — named HttpClient; IsEnabled gated on DOKOBIT__APITOKEN presence
+builder.Services.AddHttpClient<DokobitService>();
+builder.Services.AddScoped<IDokobitService, DokobitService>();
 
 // ─── Storage service ───
 if (builder.Environment.IsProduction())

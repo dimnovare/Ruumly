@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using System.Web;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
@@ -80,16 +82,23 @@ public class ContractService(RuumlyDbContext db) : IContractService
             .Replace("{{tenant_name}}",    HttpUtility.HtmlEncode(req.TenantName))
             .Replace("{{tenant_id_code}}", HttpUtility.HtmlEncode(req.TenantIdCode ?? ""));
 
+        // Compute SHA-256 of rendered HTML for tamper-evidence (canvas path).
+        var renderedHashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(rendered));
+        var renderedHash      = Convert.ToHexString(renderedHashBytes).ToLowerInvariant();
+
         var signed = new SignedContract
         {
             BookingId          = req.BookingId,
             ContractTemplateId = req.ContractTemplateId,
             RenderedHtml       = rendered,
+            RenderedHtmlHash   = renderedHash,
             SignatureDataUrl   = req.SignatureDataUrl,
             TenantName         = req.TenantName,
             TenantIdCode       = req.TenantIdCode,
             TenantEmail        = tenantEmail,
             SignedFromIp       = ip,
+            SigningMethod      = "canvas",
+            Status             = "completed",
             SignedAt           = DateTime.UtcNow,
             CreatedAt          = DateTime.UtcNow,
         };
