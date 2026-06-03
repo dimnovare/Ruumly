@@ -529,7 +529,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
 
     // ── GET /api/locations/{id}/publish-readiness ─────────────────────────────
     /// <summary>
-    /// Returns a checklist of what is blocking a location from going live.
+    /// Returns a scored checklist of what a location needs before going live.
     /// Used by the provider dashboard to guide setup completion.
     /// </summary>
     [HttpGet("{id:guid}/publish-readiness")]
@@ -550,30 +550,24 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         var pricedUnits = activeUnits.Where(u => u.PriceFrom > 0).ToList();
         var images      = location.Images;
 
-        var blockers = new List<string>();
-        var warnings = new List<string>();
+        var items = new[]
+        {
+            new { key = "units",        label = "At least 1 unit with a price is required.", done = pricedUnits.Count > 0, blocker = true  },
+            new { key = "images",       label = "Location needs at least 1 image.",           done = images.Count > 0,     blocker = true  },
+            new { key = "description",  label = "A description is required.",                 done = !string.IsNullOrWhiteSpace(location.Description), blocker = true  },
+            new { key = "moreImages",   label = "3+ images improve booking conversion.",      done = images.Count >= 3,    blocker = false },
+            new { key = "unitDesc",     label = "Adding descriptions to units helps customers choose the right space.",
+                                                                                               done = activeUnits.Count == 0 || activeUnits.Any(u => !string.IsNullOrWhiteSpace(u.Description)), blocker = false },
+        };
 
-        if (pricedUnits.Count == 0)
-            blockers.Add("At least 1 unit with a price is required.");
-
-        if (images.Count == 0)
-            blockers.Add("Location needs at least 1 image.");
-
-        if (string.IsNullOrWhiteSpace(location.Description))
-            blockers.Add("A description is required.");
-
-        if (images.Count is > 0 and < 3)
-            warnings.Add("Adding more images (3+) improves booking conversion.");
-
-        if (activeUnits.Count > 0 && activeUnits.All(u => string.IsNullOrWhiteSpace(u.Description)))
-            warnings.Add("Adding descriptions to units helps customers choose the right space.");
+        var score = items.Count(i => i.done);
 
         return Ok(new
         {
-            locationId = location.Id,
-            canPublish = blockers.Count == 0,
-            blockers,
-            warnings,
+            locationId     = location.Id,
+            readinessScore = score,
+            readinessTotal = items.Length,
+            items,
         });
     }
 
