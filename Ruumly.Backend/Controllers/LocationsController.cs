@@ -24,11 +24,11 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> GetCities()
     {
-        // Pull distinct cities from active Listings (joined to Suppliers for Country).
+        // Pull distinct cities from active Listings (joined to active Suppliers for Country).
         // Was previously querying SupplierLocations which is sparsely populated
         // (only multi-listing groups) — gave a near-empty dropdown.
         var cities = await db.Listings
-            .Where(l => l.IsActive && l.Supplier != null)
+            .Where(l => l.IsActive && l.Supplier != null && l.Supplier.IsActive)
             .Select(l => new { City = l.City, Country = l.Supplier!.Country })
             .Distinct()
             .OrderBy(c => c.Country)
@@ -55,11 +55,12 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
               .Include(l => l.Supplier)
               .Include(l => l.Listings.Where(u => u.IsActive));
 
-        // Public callers and customers only see active, non-synthetic locations.
-        // Synthetic Locations are auto-created data shells and have no user
-        // content; their listings appear directly in /api/listings search results.
+        // Public callers and customers only see active, non-synthetic locations
+        // whose supplier is also active. Inactive suppliers are hidden from all
+        // public surfaces (search, locations, sitemap, featured partners).
         if (!isAuthenticated || User.GetUserRole() == UserRole.Customer)
-            query = query.Where(l => l.IsActive && !l.IsSynthetic);
+            query = query.Where(l => l.IsActive && !l.IsSynthetic
+                                  && l.Supplier != null && l.Supplier.IsActive);
 
         // Providers see only their own supplier's locations
         if (isAuthenticated && User.GetUserRole() == UserRole.Provider)

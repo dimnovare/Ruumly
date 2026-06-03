@@ -45,12 +45,12 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
     public async Task<IActionResult> Sitemap()
     {
         var listings = await db.Listings
-            .Where(l => l.IsActive)
+            .Where(l => l.IsActive && l.Supplier != null && l.Supplier.IsActive)
             .Select(l => new { l.Id, l.Type, l.UpdatedAt })
             .ToListAsync();
 
         var locations = await db.SupplierLocations
-            .Where(l => l.IsActive)
+            .Where(l => l.IsActive && l.Supplier != null && l.Supplier.IsActive)
             .Select(l => new { l.Id, l.UpdatedAt })
             .ToListAsync();
 
@@ -114,7 +114,7 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
         }
 
         var cities = await db.Listings
-            .Where(l => l.IsActive && l.City != null)
+            .Where(l => l.IsActive && l.City != null && l.Supplier != null && l.Supplier.IsActive)
             .Select(l => l.City!.ToLower())
             .Distinct()
             .ToListAsync();

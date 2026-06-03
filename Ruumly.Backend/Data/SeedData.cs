@@ -8,6 +8,32 @@ using BC = BCrypt.Net.BCrypt;
 
 namespace Ruumly.Backend.Data;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PRODUCTION CHECKLIST — verify before / after every Railway deploy
+// ─────────────────────────────────────────────────────────────────────────────
+// This seed runs ONLY in Development (see Program.cs — SeedData.SeedAsync is
+// called exclusively inside `if (app.Environment.IsDevelopment())`). It NEVER
+// runs on Railway / Production automatically.
+//
+// However, if the Railway DB was ever seeded (e.g. during an early staging run
+// or a manual seed call), run these checks to confirm state:
+//
+//   [ ] ASPNETCORE_ENVIRONMENT=Production is set in Railway env vars
+//   [ ] SELECT name, "IsActive", "IsPartnerPagePublished" FROM "Suppliers";
+//         — all rows should show only REAL partners with IsActive=true
+//         — no fictional suppliers (Laobox, MiniLadu, SecureStore, etc.)
+//   [ ] SELECT email, role FROM "Users" WHERE email LIKE '%@demo.local'
+//         OR email LIKE '%@email.com' OR email LIKE 'reviewer-%';
+//         — should return 0 rows in production
+//   [ ] GET /api/admin/ops/environment (Admin JWT required)
+//         — confirms environment, DB name, Railway flag
+//   [ ] Rotate the admin user password on first production login
+//       (seeded password is "demo1234" — unacceptable in production)
+//
+// All seeded suppliers below have IsActive = false so they are invisible on
+// public search results, sitemap, and featured-partners even on a dev DB that
+// is accidentally pointed at a production front-end.
+// ─────────────────────────────────────────────────────────────────────────────
 public static class SeedData
 {
     // ─── Deterministic Guid from string key (MD5, same algo as spec) ─────────
@@ -63,7 +89,7 @@ public static class SeedData
                 IntegrationType     = IntegrationType.Api,
                 ApiEndpoint         = "https://api.laobox.ee/v1/orders",
                 ApiAuthType         = "bearer",
-                IsActive            = true,
+                IsActive            = false,  // seed data — must be activated manually in admin
                 Tier                = SupplierTier.Premium,
                 IntegrationHealth   = IntegrationHealth.Healthy,
                 PartnerDiscountRate = 10m,
@@ -80,7 +106,7 @@ public static class SeedData
                 ContactPhone        = "+372 5234 5678",
                 IntegrationType     = IntegrationType.Email,
                 RecipientEmail      = "tiina@miniladu.ee",
-                IsActive            = true,
+                IsActive            = false,  // seed data — must be activated manually in admin
                 IntegrationHealth   = IntegrationHealth.Healthy,
                 PartnerDiscountRate = 8m,
                 ClientDiscountRate  = 3m,
@@ -97,7 +123,7 @@ public static class SeedData
                 IntegrationType     = IntegrationType.Api,
                 ApiEndpoint         = "https://api.securestore.ee/bookings",
                 ApiAuthType         = "apikey",
-                IsActive            = true,
+                IsActive            = false,  // seed data — must be activated manually in admin
                 IntegrationHealth   = IntegrationHealth.Healthy,
                 PartnerDiscountRate = 12m,
                 ClientDiscountRate  = 0m,
@@ -113,7 +139,7 @@ public static class SeedData
                 ContactPhone        = "+372 5456 7890",
                 IntegrationType     = IntegrationType.Email,
                 RecipientEmail      = "andres@koliexpress.ee",
-                IsActive            = true,
+                IsActive            = false,  // seed data — must be activated manually in admin
                 IntegrationHealth   = IntegrationHealth.Healthy,
                 PartnerDiscountRate = 15m,
                 ClientDiscountRate  = 5m,
@@ -129,7 +155,7 @@ public static class SeedData
                 ContactPhone        = "+372 5567 8901",
                 IntegrationType     = IntegrationType.Manual,
                 RecipientEmail      = "kristjan@haagisrent.ee",
-                IsActive            = true,
+                IsActive            = false,  // seed data — must be activated manually in admin
                 IntegrationHealth   = IntegrationHealth.Degraded,
                 PartnerDiscountRate = 5m,
                 ClientDiscountRate  = 0m,
@@ -159,119 +185,119 @@ public static class SeedData
             new() { Id = G("sup-7"),  Name = "Tallinna Hoidla OÜ",      RegistryCode = "16100007", Country = "EE",
                     ContactName = "Mart Saar",        ContactEmail = "info@tallinnahoidla.ee",      ContactPhone = "+372 5512 3456",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "info@tallinnahoidla.ee",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Premium,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 13m, ClientDiscountRate = 5m,
                     CreatedAt = Utc(2025, 11, 12), UpdatedAt = Utc(2025, 11, 12) },
             new() { Id = G("sup-8"),  Name = "Eesti Logistika OÜ",      RegistryCode = "16100008", Country = "EE",
                     ContactName = "Tiina Kask",       ContactEmail = "kontor@eestilogistika.ee",    ContactPhone = "+372 5523 4567",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "kontor@eestilogistika.ee",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Premium,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 15m, ClientDiscountRate = 6m,
                     CreatedAt = Utc(2025, 12, 3),  UpdatedAt = Utc(2025, 12, 3)  },
             new() { Id = G("sup-9"),  Name = "Lao24 OÜ",                RegistryCode = "16100009", Country = "EE",
                     ContactName = "Jaan Toom",        ContactEmail = "tartu@lao24.ee",              ContactPhone = "+372 5234 5678",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "tartu@lao24.ee",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Standard, BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 11m, ClientDiscountRate = 4m,
                     CreatedAt = Utc(2025, 9, 22),  UpdatedAt = Utc(2025, 9, 22)  },
             new() { Id = G("sup-19"), Name = "Mustamäe Hoidla OÜ",      RegistryCode = "16100019", Country = "EE",
                     ContactName = "Liis Mägi",        ContactEmail = "info@mustamaehoidla.ee",      ContactPhone = "+372 5111 2233",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "info@mustamaehoidla.ee",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Standard, BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 10m, ClientDiscountRate = 4m,
                     CreatedAt = Utc(2025, 12, 15), UpdatedAt = Utc(2025, 12, 15) },
             new() { Id = G("sup-20"), Name = "Lasnamäe Storage OÜ",     RegistryCode = "16100020", Country = "EE",
                     ContactName = "Andres Tamm",      ContactEmail = "hello@lasnamaestorage.ee",    ContactPhone = "+372 5122 3344",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "hello@lasnamaestorage.ee",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Standard, BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 11m, ClientDiscountRate = 5m,
                     CreatedAt = Utc(2026, 1, 8),   UpdatedAt = Utc(2026, 1, 8)   },
             new() { Id = G("sup-21"), Name = "Põhja Lao OÜ",            RegistryCode = "16100021", Country = "EE",
                     ContactName = "Kati Lill",        ContactEmail = "info@pohjalao.ee",            ContactPhone = "+372 5133 4455",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "info@pohjalao.ee",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Starter,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 8m,  ClientDiscountRate = 3m,
                     CreatedAt = Utc(2026, 2, 2),   UpdatedAt = Utc(2026, 2, 2)   },
             new() { Id = G("sup-22"), Name = "KesklinnBox OÜ",          RegistryCode = "16100022", Country = "EE",
                     ContactName = "Kristjan Vahter",  ContactEmail = "kontor@kesklinnbox.ee",       ContactPhone = "+372 5144 5566",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "kontor@kesklinnbox.ee",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Standard, BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 12m, ClientDiscountRate = 6m,
                     CreatedAt = Utc(2026, 1, 25),  UpdatedAt = Utc(2026, 1, 25)  },
             new() { Id = G("sup-23"), Name = "Kristiine Hoidla OÜ",     RegistryCode = "16100023", Country = "EE",
                     ContactName = "Anu Pärn",         ContactEmail = "info@kristiinehoidla.ee",     ContactPhone = "+372 5155 6677",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "info@kristiinehoidla.ee",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Standard, BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 10m, ClientDiscountRate = 4m,
                     CreatedAt = Utc(2025, 10, 4),  UpdatedAt = Utc(2025, 10, 4)  },
             new() { Id = G("sup-24"), Name = "Viimsi Storage OÜ",       RegistryCode = "16100024", Country = "EE",
                     ContactName = "Toomas Sepp",      ContactEmail = "hello@viimsistorage.ee",      ContactPhone = "+372 5166 7788",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "hello@viimsistorage.ee",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Starter,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 8m,  ClientDiscountRate = 3m,
                     CreatedAt = Utc(2026, 3, 12),  UpdatedAt = Utc(2026, 3, 12)  },
             new() { Id = G("sup-25"), Name = "Kolimine Pluss OÜ",       RegistryCode = "16100025", Country = "EE",
                     ContactName = "Triin Lepik",      ContactEmail = "info@kolipluss.ee",           ContactPhone = "+372 5177 8899",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "info@kolipluss.ee",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Premium,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 14m, ClientDiscountRate = 7m,
                     CreatedAt = Utc(2025, 11, 28), UpdatedAt = Utc(2025, 11, 28) },
             new() { Id = G("sup-26"), Name = "Tartu Hoiuruum OÜ",       RegistryCode = "16100026", Country = "EE",
                     ContactName = "Erki Roos",        ContactEmail = "info@hoiuruum.ee",            ContactPhone = "+372 5288 9900",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "info@hoiuruum.ee",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Standard, BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 11m, ClientDiscountRate = 5m,
                     CreatedAt = Utc(2025, 10, 18), UpdatedAt = Utc(2025, 10, 18) },
             new() { Id = G("sup-27"), Name = "Annelinna Lao OÜ",        RegistryCode = "16100027", Country = "EE",
                     ContactName = "Helle Rebane",     ContactEmail = "annelinn@lao.ee",             ContactPhone = "+372 5299 0011",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "annelinn@lao.ee",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Starter,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 8m,  ClientDiscountRate = 3m,
                     CreatedAt = Utc(2026, 2, 20),  UpdatedAt = Utc(2026, 2, 20)  },
             new() { Id = G("sup-28"), Name = "Riia Mini-Lao OÜ",        RegistryCode = "16100028", Country = "EE",
                     ContactName = "Jaak Mets",        ContactEmail = "riia@minilao.ee",             ContactPhone = "+372 5310 1122",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "riia@minilao.ee",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Starter,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 9m,  ClientDiscountRate = 4m,
                     CreatedAt = Utc(2026, 3, 4),   UpdatedAt = Utc(2026, 3, 4)   },
             new() { Id = G("sup-29"), Name = "Pärnu Beach Storage OÜ",  RegistryCode = "16100029", Country = "EE",
                     ContactName = "Riin Kuusk",       ContactEmail = "info@beachstorage.ee",        ContactPhone = "+372 5321 2233",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "info@beachstorage.ee",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Standard, BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 12m, ClientDiscountRate = 6m,
                     CreatedAt = Utc(2025, 12, 19), UpdatedAt = Utc(2025, 12, 19) },
             new() { Id = G("sup-30"), Name = "Mai Hoidla OÜ",           RegistryCode = "16100030", Country = "EE",
                     ContactName = "Maarja Põld",      ContactEmail = "hello@maihoidla.ee",          ContactPhone = "+372 5332 3344",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "hello@maihoidla.ee",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Starter,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 8m,  ClientDiscountRate = 3m,
                     CreatedAt = Utc(2026, 1, 30),  UpdatedAt = Utc(2026, 1, 30)  },
             new() { Id = G("sup-31"), Name = "Narva Lao Keskus OÜ",     RegistryCode = "16100031", Country = "EE",
                     ContactName = "Peeter Aru",       ContactEmail = "info@narvalao.ee",            ContactPhone = "+372 5343 4455",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "info@narvalao.ee",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Standard, BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 11m, ClientDiscountRate = 5m,
                     CreatedAt = Utc(2025, 9, 30),  UpdatedAt = Utc(2025, 9, 30)  },
             new() { Id = G("sup-32"), Name = "Sillamäe Storage OÜ",     RegistryCode = "16100032", Country = "EE",
                     ContactName = "Kalev Vesi",       ContactEmail = "sillamae@storage.ee",         ContactPhone = "+372 5354 5566",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "sillamae@storage.ee",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Starter,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 9m,  ClientDiscountRate = 4m,
                     CreatedAt = Utc(2026, 4, 5),   UpdatedAt = Utc(2026, 4, 5)   },
@@ -280,112 +306,112 @@ public static class SeedData
             new() { Id = G("sup-33"), Name = "Rīgas Noliktavas SIA",    RegistryCode = "40103000033", Country = "LV",
                     ContactName = "Jānis Bērziņš",    ContactEmail = "info@rigasnoliktavas.lv",     ContactPhone = "+371 2812 3456",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "info@rigasnoliktavas.lv",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Premium,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 15m, ClientDiscountRate = 7m,
                     CreatedAt = Utc(2025, 12, 8),  UpdatedAt = Utc(2025, 12, 8)  },
             new() { Id = G("sup-34"), Name = "BalticBox SIA",           RegistryCode = "40103000034", Country = "LV",
                     ContactName = "Anna Ozoliņa",     ContactEmail = "hello@balticbox.lv",          ContactPhone = "+371 2823 4567",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "hello@balticbox.lv",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Premium,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 14m, ClientDiscountRate = 6m,
                     CreatedAt = Utc(2026, 1, 15),  UpdatedAt = Utc(2026, 1, 15)  },
             new() { Id = G("sup-35"), Name = "StoragePro Latvija SIA",  RegistryCode = "40103000035", Country = "LV",
                     ContactName = "Pēteris Liepa",    ContactEmail = "sales@storagepro.lv",         ContactPhone = "+371 2834 5678",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "sales@storagepro.lv",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Standard, BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 11m, ClientDiscountRate = 5m,
                     CreatedAt = Utc(2026, 2, 12),  UpdatedAt = Utc(2026, 2, 12)  },
             new() { Id = G("sup-36"), Name = "Centra Noliktava SIA",    RegistryCode = "40103000036", Country = "LV",
                     ContactName = "Inga Kalniņa",     ContactEmail = "info@centranoliktava.lv",     ContactPhone = "+371 2845 6789",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "info@centranoliktava.lv",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Standard, BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 10m, ClientDiscountRate = 4m,
                     CreatedAt = Utc(2025, 10, 22), UpdatedAt = Utc(2025, 10, 22) },
             new() { Id = G("sup-37"), Name = "Pārdaugavas Glabātavas SIA", RegistryCode = "40103000037", Country = "LV",
                     ContactName = "Andris Krūmiņš",   ContactEmail = "info@pardaugavas.lv",         ContactPhone = "+371 2856 7890",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "info@pardaugavas.lv",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Standard, BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 12m, ClientDiscountRate = 5m,
                     CreatedAt = Utc(2025, 11, 18), UpdatedAt = Utc(2025, 11, 18) },
             new() { Id = G("sup-38"), Name = "Mežaparka Storage SIA",   RegistryCode = "40103000038", Country = "LV",
                     ContactName = "Līga Eglīte",      ContactEmail = "mezaparks@storage.lv",        ContactPhone = "+371 2867 8901",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "mezaparks@storage.lv",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Starter,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 8m,  ClientDiscountRate = 3m,
                     CreatedAt = Utc(2026, 2, 25),  UpdatedAt = Utc(2026, 2, 25)  },
             new() { Id = G("sup-39"), Name = "Imanta Lao SIA",          RegistryCode = "40103000039", Country = "LV",
                     ContactName = "Mārtiņš Vītols",   ContactEmail = "imanta@lao.lv",               ContactPhone = "+371 2878 9012",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "imanta@lao.lv",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Starter,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 9m,  ClientDiscountRate = 3m,
                     CreatedAt = Utc(2026, 3, 9),   UpdatedAt = Utc(2026, 3, 9)   },
             new() { Id = G("sup-40"), Name = "Purvciema Noliktava SIA", RegistryCode = "40103000040", Country = "LV",
                     ContactName = "Anita Lapiņa",     ContactEmail = "info@purvciems.lv",           ContactPhone = "+371 2889 0123",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "info@purvciems.lv",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Standard, BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 10m, ClientDiscountRate = 4m,
                     CreatedAt = Utc(2025, 12, 27), UpdatedAt = Utc(2025, 12, 27) },
             new() { Id = G("sup-41"), Name = "Pārvešana Rīga SIA",      RegistryCode = "40103000041", Country = "LV",
                     ContactName = "Kārlis Skujiņš",   ContactEmail = "sales@parvesana.lv",          ContactPhone = "+371 2890 1234",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "sales@parvesana.lv",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Standard, BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 13m, ClientDiscountRate = 6m,
                     CreatedAt = Utc(2026, 1, 22),  UpdatedAt = Utc(2026, 1, 22)  },
             new() { Id = G("sup-42"), Name = "Daugavpils Storage SIA",  RegistryCode = "40103000042", Country = "LV",
                     ContactName = "Sandra Zariņa",    ContactEmail = "info@dgstorage.lv",           ContactPhone = "+371 2901 2345",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "info@dgstorage.lv",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Standard, BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 11m, ClientDiscountRate = 5m,
                     CreatedAt = Utc(2025, 10, 30), UpdatedAt = Utc(2025, 10, 30) },
             new() { Id = G("sup-43"), Name = "DGV Glabātavas SIA",      RegistryCode = "40103000043", Country = "LV",
                     ContactName = "Edgars Kalns",     ContactEmail = "dgv@glabatavas.lv",           ContactPhone = "+371 2912 3456",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "dgv@glabatavas.lv",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Starter,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 8m,  ClientDiscountRate = 3m,
                     CreatedAt = Utc(2026, 3, 18),  UpdatedAt = Utc(2026, 3, 18)  },
             new() { Id = G("sup-44"), Name = "Cietoksnis Lao SIA",      RegistryCode = "40103000044", Country = "LV",
                     ContactName = "Ilze Pētersone",   ContactEmail = "cietoksnis@lao.lv",           ContactPhone = "+371 2923 4567",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "cietoksnis@lao.lv",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Starter,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 9m,  ClientDiscountRate = 4m,
                     CreatedAt = Utc(2026, 4, 1),   UpdatedAt = Utc(2026, 4, 1)   },
             new() { Id = G("sup-45"), Name = "Liepājas Hoidla SIA",     RegistryCode = "40103000045", Country = "LV",
                     ContactName = "Raivis Strautiņš", ContactEmail = "birojs@liepajashoidla.lv",    ContactPhone = "+371 2934 5678",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "birojs@liepajashoidla.lv",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Standard, BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 12m, ClientDiscountRate = 5m,
                     CreatedAt = Utc(2025, 11, 5),  UpdatedAt = Utc(2025, 11, 5)  },
             new() { Id = G("sup-46"), Name = "Karostas Storage SIA",    RegistryCode = "40103000046", Country = "LV",
                     ContactName = "Iveta Kļaviņa",    ContactEmail = "karosta@storage.lv",          ContactPhone = "+371 2945 6789",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "karosta@storage.lv",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Starter,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 8m,  ClientDiscountRate = 3m,
                     CreatedAt = Utc(2026, 4, 8),   UpdatedAt = Utc(2026, 4, 8)   },
             new() { Id = G("sup-47"), Name = "Jelgavas Noliktava SIA",  RegistryCode = "40103000047", Country = "LV",
                     ContactName = "Aigars Apinis",    ContactEmail = "info@jelgnolikta.lv",         ContactPhone = "+371 2956 7890",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "info@jelgnolikta.lv",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Standard, BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 11m, ClientDiscountRate = 4m,
                     CreatedAt = Utc(2025, 12, 12), UpdatedAt = Utc(2025, 12, 12) },
             new() { Id = G("sup-48"), Name = "Jūrmalas Glabātavas SIA", RegistryCode = "40103000048", Country = "LV",
                     ContactName = "Dace Ābele",       ContactEmail = "info@jurmalas.lv",            ContactPhone = "+371 2967 8901",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "info@jurmalas.lv",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Starter,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 9m,  ClientDiscountRate = 4m,
                     CreatedAt = Utc(2026, 3, 22),  UpdatedAt = Utc(2026, 3, 22)  },
@@ -394,84 +420,84 @@ public static class SeedData
             new() { Id = G("sup-49"), Name = "Vilniaus Sandėliai UAB",  RegistryCode = "304000049", Country = "LT",
                     ContactName = "Tomas Petrauskas", ContactEmail = "info@vilnsand.lt",            ContactPhone = "+370 6112 3456",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "info@vilnsand.lt",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Premium,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 15m, ClientDiscountRate = 7m,
                     CreatedAt = Utc(2025, 12, 22), UpdatedAt = Utc(2025, 12, 22) },
             new() { Id = G("sup-50"), Name = "LietuvosBox UAB",          RegistryCode = "304000050", Country = "LT",
                     ContactName = "Rasa Kazlauskienė", ContactEmail = "sales@lietuvosbox.lt",       ContactPhone = "+370 6123 4567",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "sales@lietuvosbox.lt",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Premium,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 14m, ClientDiscountRate = 6m,
                     CreatedAt = Utc(2026, 1, 19),  UpdatedAt = Utc(2026, 1, 19)  },
             new() { Id = G("sup-51"), Name = "Saugykla LT UAB",          RegistryCode = "304000051", Country = "LT",
                     ContactName = "Andrius Jankauskas", ContactEmail = "info@saugykla.lt",          ContactPhone = "+370 6134 5678",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "info@saugykla.lt",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Standard, BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 11m, ClientDiscountRate = 5m,
                     CreatedAt = Utc(2026, 2, 8),   UpdatedAt = Utc(2026, 2, 8)   },
             new() { Id = G("sup-52"), Name = "Antakalnio Sandėliai UAB", RegistryCode = "304000052", Country = "LT",
                     ContactName = "Gintarė Stankevičienė", ContactEmail = "antakalnis@sandeliai.lt", ContactPhone = "+370 6145 6789",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "antakalnis@sandeliai.lt",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Standard, BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 10m, ClientDiscountRate = 4m,
                     CreatedAt = Utc(2025, 10, 12), UpdatedAt = Utc(2025, 10, 12) },
             new() { Id = G("sup-53"), Name = "Naujamiesčio Saugykla UAB", RegistryCode = "304000053", Country = "LT",
                     ContactName = "Mantas Žukauskas", ContactEmail = "naujamiestis@saugykla.lt",    ContactPhone = "+370 6156 7890",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "naujamiestis@saugykla.lt",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Standard, BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 12m, ClientDiscountRate = 5m,
                     CreatedAt = Utc(2025, 11, 22), UpdatedAt = Utc(2025, 11, 22) },
             new() { Id = G("sup-54"), Name = "Šnipiškių Lao UAB",        RegistryCode = "304000054", Country = "LT",
                     ContactName = "Aušra Paulauskienė", ContactEmail = "snipiskes@lao.lt",          ContactPhone = "+370 6167 8901",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "snipiskes@lao.lt",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Starter,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 8m,  ClientDiscountRate = 3m,
                     CreatedAt = Utc(2026, 3, 15),  UpdatedAt = Utc(2026, 3, 15)  },
             new() { Id = G("sup-55"), Name = "Žirmūnų Storage UAB",      RegistryCode = "304000055", Country = "LT",
                     ContactName = "Darius Vasiliauskas", ContactEmail = "zirmunai@storage.lt",      ContactPhone = "+370 6178 9012",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "zirmunai@storage.lt",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Starter,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 9m,  ClientDiscountRate = 3m,
                     CreatedAt = Utc(2026, 2, 28),  UpdatedAt = Utc(2026, 2, 28)  },
             new() { Id = G("sup-56"), Name = "Kauno Sandėliavimas UAB",  RegistryCode = "304000056", Country = "LT",
                     ContactName = "Lina Butkevičienė", ContactEmail = "kontaktai@kaunsand.lt",      ContactPhone = "+370 6189 0123",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "kontaktai@kaunsand.lt",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Premium,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 13m, ClientDiscountRate = 6m,
                     CreatedAt = Utc(2025, 12, 1),  UpdatedAt = Utc(2025, 12, 1)  },
             new() { Id = G("sup-57"), Name = "Centro Saugykla Kaunas UAB", RegistryCode = "304000057", Country = "LT",
                     ContactName = "Žydrūnas Kavaliauskas", ContactEmail = "info@centrosaugykla.lt", ContactPhone = "+370 6190 1234",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "info@centrosaugykla.lt",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Standard, BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 11m, ClientDiscountRate = 4m,
                     CreatedAt = Utc(2026, 1, 4),   UpdatedAt = Utc(2026, 1, 4)   },
             new() { Id = G("sup-58"), Name = "Aleksoto Lao UAB",         RegistryCode = "304000058", Country = "LT",
                     ContactName = "Justė Šimkutė",    ContactEmail = "aleksotas@lao.lt",            ContactPhone = "+370 6201 2345",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "aleksotas@lao.lt",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Starter,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 8m,  ClientDiscountRate = 3m,
                     CreatedAt = Utc(2026, 4, 12),  UpdatedAt = Utc(2026, 4, 12)  },
             new() { Id = G("sup-59"), Name = "Klaipėdos Sandėliai UAB",  RegistryCode = "304000059", Country = "LT",
                     ContactName = "Vytautas Adomaitis", ContactEmail = "info@klaipsand.lt",         ContactPhone = "+370 6212 3456",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "info@klaipsand.lt",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Standard, BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 11m, ClientDiscountRate = 5m,
                     CreatedAt = Utc(2025, 9, 15),  UpdatedAt = Utc(2025, 9, 15)  },
             new() { Id = G("sup-60"), Name = "Smiltynės Storage UAB",    RegistryCode = "304000060", Country = "LT",
                     ContactName = "Ieva Marcinkevičienė", ContactEmail = "smiltyne@storage.lt",     ContactPhone = "+370 6223 4567",
                     IntegrationType = IntegrationType.Email, RecipientEmail = "smiltyne@storage.lt",
-                    IsActive = true, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,
+                    IsActive = false, IsVerified = true, IntegrationHealth = IntegrationHealth.Healthy,  // seed data — must be activated manually in admin
                     Tier = SupplierTier.Starter,  BillingModel = BillingModel.Marketplace,
                     PartnerDiscountRate = 9m,  ClientDiscountRate = 4m,
                     CreatedAt = Utc(2026, 3, 30),  UpdatedAt = Utc(2026, 3, 30)  },

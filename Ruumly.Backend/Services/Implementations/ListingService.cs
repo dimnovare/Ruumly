@@ -55,7 +55,7 @@ public class ListingService(
         var query = db.Listings
             .Include(l => l.Supplier)
             .Include(l => l.Location)
-            .Where(l => l.IsActive)
+            .Where(l => l.IsActive && l.Supplier != null && l.Supplier.IsActive)
             .AsQueryable();
 
         // Hide listings inside real (non-synthetic) Locations from generic search
@@ -225,7 +225,8 @@ public class ListingService(
         var listing = await db.Listings
             .Include(l => l.Supplier)
             .Include(l => l.Location)
-            .FirstOrDefaultAsync(l => l.Id == id && l.IsActive);
+            .FirstOrDefaultAsync(l => l.Id == id && l.IsActive
+                                   && l.Supplier != null && l.Supplier.IsActive);
 
         if (listing is null) return null;
 
@@ -266,7 +267,8 @@ public class ListingService(
         // Badge priority: Promoted(4) > BestValue(3) > Closest(2) > Cheapest(1)
         var listings = await db.Listings
             .Include(l => l.Supplier)
-            .Where(l => l.Badge != null && l.IsActive)
+            .Where(l => l.Badge != null && l.IsActive
+                      && l.Supplier != null && l.Supplier.IsActive)
             .ToListAsync();
 
         var result = listings

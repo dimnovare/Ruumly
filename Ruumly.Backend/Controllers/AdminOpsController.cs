@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
@@ -10,8 +11,54 @@ namespace Ruumly.Backend.Controllers;
 /// All endpoints require Admin role (inherited from AdminBaseController).
 /// </summary>
 [Route("api/admin/ops")]
-public class AdminOpsController(RuumlyDbContext db, IConfiguration configuration) : AdminBaseController(db)
+public class AdminOpsController(
+    RuumlyDbContext db,
+    IConfiguration configuration,
+    IWebHostEnvironment env) : AdminBaseController(db)
 {
+    // ── GET /api/admin/ops/environment ────────────────────────────────────────
+    /// <summary>
+    /// Returns a snapshot of the running environment so an admin can confirm
+    /// they are looking at the correct deployment. Requires Admin JWT.
+    /// </summary>
+    [HttpGet("environment")]
+    public async Task<IActionResult> GetEnvironment()
+    {
+        // Extract DB name from the Npgsql connection string:
+        //   "Host=...;Database=ruumly;Username=...;"
+        string? dbName = null;
+        try
+        {
+            var cs = Db.Database.GetConnectionString() ?? "";
+            var dbSegment = cs.Split(';')
+                .FirstOrDefault(s => s.TrimStart().StartsWith("Database=", StringComparison.OrdinalIgnoreCase));
+            if (dbSegment is not null)
+                dbName = dbSegment.Split('=', 2).ElementAtOrDefault(1)?.Trim();
+        }
+        catch { /* swallow — connection string may not be readable in all configs */ }
+
+        // seedDataApplied = true if ANY supplier exists (seed guard check)
+        var seedDataApplied = await Db.Suppliers.AnyAsync();
+
+        var appVersion = Assembly.GetExecutingAssembly()
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion
+            ?? Assembly.GetExecutingAssembly().GetName().Version?.ToString()
+            ?? "unknown";
+
+        return Ok(new
+        {
+            environment     = env.EnvironmentName,
+            databaseName    = dbName,
+            seedDataApplied,
+            isRailway       = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RAILWAY_ENVIRONMENT")),
+            railwayEnv      = Environment.GetEnvironmentVariable("RAILWAY_ENVIRONMENT"),
+            appVersion,
+            utcNow          = DateTime.UtcNow,
+        });
+    }
+
+
     // ── GET /api/admin/ops/stuck ───────────────────────────────────────────────
     /// <summary>
     /// Returns orders stuck in Sending or Pending for > 30 minutes,
