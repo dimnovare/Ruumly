@@ -20,6 +20,9 @@ using Ruumly.Backend.Services.Implementations;
 using Ruumly.Backend.Services.Interfaces;
 // BookingService, OrderRoutingService, IntegrationDispatchService are in same namespace
 using Ruumly.Backend.DTOs.Requests;
+using Ruumly.Backend.Identity;
+using Ruumly.Backend.Identity.SmartId;
+using Ruumly.Backend.Identity.MobileId;
 using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
 using Hangfire;
@@ -335,6 +338,26 @@ builder.Services.AddHttpClient();
 // Dokobit — named HttpClient; IsEnabled gated on DOKOBIT__APITOKEN presence
 builder.Services.AddHttpClient<DokobitService>();
 builder.Services.AddScoped<IDokobitService, DokobitService>();
+
+// ─── Identity verification (Smart-ID / Mobile-ID) ────────────────────────────
+// Env-gated: only registered when SmartId:RelyingPartyUuid is set.
+// In Railway: set SMARTID__RELYINGPARTYUUID and SMARTID__RELYINGPARTYNAME env vars.
+var smartIdUuid = builder.Configuration["SmartId:RelyingPartyUuid"];
+if (!string.IsNullOrWhiteSpace(smartIdUuid))
+{
+    builder.Services.Configure<SmartIdConfig>(builder.Configuration.GetSection("SmartId"));
+    builder.Services.Configure<MobileIdConfig>(builder.Configuration.GetSection("MobileId"));
+    builder.Services.AddHttpClient<SmartIdProvider>();
+    builder.Services.AddHttpClient<MobileIdProvider>();
+    builder.Services.AddScoped<IIdentityVerificationProvider, SmartIdProvider>();
+    builder.Services.AddScoped<IIdentityVerificationProvider, MobileIdProvider>();
+    builder.Services.AddScoped<IdentityVerificationService>();
+    Console.WriteLine("[Ruumly] Smart-ID / Mobile-ID identity verification: ENABLED.");
+}
+else
+{
+    Console.WriteLine("[Ruumly] Smart-ID / Mobile-ID identity verification: DISABLED (SmartId:RelyingPartyUuid not set).");
+}
 
 // ─── Storage service ───
 if (builder.Environment.IsProduction())

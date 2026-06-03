@@ -20,13 +20,29 @@ public record SignContractRequest(
     Guid    ContractTemplateId,
     string  TenantName,
     string? TenantIdCode,
-    /// <summary>data:image/png;base64,... from canvas</summary>
-    string  SignatureDataUrl
+    /// <summary>data:image/png;base64,... from canvas (required for canvas path; ignored for eID path).</summary>
+    string  SignatureDataUrl,
+    /// <summary>"smartid" | "mobileid" — when set, eID path is used instead of canvas.</summary>
+    string? SigningMethod = null,
+    /// <summary>Session id from POST /identity/start — required when SigningMethod is "smartid" or "mobileid".</summary>
+    string? VerifiedSessionId = null
 );
 
 public record PreviewContractRequest(
     Guid BookingId,
     Guid ContractTemplateId
+);
+
+public record StartIdentityVerificationRequest(
+    Guid   BookingId,
+    /// <summary>"smartid" or "mobileid"</summary>
+    [MaxLength(20)] string Method,
+    /// <summary>National personal identification code, e.g. "38001085718".</summary>
+    [MaxLength(30)]  string PersonalCode,
+    /// <summary>Two-letter country code: "EE", "LV", or "LT". Defaults to "EE" when omitted.</summary>
+    [MaxLength(2)]   string? Country = null,
+    /// <summary>Phone number in international format — required for Mobile-ID.</summary>
+    [MaxLength(20)]  string? PhoneNumber = null
 );
 
 public record InitiateDokobitSigningRequest(
