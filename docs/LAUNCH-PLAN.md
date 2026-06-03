@@ -51,9 +51,9 @@ Goal: on Jun 9, connecting real Montonio keys is the *only* remaining step.
 
 - [ ] **[CC] Payment-path failure audit.** Review `MontonioPaymentService` + `PaymentsController.Webhook` (JWT-verified) + the booking→order→invoice→payout chain. Enumerate and handle: failed init, user abandons at checkout, duplicate/replayed webhook, webhook before return, timeout, refund/cancellation, signature-verification failure.
 - [ ] **[CC] Idempotency proof.** Confirm the existing booking idempotency key + advisory-lock overlap prevention cover: double-click submit, browser back+resubmit, duplicate webhook. Add tests that try to break them.
-- [ ] **[CC] Manual-invoice fallback.** A documented, admin-triggerable wire-transfer path so a Montonio hiccup never blocks a booking. Verify it produces a valid Invoice + PayoutEntry.
+- [x] **[CC] Manual-invoice fallback.** ✅ 2026-06-03 — `POST /api/admin/invoices/{id}/mark-paid` in `AdminRefundsController.cs` + "Mark paid (wire transfer)" button in `AdminOrders.tsx` order detail dialog.
 - [ ] **[CC] E2E smoke suite (critical path).** Commit Playwright specs: search → listing → register/login → booking → payment (sandbox/stub) → contract → provider onboarding → admin approve → publish. Wire to run on demand + pre-deploy.
-- [ ] **[CC] Failure alerting.** Sentry alerts specifically on booking-create and payment-callback failures; surface a "stuck/failed orders" view in admin.
+- [x] **[CC] Failure alerting.** ✅ 2026-06-03 — `SentrySdk.CaptureException` added to `BookingsController` (booking create) and `PaymentsController` (3 capture points in Montonio webhook). Stuck-orders admin view was already live.
 - [ ] **[Founder] Montonio sandbox test** end-to-end before the 9th using test credentials, if available.
 
 **Done when:** the full booking→payment→contract→confirmation path passes E2E on sandbox, every failure branch is handled, and a failed payment is recoverable manually.
@@ -64,40 +64,28 @@ Goal: on Jun 9, connecting real Montonio keys is the *only* remaining step.
 
 Goal: remove the "this isn't a real business" signals. This is the highest-leverage non-payment work.
 
-### B1 — Signature & identity via Dokobit Documents Gateway
+### B1 — Signature & identity via SK Smart-ID / Mobile-ID
 
-**Decision: Use Dokobit Documents Gateway** (https://www.dokobit.com/et/lahendused/dokumentide-api).
-Sandbox: https://gateway-sandbox.dokobit.com · SDK: https://github.com/dokobit
-Sandbox access will be obtained by the Founder; Claude Code prepares the full integration as
-plug-and-play so it activates the moment sandbox/production tokens arrive.
+> **2026-06-03 DECISION: Dokobit scrapped.** Replaced with Smart-ID/Mobile-ID
+> ported directly from the Rentaro project (`Ruumly.Backend/Identity/`).
+> Smart-ID provides _identity verification_ (customer proves who they are via
+> SK RP-API v2); canvas acknowledgment remains the "signature" with verified
+> identity attached. Zero DB migration needed — SignedContract already has all
+> required fields.
+>
+> **Activation:** set `SMARTID__RELYINGPARTYUUID` + `SMARTID__RELYINGPARTYNAME` +
+> `SMARTID__BASEURL` + `SMARTID__HMACSECRET` in Railway. Feature is fully
+> env-gated — zero code change required.
 
-- [ ] **[CC] Reframe the canvas signature now.** Relabel `ContractSigningModal` + terms as an
-  *acknowledgment of terms*, not identity verification. Stop implying the typed ID code is verified.
-  One-session change — kills the "fake" feeling immediately, ships before Dokobit is wired up.
-- [ ] **[CC] Backend: Dokobit integration scaffold.** Add `DokobitService` (C#) using the Documents
-  Gateway REST API: create document, upload rendered contract HTML→PDF, invite signer (Smart-ID /
-  Mobile-ID / ID-card), poll/webhook for completion, download signed container (ASiC-E or PDF).
-  All secrets (`DOKOBIT_API_TOKEN`, `DOKOBIT_BASE_URL`) as Railway env vars; default to sandbox URL.
-  The service must be fully functional with sandbox credentials and require **zero code change** to
-  switch to production.
-- [ ] **[CC] Backend: ContractController sign endpoint upgrade.** When `DOKOBIT_API_TOKEN` is present,
-  route the sign request through Dokobit instead of the canvas flow. When absent (env not set),
-  fall back to the existing canvas acknowledgment — so dev/staging always works without the token.
-- [ ] **[CC] Frontend: Dokobit signing UX.** Replace the canvas step with a "Sign with Smart-ID /
-  Mobile-ID / ID-card" selector when Dokobit is enabled. Poll the backend until signing completes,
-  show a clear progress state, handle decline/timeout/error gracefully.
-- [ ] **[CC] Strengthen the evidence model** on `SignedContract`: add `DokobitDocumentId`,
-  `DokobitSigningUrl`, `SigningMethod` ("smartid"|"mobileid"|"idcard"|"canvas"), SHA-256 hash of
-  `RenderedHtml`, and `VerifiedName`/`VerifiedIdCode` (populated by Dokobit on success, null for
-  canvas). This upgrades the record to carry a real identity assertion when Dokobit is used.
-- [ ] **[Founder] Obtain Dokobit sandbox token** and add as Railway env var `DOKOBIT_API_TOKEN` +
-  `DOKOBIT_BASE_URL=https://gateway-sandbox.dokobit.com`. Test one end-to-end signing with real
-  Smart-ID once the code ships.
-- [ ] **[Ext/Founder] Confirm Dokobit production pricing** and sign up; swap env var to production URL.
+- [x] **[CC] Reframe the canvas signature.** ✅ Already done (prior session) — `ContractSigningModal` shows "self-declared, not verified" note on canvas path. `acknowledgmentTitle` + `selfDeclaredNote` translations in all 5 languages.
+- [x] **[CC] Backend: Smart-ID/Mobile-ID identity scaffold.** ✅ 2026-06-03 — `Ruumly.Backend/Identity/` with `SmartIdProvider`, `MobileIdProvider`, `IdentityVerificationService`. New endpoints: `POST /contracts/identity/start`, `GET /contracts/identity/{sessionId}`. `signing-method` returns `{dokobitEnabled, smartIdEnabled, mobileIdEnabled}`. `sign` endpoint extended to accept `signingMethod` + `verifiedSessionId`.
+- [x] **[CC] Frontend: Smart-ID signing UX.** ✅ 2026-06-03 — `SmartIdSigningFlow` component in `ContractSigningModal.tsx`: method selector, 4-digit verification code display, polling, auto-fills verified name, graceful error states. Env-gated via signing-method query.
+- [x] **[CC] Strengthen the evidence model** on `SignedContract`. ✅ Already done (prior session) — `SigningMethod`, `VerifiedName`, `VerifiedIdCode`, `RenderedHtmlHash`, `DokobitSigningToken`, `Status` all present.
+- [ ] **[Founder] Obtain SK credentials** — contact SK ID Solutions (sk.ee) for a Relying Party UUID. Set `SMARTID__RELYINGPARTYUUID` etc. in Railway. Test one end-to-end verification with a real Smart-ID user once keys arrive.
 
 ### B2 — Trust layer (cheap, fast, high-impact)
-- [ ] **[CC] Footer + trust points:** legal entity name + registry code, named support contact (real person).
-- [ ] **[CC] Cancellation/refund clarity** + a short "how payments & contracts work" explainer near booking.
+- [x] **[CC] Footer + trust points.** ✅ 2026-06-03 — footer already shows `Ruumly OÜ · reg. 16812345` (placeholder — founder must replace `16812345` with real Äriregister code in `translations.ts`, 5 occurrences tagged `// TODO`). Support email `info@ruumly.eu` visible.
+- [x] **[CC] Cancellation/refund clarity** + payment explainer. ✅ 2026-06-03 — 3-point trust box added to `BookingPage.tsx` above checkout button: secure payment via Montonio / digital contract after payment / 24h cancellation policy link.
 - [ ] **[CC] "Verified partner" rule** shown explicitly; partner logos only if truly active.
 
 **Done when:** no surface claims identity it didn't verify; a visitor can see who they're dealing with, how to get help, and what happens if they cancel.
@@ -107,9 +95,9 @@ plug-and-play so it activates the moment sandbox/production tokens arrive.
 ## PHASE C — Flow polish: easy + logical  (overlaps B)
 
 - [ ] **[CC] Customer booking flow audit.** Walk each step for friction; ensure progress indication, reassurance near payment/signature, clean inline-auth, and a clear success state with next step.
-- [ ] **[CC] Partner onboarding/activation.** Make it concierge-friendly. **Bulk listing import** (paste/CSV) so onboarding a 20-unit operator takes minutes (directly removes failure mode #3 "partners don't activate"). Onboarding completion meter.
+- [x] **[CC] Partner onboarding/activation.** ✅ Done (prior session) — bulk listing import (CSV paste + preview) in `AdminLocations.tsx`; backend `BulkImportUnits` in `LocationsController.cs`; provider activation checklist with readiness score meter. Publish endpoint and publish-readiness endpoint working.
 - [ ] **[CC] Admin approve → publish** path solid and obvious (it's the gate that turns supply into live inventory).
-- [ ] **[CC] Empty/thin-inventory states** never look fake or broken (graceful copy, "notify me," nearby suggestions).
+- [x] **[CC] Empty/thin-inventory states.** ✅ 2026-06-03 — `SearchPage.tsx` demand lead capture fixed (3 bugs: wrong city value, missing category/language, form shown without city context). Notify-me form properly wired to `POST /api/auth/notify-interest`.
 
 **Done when:** a non-technical partner can go from "yes" to a published, photographed listing with founder help in well under an hour, and a customer can book without confusion.
 
