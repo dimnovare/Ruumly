@@ -1179,6 +1179,9 @@ namespace Ruumly.Backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("SignedDocumentUrl")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("SignedAt")
                         .HasColumnType("timestamp with time zone");
 

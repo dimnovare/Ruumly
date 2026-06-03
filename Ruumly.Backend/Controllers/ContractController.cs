@@ -20,6 +20,7 @@ public class ContractController(
     RuumlyDbContext  db,
     IContractService contractService,
     IDokobitService  dokobitService,
+    IStorageService  storageService,
     IConfiguration   configuration) : ControllerBase
 {
     /// <summary>
@@ -248,14 +249,31 @@ public class ContractController(
         {
             case DokobitSigningStatus.Completed:
             {
-                // Download the signed document — stored bytes reserved for future R2 upload.
-                // For now we just confirm completion and update the record.
-                // Dokobit's status response does not include signer method in the basic API;
-                // we update SigningMethod to "dokobit" (already set) as a record.
+                // Download the signed PDF from Dokobit and store it in R2.
+                try
+                {
+                    var pdfBytes = await dokobitService.DownloadSignedDocumentAsync(signingToken, ct);
+                    if (pdfBytes.Length > 0)
+                    {
+                        var r2Path  = $"contracts/{contract.BookingId}/{signingToken}.pdf";
+                        using var stream = new System.IO.MemoryStream(pdfBytes);
+                        var publicUrl = await storageService.UploadAsync(stream, r2Path, "application/pdf");
+                        contract.SignedDocumentUrl = publicUrl;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log and continue — completing the status record is more important
+                    // than failing the whole poll because R2 is temporarily unavailable.
+                    var logger = HttpContext.RequestServices
+                        .GetRequiredService<ILogger<ContractController>>();
+                    logger.LogError(ex, "Failed to download/upload Dokobit PDF for token {Token}", signingToken);
+                }
+
                 contract.Status   = "completed";
                 contract.SignedAt = DateTime.UtcNow;
                 await db.SaveChangesAsync(ct);
-                return Ok(new { status = "completed" });
+                return Ok(new { status = "completed", signedDocumentUrl = contract.SignedDocumentUrl });
             }
             case DokobitSigningStatus.Cancelled:
                 contract.Status = "cancelled";
@@ -270,6 +288,39 @@ public class ContractController(
             default:
                 return Ok(new { status = "pending" });
         }
+    }
+
+    /// <summary>
+    /// Returns the signed contract for a booking.
+    /// - If a Dokobit-signed PDF was stored in R2, returns { url: "..." } (302-style redirect target).
+    /// - If only a canvas HTML signing exists, returns the HTML snapshot as text/html.
+    /// - 404 if no signed contract exists for this booking.
+    /// Booking owner or admin/provider with access may call this.
+    /// </summary>
+    [HttpGet("{bookingId:guid}/download")]
+    public async Task<IActionResult> DownloadContract(Guid bookingId, CancellationToken ct)
+    {
+        var booking = await db.Bookings.FindAsync([bookingId], ct);
+        if (booking is null) return NotFound();
+
+        if (!await CanAccessBookingAsync(booking))
+            return Forbid();
+
+        var contract = await db.SignedContracts
+            .FirstOrDefaultAsync(c => c.BookingId == bookingId, ct);
+
+        if (contract is null)
+            return NotFound(new { error = "No signed contract found for this booking." });
+
+        // Prefer the R2-stored signed PDF (Dokobit path).
+        if (!string.IsNullOrEmpty(contract.SignedDocumentUrl))
+            return Ok(new { url = contract.SignedDocumentUrl });
+
+        // Fallback: return the canvas-signed rendered HTML snapshot.
+        if (!string.IsNullOrEmpty(contract.RenderedHtml))
+            return Content(contract.RenderedHtml, "text/html");
+
+        return NotFound(new { error = "Contract document is not yet available." });
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

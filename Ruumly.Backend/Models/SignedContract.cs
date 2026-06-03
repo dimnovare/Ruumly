@@ -38,6 +38,12 @@ public class SignedContract
     public string? VerifiedIdCode { get; set; }
 
     /// <summary>
+    /// Public URL of the signed PDF stored in R2 (null for canvas-acknowledgment signings
+    /// or before Dokobit completion is processed).
+    /// </summary>
+    public string? SignedDocumentUrl { get; set; }
+
+    /// <summary>
     /// Signing status. "pending" while Dokobit flow is in progress; "completed" when
     /// signed (canvas always writes "completed" directly). "cancelled" / "error" for
     /// Dokobit terminal failure states.
