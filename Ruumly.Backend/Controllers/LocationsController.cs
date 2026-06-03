@@ -474,7 +474,147 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         return NoContent();
     }
 
-    // POST /api/locations/{id}/units/import
+    // ── PATCH /api/locations/{id}/publish ─────────────────────────────────────
+    /// <summary>
+    /// Publishes a location (sets IsActive = true).
+    /// Requires at least 1 active unit with PriceFrom > 0.
+    /// </summary>
+    [HttpPatch("{id:guid}/publish")]
+    [Authorize(Roles = "Admin,Provider")]
+    public async Task<IActionResult> Publish(Guid id)
+    {
+        var location = await db.SupplierLocations
+            .Include(l => l.Listings)
+            .FirstOrDefaultAsync(l => l.Id == id);
+
+        if (location is null)
+            return NotFound(new { error = ErrorMessages.Get("LOCATION_NOT_FOUND", Request.GetLang()) });
+
+        if (!await CanAccess(location.SupplierId))
+            return Forbid();
+
+        var hasUnit = location.Listings.Any(u => u.IsActive && u.PriceFrom > 0);
+        if (!hasUnit)
+            return BadRequest(new { error = "At least 1 active unit with a price is required before publishing." });
+
+        location.IsActive  = true;
+        location.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        return Ok(new { id = location.Id, isActive = location.IsActive });
+    }
+
+    // ── PATCH /api/locations/{id}/unpublish ───────────────────────────────────
+    /// <summary>Sets IsActive = false, hiding the location from public search.</summary>
+    [HttpPatch("{id:guid}/unpublish")]
+    [Authorize(Roles = "Admin,Provider")]
+    public async Task<IActionResult> Unpublish(Guid id)
+    {
+        var location = await db.SupplierLocations
+            .FirstOrDefaultAsync(l => l.Id == id);
+
+        if (location is null)
+            return NotFound(new { error = ErrorMessages.Get("LOCATION_NOT_FOUND", Request.GetLang()) });
+
+        if (!await CanAccess(location.SupplierId))
+            return Forbid();
+
+        location.IsActive  = false;
+        location.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        return Ok(new { id = location.Id, isActive = location.IsActive });
+    }
+
+    // ── GET /api/locations/{id}/publish-readiness ─────────────────────────────
+    /// <summary>
+    /// Returns a checklist of what is blocking a location from going live.
+    /// Used by the provider dashboard to guide setup completion.
+    /// </summary>
+    [HttpGet("{id:guid}/publish-readiness")]
+    [Authorize(Roles = "Admin,Provider")]
+    public async Task<IActionResult> PublishReadiness(Guid id)
+    {
+        var location = await db.SupplierLocations
+            .Include(l => l.Listings)
+            .FirstOrDefaultAsync(l => l.Id == id);
+
+        if (location is null)
+            return NotFound(new { error = ErrorMessages.Get("LOCATION_NOT_FOUND", Request.GetLang()) });
+
+        if (!await CanAccess(location.SupplierId))
+            return Forbid();
+
+        var activeUnits = location.Listings.Where(u => u.IsActive).ToList();
+        var pricedUnits = activeUnits.Where(u => u.PriceFrom > 0).ToList();
+        var images      = location.Images;
+
+        var blockers = new List<string>();
+        var warnings = new List<string>();
+
+        if (pricedUnits.Count == 0)
+            blockers.Add("At least 1 unit with a price is required.");
+
+        if (images.Count == 0)
+            blockers.Add("Location needs at least 1 image.");
+
+        if (string.IsNullOrWhiteSpace(location.Description))
+            blockers.Add("A description is required.");
+
+        if (images.Count is > 0 and < 3)
+            warnings.Add("Adding more images (3+) improves booking conversion.");
+
+        if (activeUnits.Count > 0 && activeUnits.All(u => string.IsNullOrWhiteSpace(u.Description)))
+            warnings.Add("Adding descriptions to units helps customers choose the right space.");
+
+        return Ok(new
+        {
+            locationId = location.Id,
+            canPublish = blockers.Count == 0,
+            blockers,
+            warnings,
+        });
+    }
+
+    // ── PATCH /api/locations/{locationId}/units/{unitId}/activate ─────────────
+    /// <summary>Activates an individual unit without affecting the location's published state.</summary>
+    [HttpPatch("{locationId:guid}/units/{unitId:guid}/activate")]
+    [Authorize(Roles = "Admin,Provider")]
+    public async Task<IActionResult> ActivateUnit(Guid locationId, Guid unitId)
+    {
+        var listing = await db.Listings
+            .FirstOrDefaultAsync(l => l.Id == unitId && l.LocationId == locationId);
+
+        if (listing is null) return NotFound(new { error = "Unit not found." });
+        if (!await CanAccess(listing.SupplierId)) return Forbid();
+
+        listing.IsActive  = true;
+        listing.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        return Ok(new { id = listing.Id, isActive = listing.IsActive });
+    }
+
+    // ── PATCH /api/locations/{locationId}/units/{unitId}/deactivate ───────────
+    /// <summary>Deactivates an individual unit without affecting the location's published state.</summary>
+    [HttpPatch("{locationId:guid}/units/{unitId:guid}/deactivate")]
+    [Authorize(Roles = "Admin,Provider")]
+    public async Task<IActionResult> DeactivateUnit(Guid locationId, Guid unitId)
+    {
+        var listing = await db.Listings
+            .FirstOrDefaultAsync(l => l.Id == unitId && l.LocationId == locationId);
+
+        if (listing is null) return NotFound(new { error = "Unit not found." });
+        if (!await CanAccess(listing.SupplierId)) return Forbid();
+
+        listing.IsActive  = false;
+        listing.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        return Ok(new { id = listing.Id, isActive = listing.IsActive });
+    }
+
+    // POST /api/locations/{id}/units/import  (legacy — single import without per-row validation)
     [HttpPost("{id:guid}/units/import")]
     [Authorize(Roles = "Admin,Provider")]
     public async Task<IActionResult> ImportUnits(Guid id, [FromBody] ImportUnitsRequest body)
@@ -487,22 +627,27 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         var created = 0;
         foreach (var row in body.Units)
         {
+            if (!Enum.TryParse<ListingType>(row.Type, true, out var lt)) continue;
             var listing = new Listing
             {
                 Id            = Guid.NewGuid(),
                 SupplierId    = location.SupplierId,
                 LocationId    = id,
-                Type          = Enum.Parse<ListingType>(row.Type, true),
-                Title         = row.Title,
+                Type          = lt,
+                Title         = row.Title ?? string.Empty,
                 Address       = location.Address,
                 City          = location.City,
                 Lat           = location.Lat,
                 Lng           = location.Lng,
                 PriceFrom     = row.PriceFrom,
-                PriceUnit     = row.PriceUnit ?? "/month",
+                PriceUnit     = row.PriceUnit ?? "€/month",
                 SizeM2        = row.SizeM2,
-                QuantityTotal = row.Quantity ?? 1,
+                QuantityTotal = row.QuantityTotal ?? 1,
                 Description   = row.Description ?? "",
+                VatRate       = row.VatRate,
+                FeaturesJson  = row.Features is not null
+                                    ? System.Text.Json.JsonSerializer.Serialize(row.Features)
+                                    : "{}",
                 IsActive      = true,
                 AvailableNow  = true,
                 CreatedAt     = DateTime.UtcNow,
@@ -513,6 +658,177 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         }
         await db.SaveChangesAsync();
         return Ok(new { imported = created });
+    }
+
+    // ── POST /api/admin/locations/{locationId}/units/bulk ──────────────────────
+    /// <summary>
+    /// Bulk-import up to 200 units into an existing location.
+    /// Each row is validated independently — one bad row does NOT fail the batch.
+    /// Returns per-row error messages for failed rows.
+    /// </summary>
+    [HttpPost("{locationId:guid}/units/bulk")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> BulkImportUnits(
+        Guid locationId, [FromBody] List<ImportUnitRow> rows)
+    {
+        if (rows is null || rows.Count == 0)
+            return BadRequest(Error("Request body must be a non-empty JSON array."));
+        if (rows.Count > 200)
+            return BadRequest(Error("Maximum 200 units per request."));
+
+        var location = await db.SupplierLocations
+            .Include(l => l.Supplier)
+            .FirstOrDefaultAsync(l => l.Id == locationId);
+        if (location is null)
+            return NotFound(Error("Location not found."));
+
+        return await ExecuteBulkUnitInsert(location, rows, User.GetUserEmail());
+    }
+
+    // ── POST /api/admin/locations/bulk ─────────────────────────────────────────
+    /// <summary>
+    /// Create a new supplier location and bulk-import its units in a single call.
+    /// Returns the new locationId plus the same bulk-result shape as the units endpoint.
+    /// </summary>
+    [HttpPost("bulk")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> BulkCreateLocation([FromBody] BulkCreateLocationRequest body)
+    {
+        if (!body.SupplierId.HasValue || body.SupplierId.Value == Guid.Empty)
+            return BadRequest(Error("supplierId is required."));
+        if (string.IsNullOrWhiteSpace(body.Name))
+            return BadRequest(Error("name is required."));
+
+        var supplier = await db.Suppliers.FindAsync(body.SupplierId.Value);
+        if (supplier is null)
+            return NotFound(Error("Supplier not found."));
+
+        var rows = body.Units ?? [];
+        if (rows.Count > 200)
+            return BadRequest(Error("Maximum 200 units per request."));
+
+        var location = new SupplierLocation
+        {
+            Id          = Guid.NewGuid(),
+            SupplierId  = supplier.Id,
+            Name        = body.Name,
+            Address     = body.Address,
+            City        = body.City,
+            Country     = supplier.Country ?? "EE",
+            Lat         = body.Lat,
+            Lng         = body.Lng,
+            Description = string.Empty,
+            CreatedAt   = DateTime.UtcNow,
+            UpdatedAt   = DateTime.UtcNow,
+        };
+        db.SupplierLocations.Add(location);
+        await db.SaveChangesAsync();  // get the ID committed before inserting units
+
+        location.Supplier = supplier;
+
+        var result = await ExecuteBulkUnitInsert(location, rows, User.GetUserEmail(),
+            extraAuditDetail: $"(via bulk location create)");
+
+        // Wrap result JSON to add locationId
+        if (result is OkObjectResult ok)
+        {
+            var inner = ok.Value!;
+            // reflect the anonymous object from ExecuteBulkUnitInsert
+            var t       = inner.GetType();
+            var created = (int)t.GetProperty("created")!.GetValue(inner)!;
+            var failed  = (int)t.GetProperty("failed")!.GetValue(inner)!;
+            var errors  = (List<string>)t.GetProperty("errors")!.GetValue(inner)!;
+            return Ok(new { locationId = location.Id, created, failed, errors });
+        }
+        return result;
+    }
+
+    // ── Shared bulk-insert helper ──────────────────────────────────────────────
+    private async Task<IActionResult> ExecuteBulkUnitInsert(
+        SupplierLocation location,
+        List<ImportUnitRow> rows,
+        string actorEmail,
+        string? extraAuditDetail = null)
+    {
+        var errors  = new List<string>();
+        var created = 0;
+
+        for (var i = 0; i < rows.Count; i++)
+        {
+            var row     = rows[i];
+            var rowNum  = i + 1;
+            var rowErrors = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(row.Title))
+                rowErrors.Add($"Row {rowNum}: title is required");
+            if (string.IsNullOrWhiteSpace(row.Type) ||
+                !Enum.TryParse<ListingType>(row.Type, true, out var listingType))
+            {
+                rowErrors.Add($"Row {rowNum}: type must be one of Warehouse, Moving, Trailer");
+                listingType = ListingType.Warehouse; // placeholder — row will be skipped
+            }
+            if (row.PriceFrom <= 0)
+                rowErrors.Add($"Row {rowNum}: priceFrom must be > 0");
+
+            if (rowErrors.Count > 0)
+            {
+                errors.AddRange(rowErrors);
+                continue;
+            }
+
+            try
+            {
+                var listing = new Listing
+                {
+                    Id            = Guid.NewGuid(),
+                    SupplierId    = location.SupplierId,
+                    LocationId    = location.Id,
+                    Type          = listingType,
+                    Title         = row.Title!,
+                    Address       = location.Address,
+                    City          = location.City,
+                    Lat           = location.Lat,
+                    Lng           = location.Lng,
+                    PriceFrom     = row.PriceFrom,
+                    PriceUnit     = row.PriceUnit ?? "€/month",
+                    SizeM2        = row.SizeM2,
+                    QuantityTotal = row.QuantityTotal ?? 1,
+                    Description   = row.Description ?? string.Empty,
+                    VatRate       = row.VatRate,
+                    FeaturesJson  = row.Features is not null
+                                        ? System.Text.Json.JsonSerializer.Serialize(row.Features)
+                                        : "{}",
+                    IsActive      = true,
+                    AvailableNow  = true,
+                    CreatedAt     = DateTime.UtcNow,
+                    UpdatedAt     = DateTime.UtcNow,
+                };
+                db.Listings.Add(listing);
+                await db.SaveChangesAsync();
+                created++;
+            }
+            catch (Exception)
+            {
+                db.ChangeTracker.Clear();
+                errors.Add($"Row {rowNum}: database error — unit not saved");
+            }
+        }
+
+        // Audit log
+        var detail = $"Bulk import: {created} units created in location {location.Id}" +
+                     (extraAuditDetail is not null ? $" {extraAuditDetail}" : string.Empty);
+        db.AuditLogs.Add(new AuditLog
+        {
+            Id        = Guid.NewGuid(),
+            Action    = "listing.bulk_import",
+            Actor     = actorEmail,
+            Target    = $"Location:{location.Id}",
+            Detail    = detail,
+            CreatedAt = DateTime.UtcNow,
+        });
+        await db.SaveChangesAsync();
+
+        return Ok(new { created, failed = errors.Count, errors });
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────

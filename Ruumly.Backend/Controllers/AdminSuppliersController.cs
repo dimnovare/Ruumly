@@ -863,6 +863,69 @@ public class AdminSuppliersController(
         });
     }
 
+    // ── GET /api/admin/suppliers/{id}/activation-checklist ───────────────────
+
+    /// <summary>
+    /// Returns a readiness checklist for a supplier — how "launch-ready" they are.
+    /// All items derived from existing DB data; no new columns needed.
+    /// </summary>
+    [HttpGet("suppliers/{id:guid}/activation-checklist")]
+    public async Task<IActionResult> GetActivationChecklist(Guid id)
+    {
+        var supplier = await Db.Suppliers.FindAsync(id);
+        if (supplier is null) return NotFound(Error("Supplier not found."));
+
+        // Load active listings for this supplier (with image/price data)
+        var activeListings = await Db.Listings
+            .Where(l => l.SupplierId == id && l.IsActive)
+            .Select(l => new { l.PriceFrom, l.ImagesJson })
+            .ToListAsync();
+
+        // Check each criterion independently
+        var hasActiveListings = activeListings.Count > 0;
+
+        // At least one listing has an image (ImagesJson != "[]" and != "{}")
+        var hasImages = activeListings.Any(l =>
+            !string.IsNullOrEmpty(l.ImagesJson) &&
+            l.ImagesJson != "[]" && l.ImagesJson != "{}");
+
+        // All active listings have a price > 0
+        var hasPricing = activeListings.Count > 0 && activeListings.All(l => l.PriceFrom > 0);
+
+        // Bank details on file (IBAN set)
+        var hasBankDetails = !string.IsNullOrWhiteSpace(supplier.Iban);
+
+        // Partner contract signed — at least one signed contract linked to a booking
+        // for this supplier
+        var hasSignedContract = await Db.SignedContracts
+            .AnyAsync(sc => sc.Booking.SupplierId == id && sc.Status == "completed");
+
+        // Admin-verified flag
+        var isVerified = supplier.IsVerified;
+
+        var checklist = new[]
+        {
+            new { key = "hasActiveListings", done = hasActiveListings,  label = "Has at least 1 active listing" },
+            new { key = "hasImages",         done = hasImages,          label = "At least 1 listing has an image" },
+            new { key = "hasPricing",        done = hasPricing,         label = "All listings have a price > 0" },
+            new { key = "hasBankDetails",    done = hasBankDetails,     label = "Bank details (IBAN) on file" },
+            new { key = "hasSignedContract", done = hasSignedContract,  label = "Partner contract signed" },
+            new { key = "isVerified",        done = isVerified,         label = "Admin has verified the partner" },
+        };
+
+        var readinessScore = checklist.Count(c => c.done);
+        var readinessTotal = checklist.Length;
+
+        return Ok(new
+        {
+            supplierId     = supplier.Id,
+            supplierName   = supplier.Name,
+            checklist,
+            readinessScore,
+            readinessTotal,
+        });
+    }
+
     // ── Mappers ───────────────────────────────────────────────────────────────
 
     private static SupplierIntegrationDto MapIntegration(Supplier s)
