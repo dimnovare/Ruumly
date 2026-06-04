@@ -84,6 +84,13 @@ All gated: tsc clean, e2e 70/70 (clean CI server), live-verified. Backend untouc
 ### B3 (BUG, HIGH for launch, NOT fixed — needs your call): contact form is a no-op that fakes success
 `src/pages/ContactPage.tsx:99` — submit is literally `onClick={() => setSubmitted(true)}`. NO API call, NO validation, NO field read. It shows "Sõnum saadetud! Vastame teile 24 tunni jooksul" while DISCARDING the message. No backend contact endpoint exists (`/api/contact`,`/support`,`/leads` all 404). A launching marketplace silently loses every contact inquiry. RECOMMEND: add a backend contact endpoint that emails info@ruumly.eu (via EmailTranslations, 5 langs) + wire the form with validation, OR (minimal) make it a mailto: prefill. Not built overnight — needs a product decision on where messages route. (Contrast: provider onboarding IS properly wired.)
 
+### Iteration 2 cont. — more verified GOOD
+- **Email-verification gate:** fresh unverified user → `POST /api/bookings` returns **403 EMAIL_NOT_VERIFIED** ("Palun kinnitage oma e-posti aadress…"); frontend shows the verify banner. Backend enforces it. ✓
+- **OG/social worker (prod, crawler UA):** homepage et OG correct + storage-focused ("Rendi laopinda Eestis"). LOW finding: `/et/search?city=Tallinn` crawler OG falls back to ENGLISH ("Rent storage across the Baltics") on an et URL — minor OG-localization gap for non-homepage/city/blog routes; low impact (search pages aren't primary share targets). 
+
+### COVERAGE NOW ESSENTIALLY COMPLETE
+All sign-then-pay variants (pay-now / pay-later / sign-cancelled / payment-failed), both safeguards (no-pay-without-sign + auto-void) verified live, storage-only fixed+verified across pages/filters/5 langs, search filters, account+cancel, provider onboarding, email gate, how-it-works+JSON-LD, admin+provider portals, mobile, i18n, OG worker, prod health. 4 fixes shipped to prod. Open items are all documented below (H1 launch-critical, B3 contact-form, L1-L4) — they need product decisions, not more testing.
+
 ## Findings (running log)
 
 ### CONFIRMED GOOD (sign-then-pay, verified live on local stack)
