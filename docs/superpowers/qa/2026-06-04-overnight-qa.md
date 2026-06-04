@@ -56,6 +56,8 @@ Tested (local full-stack, demo data + live prod reads, desktop+mobile, browse he
 - Mobile responsive (home/search/how-it-works @375): clean. ✓
 - Language switch (en) renders, correct geography. ✓
 - Admin panel (all /api/admin/* 200) + provider portal (no API errors): load clean. ✓
+- **Auto-void safeguard verified END-TO-END live:** set expiry window=1h, backdated 2 signed-but-unpaid Pending bookings (canvas-signed, payment-failed) to 3h old, triggered StaleBookingCleanupJob via Hangfire → both bookings → Cancelled, both SignedContracts → "void"; log "1h window: 2 cancelled, 2 contracts voided". Configurable window honored (guard requires hours>0). No money involved. Test setting cleaned up after. ✓ (Also covered by Agent 1's passing unit tests in the 145.)
+- Payment-initiate backend guard: confirmed live — /payments/initiate returned 500 (local Montonio missing) NOT 409, i.e. a completed contract satisfies the guard; pre-sign it would 409 CONTRACT_NOT_SIGNED. ✓
 
 **Fixes committed + pushed (estonia-space-hub main → auto-deploys Vercel):**
 - b30266e fix(booking): signed-but-payment-failed ≠ not-signed (+3 i18n keys ×5 langs)
@@ -67,6 +69,7 @@ All gated: tsc clean, e2e 70/70 (clean CI server), live-verified. Backend untouc
 **For the user in the morning (NOT auto-fixed — need your call):**
 - **H1 (launch-critical):** mandatory sign means a supplier with NO active contract template = UNBOOKABLE listings (dead-end at gate). Demo data: only the Kookon supplier has a template. PROD has 0 listings today so no live impact, but on supplier onboarding this bites. Recommend: platform-default rental template fallback, or enforce a template on supplier activation, + a clearer no-template dead-end UX.
 - L1 sign-done modal button says "Sulge"/Close not "Continue to payment". L2 contract Dialog a11y (DialogTitle/aria-describedby). L3 payment-fail toast text English. Detail pages /et/moving/:id, /et/trailer/:id still deep-linkable when service disabled (recommend 404/redirect).
+- **L4 (medium): conditional-payment clause only GUARANTEED on the Dokobit path.** `ContractController.InitiateDokobitSigning` calls `docService.AppendClause(...)` so the eID/Dokobit path always binds the "void if unpaid in {N}h" clause (this is Estonia's prod signing path ✓). The canvas/preview path only gets the clause if the provider template includes the `{{payment_condition_clause}}` token. So a canvas-fallback sign on a token-less template yields a signed contract WITHOUT the clause. Recommend: AppendClause on the preview/canvas path too, so the protection is universal regardless of signing method/template. (Clause itself is unit-tested by Agent 1; verified present in code, not live-grep-able locally since Dokobit is disabled.)
 
 ## Findings (running log)
 
