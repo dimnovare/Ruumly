@@ -311,6 +311,20 @@ public class ContractController(
         if (booking is null) return NotFound();
         if (booking.UserId != User.GetUserId()) return Forbid();
 
+        // The frontend posts only { bookingId, contractTemplateId? }; the signer identity
+        // comes from the booking (and is VERIFIED by Dokobit during signing). Request fields
+        // are optional overrides. SignerIdCode stays optional — the verified code is captured
+        // post-sign from the gateway; rendering {{tenant_id_code}} blank here is acceptable.
+        var signerName = !string.IsNullOrWhiteSpace(req.SignerName)
+            ? req.SignerName!
+            : (booking.ContactName ?? booking.User?.Name ?? "");
+        var signerEmail = !string.IsNullOrWhiteSpace(req.SignerEmail)
+            ? req.SignerEmail!
+            : (booking.ContactEmail ?? booking.User?.Email ?? "");
+        var signerPhone = !string.IsNullOrWhiteSpace(req.SignerPhone)
+            ? req.SignerPhone!
+            : (booking.ContactPhone ?? booking.User?.Phone);
+
         // Resolve the docx template: explicit id if given, else the supplier's active docx.
         var template = await db.ContractTemplates.FirstOrDefaultAsync(t =>
             t.SupplierId == booking.SupplierId
@@ -325,7 +339,7 @@ public class ContractController(
             return StatusCode(502, new { error = "Contract template file is missing from storage." });
 
         var values = ContractTokenVocabulary.BuildValues(
-            booking, req.SignerName, req.SignerIdCode, req.SignerEmail);
+            booking, signerName, req.SignerIdCode, signerEmail);
         var filledDocx = docService.Fill(docxBytes, values);
 
         // Render to PDF via Gotenberg.
@@ -356,7 +370,7 @@ public class ContractController(
         var signing = await dokobitService.CreateSigningRequestAsync(
             upload.Token,
             $"Ruumly contract {booking.Id.ToString("N")[..8].ToUpperInvariant()}",
-            new DokobitSigner(req.SignerName, req.SignerIdCode, country, req.SignerPhone, req.SignerEmail),
+            new DokobitSigner(signerName, req.SignerIdCode, country, signerPhone, signerEmail),
             postbackUrl,
             ct);
         if (!signing.Success)
@@ -381,9 +395,9 @@ public class ContractController(
         pending.RenderedHtml        = string.Empty;          // docx path has no HTML snapshot
         pending.RenderedHtmlHash    = pdfHash;
         pending.SignatureDataUrl    = string.Empty;
-        pending.TenantName          = req.SignerName;
+        pending.TenantName          = signerName;
         pending.TenantIdCode        = req.SignerIdCode;
-        pending.TenantEmail         = req.SignerEmail;
+        pending.TenantEmail         = signerEmail;
         pending.SignedFromIp        = HttpContext.Connection.RemoteIpAddress?.ToString();
         pending.DokobitSigningToken = signing.SigningToken;
         pending.SigningMethod       = "dokobit";             // refined to smartid/mobile on completion

@@ -47,9 +47,12 @@ public record StartIdentityVerificationRequest(
 
 public record InitiateDokobitSigningRequest(
     Guid   BookingId,
-    [MaxLength(200)] string SignerName,
-    [MaxLength(20)]  string SignerIdCode,
-    [MaxLength(200)] string SignerEmail,
+    /// <summary>Optional override — when blank, derived from the booking (ContactName ?? User.Name).</summary>
+    [MaxLength(200)] string? SignerName = null,
+    /// <summary>Optional override — passed through as-is; the VERIFIED code is captured post-sign.</summary>
+    [MaxLength(20)]  string? SignerIdCode = null,
+    /// <summary>Optional override — when blank, derived from the booking (ContactEmail ?? User.Email).</summary>
+    [MaxLength(200)] string? SignerEmail = null,
     /// <summary>Optional — pin a specific template. When null, the supplier's active docx template is used.</summary>
     Guid?  ContractTemplateId = null,
     /// <summary>ISO alpha-2 country for the eID provider; defaults to the booking supplier's country, else "EE".</summary>
