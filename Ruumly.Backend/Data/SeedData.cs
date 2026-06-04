@@ -2466,6 +2466,11 @@ public static class SeedData
             ["commission.standard"]            = ("8",   "Standard tier commission %"),
             ["commission.premium"]             = ("6",   "Premium tier commission %"),
             ["onboardingWindowDays"]           = ("90",  "Days of free onboarding for new suppliers"),
+            // ── Sign-then-pay safeguard (read by StaleBookingCleanupJob) ────
+            // Hours a Pending (book→sign→pay) booking may sit unpaid before it auto-voids:
+            // booking is cancelled and any attached signed contract is marked "void" (no refund,
+            // no money was taken). Short values (e.g. 2) are allowed. Fallback if unset: 24.
+            ["booking.signedUnpaidExpiryHours"] = ("24", "Hours before a signed-but-unpaid / unpaid Pending booking auto-voids (StaleBookingCleanupJob)"),
             // ── About page settings ────────────────────────────────────────
             ["aboutPage.enabled"]    = ("true",  "Controls whether /about renders at all"),
             ["aboutPage.showStats"]  = ("false", "Show platform stats on about page (default OFF until real numbers exist)"),

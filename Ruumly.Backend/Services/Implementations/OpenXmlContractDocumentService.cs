@@ -86,6 +86,40 @@ public sealed class OpenXmlContractDocumentService : IContractDocumentService
         return stream.ToArray();
     }
 
+    /// <inheritdoc />
+    public byte[] AppendClause(byte[] docxBytes, string clauseText)
+    {
+        if (string.IsNullOrWhiteSpace(clauseText))
+            return docxBytes;
+
+        using var stream = new MemoryStream();
+        stream.Write(docxBytes, 0, docxBytes.Length);
+        stream.Position = 0;
+
+        using (var doc = WordprocessingDocument.Open(stream, isEditable: true))
+        {
+            var body = doc.MainDocumentPart?.Document?.Body;
+            if (body is null) return docxBytes;
+
+            // One paragraph; split on newlines into <w:br/>-separated runs so multi-line
+            // clauses render correctly. Plain run formatting (template default).
+            var paragraph = new Paragraph();
+            var lines     = clauseText.Replace("\r\n", "\n").Split('\n');
+            var run       = new Run();
+            for (var i = 0; i < lines.Length; i++)
+            {
+                if (i > 0) run.Append(new Break());
+                run.Append(new Text(lines[i]) { Space = SpaceProcessingModeValues.Preserve });
+            }
+            paragraph.Append(run);
+            body.Append(paragraph);
+
+            doc.MainDocumentPart?.Document?.Save();
+        }
+
+        return stream.ToArray();
+    }
+
     /// <summary>
     /// Reassembles the paragraph's text, replaces tokens on the combined string, writes
     /// the result into the first <see cref="Text"/> node and blanks the rest. Run/paragraph

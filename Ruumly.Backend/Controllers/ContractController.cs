@@ -338,9 +338,21 @@ public class ContractController(
         if (docxBytes is null)
             return StatusCode(502, new { error = "Contract template file is missing from storage." });
 
+        // Sign-then-pay: the rental is conditional on payment within the configured window.
+        // Resolve the same window the auto-void job uses so the contract text and the
+        // safeguard agree.
+        var paymentConditionHours = await ResolvePaymentConditionHoursAsync(ct);
+
         var values = ContractTokenVocabulary.BuildValues(
-            booking, signerName, req.SignerIdCode, signerEmail);
+            booking, signerName, req.SignerIdCode, signerEmail,
+            paymentConditionHours: paymentConditionHours);
         var filledDocx = docService.Fill(docxBytes, values);
+
+        // Always append the conditional-on-payment clause as a standard preamble/footer so it
+        // binds even when the provider's template omits {{payment_condition_clause}}. A
+        // signed-but-unpaid contract must state it binds no one.
+        filledDocx = docService.AppendClause(
+            filledDocx, ContractTokenVocabulary.PaymentConditionClause(paymentConditionHours));
 
         // Render to PDF via Gotenberg.
         byte[] pdfBytes;
@@ -603,5 +615,22 @@ public class ContractController(
             return supplierId == booking.SupplierId;
         }
         return false;
+    }
+
+    /// <summary>
+    /// Reads the configured sign-then-pay window (hours) from PlatformSettings, falling back
+    /// to 24. Same key the StaleBookingCleanupJob uses, so the contract clause and the
+    /// auto-void safeguard stay in lockstep.
+    /// </summary>
+    private async Task<int> ResolvePaymentConditionHoursAsync(CancellationToken ct)
+    {
+        var value = await db.PlatformSettings
+            .Where(s => s.Key == Jobs.StaleBookingCleanupJob.ExpiryHoursSettingKey)
+            .Select(s => s.Value)
+            .FirstOrDefaultAsync(ct);
+
+        return value is not null && int.TryParse(value, out var hours) && hours > 0
+            ? hours
+            : 24;
     }
 }

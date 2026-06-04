@@ -111,6 +111,23 @@ public class ContractSigningEngineTests
         result.Should().Be("A X B  C");
     }
 
+    [Fact]
+    public void AppendClause_always_adds_the_conditional_payment_text()
+    {
+        var svc  = new OpenXmlContractDocumentService();
+        // Template that does NOT mention the clause at all.
+        var docx = BuildDocx("<w:p><w:r><w:t>Storage lease body.</w:t></w:r></w:p>");
+
+        var clause = ContractTokenVocabulary.PaymentConditionClause(2);
+        var result = svc.AppendClause(docx, clause);
+        var text   = ReadDocxText(result);
+
+        text.Should().Contain("conditional upon payment");
+        text.Should().Contain("within 2 hours");
+        text.Should().Contain("automatically void");
+        text.Should().Contain("Storage lease body."); // original content preserved
+    }
+
     // ─── Token vocabulary validation ────────────────────────────────────────────
 
     [Fact]

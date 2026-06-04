@@ -38,7 +38,20 @@ public static class ContractTokenVocabulary
         new("supplier_reg_code","Provider registry code"),
         new("contract_number",  "Contract number (generated)"),
         new("today",            "Today's date (generated)"),
+        new("payment_condition_clause", "Conditional-on-payment clause (generated, sign-then-pay)"),
     };
+
+    /// <summary>
+    /// The sign-then-pay "conditional on payment" clause. A signed-but-unpaid rental binds
+    /// no one: if the deposit and first month are not paid within the window, the agreement
+    /// auto-voids. Storage-only wording. The window comes from PlatformSettings
+    /// (<c>booking.signedUnpaidExpiryHours</c>); 24 is the fallback default.
+    /// </summary>
+    public static string PaymentConditionClause(int expiryHours) =>
+        $"This storage rental agreement is conditional upon payment of the deposit and first " +
+        $"month's rent within {expiryHours} hours of signing. If payment is not received within " +
+        $"that period, this agreement is automatically void and neither party is bound by it, and " +
+        $"no payment is due.";
 
     private static readonly HashSet<string> Known =
         Vocabulary.Select(v => v.Token).ToHashSet(StringComparer.Ordinal);
@@ -70,7 +83,8 @@ public static class ContractTokenVocabulary
         string? signerName = null,
         string? signerIdCode = null,
         string? signerEmail = null,
-        string? contractNumber = null)
+        string? contractNumber = null,
+        int paymentConditionHours = 24)
     {
         var listing  = booking.Listing;
         var user     = booking.User;
@@ -104,6 +118,7 @@ public static class ContractTokenVocabulary
             ["supplier_reg_code"] = supplier?.RegistryCode ?? "",
             ["contract_number"]   = contractNumber ?? DefaultContractNumber(booking),
             ["today"]             = DateTime.UtcNow.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture),
+            ["payment_condition_clause"] = PaymentConditionClause(paymentConditionHours),
         };
     }
 
@@ -127,6 +142,7 @@ public static class ContractTokenVocabulary
         ["supplier_reg_code"] = "12345678",
         ["contract_number"]   = "RUUMLY-SAMPLE-0001",
         ["today"]             = DateTime.UtcNow.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture),
+        ["payment_condition_clause"] = PaymentConditionClause(24),
     };
 
     private static string Money(decimal amount) =>

@@ -21,4 +21,12 @@ public interface IContractDocumentService
     /// an unresolved placeholder.
     /// </summary>
     byte[] Fill(byte[] docxBytes, IReadOnlyDictionary<string, string> values);
+
+    /// <summary>
+    /// Appends a plain-text clause as a new paragraph at the end of the document body.
+    /// Used to always inject the sign-then-pay "conditional on payment" clause regardless
+    /// of whether the provider's template includes the corresponding token — a signed-but-unpaid
+    /// contract must state it binds no one. The clause is appended verbatim (no token substitution).
+    /// </summary>
+    byte[] AppendClause(byte[] docxBytes, string clauseText);
 }

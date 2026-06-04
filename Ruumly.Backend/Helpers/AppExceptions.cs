@@ -14,3 +14,14 @@ public class ConflictException(string message) : Exception(message);
 /// Callers should return HTTP 400 — this is not a transient error and should not be retried.
 /// </summary>
 public class WebhookSignatureException(string message) : Exception(message);
+
+/// <summary>
+/// Thrown by the payment-initiation path when a booking has no completed signed contract.
+/// Sign-then-pay: a customer cannot reach Montonio payment without a signed rental agreement.
+/// Callers should return HTTP 409 with the machine-readable <see cref="Code"/>.
+/// </summary>
+public class ContractNotSignedException(string message) : Exception(message)
+{
+    /// <summary>Machine-readable error code for the frontend.</summary>
+    public const string Code = "CONTRACT_NOT_SIGNED";
+}

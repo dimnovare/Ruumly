@@ -63,6 +63,14 @@ public class PaymentsController(
                 request.CustomerEmail,
                 request.Locale ?? "et");
         }
+        catch (ContractNotSignedException ex)
+        {
+            // Sign-then-pay: the rental must be signed before payment can be initiated.
+            logger.LogInformation(
+                "Payment initiation rejected for invoice {InvoiceId}: contract not signed",
+                request.InvoiceId);
+            return Conflict(new { code = ContractNotSignedException.Code, error = ex.Message });
+        }
         catch (InvalidOperationException ex)
         {
             // Montonio rejected the request or returned an error (already captured in service).

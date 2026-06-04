@@ -71,6 +71,20 @@ public class MontonioPaymentService(
             return "";
         }
 
+        // Sign-then-pay guard (acceptance criterion #1): a Montonio payment order cannot be
+        // created for a booking that has no COMPLETED signed contract. Applies only to the
+        // pay-now path (the "later"/rebate path returned above and never reaches Montonio).
+        var hasCompletedContract = await db.SignedContracts
+            .AnyAsync(c => c.BookingId == invoice.BookingId && c.Status == "completed");
+        if (!hasCompletedContract)
+        {
+            logger.LogWarning(
+                "Payment initiation blocked for invoice {InvoiceId} (booking {BookingId}): no completed signed contract",
+                invoiceId, invoice.BookingId);
+            throw new ContractNotSignedException(
+                "This rental must be signed before payment can be made.");
+        }
+
         // Guard: if payment already initiated and URL was saved, don't create a duplicate order.
         // This makes the endpoint idempotent on browser back+resubmit.
         if (invoice.Status == InvoiceStatus.AwaitingPayment
@@ -136,12 +150,10 @@ public class MontonioPaymentService(
         invoice.Status         = InvoiceStatus.AwaitingPayment;
         await db.SaveChangesAsync();
 
-        // TODO(cleanup): Bookings/invoices that stay in AwaitingPayment because the user
-        // abandoned the Montonio checkout should be expired after ~24 h. A Hangfire recurring
-        // job should query invoices WHERE Status = AwaitingPayment AND UpdatedAt < UtcNow - 24h,
-        // mark them Refunded/Pending, and cancel the associated booking if it was still Pending.
-        // Not required for launch (Montonio order TTL handles re-entry; booking stays Pending
-        // and does not block inventory unless the listing has strict availability locking).
+        // Abandoned-checkout cleanup is handled by StaleBookingCleanupJob: a Pending booking
+        // whose invoice never reaches Paid within the configured window
+        // (PlatformSettings "booking.signedUnpaidExpiryHours", default 24h) is auto-cancelled
+        // and any attached signed contract is voided. No refund path — no money was taken.
 
         string paymentUrl;
         try
