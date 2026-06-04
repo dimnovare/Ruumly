@@ -102,6 +102,16 @@ to confirm exact paths before trusting them** (docs say `/api/file/upload.json`;
 6. **Identity capture** — on Signed, set `VerifiedIdCode = signer_info.code` (the **verified**
    personal code — fixes the prior form-sourced bug), `SigningMethod = signer_info.signing_option`.
 
+**Verified live against the sandbox (2026-06-04):**
+- Upload path `/api/file/upload.json` works (Rentaro's `/api/upload.json` also works); upload is
+  `uploaded` immediately, so the status poll is best-effort.
+- `signers[0][signing_purpose]` is **REQUIRED** (gateway returns 400 `code 10000` without it) —
+  not optional as the public docs imply.
+- Per-signer info in status is nested under `signers["1"]` (NOT a top-level `signer_info`) —
+  the parser handles both shapes. Read `code`/`signing_option`/`name`/`surname` from there.
+- `signers[0][code]` (personal code) is optional and may be omitted; the tenant supplies it on
+  the hosted Smart-ID/Mobile-ID page and we capture the VERIFIED value from status afterward.
+
 ## 7. API endpoints (backend ↔ frontend contract)
 
 **Provider templating** (`[Authorize(Roles="Provider,Admin")]`, scoped to caller's supplier):
