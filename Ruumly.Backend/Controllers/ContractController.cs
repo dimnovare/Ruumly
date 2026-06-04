@@ -22,7 +22,10 @@ public class ContractController(
     IContractService contractService,
     IDokobitService  dokobitService,
     IStorageService  storageService,
+    IContractDocumentService docService,
+    IGotenbergClient gotenberg,
     IConfiguration   configuration,
+    ILogger<ContractController> logger,
     IdentityVerificationService? identityService = null) : ControllerBase
 {
     /// <summary>
@@ -285,7 +288,8 @@ public class ContractController(
 
     /// <summary>
     /// Initiates a Dokobit e-signing session for a booking's contract.
-    /// Renders the contract HTML, uploads it to Dokobit, creates a signing
+    /// Loads the supplier's active docx template, fills it with the booking's data,
+    /// renders it to PDF via Gotenberg, uploads it to Dokobit, creates a signing
     /// request, persists a pending SignedContract, and returns the signing URL.
     /// </summary>
     [HttpPost("dokobit/initiate")]
@@ -296,68 +300,95 @@ public class ContractController(
     {
         if (!dokobitService.IsEnabled)
             return BadRequest(new { error = "Dokobit e-signing is not configured on this deployment." });
+        if (!gotenberg.IsEnabled)
+            return BadRequest(new { error = "Contract rendering is not configured on this deployment (Gotenberg:Url not set)." });
 
-        var booking = await db.Bookings.FindAsync([req.BookingId], ct);
+        var booking = await db.Bookings
+            .Include(b => b.User)
+            .Include(b => b.Listing).ThenInclude(l => l.Location)
+            .Include(b => b.Supplier)
+            .FirstOrDefaultAsync(b => b.Id == req.BookingId, ct);
         if (booking is null) return NotFound();
         if (booking.UserId != User.GetUserId()) return Forbid();
 
-        // Render contract HTML
-        string renderedHtml;
+        // Resolve the docx template: explicit id if given, else the supplier's active docx.
+        var template = await db.ContractTemplates.FirstOrDefaultAsync(t =>
+            t.SupplierId == booking.SupplierId
+            && t.TemplateType == ContractTemplateType.Docx
+            && (req.ContractTemplateId != null ? t.Id == req.ContractTemplateId : t.IsActive), ct);
+        if (template is null || string.IsNullOrEmpty(template.DocxObjectKey))
+            return NotFound(new { error = "No active docx contract template is configured for this supplier." });
+
+        // Fetch the docx and fill it with this booking's values.
+        var docxBytes = await storageService.DownloadAsync(template.DocxObjectKey);
+        if (docxBytes is null)
+            return StatusCode(502, new { error = "Contract template file is missing from storage." });
+
+        var values = ContractTokenVocabulary.BuildValues(
+            booking, req.SignerName, req.SignerIdCode, req.SignerEmail);
+        var filledDocx = docService.Fill(docxBytes, values);
+
+        // Render to PDF via Gotenberg.
+        byte[] pdfBytes;
         try
         {
-            renderedHtml = await contractService.RenderAsync(req.ContractTemplateId, req.BookingId, ct);
+            pdfBytes = await gotenberg.ConvertDocxToPdfAsync(filledDocx, $"contract-{req.BookingId:N}.docx", ct);
         }
-        catch (KeyNotFoundException ex)
+        catch (InvalidOperationException ex)
         {
-            return NotFound(new { error = ex.Message });
+            logger.LogWarning(ex, "Gotenberg render failed for booking {BookingId}", req.BookingId);
+            return StatusCode(502, new { error = "Contract PDF rendering failed: " + ex.Message });
         }
 
-        // Substitute signer identity fields into the rendered HTML
-        renderedHtml = renderedHtml
-            .Replace("{{tenant_name}}",    System.Web.HttpUtility.HtmlEncode(req.SignerName))
-            .Replace("{{tenant_id_code}}", System.Web.HttpUtility.HtmlEncode(req.SignerIdCode));
-
-        // Upload the HTML file to Dokobit (Dokobit Gateway accepts HTML documents)
-        var fileName  = $"contract-{req.BookingId:N}.html";
-        var fileBytes = Encoding.UTF8.GetBytes(renderedHtml);
-        var upload    = await dokobitService.UploadDocumentAsync(fileName, fileBytes, ct);
+        // Upload the PDF to Dokobit (base64 + digest — never hosted publicly).
+        var fileName = $"contract-{req.BookingId:N}.pdf";
+        var upload   = await dokobitService.UploadDocumentAsync(fileName, pdfBytes, ct);
         if (!upload.Success)
             return StatusCode(502, new { error = $"Dokobit upload failed: {upload.Error}" });
 
-        // Build the return URL from SITE_URL env var (or fallback)
-        var siteUrl    = configuration["SiteUrl"] ?? "https://ruumly.eu";
-        var returnUrl  = $"{siteUrl.TrimEnd('/')}/et/booking/{req.BookingId}/contract/complete";
+        var siteUrl     = configuration["SiteUrl"] ?? "https://ruumly.eu";
+        var postbackUrl = $"{siteUrl.TrimEnd('/')}/api/contracts/dokobit/callback";
+
+        var country = !string.IsNullOrWhiteSpace(req.SignerCountryCode)
+            ? req.SignerCountryCode!.ToUpperInvariant()
+            : (booking.Supplier?.Country ?? "EE");
 
         var signing = await dokobitService.CreateSigningRequestAsync(
-            upload.Token, req.SignerName, req.SignerIdCode, req.SignerEmail, returnUrl, ct);
+            upload.Token,
+            $"Ruumly contract {booking.Id.ToString("N")[..8].ToUpperInvariant()}",
+            new DokobitSigner(req.SignerName, req.SignerIdCode, country, req.SignerPhone, req.SignerEmail),
+            postbackUrl,
+            ct);
         if (!signing.Success)
             return StatusCode(502, new { error = $"Dokobit signing/create failed: {signing.Error}" });
 
-        // SHA-256 of rendered HTML for tamper-evidence
-        var hashBytes = SHA256.HashData(fileBytes);
-        var htmlHash  = Convert.ToHexString(hashBytes).ToLowerInvariant();
+        // SHA-256 of the signed-candidate PDF for tamper-evidence.
+        var pdfHash = Convert.ToHexString(SHA256.HashData(pdfBytes)).ToLowerInvariant();
 
-        // Persist a pending SignedContract record
-        var pending = new SignedContract
+        // Upsert a pending SignedContract for this booking (idempotent on re-initiate).
+        var pending = await db.SignedContracts.FirstOrDefaultAsync(c => c.BookingId == req.BookingId, ct);
+        if (pending is null)
         {
-            BookingId           = req.BookingId,
-            ContractTemplateId  = req.ContractTemplateId,
-            RenderedHtml        = renderedHtml,
-            RenderedHtmlHash    = htmlHash,
-            SignatureDataUrl    = "",          // not applicable for Dokobit path
-            TenantName          = req.SignerName,
-            TenantIdCode        = req.SignerIdCode,
-            TenantEmail         = req.SignerEmail,
-            SignedFromIp        = HttpContext.Connection.RemoteIpAddress?.ToString(),
-            DokobitSigningToken = signing.SigningToken,
-            // Signing method will be updated to "smartid"/"mobileid"/"idcard" when
-            // Dokobit returns signer info on completion. Set a sentinel for now.
-            SigningMethod       = "dokobit",
-            Status              = "pending",
-            SignedAt            = DateTime.UtcNow,
-            CreatedAt           = DateTime.UtcNow,
-        };
-        db.SignedContracts.Add(pending);
+            pending = new SignedContract
+            {
+                BookingId          = req.BookingId,
+                ContractTemplateId = template.Id,
+                CreatedAt          = DateTime.UtcNow,
+            };
+            db.SignedContracts.Add(pending);
+        }
+        pending.ContractTemplateId  = template.Id;
+        pending.RenderedHtml        = string.Empty;          // docx path has no HTML snapshot
+        pending.RenderedHtmlHash    = pdfHash;
+        pending.SignatureDataUrl    = string.Empty;
+        pending.TenantName          = req.SignerName;
+        pending.TenantIdCode        = req.SignerIdCode;
+        pending.TenantEmail         = req.SignerEmail;
+        pending.SignedFromIp        = HttpContext.Connection.RemoteIpAddress?.ToString();
+        pending.DokobitSigningToken = signing.SigningToken;
+        pending.SigningMethod       = "dokobit";             // refined to smartid/mobile on completion
+        pending.Status              = "pending";
+        pending.SignedAt            = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
 
         return Ok(new
@@ -368,8 +399,9 @@ public class ContractController(
     }
 
     /// <summary>
-    /// Polls Dokobit for the signing status. When completed, downloads the
-    /// signed document (future: store to R2) and marks the contract as signed.
+    /// Polls Dokobit for the signing status (fallback to the postback). When completed,
+    /// captures the verified identity, downloads the signed PDF, stores it to R2 and
+    /// marks the contract signed. Booking owner or admin/provider only.
     /// </summary>
     [HttpGet("dokobit/{signingToken}/status")]
     public async Task<IActionResult> DokobitStatus(string signingToken, CancellationToken ct)
@@ -377,65 +409,131 @@ public class ContractController(
         if (!dokobitService.IsEnabled)
             return BadRequest(new { error = "Dokobit is not configured." });
 
-        // Look up the pending contract
         var contract = await db.SignedContracts
             .FirstOrDefaultAsync(c => c.DokobitSigningToken == signingToken, ct);
         if (contract is null) return NotFound(new { error = "Signing session not found." });
 
-        // Only the booking owner (or admin) may poll
         var booking = await db.Bookings.FindAsync([contract.BookingId], ct);
         if (booking is null) return NotFound();
         if (!await CanAccessBookingAsync(booking)) return Forbid();
 
-        // If already terminal, return cached status
+        // Already terminal — return cached status (idempotent).
         if (contract.Status is "completed" or "cancelled" or "error")
-            return Ok(new { status = contract.Status });
+            return Ok(new { status = contract.Status, signedDocumentUrl = contract.SignedDocumentUrl });
 
-        var dokobitStatus = await dokobitService.GetStatusAsync(signingToken, ct);
+        var result = await dokobitService.GetStatusAsync(signingToken, ct);
+        await ApplyDokobitResultAsync(contract, signingToken, result, ct);
 
-        switch (dokobitStatus)
+        return Ok(new { status = contract.Status, signedDocumentUrl = contract.SignedDocumentUrl });
+    }
+
+    /// <summary>
+    /// Dokobit postback endpoint. Anonymous — Dokobit POSTs here after each signature.
+    /// The token is read from the query/form; status is re-fetched server-to-server
+    /// (we never trust the body). Idempotent via the contract's terminal-status guard.
+    /// Always returns 200 so Dokobit does not retry indefinitely.
+    /// </summary>
+    [HttpPost("dokobit/callback")]
+    [AllowAnonymous]
+    public async Task<IActionResult> DokobitCallback(CancellationToken ct)
+    {
+        if (!dokobitService.IsEnabled)
+            return Ok();   // nothing to do; acknowledge so Dokobit stops retrying
+
+        var token = ReadCallbackToken();
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            logger.LogWarning("Dokobit callback received without a signing token.");
+            return Ok();
+        }
+
+        var contract = await db.SignedContracts.FirstOrDefaultAsync(c => c.DokobitSigningToken == token, ct);
+        if (contract is null)
+        {
+            logger.LogWarning("Dokobit callback for unknown signing token {Token}", token);
+            return Ok();
+        }
+
+        // Idempotent: skip if already terminal.
+        if (contract.Status is "completed" or "cancelled" or "error")
+            return Ok();
+
+        var result = await dokobitService.GetStatusAsync(token, ct);
+        await ApplyDokobitResultAsync(contract, token, result, ct);
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// Applies a Dokobit status result to a pending contract: on completion captures the
+    /// gateway-verified identity, downloads + stores the signed PDF to R2, and flips the
+    /// status. Shared by the poll and postback paths. Persists changes.
+    /// </summary>
+    private async Task ApplyDokobitResultAsync(
+        SignedContract contract, string signingToken, DokobitStatusResult result, CancellationToken ct)
+    {
+        switch (result.Status)
         {
             case DokobitSigningStatus.Completed:
-            {
-                // Download the signed PDF from Dokobit and store it in R2.
+                // Capture the VERIFIED identity from the gateway (authoritative — not a form value).
+                if (!string.IsNullOrWhiteSpace(result.VerifiedIdCode))
+                    contract.VerifiedIdCode = result.VerifiedIdCode;
+                if (!string.IsNullOrWhiteSpace(result.VerifiedName))
+                    contract.VerifiedName = result.VerifiedName;
+                if (!string.IsNullOrWhiteSpace(result.SigningOption))
+                    contract.SigningMethod = result.SigningOption!;   // "smartid" | "mobile"
+
                 try
                 {
                     var pdfBytes = await dokobitService.DownloadSignedDocumentAsync(signingToken, ct);
-                    if (pdfBytes.Length > 0)
+                    if (pdfBytes is { Length: > 0 })
                     {
-                        var r2Path  = $"contracts/{contract.BookingId}/{signingToken}.pdf";
-                        using var stream = new System.IO.MemoryStream(pdfBytes);
-                        var publicUrl = await storageService.UploadAsync(stream, r2Path, "application/pdf");
-                        contract.SignedDocumentUrl = publicUrl;
+                        var name = $"signed-contracts/{contract.BookingId:N}/{signingToken}.pdf";
+                        using var stream = new MemoryStream(pdfBytes);
+                        contract.SignedDocumentUrl = await storageService.UploadAsync(stream, name, "application/pdf");
                     }
                 }
                 catch (Exception ex)
                 {
-                    // Log and continue — completing the status record is more important
-                    // than failing the whole poll because R2 is temporarily unavailable.
-                    var logger = HttpContext.RequestServices
-                        .GetRequiredService<ILogger<ContractController>>();
-                    logger.LogError(ex, "Failed to download/upload Dokobit PDF for token {Token}", signingToken);
+                    // Completing the record matters more than a transient R2 hiccup.
+                    logger.LogError(ex, "Failed to download/store signed Dokobit PDF for token {Token}", signingToken);
                 }
 
                 contract.Status   = "completed";
                 contract.SignedAt = DateTime.UtcNow;
-                await db.SaveChangesAsync(ct);
-                return Ok(new { status = "completed", signedDocumentUrl = contract.SignedDocumentUrl });
-            }
+                break;
+
             case DokobitSigningStatus.Cancelled:
                 contract.Status = "cancelled";
-                await db.SaveChangesAsync(ct);
-                return Ok(new { status = "cancelled" });
+                break;
 
             case DokobitSigningStatus.Error:
                 contract.Status = "error";
-                await db.SaveChangesAsync(ct);
-                return Ok(new { status = "error" });
+                break;
 
-            default:
-                return Ok(new { status = "pending" });
+            // Pending → leave as-is.
         }
+
+        await db.SaveChangesAsync(ct);
+    }
+
+    /// <summary>Reads the Dokobit signing token from common callback locations (query or form).</summary>
+    private string? ReadCallbackToken()
+    {
+        foreach (var key in new[] { "token", "signing_token", "signingToken" })
+        {
+            if (Request.Query.TryGetValue(key, out var qv) && !string.IsNullOrWhiteSpace(qv))
+                return qv.ToString();
+        }
+        if (Request.HasFormContentType)
+        {
+            foreach (var key in new[] { "token", "signing_token", "signingToken" })
+            {
+                if (Request.Form.TryGetValue(key, out var fv) && !string.IsNullOrWhiteSpace(fv))
+                    return fv.ToString();
+            }
+        }
+        return null;
     }
 
     /// <summary>

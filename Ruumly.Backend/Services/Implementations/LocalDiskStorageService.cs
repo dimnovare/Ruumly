@@ -14,8 +14,12 @@ public class LocalDiskStorageService(
     private string BaseUrl  => config["Storage:BaseUrl"]  ?? "";
 
     public async Task<string> UploadAsync(Stream stream, string fileName, string contentType)
+        => (await UploadWithKeyAsync(stream, fileName, contentType)).Url;
+
+    public async Task<StoredObject> UploadWithKeyAsync(Stream stream, string fileName, string contentType)
     {
         var now = DateTime.UtcNow;
+        var key = $"{now.Year}/{now.Month:D2}/{fileName}";
         var dir = Path.Combine(BasePath, now.Year.ToString(), now.Month.ToString("D2"));
         Directory.CreateDirectory(dir);
 
@@ -23,9 +27,17 @@ public class LocalDiskStorageService(
         await using var fs = File.Create(fullPath);
         await stream.CopyToAsync(fs);
 
-        var url = $"{BaseUrl}/uploads/{now.Year}/{now.Month:D2}/{fileName}";
+        var url = $"{BaseUrl}/uploads/{key}";
         logger.LogInformation("Saved locally: {Path}", fullPath);
-        return url;
+        return new StoredObject(key, url);
+    }
+
+    public Task<byte[]?> DownloadAsync(string key)
+    {
+        var fullPath = Path.Combine(BasePath, key.Replace('/', Path.DirectorySeparatorChar));
+        return File.Exists(fullPath)
+            ? Task.FromResult<byte[]?>(File.ReadAllBytes(fullPath))
+            : Task.FromResult<byte[]?>(null);
     }
 
     public Task DeleteAsync(string publicUrl)

@@ -21,6 +21,9 @@ public class CloudflareR2StorageService(
         });
 
     public async Task<string> UploadAsync(Stream stream, string fileName, string contentType)
+        => (await UploadWithKeyAsync(stream, fileName, contentType)).Url;
+
+    public async Task<StoredObject> UploadWithKeyAsync(Stream stream, string fileName, string contentType)
     {
         var bucket    = config["Storage:R2BucketName"]!;
         var publicUrl = config["Storage:R2PublicUrl"]!;
@@ -41,7 +44,23 @@ public class CloudflareR2StorageService(
 
         var url = $"{publicUrl}/{key}";
         logger.LogInformation("Uploaded to R2: {Url}", url);
-        return url;
+        return new StoredObject(key, url);
+    }
+
+    public async Task<byte[]?> DownloadAsync(string key)
+    {
+        var bucket = config["Storage:R2BucketName"]!;
+        try
+        {
+            using var resp = await _s3.GetObjectAsync(bucket, key);
+            using var ms = new MemoryStream();
+            await resp.ResponseStream.CopyToAsync(ms);
+            return ms.ToArray();
+        }
+        catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
     }
 
     public async Task DeleteAsync(string publicUrl)

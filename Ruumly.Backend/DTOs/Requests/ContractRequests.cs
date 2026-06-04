@@ -47,8 +47,13 @@ public record StartIdentityVerificationRequest(
 
 public record InitiateDokobitSigningRequest(
     Guid   BookingId,
-    Guid   ContractTemplateId,
     [MaxLength(200)] string SignerName,
     [MaxLength(20)]  string SignerIdCode,
-    [MaxLength(200)] string SignerEmail
+    [MaxLength(200)] string SignerEmail,
+    /// <summary>Optional — pin a specific template. When null, the supplier's active docx template is used.</summary>
+    Guid?  ContractTemplateId = null,
+    /// <summary>ISO alpha-2 country for the eID provider; defaults to the booking supplier's country, else "EE".</summary>
+    [MaxLength(2)] string? SignerCountryCode = null,
+    /// <summary>Optional phone for Mobile-ID prefill.</summary>
+    [MaxLength(20)] string? SignerPhone = null
 );

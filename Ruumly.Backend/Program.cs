@@ -335,9 +335,13 @@ builder.Services.AddScoped<ISupplierPollingService, SupplierPollingService>();
 builder.Services.AddScoped<IContractService, ContractService>();
 builder.Services.AddScoped<SupplierPollingDispatcherJob>();
 builder.Services.AddHttpClient();
-// Dokobit — named HttpClient; IsEnabled gated on DOKOBIT__APITOKEN presence
+// Dokobit — typed HttpClient; IsEnabled gated on Signing:Dokobit:AccessToken presence
 builder.Services.AddHttpClient<DokobitService>();
 builder.Services.AddScoped<IDokobitService, DokobitService>();
+// Contract docx fill (Open XML) + Gotenberg docx→PDF render.
+builder.Services.AddSingleton<IContractDocumentService, OpenXmlContractDocumentService>();
+builder.Services.AddHttpClient<GotenbergClient>(c => c.Timeout = TimeSpan.FromSeconds(90));
+builder.Services.AddScoped<IGotenbergClient, GotenbergClient>();
 
 // ─── Identity verification (Smart-ID / Mobile-ID) ────────────────────────────
 // Env-gated: only registered when SmartId:RelyingPartyUuid is set.
