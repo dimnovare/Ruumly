@@ -157,3 +157,49 @@ Make it run without babysitting, then grow.
 4. **B2 + C:** trust layer + flow polish (parallelizable)
 5. **A:** failure alerting → **E:** ops dashboard
 6. **D:** go-live checklist (gated on Montonio creds, Jun 9)
+
+---
+
+## Execution roadmap — 2026-06-04 (post deep-research synthesis)
+
+A deep-research report was cross-checked against the actual codebase (4 verification
+agents). Most of its "critical gaps" were already built (auth, reviews, legal pages,
+security, SEO, idempotency). The genuine remaining work is below.
+
+### DECISION REVERSAL — Dokobit re-adopted for real signatures
+The 2026-06-03 "scrap Dokobit, Smart-ID only" decision was based on a wrong premise:
+our Smart-ID/Mobile-ID code only **authenticates identity** (hashes a random nonce via
+SK `/authentication`) — it does **not** sign documents. Real qualified e-signing needs
+either Dokobit or a multi-week direct-SK `/signature` + ASiC-E container build. Founder
+chose **Dokobit Documents Gateway** (financially better, already partly wired, produces
+real QES). Sandbox creds in hand (90-day token). Design spec:
+`docs/superpowers/specs/2026-06-04-partner-docx-contracts-dokobit-design.md`.
+
+- Contracts: **partners upload their own `.docx`** with `{{tokens}}` they place themselves;
+  system validates + fills + renders PDF (**Gotenberg** sidecar, not LibreOffice-in-API) +
+  signs via Dokobit. **Tenant-only** signing at launch.
+- This also fixes the known bug: verified ID code now comes from Dokobit `signer_info.code`,
+  not the typed form field.
+
+### P0 — before real money (mostly founder-gated)
+- [ ] **[Founder]** Montonio production creds + one real-euro test (Jun 9) — the revenue gate.
+- [ ] **[Founder]** Replace registry placeholder `16812345` (real Äriregister code; on every footer).
+- [ ] **[Founder/Ops]** Deploy Gotenberg Railway service + `GOTENBERG__URL`; set `SIGNING__DOKOBIT__ACCESSTOKEN`.
+- [ ] **[CC]** Partner-docx → Dokobit signing feature (per spec). **In progress 2026-06-04.**
+- [ ] **[CC]** Stale-date backend test fixtures (spun off).
+
+### P1 — launch-week polish (CC, in progress 2026-06-04, parallel)
+- [ ] **[CC]** SSRF guard on `AdminSuppliersController.TestSupplier` (skips `OutboundEndpointValidator`).
+- [ ] **[CC]** Payment/trust badge graphics at checkout (currently text-only "secured by Montonio").
+- [ ] **[CC]** Wire the E2E Playwright suite into pre-deploy / CI so bulletproof flows can't regress.
+- [ ] **[CC]** Homepage testimonials / social-proof block (beyond per-listing reviews + partner strip).
+
+### P2 — after launch (defer)
+- Dual-signer contracts (tenant + partner) via Dokobit `signers[1]`.
+- DNS-rebinding hardening on the SSRF validator (documented, accepted trade-off).
+- Caching/Redis (only at real traffic; indexes already cover launch scale).
+- Content SEO, referral loops, partners #2–10 (post-traction).
+
+### Explicitly rejected (scope discipline)
+Stripe alongside Montonio · Partner Value Bundle · Next.js/SSR migration ·
+"add email login / guest checkout / lock CORS / add indexes / rate limiting" (all already done).
