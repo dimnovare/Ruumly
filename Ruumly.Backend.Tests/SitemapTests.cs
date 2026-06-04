@@ -3,6 +3,8 @@ using System.Text.RegularExpressions;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Ruumly.Backend.Controllers;
+using Ruumly.Backend.Models;
+using Ruumly.Backend.Models.Enums;
 
 namespace Ruumly.Backend.Tests;
 
@@ -14,6 +16,42 @@ public class SitemapTests
     private static async Task<string> RenderSitemapAsync()
     {
         var db = TestDbContext.Create();
+        var controller = new SitemapController(db);
+        var result = await controller.Sitemap() as ContentResult;
+        return result!.Content!;
+    }
+
+    // Renders the sitemap with one active Tallinn listing seeded, so the
+    // city-page branch of the controller actually emits a /storage/tallinn block.
+    private static async Task<string> RenderSitemapWithTallinnListingAsync()
+    {
+        var db = TestDbContext.Create();
+
+        var supplier = new Supplier
+        {
+            Id           = Guid.NewGuid(),
+            Name         = "Test Supplier",
+            ContactName  = "Contact",
+            ContactEmail = "s@test.ee",
+            ContactPhone = "+372 5000 0000",
+            IsActive     = true,
+        };
+        var listing = new Listing
+        {
+            Id          = Guid.NewGuid(),
+            SupplierId  = supplier.Id,
+            Type        = ListingType.Warehouse,
+            Title       = "Tallinn Storage",
+            Address     = "Test St 1",
+            City        = "Tallinn",
+            PriceUnit   = "kuu",
+            Description = "Test",
+            IsActive    = true,
+        };
+        db.Suppliers.Add(supplier);
+        db.Listings.Add(listing);
+        await db.SaveChangesAsync();
+
         var controller = new SitemapController(db);
         var result = await controller.Sitemap() as ContentResult;
         return result!.Content!;
@@ -101,7 +139,7 @@ public class SitemapTests
     [Fact]
     public async Task Sitemap_CityPages_UseLanguagePrefix()
     {
-        var body = await RenderSitemapAsync();
+        var body = await RenderSitemapWithTallinnListingAsync();
 
         // City pages previously emitted no hreflang at all — verify they now
         // follow the same per-language pattern as everything else.

@@ -283,10 +283,12 @@ public class MontonioWebhookIdempotencyTests : IDisposable
     }
 
     /// <summary>
-    /// Tampered / invalid JWT signature returns false without throwing.
+    /// Tampered / invalid JWT signature must be rejected by throwing
+    /// WebhookSignatureException (→ HTTP 400). A bad signature is not a
+    /// transient error and must not return a 200 that would suppress retries.
     /// </summary>
     [Fact]
-    public async Task Webhook_TamperedJwt_ReturnsFalse()
+    public async Task Webhook_TamperedJwt_Throws()
     {
         var db  = CreateDb();
         var svc = MakeService(db);
@@ -300,8 +302,8 @@ public class MontonioWebhookIdempotencyTests : IDisposable
             signingCredentials: wrongCred);
         var tampered = new JwtSecurityTokenHandler().WriteToken(jwt);
 
-        var ok = await svc.HandleWebhookAsync(tampered);
-        ok.Should().BeFalse("JWT signed with wrong key must be rejected");
+        await Assert.ThrowsAsync<Ruumly.Backend.Helpers.WebhookSignatureException>(
+            () => svc.HandleWebhookAsync(tampered));
     }
 
     /// <summary>

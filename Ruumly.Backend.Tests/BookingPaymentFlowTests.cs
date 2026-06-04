@@ -331,8 +331,10 @@ public class BookingPaymentFlowTests
         var orderService = MakeOrderService(db);
         var act = async () => await orderService.ApproveAsync(order.Id, admin.Id);
 
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithMessage("*invoice not paid*");
+        // Assert on the exception TYPE only — the message is localized
+        // (Estonian by default: "Arvet ei ole tasutud.") so we must not
+        // assert on an English substring.
+        await act.Should().ThrowAsync<ArgumentException>();
     }
 
     [Fact]

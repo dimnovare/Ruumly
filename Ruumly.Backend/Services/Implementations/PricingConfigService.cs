@@ -98,14 +98,19 @@ public class PricingConfigService(RuumlyDbContext db, IDistributedCache cache) :
             return new EffectivePricing(SubscriptionFee: 0m, CommissionRate: 0m);
 
         // Commission rate: driven by DB-configured tier rates
-        // Founding partners pay 0% commission as a permanent benefit
+        decimal tierCommissionRate = supplier.Tier switch {
+            SupplierTier.Premium  => config.Premium.CommissionRate,
+            SupplierTier.Standard => config.Standard.CommissionRate,
+            _                     => config.Starter.CommissionRate,
+        };
+
+        // Founding partners get a permanent 2 percentage-point commission
+        // discount off their tier rate (floored at 0). e.g. starter 12→10,
+        // standard 8→6.
+        // TODO: make the founding-partner commission discount (2pp) admin-configurable via PricingConfig/PlatformSettings
         decimal commission = supplier.FoundingPartner
-            ? 0m
-            : supplier.Tier switch {
-                SupplierTier.Premium  => config.Premium.CommissionRate,
-                SupplierTier.Standard => config.Standard.CommissionRate,
-                _                     => config.Starter.CommissionRate,
-              };
+            ? Math.Max(0, tierCommissionRate - 2)
+            : tierCommissionRate;
 
         // Founding partners get 20% lifetime discount on any paid tier subscription
         decimal subscriptionFee = supplier.FoundingPartner
