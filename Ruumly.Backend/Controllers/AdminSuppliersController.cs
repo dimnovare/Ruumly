@@ -105,6 +105,9 @@ public class AdminSuppliersController(
         if (string.IsNullOrWhiteSpace(body.Name))
             return BadRequest(new { error = ErrorMessages.Get("SUPPLIER_NAME_REQUIRED", Request.GetLang()) });
 
+        if (!string.IsNullOrWhiteSpace(body.ApiEndpoint) && !OutboundEndpointValidator.IsAllowed(body.ApiEndpoint))
+            return BadRequest(new { error = "Endpoint URL is not allowed (must be a public HTTPS host)." });
+
         var supplier = new Supplier
         {
             Id                  = Guid.NewGuid(),
@@ -188,7 +191,12 @@ public class AdminSuppliersController(
             Enum.TryParse<IntegrationType>(body.IntegrationType, true, out var it2))
             supplier.IntegrationType = it2;
         if (body.RecipientEmail is not null)   supplier.RecipientEmail = body.RecipientEmail;
-        if (body.ApiEndpoint is not null)      supplier.ApiEndpoint = body.ApiEndpoint;
+        if (body.ApiEndpoint is not null)
+        {
+            if (!string.IsNullOrWhiteSpace(body.ApiEndpoint) && !OutboundEndpointValidator.IsAllowed(body.ApiEndpoint))
+                return BadRequest(new { error = "Endpoint URL is not allowed (must be a public HTTPS host)." });
+            supplier.ApiEndpoint = body.ApiEndpoint;
+        }
         if (body.ApiAuthType is not null)      supplier.ApiAuthType = body.ApiAuthType;
         if (!string.IsNullOrWhiteSpace(body.ApiAuthToken))
             supplier.ApiAuthToken = tokenProtector.Protect(body.ApiAuthToken);
@@ -359,6 +367,16 @@ public class AdminSuppliersController(
         if (supplier.IntegrationType == IntegrationType.Api &&
             !string.IsNullOrWhiteSpace(supplier.ApiEndpoint))
         {
+            // SSRF guard — refuse to probe loopback, private ranges, cloud metadata,
+            // Railway internal, or non-HTTP(S) schemes via an admin-supplied endpoint.
+            if (!OutboundEndpointValidator.IsAllowed(supplier.ApiEndpoint))
+            {
+                logger.LogWarning(
+                    "SSRF guard blocked test for supplier {SupplierId} — endpoint '{Endpoint}' not allowed",
+                    id, supplier.ApiEndpoint);
+                return BadRequest(new { error = "Endpoint URL is not allowed (must be a public HTTPS host)." });
+            }
+
             var client = httpClientFactory.CreateClient();
             client.Timeout = TimeSpan.FromSeconds(10);
             var sw = Stopwatch.StartNew();
@@ -598,7 +616,12 @@ public class AdminSuppliersController(
             supplier.IntegrationType = it;
 
         if (body.RecipientEmail is not null) supplier.RecipientEmail = body.RecipientEmail;
-        if (body.ApiEndpoint is not null)    supplier.ApiEndpoint    = body.ApiEndpoint;
+        if (body.ApiEndpoint is not null)
+        {
+            if (!string.IsNullOrWhiteSpace(body.ApiEndpoint) && !OutboundEndpointValidator.IsAllowed(body.ApiEndpoint))
+                return BadRequest(new { error = "Endpoint URL is not allowed (must be a public HTTPS host)." });
+            supplier.ApiEndpoint    = body.ApiEndpoint;
+        }
         if (body.ApiAuthType is not null)    supplier.ApiAuthType    = body.ApiAuthType;
         if (!string.IsNullOrWhiteSpace(body.ApiAuthToken))
             supplier.ApiAuthToken = tokenProtector.Protect(body.ApiAuthToken);
