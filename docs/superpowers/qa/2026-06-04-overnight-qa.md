@@ -71,6 +71,19 @@ All gated: tsc clean, e2e 70/70 (clean CI server), live-verified. Backend untouc
 - L1 sign-done modal button says "Sulge"/Close not "Continue to payment". L2 contract Dialog a11y (DialogTitle/aria-describedby). L3 payment-fail toast text English. Detail pages /et/moving/:id, /et/trailer/:id still deep-linkable when service disabled (recommend 404/redirect).
 - **L4 (medium): conditional-payment clause only GUARANTEED on the Dokobit path.** `ContractController.InitiateDokobitSigning` calls `docService.AppendClause(...)` so the eID/Dokobit path always binds the "void if unpaid in {N}h" clause (this is Estonia's prod signing path ✓). The canvas/preview path only gets the clause if the provider template includes the `{{payment_condition_clause}}` token. So a canvas-fallback sign on a token-less template yields a signed contract WITHOUT the clause. Recommend: AppendClause on the preview/canvas path too, so the protection is universal regardless of signing method/template. (Clause itself is unit-tested by Agent 1; verified present in code, not live-grep-able locally since Dokobit is disabled.)
 
+## ITERATION 2 (~00:40) — more flows
+
+### Verified GOOD (live)
+- **Search filters** all work + storage-only holds: priceMax=50→22, city=Tallinn→13, sizeCategory=S→2, availableNow→53, sort=cheapest reorders; **0 moving/trailer leak on every filter**, no crashes.
+- **Pay-later / rebate path:** select "Broneeri 24 tunniks" → confirm → **sign gate STILL opens** (pay-later also requires signing) → canvas sign → success screen "Broneering kinnitatud!" with 24h reservation countdown + "arve e-postiga" + auto-cancel-in-24h note; **NO payments/initiate call** (correct, no Montonio). Old post-payment ContractCta gone. ✓
+- **Account bookings + cancel:** list renders (Ootel/Kinnitatud/Lõpetatud/Tühistatud tabs); the 2 auto-voided bookings correctly show as Tühistatud; clicking a Pending booking → "Tühista broneering" → `PATCH /api/bookings/{id}/cancel` 200 → cancelled. ✓
+- **Provider onboarding (revenue path):** ProviderOnboardingPage.handleSubmit properly wired — authed → `/auth/apply-provider` (401 w/o auth), anonymous → `/auth/apply-provider-public` (400 validation, exists). Public application without forced account works. ✓
+- **ru + lv** booking wizard + search: no crash, no raw i18n keys, 0 moving/trailer leak. ✓
+- Prod re-verified healthy (api 200, ruumly.eu 200).
+
+### B3 (BUG, HIGH for launch, NOT fixed — needs your call): contact form is a no-op that fakes success
+`src/pages/ContactPage.tsx:99` — submit is literally `onClick={() => setSubmitted(true)}`. NO API call, NO validation, NO field read. It shows "Sõnum saadetud! Vastame teile 24 tunni jooksul" while DISCARDING the message. No backend contact endpoint exists (`/api/contact`,`/support`,`/leads` all 404). A launching marketplace silently loses every contact inquiry. RECOMMEND: add a backend contact endpoint that emails info@ruumly.eu (via EmailTranslations, 5 langs) + wire the form with validation, OR (minimal) make it a mailto: prefill. Not built overnight — needs a product decision on where messages route. (Contrast: provider onboarding IS properly wired.)
+
 ## Findings (running log)
 
 ### CONFIRMED GOOD (sign-then-pay, verified live on local stack)
