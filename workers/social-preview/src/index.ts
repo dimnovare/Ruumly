@@ -68,29 +68,29 @@ const CITY_TITLE: Record<Lang, (city: string) => string> = {
 };
 
 const CITY_DESC: Record<Lang, (city: string) => string> = {
-  et: (c) => `Leia laopindu, kolimis- ja haagiseteenuseid ${c} piirkonnas Ruumly kaudu.`,
-  en: (c) => `Find warehouse storage, moving services, and trailer rentals in ${c} on Ruumly.`,
-  ru: (c) => `Найдите складские помещения, услуги переезда и аренду прицепов в ${c} на Ruumly.`,
-  lv: (c) => `Atrodi noliktavu, pārvākšanās un piekabju nomas pakalpojumus ${c} ar Ruumly.`,
-  lt: (c) => `Raskite sandėliavimą, perkraustymo paslaugas ir priekabų nuomą ${c} su Ruumly.`,
+  et: (c) => `Leia ja broneeri laopinda ${c} piirkonnas Ruumly kaudu. Kontrollitud partnerid.`,
+  en: (c) => `Find and book self-storage and warehouse space in ${c} on Ruumly. Verified partners.`,
+  ru: (c) => `Найдите и забронируйте склад в ${c} на Ruumly. Проверенные партнёры.`,
+  lv: (c) => `Atrodi un rezervē noliktavas telpu ${c} ar Ruumly. Pārbaudīti partneri.`,
+  lt: (c) => `Raskite ir užsisakykite sandėliavimo vietą ${c} su Ruumly. Patikrinti partneriai.`,
 };
 
 // ── Homepage copy per language ─────────────────────────────────────────────────
 
 const HOME_TITLE: Record<Lang, string> = {
-  et: "Ruumly — Laopinnad, kolimine ja haagised Eestis",
-  en: "Ruumly — Storage, Moving & Trailer Services",
-  ru: "Ruumly — Склады, переезд и прицепы в Прибалтике",
-  lv: "Ruumly — Noliktavas, pārcelšanās un piekabe Baltijā",
-  lt: "Ruumly — Sandėliai, kraustymasis ir priekabos Baltijos šalyse",
+  et: "Ruumly — Rendi laopinda Eestis",
+  en: "Ruumly — Rent storage across the Baltics",
+  ru: "Ruumly — Аренда склада в Прибалтике",
+  lv: "Ruumly — Noliktavas noma Latvijā",
+  lt: "Ruumly — Sandėlio nuoma Lietuvoje",
 };
 
 const HOME_DESC: Record<Lang, string> = {
-  et: "Leia ja broneeri laopindu, kolimisteenuseid ja haagiseid üle Eesti ja Baltikumi.",
-  en: "Find and book warehouse storage, moving services, and trailer rentals across Estonia and the Baltics.",
-  ru: "Найдите и забронируйте склады, услуги переезда и аренду прицепов в странах Балтии.",
-  lv: "Atrodi un rezervē noliktavas, pārcelšanās pakalpojumus un piekabju nomu Baltijā.",
-  lt: "Raskite ir užsisakykite sandėliavimą, perkraustymo paslaugas ir priekabų nuomą Baltijos šalyse.",
+  et: "Leia ja broneeri laopinda üle Eesti. Kiire kinnitus, kontrollitud partnerid.",
+  en: "Find and book storage space across the Baltics. Instant confirmation, verified partners.",
+  ru: "Найдите и забронируйте склад по всей Прибалтике. Проверенные партнёры.",
+  lv: "Atrodi un rezervē noliktavas telpu visā Latvijā. Pārbaudīti partneri.",
+  lt: "Raskite ir užsisakykite sandėliavimo vietą visoje Lietuvoje. Patikrinti partneriai.",
 };
 
 function parseLang(segment: string | undefined): Lang {
@@ -138,8 +138,8 @@ interface OgData {
 
 const SITE_NAME    = "Ruumly";
 const DEFAULT_IMAGE = "https://ruumly.eu/ruumly-logo.png";
-const DEFAULT_TITLE = "Ruumly — Storage, Moving & Trailer Services";
-const DEFAULT_DESC  = "Browse and book warehouse storage, moving services, and trailer rentals across Estonia and the Baltics.";
+const DEFAULT_TITLE = "Ruumly — Rent storage across the Baltics";
+const DEFAULT_DESC  = "Find and book secure self-storage and warehouse space. Instant confirmation, verified partners.";
 
 function withSiteName(title: string): string {
   return title.includes(SITE_NAME) ? title : `${title} — ${SITE_NAME}`;
