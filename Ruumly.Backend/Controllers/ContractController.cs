@@ -47,6 +47,20 @@ public class ContractController(
             .ThenBy(t => t.Name)
             .ToListAsync();
 
+        // No supplier template → expose the in-code platform default so the frontend modal shows a
+        // signable contract instead of dead-ending. The preview re-renders server-side from the
+        // sentinel id (the Html field here is not used to render).
+        if (templates.Count == 0)
+        {
+            var now = DateTime.UtcNow.ToString("o");
+            return Ok(new[]
+            {
+                new ContractTemplateDto(
+                    PlatformDefaultContract.TemplateId, PlatformDefaultContract.Name,
+                    string.Empty, true, true, now, now),
+            });
+        }
+
         return Ok(templates.Select(t => new ContractTemplateDto(
             t.Id, t.Name, t.HtmlTemplate, t.IsActive, t.IsDefault,
             t.CreatedAt.ToString("o"), t.UpdatedAt.ToString("o"))));
@@ -326,17 +340,35 @@ public class ContractController(
             : (booking.ContactPhone ?? booking.User?.Phone);
 
         // Resolve the docx template: explicit id if given, else the supplier's active docx.
-        var template = await db.ContractTemplates.FirstOrDefaultAsync(t =>
-            t.SupplierId == booking.SupplierId
-            && t.TemplateType == ContractTemplateType.Docx
-            && (req.ContractTemplateId != null ? t.Id == req.ContractTemplateId : t.IsActive), ct);
-        if (template is null || string.IsNullOrEmpty(template.DocxObjectKey))
-            return NotFound(new { error = "No active docx contract template is configured for this supplier." });
+        // Skip the supplier lookup entirely when the caller explicitly requests the platform default.
+        var template = req.ContractTemplateId == PlatformDefaultContract.TemplateId
+            ? null
+            : await db.ContractTemplates.FirstOrDefaultAsync(t =>
+                t.SupplierId == booking.SupplierId
+                && t.TemplateType == ContractTemplateType.Docx
+                && (req.ContractTemplateId != null ? t.Id == req.ContractTemplateId : t.IsActive), ct);
 
-        // Fetch the docx and fill it with this booking's values.
-        var docxBytes = await storageService.DownloadAsync(template.DocxObjectKey);
-        if (docxBytes is null)
-            return StatusCode(502, new { error = "Contract template file is missing from storage." });
+        // The template id we stamp onto the SignedContract (real template or the platform-default sentinel).
+        Guid contractTemplateId;
+        byte[] docxBytes;
+
+        if (template is not null && !string.IsNullOrEmpty(template.DocxObjectKey))
+        {
+            // Fetch the supplier's uploaded docx and fill it with this booking's values.
+            var downloaded = await storageService.DownloadAsync(template.DocxObjectKey);
+            if (downloaded is null)
+                return StatusCode(502, new { error = "Contract template file is missing from storage." });
+            docxBytes          = downloaded;
+            contractTemplateId = template.Id;
+        }
+        else
+        {
+            // PROD-CRITICAL fallback: no supplier docx template → build the in-code platform default.
+            // The built docx carries {{token}} placeholders that the existing Fill pipeline resolves,
+            // so the rest of the flow (Fill → AppendClause → Gotenberg → Dokobit) is unchanged.
+            docxBytes          = docService.BuildDocx(PlatformDefaultContract.Paragraphs);
+            contractTemplateId = PlatformDefaultContract.TemplateId;
+        }
 
         // Sign-then-pay: the rental is conditional on payment within the configured window.
         // Resolve the same window the auto-void job uses so the contract text and the
@@ -398,12 +430,12 @@ public class ContractController(
             pending = new SignedContract
             {
                 BookingId          = req.BookingId,
-                ContractTemplateId = template.Id,
+                ContractTemplateId = contractTemplateId,
                 CreatedAt          = DateTime.UtcNow,
             };
             db.SignedContracts.Add(pending);
         }
-        pending.ContractTemplateId  = template.Id;
+        pending.ContractTemplateId  = contractTemplateId;
         pending.RenderedHtml        = string.Empty;          // docx path has no HTML snapshot
         pending.RenderedHtmlHash    = pdfHash;
         pending.SignatureDataUrl    = string.Empty;

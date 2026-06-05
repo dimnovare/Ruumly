@@ -21,9 +21,6 @@ public class ContractService(
     public async Task<string> RenderAsync(
         Guid templateId, Guid bookingId, CancellationToken ct = default)
     {
-        var template = await db.ContractTemplates.FindAsync([templateId], ct)
-            ?? throw new KeyNotFoundException($"Contract template {templateId} not found.");
-
         var booking = await db.Bookings
             .Include(b => b.User)
             .Include(b => b.Listing)
@@ -31,6 +28,20 @@ public class ContractService(
             .Include(b => b.Supplier)
             .FirstOrDefaultAsync(b => b.Id == bookingId, ct)
             ?? throw new KeyNotFoundException($"Booking {bookingId} not found.");
+
+        var hours = await ResolvePaymentConditionHoursAsync(ct);
+
+        // ── Platform-default fallback ────────────────────────────────────────────
+        // The sentinel id is not a real ContractTemplate row; render the in-code default whose
+        // body already includes {{payment_condition_clause}}. No supplier-mismatch check applies.
+        if (templateId == PlatformDefaultContract.TemplateId)
+        {
+            var values = ContractTokenVocabulary.BuildValues(booking, paymentConditionHours: hours);
+            return PlatformDefaultContract.RenderHtml(values);
+        }
+
+        var template = await db.ContractTemplates.FindAsync([templateId], ct)
+            ?? throw new KeyNotFoundException($"Contract template {templateId} not found.");
 
         if (template.SupplierId != booking.SupplierId)
             throw new InvalidOperationException(
@@ -56,7 +67,31 @@ public class ContractService(
             .Replace("{{signed_date}}",    DateTime.UtcNow.ToString("dd.MM.yyyy"))
             .Replace("{{supplier_name}}",  HttpUtility.HtmlEncode(supplier?.Name ?? ""));
 
+        // L4: always bind the conditional-on-payment clause, even when the provider's HTML template
+        // omits it. A signed-but-unpaid contract must state it binds no one. Mirror the docx path,
+        // which appends the same clause via AppendClause.
+        html += "<hr/><p><strong>Conditional upon payment:</strong> "
+              + HttpUtility.HtmlEncode(ContractTokenVocabulary.PaymentConditionClause(hours))
+              + "</p>";
+
         return html;
+    }
+
+    /// <summary>
+    /// Reads the configured sign-then-pay window (hours) from PlatformSettings, falling back to 24.
+    /// Same key the StaleBookingCleanupJob uses, so the contract clause and the auto-void safeguard
+    /// stay in lockstep. Mirrors ContractController.ResolvePaymentConditionHoursAsync.
+    /// </summary>
+    private async Task<int> ResolvePaymentConditionHoursAsync(CancellationToken ct)
+    {
+        var value = await db.PlatformSettings
+            .Where(s => s.Key == Jobs.StaleBookingCleanupJob.ExpiryHoursSettingKey)
+            .Select(s => s.Value)
+            .FirstOrDefaultAsync(ct);
+
+        return value is not null && int.TryParse(value, out var hours) && hours > 0
+            ? hours
+            : 24;
     }
 
     public async Task<SignedContract> SignAsync(

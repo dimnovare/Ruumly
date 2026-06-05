@@ -87,6 +87,39 @@ public sealed class OpenXmlContractDocumentService : IContractDocumentService
     }
 
     /// <inheritdoc />
+    public byte[] BuildDocx(IEnumerable<string> paragraphs)
+    {
+        using var stream = new MemoryStream();
+
+        using (var doc = WordprocessingDocument.Create(stream, WordprocessingDocumentType.Document))
+        {
+            var mainPart = doc.AddMainDocumentPart();
+            mainPart.Document = new Document();
+            var body = new Body();
+            mainPart.Document.AppendChild(body);
+
+            foreach (var text in paragraphs)
+            {
+                var paragraph = new Paragraph();
+                var run       = new Run();
+                var lines     = (text ?? string.Empty).Replace("\r\n", "\n").Split('\n');
+                for (var i = 0; i < lines.Length; i++)
+                {
+                    if (i > 0) run.Append(new Break());
+                    // Preserve the {{token}} placeholders literally so Fill replaces them later.
+                    run.Append(new Text(lines[i]) { Space = SpaceProcessingModeValues.Preserve });
+                }
+                paragraph.Append(run);
+                body.Append(paragraph);
+            }
+
+            mainPart.Document.Save();
+        }
+
+        return stream.ToArray();
+    }
+
+    /// <inheritdoc />
     public byte[] AppendClause(byte[] docxBytes, string clauseText)
     {
         if (string.IsNullOrWhiteSpace(clauseText))
