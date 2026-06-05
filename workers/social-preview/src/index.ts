@@ -151,6 +151,10 @@ interface OgData {
 
 const SITE_NAME    = "Ruumly";
 const DEFAULT_IMAGE = "https://ruumly.eu/ruumly-og.png?v=2";
+// Bump to invalidate cached OG HTML at the edge (caches.default persists across
+// deploys, so changing og:image/title/desc otherwise won't reach crawlers until
+// the entry's TTL expires).
+const OG_CACHE_VERSION = "2";
 const DEFAULT_TITLE = "Ruumly — Rent storage across the Baltics";
 const DEFAULT_DESC  = "Find and book secure self-storage and warehouse space. Instant confirmation, verified partners.";
 
@@ -418,7 +422,10 @@ export default {
 
     // 1. Check Workers edge cache first
     const cache    = caches.default;
-    const cacheKey = new Request(request.url, { method: "GET" });
+    // Versioned cache key — bumping OG_CACHE_VERSION invalidates stale OG HTML.
+    const cacheUrlObj = new URL(request.url);
+    cacheUrlObj.searchParams.set("_ogv", OG_CACHE_VERSION);
+    const cacheKey = new Request(cacheUrlObj.toString(), { method: "GET" });
     const cached   = await cache.match(cacheKey);
     if (cached) return cached;
 
