@@ -44,6 +44,19 @@ function isCrawler(userAgent: string): boolean {
   return CRAWLER_UA_FRAGMENTS.some((fragment) => ua.includes(fragment));
 }
 
+/**
+ * Static asset paths (og:image, favicon, PWA icons, manifest, fonts, sitemap, …)
+ * must always be served from origin — never rewritten to OG HTML. Otherwise a
+ * social crawler that fetches the og:image gets HTML back and the link preview
+ * renders no image at all.
+ */
+const STATIC_ASSET_EXT =
+  /\.(png|jpe?g|gif|webp|avif|svg|ico|json|webmanifest|xml|txt|css|js|mjs|map|woff2?|ttf|otf|eot|mp4|webm|pdf)$/i;
+
+function isStaticAsset(pathname: string): boolean {
+  return STATIC_ASSET_EXT.test(pathname);
+}
+
 // ── Language helpers ──────────────────────────────────────────────────────────
 
 type Lang = "et" | "en" | "ru" | "lv" | "lt";
@@ -137,7 +150,7 @@ interface OgData {
 }
 
 const SITE_NAME    = "Ruumly";
-const DEFAULT_IMAGE = "https://ruumly.eu/ruumly-og.png";
+const DEFAULT_IMAGE = "https://ruumly.eu/ruumly-og.png?v=2";
 const DEFAULT_TITLE = "Ruumly — Rent storage across the Baltics";
 const DEFAULT_DESC  = "Find and book secure self-storage and warehouse space. Instant confirmation, verified partners.";
 
@@ -392,6 +405,12 @@ export default {
 
     // ── Non-crawlers in PRODUCTION: pass straight to Vercel origin ──────────
     if (!isCrawler(userAgent)) {
+      return fetch(request);
+    }
+
+    // ── Crawlers requesting a static asset (og:image, icons, manifest, …): ──
+    // serve the real file from origin, never the OG HTML, or the card is blank.
+    if (isStaticAsset(url.pathname)) {
       return fetch(request);
     }
 
