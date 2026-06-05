@@ -91,6 +91,13 @@ All gated: tsc clean, e2e 70/70 (clean CI server), live-verified. Backend untouc
 ### COVERAGE NOW ESSENTIALLY COMPLETE
 All sign-then-pay variants (pay-now / pay-later / sign-cancelled / payment-failed), both safeguards (no-pay-without-sign + auto-void) verified live, storage-only fixed+verified across pages/filters/5 langs, search filters, account+cancel, provider onboarding, email gate, how-it-works+JSON-LD, admin+provider portals, mobile, i18n, OG worker, prod health. 4 fixes shipped to prod. Open items are all documented below (H1 launch-critical, B3 contact-form, L1-L4) — they need product decisions, not more testing.
 
+## MORNING — user-directed fixes (H1, B3, L4) implemented + verified
+
+- **H1 (RESOLVED): platform-default contract template.** New `Helpers/PlatformDefaultContract.cs` (sentinel id `d0000000-…-def0`, no migration/FK — `SignedContract.ContractTemplateId` is a plain Guid). Wired into `GetTemplates` (returns the default when a supplier has none → modal no longer dead-ends), the HTML/canvas render+sign, and the **Dokobit/docx path** (`InitiateDokobitSigning` builds the default docx in-code via new `OpenXmlContractDocumentService.BuildDocx` → existing Fill→clause→Gotenberg pipeline). Verified LIVE on canvas path: BalticBox (non-templated) booking → gate shows the default agreement, "Edasi allkirjastama" enabled (was permanently disabled), canvas sign 200, stored SignedContract has the sentinel id + the clause (`has_clause=t`). Prod-critical Docx path: **default docx → PDF verified via a real local Gotenberg sidecar (%PDF)**; Dokobit UPLOAD still needs a staging smoke-test (no creds locally). **Legal text needs operator/counsel review** before onboarding suppliers (prod has 0 listings so nothing renders against it yet). Commit 2a89241.
+- **L4 (FIXED): conditional-payment clause now bound on the HTML/canvas path too** (was Dokobit-only). `ContractService.RenderAsync` always appends the "void if unpaid in {N}h" clause (default body already contains it). Verified: canvas-signed default contract's RenderedHtml contains "automatically void". Part of 2a89241.
+- **B3 (FIXED): contact form now works.** New `POST /api/contact` (anonymous, rate-limited `auth`, emails siteEmail/info@ruumly.eu via IEmailSender, mirrors notify-interest) + `ContactPage` wired with validation/loading/error + 7 i18n keys ×5. Verified live: 200 {success} + 400 validation; the no-op fake-success is gone. Commits d8ce665 (backend) + 71c5681 (frontend).
+- Gates: backend build clean, **dotnet test 154 passed / 2 skipped** (145 + 4 contact + 5 platform); frontend **tsc clean + e2e 70/70** (clean server).
+
 ## Findings (running log)
 
 ### CONFIRMED GOOD (sign-then-pay, verified live on local stack)
