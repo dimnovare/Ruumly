@@ -2452,6 +2452,7 @@ public static class SeedData
             ["showProviderCta"]      = ("true",       "Show provider CTA section on homepage"),
             ["showFaq"]              = ("true",       "Show FAQ section on homepage"),
             ["showMap"]              = ("true",       "Show interactive map on homepage"),
+            ["showTestimonials"]     = ("false",      "Show testimonials/social-proof section on homepage (placeholder quotes until real reviews exist)"),
             ["heroSubtitle"]         = ("Üks platvorm — laopinnad, kolimine ja haagised. Leia asukoht, vali sobiv ühik, broneeri.", "Homepage hero subtitle — supports {discount} placeholder"),
             ["heroDiscount"]         = ("10",         "Discount percentage shown on homepage"),
             // ── Pricing config (read by IPricingConfigService) ──────────────
