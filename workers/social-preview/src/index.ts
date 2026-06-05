@@ -137,7 +137,7 @@ interface OgData {
 }
 
 const SITE_NAME    = "Ruumly";
-const DEFAULT_IMAGE = "https://ruumly.eu/ruumly-logo.png";
+const DEFAULT_IMAGE = "https://ruumly.eu/ruumly-og.png";
 const DEFAULT_TITLE = "Ruumly — Rent storage across the Baltics";
 const DEFAULT_DESC  = "Find and book secure self-storage and warehouse space. Instant confirmation, verified partners.";
 
