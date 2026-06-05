@@ -150,11 +150,11 @@ interface OgData {
 }
 
 const SITE_NAME    = "Ruumly";
-const DEFAULT_IMAGE = "https://ruumly.eu/ruumly-og.png?v=2";
+const DEFAULT_IMAGE = "https://ruumly.eu/ruumly-og.png?v=3";
 // Bump to invalidate cached OG HTML at the edge (caches.default persists across
 // deploys, so changing og:image/title/desc otherwise won't reach crawlers until
 // the entry's TTL expires).
-const OG_CACHE_VERSION = "2";
+const OG_CACHE_VERSION = "3";
 const DEFAULT_TITLE = "Ruumly — Rent storage across the Baltics";
 const DEFAULT_DESC  = "Find and book secure self-storage and warehouse space. Instant confirmation, verified partners.";
 
