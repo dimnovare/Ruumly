@@ -98,6 +98,10 @@ All sign-then-pay variants (pay-now / pay-later / sign-cancelled / payment-faile
 - **B3 (FIXED): contact form now works.** New `POST /api/contact` (anonymous, rate-limited `auth`, emails siteEmail/info@ruumly.eu via IEmailSender, mirrors notify-interest) + `ContactPage` wired with validation/loading/error + 7 i18n keys ×5. Verified live: 200 {success} + 400 validation; the no-op fake-success is gone. Commits d8ce665 (backend) + 71c5681 (frontend).
 - Gates: backend build clean, **dotnet test 154 passed / 2 skipped** (145 + 4 contact + 5 platform); frontend **tsc clean + e2e 70/70** (clean server).
 
+## H1 Dokobit-path staging test — CLOSED (passed)
+Ran the local backend with the real Dokobit **sandbox** token (Railway `SIGNING__DOKOBIT__ENVIRONMENT=test`, gateway-sandbox.dokobit.com) + a local Gotenberg container. Created a booking on a template-less supplier (Hoidla Lasnamäe) and called `POST /api/contracts/dokobit/initiate` → **200** with a real sandbox signing URL (`gateway-sandbox.dokobit.com/signing/…`). This exercised the ENTIRE prod-critical chain for the platform default: no supplier docx → `BuildDocx(default)` → `Fill` → `AppendClause` → Gotenberg docx→PDF → Dokobit sandbox upload → create-signing-request → signing URL. SignedContract persisted `pending`, `SigningMethod=dokobit`, `ContractTemplateId=` the sentinel `d0000000-…-def0`, signing token + PDF hash set. So H1 is verified on BOTH the canvas/HTML and the Dokobit/docx paths. Local stack restored to dev config; temp files with the sandbox token removed afterwards.
+(Note: prod Dokobit is still in `test`/sandbox mode — go-live to production Dokobit is a separate step.)
+
 ## Findings (running log)
 
 ### CONFIRMED GOOD (sign-then-pay, verified live on local stack)
