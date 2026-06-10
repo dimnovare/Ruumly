@@ -475,8 +475,10 @@ public class ContractController(
         if (booking is null) return NotFound();
         if (!await CanAccessBookingAsync(booking)) return Forbid();
 
-        // Already terminal — return cached status (idempotent).
-        if (contract.Status is "completed" or "cancelled" or "error")
+        // A completed Dokobit row is terminal only after its legal artifacts were persisted.
+        // Older/incomplete rows are deliberately reprocessed so transient failures self-heal.
+        if ((contract.Status == "completed" && HasDokobitArtifacts(contract))
+            || contract.Status is "cancelled" or "error")
             return Ok(new { status = contract.Status, signedDocumentUrl = contract.SignedDocumentUrl });
 
         var result = await dokobitService.GetStatusAsync(signingToken, ct);
@@ -512,8 +514,9 @@ public class ContractController(
             return Ok();
         }
 
-        // Idempotent: skip if already terminal.
-        if (contract.Status is "completed" or "cancelled" or "error")
+        // Idempotent only when completion includes the verified identity and signed PDF.
+        if ((contract.Status == "completed" && HasDokobitArtifacts(contract))
+            || contract.Status is "cancelled" or "error")
             return Ok();
 
         var result = await dokobitService.GetStatusAsync(token, ct);
@@ -541,24 +544,40 @@ public class ContractController(
                 if (!string.IsNullOrWhiteSpace(result.SigningOption))
                     contract.SigningMethod = result.SigningOption!;   // "smartid" | "mobile"
 
-                try
+                if (string.IsNullOrWhiteSpace(contract.SignedDocumentUrl))
                 {
-                    var pdfBytes = await dokobitService.DownloadSignedDocumentAsync(signingToken, ct);
-                    if (pdfBytes is { Length: > 0 })
+                    try
                     {
-                        var name = $"signed-contracts/{contract.BookingId:N}/{signingToken}.pdf";
-                        using var stream = new MemoryStream(pdfBytes);
-                        contract.SignedDocumentUrl = await storageService.UploadAsync(stream, name, "application/pdf");
+                        var pdfBytes = await dokobitService.DownloadSignedDocumentAsync(signingToken, ct);
+                        if (pdfBytes is { Length: > 0 })
+                        {
+                            var name = $"signed-contracts/{contract.BookingId:N}/{signingToken}.pdf";
+                            using var stream = new MemoryStream(pdfBytes);
+                            contract.SignedDocumentUrl = await storageService.UploadAsync(stream, name, "application/pdf");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Failed to download/store signed Dokobit PDF for token {Token}", signingToken);
                     }
                 }
-                catch (Exception ex)
-                {
-                    // Completing the record matters more than a transient R2 hiccup.
-                    logger.LogError(ex, "Failed to download/store signed Dokobit PDF for token {Token}", signingToken);
-                }
 
-                contract.Status   = "completed";
-                contract.SignedAt = DateTime.UtcNow;
+                if (HasDokobitArtifacts(contract))
+                {
+                    contract.Status   = "completed";
+                    contract.SignedAt = DateTime.UtcNow;
+                }
+                else
+                {
+                    contract.Status = "pending";
+                    logger.LogWarning(
+                        "Dokobit signing {Token} is complete at the gateway but artifacts are incomplete. " +
+                        "VerifiedId={HasId}, VerifiedName={HasName}, SignedDocument={HasDocument}; will retry.",
+                        signingToken,
+                        !string.IsNullOrWhiteSpace(contract.VerifiedIdCode),
+                        !string.IsNullOrWhiteSpace(contract.VerifiedName),
+                        !string.IsNullOrWhiteSpace(contract.SignedDocumentUrl));
+                }
                 break;
 
             case DokobitSigningStatus.Cancelled:
@@ -574,6 +593,11 @@ public class ContractController(
 
         await db.SaveChangesAsync(ct);
     }
+
+    private static bool HasDokobitArtifacts(SignedContract contract) =>
+        !string.IsNullOrWhiteSpace(contract.VerifiedIdCode)
+        && !string.IsNullOrWhiteSpace(contract.VerifiedName)
+        && !string.IsNullOrWhiteSpace(contract.SignedDocumentUrl);
 
     /// <summary>Reads the Dokobit signing token from common callback locations (query or form).</summary>
     private string? ReadCallbackToken()

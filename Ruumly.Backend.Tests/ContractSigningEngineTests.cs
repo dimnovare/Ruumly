@@ -1,6 +1,9 @@
 using System.IO.Compression;
+using System.Net;
 using System.Text;
 using FluentAssertions;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Services.Implementations;
 using Xunit;
@@ -192,6 +195,123 @@ public class ContractSigningEngineTests
         result.SigningOption.Should().Be("mobile");
     }
 
+    [Fact]
+    public void ParseStatus_completed_sandbox_shape_reads_certificate_identity()
+    {
+        // Sanitized shape returned by gateway-sandbox.dokobit.com after signing.
+        const string json = """
+            {
+              "status": "completed",
+              "signers": {
+                "1": {
+                  "status": "signed",
+                  "signing_time": "2026-06-10 15:11:54",
+                  "signature_id": "S-123"
+                }
+              },
+              "structure": {
+                "signatures": [
+                  {
+                    "certificate": {
+                      "subject": {
+                        "country": "EE",
+                        "surname": "O’CONNEŽ-ŠUSLIK TESTNUMBER",
+                        "name": "MARY ÄNN",
+                        "serial_number": "PNOEE-60001019906"
+                      }
+                    },
+                    "type": "qes"
+                  }
+                ]
+              }
+            }
+            """;
+
+        var result = DokobitService.ParseStatus(json);
+
+        result.Status.Should().Be(Ruumly.Backend.Services.Interfaces.DokobitSigningStatus.Completed);
+        result.VerifiedIdCode.Should().Be("60001019906");
+        result.VerifiedName.Should().Be("MARY ÄNN O’CONNEŽ-ŠUSLIK TESTNUMBER");
+    }
+
+    [Fact]
+    public async Task DownloadSignedDocument_follows_top_level_file_url_from_status()
+    {
+        var handler = new StubHttpMessageHandler(req =>
+        {
+            if (req.RequestUri!.AbsolutePath.EndsWith("/status.json"))
+            {
+                return JsonResponse("""
+                    {
+                      "status": "completed",
+                      "file": "https://gateway-sandbox.dokobit.com/api/signing/session/download"
+                    }
+                    """);
+            }
+
+            if (req.RequestUri.AbsolutePath.EndsWith("/download"))
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new ByteArrayContent("%PDF-test"u8.ToArray()),
+                };
+
+            return new HttpResponseMessage(HttpStatusCode.NotFound);
+        });
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Signing:Dokobit:AccessToken"] = "test-token",
+                ["Signing:Dokobit:Environment"] = "test",
+            })
+            .Build();
+        var service = new DokobitService(
+            new HttpClient(handler), config, NullLogger<DokobitService>.Instance);
+
+        var bytes = await service.DownloadSignedDocumentAsync("session");
+
+        bytes.Should().Equal("%PDF-test"u8.ToArray());
+        handler.Requests.Should().Contain(u => u.AbsolutePath.EndsWith("/download"));
+    }
+
+    [Fact]
+    public async Task DownloadSignedDocument_rejects_file_url_outside_dokobit_origin()
+    {
+        var handler = new StubHttpMessageHandler(req =>
+        {
+            if (req.RequestUri!.AbsolutePath.EndsWith("/status.json"))
+            {
+                return JsonResponse("""
+                    {
+                      "status": "completed",
+                      "file": "https://attacker.example/signed.pdf"
+                    }
+                    """);
+            }
+
+            if (req.RequestUri.Host == "attacker.example")
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new ByteArrayContent("%PDF-stolen-token"u8.ToArray()),
+                };
+
+            return new HttpResponseMessage(HttpStatusCode.NotFound);
+        });
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Signing:Dokobit:AccessToken"] = "test-token",
+                ["Signing:Dokobit:Environment"] = "test",
+            })
+            .Build();
+        var service = new DokobitService(
+            new HttpClient(handler), config, NullLogger<DokobitService>.Instance);
+
+        var bytes = await service.DownloadSignedDocumentAsync("session");
+
+        bytes.Should().BeNull();
+        handler.Requests.Should().NotContain(u => u.Host == "attacker.example");
+    }
+
     [Theory]
     [InlineData("pending", Ruumly.Backend.Services.Interfaces.DokobitSigningStatus.Pending)]
     [InlineData("signed", Ruumly.Backend.Services.Interfaces.DokobitSigningStatus.Completed)]
@@ -210,5 +330,24 @@ public class ContractSigningEngineTests
     {
         DokobitService.SplitName("Mari Anne Maasikas").Should().Be(("Mari Anne", "Maasikas"));
         DokobitService.SplitName("Madonna").Should().Be(("Madonna", ""));
+    }
+
+    private static HttpResponseMessage JsonResponse(string json) =>
+        new(HttpStatusCode.OK)
+        {
+            Content = new StringContent(json, Encoding.UTF8, "application/json"),
+        };
+
+    private sealed class StubHttpMessageHandler(
+        Func<HttpRequestMessage, HttpResponseMessage> respond) : HttpMessageHandler
+    {
+        public List<Uri> Requests { get; } = [];
+
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Requests.Add(request.RequestUri!);
+            return Task.FromResult(respond(request));
+        }
     }
 }

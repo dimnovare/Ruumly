@@ -1,5 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Services.Implementations;
@@ -264,6 +266,9 @@ public class DokobitService : IDokobitService
 
         // Prefer the per-signer object (sandbox shape); fall back to flat signer_info.
         var signer = parsed?.Signers?.Values.FirstOrDefault() ?? parsed?.SignerInfo;
+        var certificateSubject = parsed?.Structure?.Signatures?
+            .Select(s => s.Certificate?.Subject)
+            .FirstOrDefault(s => s is not null);
 
         // The overall signing status, falling back to the individual signer's status.
         var statusStr = parsed?.Status ?? signer?.Status;
@@ -271,8 +276,8 @@ public class DokobitService : IDokobitService
 
         return new DokobitStatusResult(
             status,
-            string.IsNullOrWhiteSpace(signer?.Code)          ? null : signer!.Code,
-            BuildName(signer),
+            NormalizePersonalCode(FirstNonEmpty(signer?.Code, certificateSubject?.SerialNumber)),
+            FirstNonEmpty(BuildName(signer), BuildName(certificateSubject)),
             string.IsNullOrWhiteSpace(signer?.SigningOption) ? null : signer!.SigningOption);
     }
 
@@ -300,6 +305,26 @@ public class DokobitService : IDokobitService
         var full = string.Join(" ",
             new[] { signer.Name, signer.Surname }.Where(p => !string.IsNullOrWhiteSpace(p)));
         return string.IsNullOrWhiteSpace(full) ? null : full;
+    }
+
+    private static string? BuildName(CertificateSubject? subject)
+    {
+        if (subject is null) return null;
+        var full = string.Join(" ",
+            new[] { subject.Name, subject.Surname }.Where(p => !string.IsNullOrWhiteSpace(p)));
+        return string.IsNullOrWhiteSpace(full) ? null : full;
+    }
+
+    private static string? FirstNonEmpty(params string?[] values) =>
+        values.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v));
+
+    private static string? NormalizePersonalCode(string? serialNumber)
+    {
+        if (string.IsNullOrWhiteSpace(serialNumber)) return null;
+        var separator = serialNumber.LastIndexOf('-');
+        return separator >= 0 && separator < serialNumber.Length - 1
+            ? serialNumber[(separator + 1)..]
+            : serialNumber;
     }
 
     // ─── Download signed PDF ────────────────────────────────────────────────
@@ -393,17 +418,25 @@ public class DokobitService : IDokobitService
     /// </summary>
     private async Task<byte[]?> TryDownloadFromUrlAsync(string url, string signingToken, CancellationToken ct)
     {
+        var baseUri = new Uri(_baseUrl);
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var downloadUri))
+            downloadUri = new Uri(baseUri, url);
+
+        var isTrustedDokobitOrigin =
+            downloadUri.Scheme == baseUri.Scheme
+            && downloadUri.Host.Equals(baseUri.Host, StringComparison.OrdinalIgnoreCase)
+            && downloadUri.Port == baseUri.Port;
+        if (!isTrustedDokobitOrigin || !OutboundEndpointValidator.IsAllowed(downloadUri.ToString()))
+        {
+            _logger.LogWarning(
+                "Dokobit download URL for {Token} was rejected because it is outside the configured gateway origin.",
+                signingToken);
+            return null;
+        }
+
         var tokenParam = $"access_token={Uri.EscapeDataString(_accessToken!)}";
-        string requestUrl;
-        if (url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-        {
-            var sep    = url.Contains('?') ? '&' : '?';
-            requestUrl = $"{url}{sep}{tokenParam}";
-        }
-        else
-        {
-            requestUrl = $"{_baseUrl}/{url.TrimStart('/')}?{tokenParam}";
-        }
+        var separator = string.IsNullOrEmpty(downloadUri.Query) ? '?' : '&';
+        var requestUrl = $"{downloadUri}{separator}{tokenParam}";
 
         using var resp = await _http.GetAsync(requestUrl, ct);
         if (!resp.IsSuccessStatusCode)
@@ -470,6 +503,7 @@ public class DokobitService : IDokobitService
         public string? Status { get; init; }
         public Dictionary<string, SignerInfo>? Signers { get; init; }
         public SignerInfo? SignerInfo { get; init; }
+        public SigningStructure? Structure { get; init; }
     }
 
     private sealed record SignerInfo
@@ -485,6 +519,28 @@ public class DokobitService : IDokobitService
         public string? Surname       { get; init; }
     }
 
+    private sealed record SigningStructure
+    {
+        public List<SigningSignature>? Signatures { get; init; }
+    }
+
+    private sealed record SigningSignature
+    {
+        public SigningCertificate? Certificate { get; init; }
+    }
+
+    private sealed record SigningCertificate
+    {
+        public CertificateSubject? Subject { get; init; }
+    }
+
+    private sealed record CertificateSubject
+    {
+        public string? Name         { get; init; }
+        public string? Surname      { get; init; }
+        public string? SerialNumber { get; init; }
+    }
+
     /// <summary>
     /// Envelope for resolving the signed PDF from status.json / files.json. The <c>file</c>
     /// field is read raw because the gateway returns it either as an object
@@ -494,16 +550,18 @@ public class DokobitService : IDokobitService
     {
         public List<SignedFile>? Files { get; init; }
 
-        [System.Text.Json.Serialization.JsonPropertyName("file")]
+        [JsonPropertyName("file")]
         public JsonElement? FileRaw { get; init; }
 
         /// <summary>The <c>file</c> field parsed as an object, or null when it isn't one.</summary>
+        [JsonIgnore]
         public SignedFile? File =>
             FileRaw is { ValueKind: JsonValueKind.Object } el
                 ? el.Deserialize<SignedFile>(JsonOptions)
                 : null;
 
         /// <summary>The <c>file</c> field when it is a plain URL string, else null.</summary>
+        [JsonIgnore]
         public string? FileUrlString =>
             FileRaw is { ValueKind: JsonValueKind.String } el ? el.GetString() : null;
     }
