@@ -902,6 +902,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
             Images:         l.Images,
             Description:    l.Description,
             OpeningHours:   l.OpeningHours,
+            IsActive:       l.IsActive,
             UnitCount:      activeUnits.Count,
             AvailableUnits: availableUnits,
             FullyBooked:    fullyBooked,

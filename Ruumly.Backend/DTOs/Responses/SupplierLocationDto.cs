@@ -13,6 +13,7 @@ public record SupplierLocationDto(
     List<string>  Images,
     string        Description,
     string?       OpeningHours,
+    bool              IsActive,
     int               UnitCount,
     int               AvailableUnits,
     bool              FullyBooked,
