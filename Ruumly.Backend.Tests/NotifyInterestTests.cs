@@ -22,7 +22,9 @@ public class NotifyInterestTests
 
     private static RuumlyDbContext CreateDb() => TestDbContext.Create();
 
-    private static AuthController MakeController(RuumlyDbContext db)
+    private static AuthController MakeController(
+        RuumlyDbContext db,
+        IBackgroundEmailQueue? emailQueue = null)
     {
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -42,8 +44,7 @@ public class NotifyInterestTests
             notificationService: new NoOpNotificationService(),
             config:              config,
             env:                 new NoOpWebHostEnvironment(),
-            logger:              new NullLogger<AuthController>(),
-            emailSender:         new NoOpEmailSender());
+            emailQueue:          emailQueue ?? new NoOpBackgroundEmailQueue());
 
         controller.ControllerContext = new ControllerContext
         {
@@ -113,10 +114,22 @@ public class NotifyInterestTests
         public string EnvironmentName { get; set; } = "Development";
     }
 
-    private sealed class NoOpEmailSender : IEmailSender
+    private sealed class NoOpBackgroundEmailQueue : IBackgroundEmailQueue
     {
-        public Task SendAsync(string to, string subject, string textBody, string? htmlBody = null)
-            => Task.CompletedTask;
+        public void EnqueueEmail(string to, string subject, string textBody, string? htmlBody = null) { }
+        public void EnqueueVerificationEmail(Guid userId) { }
+    }
+
+    private sealed class CapturingBackgroundEmailQueue : IBackgroundEmailQueue
+    {
+        public List<(string To, string Subject, string TextBody)> Emails { get; } = [];
+        public List<Guid> VerificationUsers { get; } = [];
+
+        public void EnqueueEmail(string to, string subject, string textBody, string? htmlBody = null) =>
+            Emails.Add((to, subject, textBody));
+
+        public void EnqueueVerificationEmail(Guid userId) =>
+            VerificationUsers.Add(userId);
     }
 
     // ─── Tests ─────────────────────────────────────────────────────────────
@@ -140,6 +153,32 @@ public class NotifyInterestTests
         lead.Email.Should().Be("test@example.com");
         lead.City.Should().Be("Tallinn");
         lead.Status.Should().Be(DemandLeadStatus.New);
+    }
+
+    [Fact]
+    public async Task ApplyProviderPublic_QueuesApplicantAndAdminEmailsAfterPersisting()
+    {
+        var db = CreateDb();
+        var queue = new CapturingBackgroundEmailQueue();
+        var controller = MakeController(db, queue);
+
+        var result = await controller.ApplyProviderPublic(new SupplierApplicationRequest
+        {
+            CompanyName = "Test Storage",
+            RegistryCode = "12345678",
+            ContactName = "Test Partner",
+            ContactEmail = "partner@example.com",
+            ContactPhone = "+3725555555",
+            Language = "en",
+        });
+
+        result.Should().BeOfType<OkObjectResult>();
+        var user = db.Users.Single(u => u.Email == "partner@example.com");
+        db.Suppliers.Should().ContainSingle(s => s.Id == user.SupplierId);
+        queue.VerificationUsers.Should().Equal(user.Id);
+        queue.Emails.Should().ContainSingle(e =>
+            e.To == "admin@ruumly.eu" &&
+            e.Subject.Contains("Test Storage"));
     }
 
     [Fact]

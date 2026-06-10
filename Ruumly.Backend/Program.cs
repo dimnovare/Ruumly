@@ -314,10 +314,12 @@ builder.Services.AddHangfire(config => config
 
 builder.Services.AddHangfireServer();
 builder.Services.AddScoped<BackgroundOrderDispatchService>();
+builder.Services.AddScoped<BackgroundEmailService>();
 builder.Services.AddScoped<BackgroundCleanupService>();
 
 // ─── Application services ───
 builder.Services.AddScoped<IPricingConfigService, PricingConfigService>();
+builder.Services.AddScoped<IBackgroundEmailQueue, HangfireBackgroundEmailQueue>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IListingService, ListingService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();

@@ -15,23 +15,24 @@ public class ContactFormTests
 {
     private static RuumlyDbContext CreateDb() => TestDbContext.Create();
 
-    private sealed class CapturingEmailSender : IEmailSender
+    private sealed class CapturingEmailQueue : IBackgroundEmailQueue
     {
         public string? To;
         public string? Subject;
         public string? TextBody;
 
-        public Task SendAsync(string to, string subject, string textBody, string? htmlBody = null)
+        public void EnqueueEmail(string to, string subject, string textBody, string? htmlBody = null)
         {
             To = to;
             Subject = subject;
             TextBody = textBody;
-            return Task.CompletedTask;
         }
+
+        public void EnqueueVerificationEmail(Guid userId) { }
     }
 
-    private static SupportController MakeController(RuumlyDbContext db, IEmailSender emailSender)
-        => new SupportController(db, emailSender, new NullLogger<SupportController>())
+    private static SupportController MakeController(RuumlyDbContext db, IBackgroundEmailQueue emailQueue)
+        => new SupportController(db, emailQueue)
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
         };
@@ -64,7 +65,7 @@ public class ContactFormTests
     public async Task Contact_ValidRequest_ReturnsSuccess_AndEmailsTeam()
     {
         var db = CreateDb();
-        var email = new CapturingEmailSender();
+        var email = new CapturingEmailQueue();
         var controller = MakeController(db, email);
 
         var result = await controller.Contact(
@@ -88,7 +89,7 @@ public class ContactFormTests
         db.PlatformSettings.Add(new PlatformSetting { Key = "siteEmail", Value = "team@ruumly.eu" });
         await db.SaveChangesAsync();
 
-        var email = new CapturingEmailSender();
+        var email = new CapturingEmailQueue();
         var controller = MakeController(db, email);
 
         await controller.Contact(

@@ -24,7 +24,8 @@ public class AdminSuppliersController(
     TokenProtector tokenProtector,
     IPricingConfigService pricingConfigService,
     ISupplierPollingService pollingService,
-    IDistributedCache cache) : AdminBaseController(db)
+    IDistributedCache cache,
+    IBackgroundEmailQueue emailQueue) : AdminBaseController(db)
 {
     [HttpGet("suppliers")]
     public async Task<IActionResult> GetSuppliers([FromQuery] int page = 1, [FromQuery] int limit = 50)
@@ -869,13 +870,12 @@ public class AdminSuppliersController(
         // Send welcome email
         if (user is not null)
         {
-            var tl        = EmailTranslations.For(user.Language);
-            var emailSender = HttpContext.RequestServices.GetRequiredService<IEmailSender>();
-            emailSender.SendAsync(
+            var tl = EmailTranslations.For(user.Language);
+            emailQueue.EnqueueEmail(
                 to:       supplier.ContactEmail,
                 subject:  tl.SupplierWelcomeSubject,
                 textBody: tl.SupplierWelcomeBody(supplier.ContactName)
-            ).FireAndForget(logger, "supplier-welcome-email");
+            );
         }
 
         return Ok(new

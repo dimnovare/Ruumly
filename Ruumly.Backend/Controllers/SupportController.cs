@@ -13,13 +13,12 @@ namespace Ruumly.Backend.Controllers;
 [Route("api")]
 public class SupportController(
     RuumlyDbContext db,
-    IEmailSender emailSender,
-    ILogger<SupportController> logger) : ControllerBase
+    IBackgroundEmailQueue emailQueue) : ControllerBase
 {
     /// <summary>
     /// Public contact form. Emails the team the visitor's message.
-    /// The send is fire-and-forget so a transient email failure never
-    /// breaks the visitor's submit (mirrors the notify-interest pattern).
+    /// Delivery is queued so transient provider failures are retried without
+    /// delaying or failing the visitor's request.
     /// </summary>
     [HttpPost("contact")]
     [AllowAnonymous]
@@ -39,11 +38,10 @@ public class SupportController(
 
         var lang = string.IsNullOrWhiteSpace(req.Language) ? "et" : req.Language;
 
-        emailSender.SendAsync(
+        emailQueue.EnqueueEmail(
             to:       teamEmail,
             subject:  $"[Ruumly contact] {req.Subject}",
-            textBody: $"From: {req.Name} <{req.Email}>\nLang: {lang}\n\n{req.Message}\n\n— Reply directly to {req.Email}")
-            .FireAndForget(logger, "contact-form");
+            textBody: $"From: {req.Name} <{req.Email}>\nLang: {lang}\n\n{req.Message}\n\n— Reply directly to {req.Email}");
 
         return Ok(new { success = true });
     }

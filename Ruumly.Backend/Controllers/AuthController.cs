@@ -21,8 +21,7 @@ public class AuthController(
     INotificationService notificationService,
     IConfiguration config,
     IWebHostEnvironment env,
-    ILogger<AuthController> logger,
-    IEmailSender emailSender) : ControllerBase
+    IBackgroundEmailQueue emailQueue) : ControllerBase
 {
     // Sets the HttpOnly refresh-token cookie on every successful auth response.
     // SameSite=None because the frontend (ruumly.eu) and API (Railway) are on different origins.
@@ -442,14 +441,14 @@ public class AuthController(
             await db.SaveChangesAsync();
             await tx.CommitAsync();
 
-            // Send verification/info email to applicant
-            authService.ResendVerificationEmailAsync(userId).FireAndForget(logger, "verification-email");
+            // Queue after commit so Hangfire owns the execution scope and retries.
+            emailQueue.EnqueueVerificationEmail(userId);
 
             // Notify admin
-            emailSender.SendAsync(
+            emailQueue.EnqueueEmail(
                 to:       "admin@ruumly.eu",
                 subject:  $"New provider application: {request.CompanyName}",
-                textBody: $"Company: {request.CompanyName}\nContact: {request.ContactName} <{request.ContactEmail}>\nPhone: {request.ContactPhone}\nRegistry: {request.RegistryCode}").FireAndForget(logger, "admin-notification");
+                textBody: $"Company: {request.CompanyName}\nContact: {request.ContactName} <{request.ContactEmail}>\nPhone: {request.ContactPhone}\nRegistry: {request.RegistryCode}");
 
             return Ok(new { applicationId = supplierId, message = "Application received. Please check your email." });
         }
@@ -680,10 +679,10 @@ public class AuthController(
             await tx.CommitAsync();
 
             // Notify admin (after transaction commits)
-            emailSender.SendAsync(
+            emailQueue.EnqueueEmail(
                 to:       "admin@ruumly.eu",
                 subject:  $"New demand lead: {body.Email} ({city})",
-                textBody: $"Email: {body.Email}\nCity: {city}\nCategory: {lead.Category}\nQuery: {lead.Query}").FireAndForget(logger, "demand-lead-notification");
+                textBody: $"Email: {body.Email}\nCity: {city}\nCategory: {lead.Category}\nQuery: {lead.Query}");
 
             return Ok(new { success = true });
         }
