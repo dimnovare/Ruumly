@@ -337,11 +337,10 @@ builder.Services.AddScoped<ISupplierPollingService, SupplierPollingService>();
 builder.Services.AddScoped<IContractService, ContractService>();
 builder.Services.AddScoped<SupplierPollingDispatcherJob>();
 builder.Services.AddHttpClient();
-// Dokobit — typed HttpClient; IsEnabled gated on Signing:Dokobit:AccessToken presence
+// Dokobit — typed HttpClient; IsEnabled gated on Signing:Dokobit:AccessToken presence.
 // Dokobit requires its access token in the query string. Remove the framework HTTP
 // loggers for this client so request URLs cannot leak that credential into Railway logs.
-builder.Services.AddHttpClient<DokobitService>().RemoveAllLoggers();
-builder.Services.AddScoped<IDokobitService, DokobitService>();
+builder.Services.AddHttpClient<IDokobitService, DokobitService>().RemoveAllLoggers();
 // Contract docx fill (Open XML) + Gotenberg docx→PDF render.
 builder.Services.AddSingleton<IContractDocumentService, OpenXmlContractDocumentService>();
 builder.Services.AddHttpClient<GotenbergClient>(c => c.Timeout = TimeSpan.FromSeconds(90));
