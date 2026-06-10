@@ -10,6 +10,7 @@ using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
+using BC = BCrypt.Net.BCrypt;
 
 namespace Ruumly.Backend.Controllers;
 
@@ -412,7 +413,7 @@ public class AuthController(
                     Id            = Guid.NewGuid(),
                     Name          = request.ContactName,
                     Email         = request.ContactEmail,
-                    PasswordHash  = "",
+                    PasswordHash  = BC.HashPassword(Guid.NewGuid().ToString(), workFactor: 4),
                     Role          = UserRole.Customer,
                     Status        = UserStatus.Active,
                     Language      = lang,

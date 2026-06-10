@@ -118,7 +118,9 @@ public class AuthService(
         // Always run a BCrypt verification to prevent timing-based email enumeration.
         // If the user does not exist, verify against DummyHash (result is always false)
         // so the response time is indistinguishable from a real wrong-password attempt.
-        var hashToVerify = user?.PasswordHash ?? DummyHash;
+        var hashToVerify = !string.IsNullOrWhiteSpace(user?.PasswordHash)
+            ? user.PasswordHash
+            : DummyHash;
         var passwordOk   = BC.Verify(request.Password, hashToVerify) && user is not null;
         if (!passwordOk)
             throw new UnauthorizedAccessException(Msg("INVALID_CREDENTIALS"));
@@ -293,7 +295,8 @@ public class AuthService(
         if (user is null) return false;
 
         // Prevent reusing the same password
-        if (BC.Verify(newPassword, user.PasswordHash))
+        if (!string.IsNullOrWhiteSpace(user.PasswordHash) &&
+            BC.Verify(newPassword, user.PasswordHash))
             throw new ArgumentException(Msg("PASSWORD_SAME_AS_OLD"));
 
         user.PasswordHash        = BC.HashPassword(newPassword, workFactor: 12);

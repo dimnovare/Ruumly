@@ -226,4 +226,36 @@ public class AuthServiceTests
         email.TextBody.Should().Contain("https://test.ruumly.eu/lv/login?view=reset&token=");
         email.HtmlBody.Should().Contain("https://test.ruumly.eu/lv/login?view=reset&token=");
     }
+
+    [Fact]
+    public async Task ResetPassword_Allows_Passwordless_Public_Applicant_To_Set_First_Password()
+    {
+        var db = CreateDb();
+        const string rawToken = "first-password-token";
+        db.Users.Add(new User
+        {
+            Id = Guid.NewGuid(),
+            Email = "applicant@ruumly.ee",
+            Name = "Public Applicant",
+            PasswordHash = string.Empty,
+            PasswordResetToken = Convert.ToHexString(
+                System.Security.Cryptography.SHA256.HashData(
+                    System.Text.Encoding.UTF8.GetBytes(rawToken))).ToLowerInvariant(),
+            PasswordResetExpiry = DateTime.UtcNow.AddHours(1),
+            Role = UserRole.Customer,
+            Status = UserStatus.Active,
+            Language = "en",
+        });
+        await db.SaveChangesAsync();
+
+        var service = MakeService(db);
+
+        var success = await service.ResetPasswordAsync(rawToken, "demo1234");
+
+        success.Should().BeTrue();
+        var user = await db.Users.SingleAsync();
+        BC.Verify("demo1234", user.PasswordHash).Should().BeTrue();
+        user.PasswordResetToken.Should().BeNull();
+        user.PasswordResetExpiry.Should().BeNull();
+    }
 }

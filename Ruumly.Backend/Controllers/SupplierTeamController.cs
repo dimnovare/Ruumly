@@ -9,6 +9,7 @@ using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
+using BC = BCrypt.Net.BCrypt;
 using System.Text;
 
 namespace Ruumly.Backend.Controllers;
@@ -105,7 +106,7 @@ public class SupplierTeamController(
                 Id           = Guid.NewGuid(),
                 Name         = request.Name,
                 Email        = request.Email,
-                PasswordHash = string.Empty,
+                PasswordHash = BC.HashPassword(Guid.NewGuid().ToString(), workFactor: 4),
                 Role         = UserRole.Provider,
                 SupplierId   = supplierId,
                 RegisteredAt = DateTime.UtcNow,
