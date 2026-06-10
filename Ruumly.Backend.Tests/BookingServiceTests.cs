@@ -184,6 +184,25 @@ public class BookingServiceTests
     }
 
     [Fact]
+    public async Task CreateAsync_Rounds_Discounted_Prices_To_Cents()
+    {
+        var db = CreateDb();
+        var (_, listing, user) = await SeedBasicAsync(db, priceFrom: 1m);
+        var service = MakeService(db);
+
+        var booking = await service.CreateAsync(
+            MakeBookingRequest(
+                listing.Id,
+                startDate: "2027-06-11",
+                endDate: "2027-07-11"),
+            user.Id);
+
+        booking.BasePrice.Should().Be(0.99m);
+        booking.PlatformPrice.Should().Be(0.94m);
+        booking.PlatformPrice.Should().BeLessThanOrEqualTo(booking.BasePrice);
+    }
+
+    [Fact]
     public async Task CreateAsync_Calculates_Extras_Totals_Correctly()
     {
         var db = CreateDb();

@@ -312,10 +312,10 @@ public class BookingService(
             }
 
             // What the customer pays
-            var platformPrice = Math.Round(basePrice * (1m - customerDiscountRate / 100m));
+            var platformPrice = Math.Round(basePrice * (1m - customerDiscountRate / 100m), 2);
 
             // Safety check: ensure margin is never negative
-            var supplierPrice = Math.Round(basePrice * (1m - partnerDiscountRate / 100m));
+            var supplierPrice = Math.Round(basePrice * (1m - partnerDiscountRate / 100m), 2);
             if (platformPrice < supplierPrice)
             {
                 // If somehow the math fails, charge full price
