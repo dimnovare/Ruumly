@@ -62,7 +62,7 @@ public class BookingIdempotencyTests
             Task.FromResult(new PaginatedResult<InvoiceDto>([], 0, page, limit, false));
         public Task<InvoiceDto?> GetByBookingIdAsync(Guid bid, Guid uid, UserRole role) =>
             Task.FromResult<InvoiceDto?>(null);
-        public Task<InvoiceDto> GenerateAsync(Guid bid) =>
+        public Task<InvoiceDto> GenerateAsync(Guid bid, string? paymentMethod = null) =>
             Task.FromResult(new InvoiceDto(bid, bid, 0m, "pending", "2026-01-01", null, ""));
         public Task<InvoiceDto> MarkPaidAsync(Guid id) =>
             Task.FromResult(new InvoiceDto(id, id, 0m, "paid", "2026-01-01", "2026-01-01", ""));

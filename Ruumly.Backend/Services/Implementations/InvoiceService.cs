@@ -79,7 +79,7 @@ public class InvoiceService(
         return MapToDto(invoice);
     }
 
-    public async Task<InvoiceDto> GenerateAsync(Guid bookingId)
+    public async Task<InvoiceDto> GenerateAsync(Guid bookingId, string? paymentMethod = null)
     {
         // Idempotent: return existing invoice if already generated
         var existing = await db.Invoices
@@ -98,6 +98,9 @@ public class InvoiceService(
             BookingId   = booking.Id,
             Amount      = booking.Total,
             Status      = InvoiceStatus.Pending,
+            PaymentMethod = string.IsNullOrWhiteSpace(paymentMethod)
+                ? null
+                : paymentMethod.Trim().ToLowerInvariant(),
             IssuedAt    = DateTime.UtcNow,
             Description = $"{booking.Listing?.Title ?? "Teenus"} — {booking.Duration}",
             CreatedAt   = DateTime.UtcNow,

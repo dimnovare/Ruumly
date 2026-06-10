@@ -424,7 +424,7 @@ public class BookingService(
             // Rebate model: customer pays provider directly — no Ruumly invoice needed
             if (supplier.BillingModel == BillingModel.Marketplace)
             {
-                await invoiceService.GenerateAsync(booking.Id);
+                await invoiceService.GenerateAsync(booking.Id, request.PaymentMethod);
             }
 
             await transaction.CommitAsync();

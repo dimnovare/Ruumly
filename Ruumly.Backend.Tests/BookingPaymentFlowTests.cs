@@ -244,22 +244,16 @@ public class BookingPaymentFlowTests
     }
 
     [Fact]
-    public async Task CreateBooking_Later_Payment_InvoicePaymentMethod_CanBeSetToLater()
+    public async Task CreateBooking_Later_Payment_PersistsInvoicePaymentMethod()
     {
         var db = CreateDb();
         var (_, listing, customer, _) = await SeedAsync(db);
 
-        // Create booking — invoice is generated with no payment method yet
         var result = await MakeBookingService(db).CreateAsync(MakeRequest(listing.Id, "later"), customer.Id);
         result.InvoiceId.Should().NotBeNull();
 
-        // Payment service would set PaymentMethod when customer selects "later"
         var invoice = await db.Invoices.FirstAsync(i => i.BookingId == result.Id);
-        invoice.PaymentMethod = "later";
-        await db.SaveChangesAsync();
-
-        var fromDb = await db.Invoices.FindAsync(invoice.Id);
-        fromDb!.PaymentMethod.Should().Be("later");
+        invoice.PaymentMethod.Should().Be("later");
     }
 
     [Fact]
