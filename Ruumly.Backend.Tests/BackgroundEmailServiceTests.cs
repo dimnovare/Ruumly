@@ -64,7 +64,7 @@ public class BackgroundEmailServiceTests
         user.EmailVerificationExpiry.Should().BeAfter(DateTime.UtcNow.AddHours(23));
         sender.To.Should().Be(user.Email);
         sender.Subject.Should().NotBeNullOrWhiteSpace();
-        sender.TextBody.Should().Contain("https://ruumly.eu/verify?token=");
+        sender.TextBody.Should().Contain("https://ruumly.eu/en/verify?token=");
     }
 
     [Fact]

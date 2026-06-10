@@ -89,7 +89,8 @@ public class AuthService(
         // Send verification email (fire-and-forget — don't block registration)
         try
         {
-            var verifyUrl = $"{config["AppUrl"]}/verify?token={verifyToken}";
+            var verifyUrl = FrontendUrl.Localized(
+                config["AppUrl"], user.Language, $"verify?token={verifyToken}");
             var t         = EmailTranslations.For(user.Language);
             var body      =
                 $"{t.EmailVerifyGreeting}\n\n" +
@@ -261,7 +262,8 @@ public class AuthService(
         user.PasswordResetExpiry = DateTime.UtcNow.AddHours(2);
         await db.SaveChangesAsync();
 
-        var resetUrl = $"{config["AppUrl"]}/login?view=reset&token={token}";
+        var resetUrl = FrontendUrl.Localized(
+            config["AppUrl"], user.Language, $"login?view=reset&token={token}");
         var t = EmailTranslations.For(user.Language);
 
         var textBody =
@@ -460,7 +462,8 @@ public class AuthService(
 
         try
         {
-            var verifyUrl = $"{config["AppUrl"]}/verify?token={verifyToken}";
+            var verifyUrl = FrontendUrl.Localized(
+                config["AppUrl"], user.Language, $"verify?token={verifyToken}");
             var t         = EmailTranslations.For(user.Language);
             var body      =
                 $"{t.EmailVerifyGreeting}\n\n" +

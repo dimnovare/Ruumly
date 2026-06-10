@@ -32,14 +32,27 @@ public class AuthServiceTests
             })
             .Build();
 
-    private static AuthService MakeService(RuumlyDbContext db) =>
-        new(db, MakeConfig(), new NoOpEmailSender(), new NoOpHttpContextAccessor(),
+    private static AuthService MakeService(RuumlyDbContext db, IEmailSender? emailSender = null) =>
+        new(db, MakeConfig(), emailSender ?? new NoOpEmailSender(), new NoOpHttpContextAccessor(),
             NullLogger<AuthService>.Instance);
 
     private sealed class NoOpEmailSender : IEmailSender
     {
         public Task SendAsync(string to, string subject, string textBody, string? htmlBody = null)
             => Task.CompletedTask;
+    }
+
+    private sealed class CapturingEmailSender : IEmailSender
+    {
+        public string? TextBody { get; private set; }
+        public string? HtmlBody { get; private set; }
+
+        public Task SendAsync(string to, string subject, string textBody, string? htmlBody = null)
+        {
+            TextBody = textBody;
+            HtmlBody = htmlBody;
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class NoOpHttpContextAccessor : Microsoft.AspNetCore.Http.IHttpContextAccessor
@@ -72,6 +85,20 @@ public class AuthServiceTests
         response.User.Should().NotBeNull();
         response.AccessToken.Should().NotBeNullOrWhiteSpace();
         response.RefreshToken.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public async Task Register_Sends_Verification_Link_With_User_Language_Prefix()
+    {
+        var db = CreateDb();
+        var email = new CapturingEmailSender();
+        var service = MakeService(db, email);
+
+        await service.RegisterAsync(
+            new RegisterRequest("Test", "test-en@ruumly.ee", "Password123",
+                "Password123", null, "en"));
+
+        email.TextBody.Should().Contain("https://test.ruumly.eu/en/verify?token=");
     }
 
     [Fact]
@@ -173,5 +200,30 @@ public class AuthServiceTests
         var response = await service.RegisterAsync(
             new RegisterRequest("Test", "a@test.ee", "Pass1234", "Pass1234", "SECRETCODE", "et"));
         response.User.Email.Should().Be("a@test.ee");
+    }
+
+    [Fact]
+    public async Task RequestPasswordReset_Sends_Login_Link_With_User_Language_Prefix()
+    {
+        var db = CreateDb();
+        db.Users.Add(new User
+        {
+            Id = Guid.NewGuid(),
+            Email = "reset@ruumly.ee",
+            Name = "Reset User",
+            PasswordHash = BC.HashPassword("Password123", workFactor: 4),
+            Role = UserRole.Customer,
+            Status = UserStatus.Active,
+            Language = "lv",
+        });
+        await db.SaveChangesAsync();
+
+        var email = new CapturingEmailSender();
+        var service = MakeService(db, email);
+
+        await service.RequestPasswordResetAsync("reset@ruumly.ee");
+
+        email.TextBody.Should().Contain("https://test.ruumly.eu/lv/login?view=reset&token=");
+        email.HtmlBody.Should().Contain("https://test.ruumly.eu/lv/login?view=reset&token=");
     }
 }

@@ -47,7 +47,8 @@ public class BackgroundEmailService(
         user.EmailVerificationExpiry = DateTime.UtcNow.AddHours(24);
         await db.SaveChangesAsync();
 
-        var verifyUrl = $"{config["AppUrl"]}/verify?token={rawToken}";
+        var verifyUrl = FrontendUrl.Localized(
+            config["AppUrl"], user.Language, $"verify?token={rawToken}");
         var t = EmailTranslations.For(user.Language);
         var body =
             $"{t.EmailVerifyGreeting}\n\n" +
