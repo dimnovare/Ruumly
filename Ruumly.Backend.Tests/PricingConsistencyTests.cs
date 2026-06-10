@@ -25,10 +25,10 @@ public class PricingConsistencyTests
         Math.Max(0m, partnerDiscountRate - minMarginRate);
 
     private static decimal PlatformPrice(decimal basePrice, decimal partnerDiscountRate, decimal minMarginRate) =>
-        Math.Round(basePrice * (1m - CustomerDiscountRate(partnerDiscountRate, minMarginRate) / 100m));
+        Math.Round(basePrice * (1m - CustomerDiscountRate(partnerDiscountRate, minMarginRate) / 100m), 2);
 
     private static decimal SupplierPrice(decimal basePrice, decimal partnerDiscountRate) =>
-        Math.Round(basePrice * (1m - partnerDiscountRate / 100m));
+        Math.Round(basePrice * (1m - partnerDiscountRate / 100m), 2);
 
     private static decimal Margin(decimal platformPrice, decimal supplierPrice,
                                   decimal extrasCustomerTotal = 0m, decimal extrasSupplierTotal = 0m) =>
@@ -125,6 +125,13 @@ public class PricingConsistencyTests
     {
         // partner=8%, minMargin=8% → customerDiscount=0
         CustomerDiscountRate(8m, 8m).Should().Be(0m);
+    }
+
+    [Fact]
+    public void LowValue_OrderPrices_AreRoundedToCents()
+    {
+        PlatformPrice(0.99m, 5m, 8m).Should().Be(0.99m);
+        SupplierPrice(0.99m, 0m).Should().Be(0.99m);
     }
 
     // ─── Extras margin ─────────────────────────────────────────────────────

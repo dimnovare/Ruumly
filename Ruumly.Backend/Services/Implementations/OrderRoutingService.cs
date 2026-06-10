@@ -48,7 +48,7 @@ public class OrderRoutingService(
             supplierPartnerRate:     supplier.PartnerDiscountRate,
             defaultPartnerDiscount:  pricingConfig.DefaultPartnerDiscountRate,
             ruumlyMinMargin:         pricingConfig.RuumlyMinMarginRate);
-        var supplierPrice = Math.Round(booking.BasePrice * (1m - partnerDiscountRate / 100m));
+        var supplierPrice = Math.Round(booking.BasePrice * (1m - partnerDiscountRate / 100m), 2);
 
         // Extras supplier total (from the snapshot stored on the booking)
         var extrasSupplierTotal = booking.ExtrasSnapshot.Sum(e => e.SupplierPrice);
@@ -66,7 +66,9 @@ public class OrderRoutingService(
                 "extras margin {ExtrasMargin}. PartnerDiscount={PD}%, CustomerDiscount={CD}%",
                 booking.Id, baseMargin, extrasMargin,
                 partnerDiscountRate,
-                booking.BasePrice > 0 ? Math.Round(booking.PlatformPrice / booking.BasePrice * 100, 1) : 0m);
+                booking.BasePrice > 0
+                    ? Math.Round((1m - booking.PlatformPrice / booking.BasePrice) * 100m, 1)
+                    : 0m);
 
         // 5. Determine posting channel
         // If IntegrationSettings exists and is deactivated, force Manual mode.
