@@ -57,6 +57,7 @@ public class ListingService(
         var pricingConfig = await pricingConfigService.GetAsync();
 
         var query = db.Listings
+            .AsNoTracking()
             .Include(l => l.Supplier)
             .Include(l => l.Location)
             .Where(l => l.IsActive && l.Supplier != null && l.Supplier.IsActive)
@@ -232,6 +233,7 @@ public class ListingService(
         var pricingConfig = await pricingConfigService.GetAsync();
 
         var listing = await db.Listings
+            .AsNoTracking()
             .Include(l => l.Supplier)
             .Include(l => l.Location)
             .FirstOrDefaultAsync(l => l.Id == id && l.IsActive
@@ -285,16 +287,21 @@ public class ListingService(
         // featured rail never surfaces hidden Moving/Trailer listings.
         var (showMoving, showTrailer) = await GetVerticalVisibilityAsync();
 
-        // Badge priority: Promoted(4) > BestValue(3) > Closest(2) > Cheapest(1)
-        var listings = await db.Listings
+        // Filter (active + visible verticals) in SQL with AsNoTracking. The badge
+        // set is small and curated, so order by priority + Take(4) in memory —
+        // a switch-expression CASE inside OrderBy is not reliably translatable by
+        // Npgsql and would 500 the live featured rail (InMemory tests can't catch it).
+        var badged = await db.Listings
+            .AsNoTracking()
             .Include(l => l.Supplier)
             .Where(l => l.Badge != null && l.IsActive
                       && l.Supplier != null && l.Supplier.IsActive)
-            .ToListAsync();
-
-        var result = listings
             .Where(l => (showMoving  || l.Type != ListingType.Moving)
                      && (showTrailer || l.Type != ListingType.Trailer))
+            .ToListAsync();
+
+        // Badge priority: Promoted(4) > BestValue(3) > Closest(2) > Cheapest(1)
+        var result = badged
             .OrderByDescending(l => l.Badge switch
             {
                 ListingBadge.Promoted  => 4,

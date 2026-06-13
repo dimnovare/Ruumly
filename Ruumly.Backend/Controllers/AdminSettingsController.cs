@@ -201,6 +201,7 @@ public class AdminSettingsController(
     public async Task<IActionResult> GetListings()
     {
         var listings = await Db.Listings
+            .AsNoTracking()
             .Include(l => l.Supplier)
             .Include(l => l.Location)
             .OrderByDescending(l => l.CreatedAt)
@@ -212,6 +213,7 @@ public class AdminSettingsController(
     public async Task<IActionResult> GetListing(Guid id)
     {
         var listing = await Db.Listings
+            .AsNoTracking()
             .Include(l => l.Supplier)
             .Include(l => l.Location)
             .FirstOrDefaultAsync(l => l.Id == id);
