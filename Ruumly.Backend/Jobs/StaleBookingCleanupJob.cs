@@ -71,6 +71,21 @@ public class StaleBookingCleanupJob(RuumlyDbContext db, ILogger<StaleBookingClea
                 contractVoided ? " — signed contract voided" : "");
         }
 
+        // Reverse any pending payout entries for the auto-cancelled orders so a
+        // stale, never-paid booking never leaves the supplier owed a payout.
+        var staleOrderIds = staleBookings
+            .Where(b => b.Order is not null)
+            .Select(b => b.Order!.Id)
+            .ToList();
+        if (staleOrderIds.Count > 0)
+        {
+            var payouts = await db.PayoutEntries
+                .Where(p => staleOrderIds.Contains(p.OrderId) && p.Status == PayoutStatus.Pending)
+                .ToListAsync();
+            foreach (var payout in payouts)
+                payout.Status = PayoutStatus.Cancelled;
+        }
+
         if (staleBookings.Count > 0)
             await db.SaveChangesAsync();
 

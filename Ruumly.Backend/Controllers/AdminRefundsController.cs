@@ -106,9 +106,15 @@ public class AdminRefundsController(
         invoice.Status = InvoiceStatus.Refunded;
         await Db.SaveChangesAsync();
 
-        // Cancel the payout entry so the supplier is not paid for a refunded order
+        // Cancel the payout entry so the supplier is not paid for a refunded order.
+        // Resolve via the scalar OrderId (no navigation in the predicate) so this is
+        // reliably SQL-translatable and works under the InMemory test provider.
+        var refundedOrderId = await Db.Orders
+            .Where(o => o.BookingId == invoice.BookingId)
+            .Select(o => o.Id)
+            .FirstOrDefaultAsync();
         var payout = await Db.PayoutEntries
-            .FirstOrDefaultAsync(p => p.Order.BookingId == invoice.BookingId
+            .FirstOrDefaultAsync(p => p.OrderId == refundedOrderId
                                    && p.Status == PayoutStatus.Pending);
         if (payout is not null)
         {

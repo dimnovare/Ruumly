@@ -354,6 +354,24 @@ public class MontonioPaymentService(
                         cancelledInvoice.Booking.UpdatedAt = DateTime.UtcNow;
                     }
 
+                    // Reverse the supplier ledger: cancel the Order and its pending
+                    // PayoutEntry so a refunded/voided booking never pays the supplier.
+                    var refundedOrder = await db.Orders
+                        .FirstOrDefaultAsync(o => o.BookingId == cancelledInvoice.BookingId);
+                    if (refundedOrder is not null)
+                    {
+                        if (refundedOrder.Status != OrderStatus.Cancelled)
+                        {
+                            refundedOrder.Status    = OrderStatus.Cancelled;
+                            refundedOrder.UpdatedAt = DateTime.UtcNow;
+                        }
+                        var refundedPayout = await db.PayoutEntries
+                            .FirstOrDefaultAsync(p => p.OrderId == refundedOrder.Id
+                                                   && p.Status == PayoutStatus.Pending);
+                        if (refundedPayout is not null)
+                            refundedPayout.Status = PayoutStatus.Cancelled;
+                    }
+
                     await db.SaveChangesAsync();
 
                     SentrySdk.CaptureMessage(

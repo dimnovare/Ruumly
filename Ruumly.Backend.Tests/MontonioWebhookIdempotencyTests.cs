@@ -385,4 +385,44 @@ public class MontonioWebhookIdempotencyTests : IDisposable
         booking.Status.Should().NotBe(BookingStatus.Cancelled,
             "a late 'cancelled' on a paid invoice must not cancel the booking");
     }
+
+    /// <summary>
+    /// A genuine 'refunded' webhook on a Paid invoice must reverse the whole chain:
+    /// invoice → Refunded, booking + order → Cancelled, and the pending PayoutEntry
+    /// → Cancelled so the supplier is never paid for a refunded booking.
+    /// </summary>
+    [Fact]
+    public async Task Webhook_Refunded_OnPaidInvoice_CancelsOrderAndPayout()
+    {
+        var db   = CreateDb();
+        var ref_ = Guid.NewGuid().ToString();
+        var (invoice, order) = await SeedPaidScenarioAsync(
+            db, ref_, invoiceStatus: InvoiceStatus.Paid, orderStatus: OrderStatus.Confirmed);
+
+        var payout = new PayoutEntry
+        {
+            Id             = Guid.NewGuid(),
+            SupplierId     = order.SupplierId,
+            OrderId        = order.Id,
+            SupplierAmount = order.SupplierPrice,
+            PlatformMargin = order.Total - order.SupplierPrice,
+            Status         = PayoutStatus.Pending,
+        };
+        db.PayoutEntries.Add(payout);
+        await db.SaveChangesAsync();
+
+        var svc = MakeService(db);
+
+        var ok = await svc.HandleWebhookAsync(MakeWebhookJwt(ref_, paymentStatus: "refunded"));
+        ok.Should().BeTrue();
+
+        (await db.Invoices.FindAsync(invoice.Id))!.Status
+            .Should().Be(InvoiceStatus.Refunded);
+        (await db.Bookings.FirstAsync(b => b.Id == invoice.BookingId)).Status
+            .Should().Be(BookingStatus.Cancelled);
+        (await db.Orders.FindAsync(order.Id))!.Status
+            .Should().Be(OrderStatus.Cancelled, "a refunded booking's order must be cancelled");
+        (await db.PayoutEntries.FindAsync(payout.Id))!.Status
+            .Should().Be(PayoutStatus.Cancelled, "supplier must not be paid for a refunded booking");
+    }
 }
