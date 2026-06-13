@@ -232,8 +232,10 @@ public class ListingService(
 
         var pricingConfig = await pricingConfigService.GetAsync();
 
+        // Not AsNoTracking: the non-relational (InMemory) view-count path below
+        // mutates this entity and persists via SaveChangesAsync; AsNoTracking
+        // would silently drop that bump. The relational path uses ExecuteUpdate.
         var listing = await db.Listings
-            .AsNoTracking()
             .Include(l => l.Supplier)
             .Include(l => l.Location)
             .FirstOrDefaultAsync(l => l.Id == id && l.IsActive

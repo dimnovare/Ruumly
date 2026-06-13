@@ -24,7 +24,9 @@ public class OrderLeadStatusTests
 
     private sealed class StubOrderService : IOrderService
     {
-        public Task<DTOs.PaginatedResult<DTOs.Responses.OrderDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 50, Guid? supplierId = null, CancellationToken ct = default)
+        public Task<DTOs.PaginatedResult<DTOs.Responses.OrderDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 50, Guid? supplierId = null, string? status = null, CancellationToken ct = default)
+            => throw new NotImplementedException();
+        public Task<Dictionary<string, int>> GetStatusCountsAsync(Guid userId, UserRole role, Guid? supplierId = null, CancellationToken ct = default)
             => throw new NotImplementedException();
         public Task<DTOs.Responses.OrderDto?> GetByIdAsync(Guid id, Guid callerId, Models.Enums.UserRole callerRole, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<DTOs.Responses.OrderDto?> GetByBookingIdAsync(Guid bookingId, Guid callerId, UserRole callerRole, CancellationToken ct = default) => throw new NotImplementedException();

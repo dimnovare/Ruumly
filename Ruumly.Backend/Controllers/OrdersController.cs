@@ -22,12 +22,25 @@ public class OrdersController(IOrderService orderService, RuumlyDbContext db) : 
     [Authorize(Roles = "Admin,Provider,Customer")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
-        [FromQuery] int   page       = 1,
-        [FromQuery] int   limit      = 50,
-        [FromQuery] Guid? supplierId = null)
+        [FromQuery] int    page       = 1,
+        [FromQuery] int    limit      = 50,
+        [FromQuery] Guid?  supplierId = null,
+        [FromQuery] string? status    = null)
     {
-        var result = await orderService.GetAllAsync(User.GetUserId(), User.GetUserRole(), page, limit, supplierId, HttpContext.RequestAborted);
+        var result = await orderService.GetAllAsync(User.GetUserId(), User.GetUserRole(), page, limit, supplierId, status, HttpContext.RequestAborted);
         return Ok(result);
+    }
+
+    /// <summary>
+    /// Order counts grouped by status, scoped to the caller. Powers the admin status tabs.
+    /// </summary>
+    [HttpGet("status-counts")]
+    [Authorize(Roles = "Admin,Provider,Customer")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetStatusCounts([FromQuery] Guid? supplierId = null)
+    {
+        var counts = await orderService.GetStatusCountsAsync(User.GetUserId(), User.GetUserRole(), supplierId, HttpContext.RequestAborted);
+        return Ok(counts);
     }
 
     /// <summary>

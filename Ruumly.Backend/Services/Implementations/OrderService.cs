@@ -26,7 +26,7 @@ public class OrderService(
 
     // ─── Queries ──────────────────────────────────────────────────────────────
 
-    public async Task<PaginatedResult<OrderDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 50, Guid? supplierId = null, CancellationToken ct = default)
+    public async Task<PaginatedResult<OrderDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 50, Guid? supplierId = null, string? status = null, CancellationToken ct = default)
     {
         page  = Math.Max(1, page);
         limit = Math.Clamp(limit, 1, 100);
@@ -62,6 +62,10 @@ public class OrderService(
             query = query.Where(o => o.SupplierId == supplierId.Value);
         }
 
+        // Optional server-side status filter (AdminOrders tabs). Unknown/blank → no filter.
+        if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<OrderStatus>(status, ignoreCase: true, out var statusFilter))
+            query = query.Where(o => o.Status == statusFilter);
+
         var total = await query.CountAsync(ct);
 
         // Admin inbox: surface high-priority suppliers first
@@ -77,6 +81,57 @@ public class OrderService(
 
         var data = orders.Select(MapToDto).ToList();
         return new PaginatedResult<OrderDto>(data, total, page, limit, (page - 1) * limit + data.Count < total);
+    }
+
+    /// <summary>
+    /// Order counts grouped by status. Provider/Customer are scoped to their own
+    /// data; an Admin sees all orders, or one supplier's when supplierId is given.
+    /// Powers the AdminOrders status tabs without pulling every order client-side.
+    /// Keys are lowercased status names plus an "all" total.
+    /// Scoping uses scalar sub-queries (no navigation-property access) so it is
+    /// reliably SQL-translatable and works under the InMemory test provider.
+    /// </summary>
+    public async Task<Dictionary<string, int>> GetStatusCountsAsync(Guid userId, UserRole role, Guid? supplierId = null, CancellationToken ct = default)
+    {
+        var query = db.Orders.AsNoTracking().AsQueryable();
+
+        if (role == UserRole.Provider)
+        {
+            var user = await db.Users
+                .Where(u => u.Id == userId)
+                .Select(u => new { u.SupplierId, u.Email })
+                .FirstOrDefaultAsync(ct);
+            if (user is not null)
+            {
+                if (user.SupplierId.HasValue)
+                    query = query.Where(o => o.SupplierId == user.SupplierId.Value);
+                else
+                {
+                    var supplierIds = await db.Suppliers
+                        .Where(s => s.ContactEmail == user.Email)
+                        .Select(s => s.Id)
+                        .ToListAsync(ct);
+                    query = query.Where(o => supplierIds.Contains(o.SupplierId));
+                }
+            }
+        }
+        else if (role == UserRole.Customer)
+        {
+            query = query.Where(o => db.Bookings.Any(b => b.Id == o.BookingId && b.UserId == userId));
+        }
+        else if (role == UserRole.Admin && supplierId.HasValue)
+        {
+            query = query.Where(o => o.SupplierId == supplierId.Value);
+        }
+
+        var grouped = await query
+            .GroupBy(o => o.Status)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToListAsync(ct);
+
+        var counts = grouped.ToDictionary(x => x.Status.ToString().ToLowerInvariant(), x => x.Count);
+        counts["all"] = grouped.Sum(x => x.Count);
+        return counts;
     }
 
     public async Task<OrderDto?> GetByIdAsync(Guid id, Guid callerId, UserRole callerRole, CancellationToken ct = default)

@@ -198,15 +198,23 @@ public class AdminSettingsController(
     // ══════════════════════════════════════════════════════════════════════════
 
     [HttpGet("listings")]
-    public async Task<IActionResult> GetListings()
+    public async Task<IActionResult> GetListings([FromQuery] int page = 1, [FromQuery] int limit = 50)
     {
-        var listings = await Db.Listings
+        page  = Math.Max(1, page);
+        limit = Math.Clamp(limit, 1, 200);
+
+        var query = Db.Listings
             .AsNoTracking()
             .Include(l => l.Supplier)
             .Include(l => l.Location)
-            .OrderByDescending(l => l.CreatedAt)
-            .ToListAsync();
-        return Ok(listings.Select(AdminMappers.MapListing));
+            .OrderByDescending(l => l.CreatedAt);
+
+        var total = await query.CountAsync();
+        var items = await query.Skip((page - 1) * limit).Take(limit).ToListAsync();
+        var data  = items.Select(AdminMappers.MapListing).Cast<object>().ToList();
+
+        return Ok(new PaginatedResult<object>(data, total, page, limit,
+            (page - 1) * limit + data.Count < total));
     }
 
     [HttpGet("listings/{id:guid}")]
