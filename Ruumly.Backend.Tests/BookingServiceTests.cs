@@ -278,6 +278,83 @@ public class BookingServiceTests
         await act.Should().ThrowAsync<ArgumentException>();
     }
 
+    // ─── Open-ended overbooking tests ──────────────────────────────────────
+    // Storage is open-ended/monthly (null EndDate = ongoing). The capacity guard
+    // must treat a null EndDate as +infinity on BOTH sides so open-ended bookings
+    // can't skip the overlap check and overbook a single-unit listing.
+
+    [Fact]
+    public async Task CreateAsync_Rejects_Second_OpenEnded_Booking_On_SingleUnit_Listing()
+    {
+        var db = CreateDb();
+        var (supplier, listing, user) = await SeedBasicAsync(db, priceFrom: 100m);
+        listing.QuantityTotal = 1;
+        await db.SaveChangesAsync();
+        var service = MakeService(db);
+
+        // First open-ended booking (StartDate set, no EndDate) succeeds.
+        var first = await service.CreateAsync(
+            MakeBookingRequest(listing.Id, startDate: "2027-09-01", endDate: null),
+            user.Id);
+        first.Should().NotBeNull();
+
+        // Second open-ended booking on the same single-unit listing must be rejected:
+        // the existing open-ended row (EndDate == null) is still occupying the unit.
+        var act = async () => await service.CreateAsync(
+            MakeBookingRequest(listing.Id, startDate: "2027-10-01", endDate: null),
+            user.Id);
+
+        await act.Should().ThrowAsync<ArgumentException>();
+    }
+
+    [Fact]
+    public async Task CreateAsync_Rejects_New_Dated_Booking_Overlapping_Existing_OpenEnded()
+    {
+        var db = CreateDb();
+        var (supplier, listing, user) = await SeedBasicAsync(db, priceFrom: 100m);
+        listing.QuantityTotal = 1;
+        await db.SaveChangesAsync();
+
+        // Existing open-ended booking (no EndDate = runs to +infinity).
+        db.Bookings.Add(new Booking
+        {
+            Id         = Guid.NewGuid(),
+            UserId     = user.Id,
+            ListingId  = listing.Id,
+            SupplierId = supplier.Id,
+            StartDate  = new DateTime(2027, 9, 1, 0, 0, 0, DateTimeKind.Utc),
+            EndDate    = null,
+            Duration   = "1 kuu",
+            Status     = BookingStatus.Confirmed,
+        });
+        await db.SaveChangesAsync();
+        var service = MakeService(db);
+
+        // A new DATED booking starting after the open-ended booking's start overlaps it
+        // (open-ended runs forever), so it must be rejected on a single-unit listing.
+        var act = async () => await service.CreateAsync(
+            MakeBookingRequest(listing.Id, startDate: "2027-12-01", endDate: "2027-12-31"),
+            user.Id);
+
+        await act.Should().ThrowAsync<ArgumentException>();
+    }
+
+    [Fact]
+    public async Task CreateAsync_Allows_Single_OpenEnded_Booking_On_Free_SingleUnit_Listing()
+    {
+        var db = CreateDb();
+        var (_, listing, user) = await SeedBasicAsync(db, priceFrom: 100m);
+        listing.QuantityTotal = 1;
+        await db.SaveChangesAsync();
+        var service = MakeService(db);
+
+        var booking = await service.CreateAsync(
+            MakeBookingRequest(listing.Id, startDate: "2027-09-01", endDate: null),
+            user.Id);
+
+        booking.Should().NotBeNull();
+    }
+
     // ─── Role scoping tests ────────────────────────────────────────────────
 
     [Fact]

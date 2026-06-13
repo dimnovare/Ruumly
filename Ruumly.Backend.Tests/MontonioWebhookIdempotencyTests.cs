@@ -81,8 +81,10 @@ public class MontonioWebhookIdempotencyTests : IDisposable
 
     /// <summary>
     /// Creates a Montonio-style webhook JWT (data claim wraps the payload JSON).
+    /// <paramref name="amount"/> defaults to 95m to match the seeded invoice Amount;
+    /// override it to simulate an amount-mismatched event.
     /// </summary>
-    private static string MakeWebhookJwt(string merchantReference, string paymentStatus = "paid")
+    private static string MakeWebhookJwt(string merchantReference, string paymentStatus = "paid", decimal amount = 95m)
     {
         var key    = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(TestSecretKey));
         var creds  = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -90,7 +92,7 @@ public class MontonioWebhookIdempotencyTests : IDisposable
         {
             merchant_reference = merchantReference,
             payment_status     = paymentStatus,
-            grand_total        = 95m,      // must match the seeded invoice Amount (95m)
+            grand_total        = amount,   // defaults to the seeded invoice Amount (95m)
             currency           = "EUR",
         });
         var jwt = new JwtSecurityToken(
@@ -330,5 +332,56 @@ public class MontonioWebhookIdempotencyTests : IDisposable
         var updatedOrder = await db.Orders.FindAsync(order.Id);
         updatedOrder!.Status.Should().Be(OrderStatus.Cancelled,
             "cancelled orders must not be re-dispatched by a late payment webhook");
+    }
+
+    /// <summary>
+    /// Amount verification: a 'paid' webhook whose grand_total does not match the
+    /// invoice Amount must NOT mark the invoice Paid. Returns false and the invoice
+    /// stays AwaitingPayment — guards against under/over-charge on a mismatched event.
+    /// </summary>
+    [Fact]
+    public async Task Webhook_PaidStatus_AmountMismatch_DoesNotMarkPaid()
+    {
+        var db   = CreateDb();
+        var ref_ = Guid.NewGuid().ToString();
+        var (invoice, _) = await SeedPaidScenarioAsync(db, ref_); // seeded Amount = 95m
+        var svc = MakeService(db);
+
+        // Webhook reports 50 — does not match the billed 95.
+        var ok = await svc.HandleWebhookAsync(MakeWebhookJwt(ref_, amount: 50m));
+
+        ok.Should().BeFalse("a 'paid' webhook with a mismatched amount must be refused");
+
+        var unchanged = await db.Invoices.FindAsync(invoice.Id);
+        unchanged!.Status.Should().Be(InvoiceStatus.AwaitingPayment,
+            "invoice must not be marked Paid on an amount-mismatched webhook");
+        unchanged.PaidAt.Should().BeNull();
+    }
+
+    /// <summary>
+    /// Terminal-state guard: a late 'cancelled' webhook arriving on an already-PAID
+    /// invoice must leave it Paid and must NOT cancel the linked booking — a stale
+    /// abandoned-checkout event must never downgrade a successful payment.
+    /// </summary>
+    [Fact]
+    public async Task Webhook_LateCancelled_OnPaidInvoice_LeavesPaid_AndDoesNotCancelBooking()
+    {
+        var db   = CreateDb();
+        var ref_ = Guid.NewGuid().ToString();
+        var (invoice, _) = await SeedPaidScenarioAsync(
+            db, ref_, invoiceStatus: InvoiceStatus.Paid);
+        var svc = MakeService(db);
+
+        var ok = await svc.HandleWebhookAsync(MakeWebhookJwt(ref_, paymentStatus: "cancelled"));
+
+        ok.Should().BeTrue("stale 'cancelled' events are acknowledged (200) but not acted on");
+
+        var unchangedInvoice = await db.Invoices.FindAsync(invoice.Id);
+        unchangedInvoice!.Status.Should().Be(InvoiceStatus.Paid,
+            "a late 'cancelled' must not downgrade a Paid invoice to Refunded");
+
+        var booking = await db.Bookings.FirstAsync(b => b.Id == invoice.BookingId);
+        booking.Status.Should().NotBe(BookingStatus.Cancelled,
+            "a late 'cancelled' on a paid invoice must not cancel the booking");
     }
 }

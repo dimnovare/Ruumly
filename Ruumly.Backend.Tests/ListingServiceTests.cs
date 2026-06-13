@@ -333,4 +333,85 @@ public class ListingServiceTests
         result.Data.Should().HaveCount(2);
         result.Data.Should().OnlyContain(l => l.SizeM2 != null);
     }
+
+    // ─── Storage-only launch gating ────────────────────────────────────────
+    // Moving/Trailer verticals are hidden behind admin toggles
+    // (showMovingService / showTrailerService in PlatformSettings). A missing
+    // row defaults to enabled — the guard must not over-filter.
+
+    /// <summary>
+    /// Seeds one Moving and one Warehouse listing (both active). When
+    /// <paramref name="movingFlag"/> / <paramref name="trailerFlag"/> are non-null
+    /// the corresponding PlatformSettings row is written; null leaves it absent.
+    /// </summary>
+    private static async Task<(RuumlyDbContext db, Guid movingId, Guid warehouseId)> SeedVerticalGatingAsync(
+        string? movingFlag, string? trailerFlag = "false")
+    {
+        var db       = CreateDb();
+        var supplier = MakeSupplier();
+        db.Suppliers.Add(supplier);
+
+        var moving    = MakeListing(supplier.Id, type: ListingType.Moving);
+        var warehouse = MakeListing(supplier.Id, type: ListingType.Warehouse);
+        db.Listings.AddRange(moving, warehouse);
+
+        if (movingFlag is not null)
+            db.PlatformSettings.Add(new PlatformSetting { Key = "showMovingService", Value = movingFlag });
+        if (trailerFlag is not null)
+            db.PlatformSettings.Add(new PlatformSetting { Key = "showTrailerService", Value = trailerFlag });
+
+        await db.SaveChangesAsync();
+        return (db, moving.Id, warehouse.Id);
+    }
+
+    [Fact]
+    public async Task SearchAsync_ExcludesMoving_When_ShowMovingService_False()
+    {
+        var (db, movingId, warehouseId) = await SeedVerticalGatingAsync(movingFlag: "false");
+        var service = MakeService(db);
+
+        var result = await service.SearchAsync(new ListingSearchRequest());
+
+        result.Data.Should().ContainSingle()
+            .Which.Id.Should().Be(warehouseId);
+        result.Data.Should().NotContain(l => l.Id == movingId);
+        result.Total.Should().Be(1, "the disabled Moving vertical must be excluded before Count");
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_ReturnsNull_For_Moving_When_Disabled()
+    {
+        var (db, movingId, _) = await SeedVerticalGatingAsync(movingFlag: "false");
+        var service = MakeService(db);
+
+        var result = await service.GetByIdAsync(movingId);
+
+        result.Should().BeNull("a deep link to a disabled vertical must 404");
+    }
+
+    [Fact]
+    public async Task SearchAsync_IncludesMoving_When_Flag_Absent_DefaultsEnabled()
+    {
+        // No showMovingService row at all → default enabled (guard against over-filtering).
+        var (db, movingId, warehouseId) = await SeedVerticalGatingAsync(movingFlag: null, trailerFlag: null);
+        var service = MakeService(db);
+
+        var result = await service.SearchAsync(new ListingSearchRequest());
+
+        result.Data.Should().HaveCount(2);
+        result.Data.Should().Contain(l => l.Id == movingId, "Moving is default-enabled when the flag is absent");
+        result.Data.Should().Contain(l => l.Id == warehouseId);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_ReturnsMoving_When_Flag_Explicit_True()
+    {
+        var (db, movingId, _) = await SeedVerticalGatingAsync(movingFlag: "true", trailerFlag: "true");
+        var service = MakeService(db);
+
+        var result = await service.GetByIdAsync(movingId);
+
+        result.Should().NotBeNull();
+        result!.Id.Should().Be(movingId);
+    }
 }
