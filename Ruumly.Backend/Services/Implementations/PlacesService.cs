@@ -85,6 +85,83 @@ public class PlacesService(
         return dto;
     }
 
+    public async Task<IReadOnlyList<PlaceSuggestionDto>> AutocompleteAsync(
+        string input, string language, CancellationToken ct = default)
+    {
+        var apiKey = config["GooglePlaces:ApiKey"];
+        if (string.IsNullOrWhiteSpace(apiKey) || string.IsNullOrWhiteSpace(input) || input.Trim().Length < 3)
+            return [];
+
+        var url = "https://maps.googleapis.com/maps/api/place/autocomplete/json" +
+                  $"?input={Uri.EscapeDataString(input.Trim())}" +
+                  $"&language={Uri.EscapeDataString(language)}" +
+                  "&components=country:ee|country:lv|country:lt";
+
+        using var http    = httpFactory.CreateClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Add("X-Goog-Api-Key", apiKey);
+        using var response = await http.SendAsync(request, ct);
+        if (!response.IsSuccessStatusCode) return [];
+
+        var json = await response.Content.ReadAsStringAsync(ct);
+        var root = JsonSerializer.Deserialize<AutocompleteResponse>(json, JsonOpts);
+        if (root?.Predictions is null) return [];
+
+        return root.Predictions
+            .Where(p => !string.IsNullOrWhiteSpace(p.PlaceId))
+            .Take(8)
+            .Select(p => new PlaceSuggestionDto(p.PlaceId!, p.Description ?? string.Empty))
+            .ToList();
+    }
+
+    public async Task<PlacePrefillDto?> GetPrefillAsync(
+        string placeId, string language, CancellationToken ct = default)
+    {
+        var apiKey = config["GooglePlaces:ApiKey"];
+        if (string.IsNullOrWhiteSpace(apiKey) || string.IsNullOrWhiteSpace(placeId))
+            return null;
+
+        var url = "https://maps.googleapis.com/maps/api/place/details/json" +
+                  $"?place_id={Uri.EscapeDataString(placeId)}" +
+                  "&fields=name,formatted_address,geometry,address_component,opening_hours,url" +
+                  $"&language={Uri.EscapeDataString(language)}";
+
+        using var http    = httpFactory.CreateClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Add("X-Goog-Api-Key", apiKey);
+        using var response = await http.SendAsync(request, ct);
+        if (!response.IsSuccessStatusCode) return null;
+
+        var json = await response.Content.ReadAsStringAsync(ct);
+        var root = JsonSerializer.Deserialize<DetailsResponse>(json, JsonOpts);
+        if (root?.Status != "OK" || root.Result is null) return null;
+
+        var r = root.Result;
+
+        // City: prefer locality, then postal_town, then admin_area_level_2.
+        string? city = null;
+        foreach (var comp in r.AddressComponents ?? [])
+        {
+            var types = comp.Types ?? [];
+            if (types.Contains("locality")) { city = comp.LongName; break; }
+            if (city is null && types.Contains("postal_town"))                 city = comp.LongName;
+            if (city is null && types.Contains("administrative_area_level_2")) city = comp.LongName;
+        }
+
+        var hours = r.OpeningHours?.WeekdayText is { Count: > 0 } wt
+            ? string.Join("; ", wt)
+            : null;
+
+        return new PlacePrefillDto(
+            Name:         r.Name             ?? string.Empty,
+            Address:      r.FormattedAddress ?? string.Empty,
+            City:         city               ?? string.Empty,
+            Lat:          r.Geometry?.Location?.Lat ?? 0,
+            Lng:          r.Geometry?.Location?.Lng ?? 0,
+            OpeningHours: hours,
+            MapsUrl:      r.Url);
+    }
+
     // ── Internal deserialization models (Google Places Details API) ───────────
     // These never leave this file; the public DTOs above are what callers consume.
 
@@ -110,5 +187,56 @@ public class PlacesService(
         public string? Text                    { get; set; }
         public string? RelativeTimeDescription { get; set; }
         public long    Time                    { get; set; }
+    }
+
+    private sealed class AutocompleteResponse
+    {
+        public string?                       Status      { get; set; }
+        public List<AutocompletePrediction>? Predictions { get; set; }
+    }
+
+    private sealed class AutocompletePrediction
+    {
+        public string? PlaceId     { get; set; }
+        public string? Description { get; set; }
+    }
+
+    private sealed class DetailsResponse
+    {
+        public string?        Status { get; set; }
+        public DetailsResult? Result { get; set; }
+    }
+
+    private sealed class DetailsResult
+    {
+        public string?                        Name              { get; set; }
+        public string?                        FormattedAddress  { get; set; }
+        public DetailsGeometry?               Geometry          { get; set; }
+        public List<DetailsAddressComponent>? AddressComponents { get; set; }
+        public DetailsOpeningHours?           OpeningHours      { get; set; }
+        public string?                        Url               { get; set; }
+    }
+
+    private sealed class DetailsGeometry
+    {
+        public DetailsLocation? Location { get; set; }
+    }
+
+    private sealed class DetailsLocation
+    {
+        public double Lat { get; set; }
+        public double Lng { get; set; }
+    }
+
+    private sealed class DetailsAddressComponent
+    {
+        public string?       LongName  { get; set; }
+        public string?       ShortName { get; set; }
+        public List<string>? Types     { get; set; }
+    }
+
+    private sealed class DetailsOpeningHours
+    {
+        public List<string>? WeekdayText { get; set; }
     }
 }
