@@ -10,17 +10,23 @@ using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Tests;
 
+[Collection(HangfireCollection.Name)]
 public class BackgroundEmailServiceTests
 {
     [Fact]
     public void EnqueueEmail_StoresDurableHangfireJob()
     {
-        JobStorage.Current = new InMemoryStorage();
-        var queue = new HangfireBackgroundEmailQueue(new BackgroundJobClient());
+        // Bind the client and the assertion to this test's own storage instance instead of the
+        // global JobStorage.Current, so the result can't be affected by any other class touching
+        // the static. The [Collection] above already serializes Hangfire tests; this is belt-and-
+        // suspenders so the assertion reads exactly the storage we enqueued into.
+        var storage = new InMemoryStorage();
+        JobStorage.Current = storage;
+        var queue = new HangfireBackgroundEmailQueue(new BackgroundJobClient(storage));
 
         queue.EnqueueEmail("partner@example.com", "Welcome", "Approved");
 
-        var jobs = JobStorage.Current.GetMonitoringApi().EnqueuedJobs("default", 0, 10);
+        var jobs = storage.GetMonitoringApi().EnqueuedJobs("default", 0, 10);
         jobs.Should().ContainSingle();
         jobs.Single().Value.Job.Type.Should().Be(typeof(BackgroundEmailService));
         jobs.Single().Value.Job.Method.Name.Should().Be(nameof(BackgroundEmailService.SendAsync));

@@ -19,6 +19,7 @@ namespace Ruumly.Backend.Tests;
 /// Validates that terminal booking/order states are not corrupted by
 /// late or out-of-order webhook/admin events.
 /// </summary>
+[Collection(HangfireCollection.Name)]
 public class BookingStateMachineTests : IDisposable
 {
     // ─── Hangfire in-memory setup ─────────────────────────────────────────────

@@ -21,6 +21,7 @@ namespace Ruumly.Backend.Tests;
 /// firing the same webhook twice must not charge twice, not corrupt state,
 /// and must return true (success) on the duplicate call.
 /// </summary>
+[Collection(HangfireCollection.Name)]
 public class MontonioWebhookIdempotencyTests : IDisposable
 {
     private const string TestSecretKey = "test-secret-key-that-is-long-enough-for-hs256";
