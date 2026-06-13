@@ -39,7 +39,7 @@ public class OrdersController(IOrderService orderService, RuumlyDbContext db) : 
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
     {
-        var order = await orderService.GetByIdAsync(id, HttpContext.RequestAborted);
+        var order = await orderService.GetByIdAsync(id, User.GetUserId(), User.GetUserRole(), HttpContext.RequestAborted);
         if (order is null) return NotFound(new { error = "Not Found", message = "Order not found", statusCode = 404 });
         return Ok(order);
     }

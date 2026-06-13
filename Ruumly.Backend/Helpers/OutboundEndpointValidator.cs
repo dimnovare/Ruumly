@@ -26,6 +26,22 @@ public static class OutboundEndpointValidator
         // covering real-world attack vectors are already blocked via the IP literal check below).
         if (!System.Net.IPAddress.TryParse(uri.Host.Trim('[', ']'), out var ip)) return true;
 
+        // Native IPv6 must be range-checked in v6 form. MapToIPv4() on a non-v4-mapped v6 address
+        // (e.g. ULA fd00::) produces meaningless bytes, so private v6 targets would otherwise slip
+        // through (e.g. http://[fd00::808:808]/ maps to 8.8.8.8 and would be wrongly ALLOWED).
+        if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6 && !ip.IsIPv4MappedToIPv6)
+        {
+            var v6 = ip.GetAddressBytes();
+            var isPrivateV6 =
+                System.Net.IPAddress.IsLoopback(ip) ||                 // ::1 — loopback
+                ip.IsIPv6LinkLocal ||                                  // fe80::/10 — link-local
+                ip.IsIPv6SiteLocal ||                                  // fec0::/10 — deprecated site-local
+                (v6[0] & 0xFE) == 0xFC ||                              // fc00::/7  — unique local address (ULA)
+                ip.Equals(System.Net.IPAddress.IPv6Any);              // ::        — unspecified
+
+            return !isPrivateV6;
+        }
+
         // Map IPv6-encoded IPv4 (::ffff:192.168.x.x) to IPv4 for uniform range checks
         var v4 = ip.MapToIPv4();
         var b  = v4.GetAddressBytes();

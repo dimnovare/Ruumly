@@ -238,8 +238,13 @@ public class MontonioPaymentService(
             // Montonio wraps the payload in a "data" claim (same structure as the
             // outgoing order JWT). Extract merchant_reference and payment_status
             // from the nested JSON object.
-            string? ref_   = null;
-            string? status = null;
+            string?  ref_      = null;
+            string?  status    = null;
+            // Amount + currency reported by the (already signature-verified) webhook payload.
+            // Captured here so the 'paid' branch can assert they match the invoice before
+            // transitioning to Paid (defence against an amount/currency-mismatched event).
+            decimal? webhookAmount   = null;
+            string?  webhookCurrency = null;
 
             // Try nested "data" claim first (standard Montonio webhook format)
             var dataClaim = jwt.Claims.FirstOrDefault(c => c.Type == "data")?.Value;
@@ -253,6 +258,15 @@ public class MontonioPaymentService(
                         ref_ = refEl.GetString();
                     if (root.TryGetProperty("payment_status", out var statusEl))
                         status = statusEl.GetString();
+                    // Montonio echoes the order total as "grand_total" (falling back to "amount").
+                    if (root.TryGetProperty("grand_total", out var grandEl)
+                        && grandEl.TryGetDecimal(out var grand))
+                        webhookAmount = grand;
+                    else if (root.TryGetProperty("amount", out var amtEl)
+                        && amtEl.TryGetDecimal(out var amt))
+                        webhookAmount = amt;
+                    if (root.TryGetProperty("currency", out var curEl))
+                        webhookCurrency = curEl.GetString();
                 }
                 catch (JsonException ex)
                 {
@@ -289,6 +303,46 @@ public class MontonioPaymentService(
 
                 if (cancelledInvoice is not null)
                 {
+                    // Terminal-state / idempotency guard. Without this a stale, duplicate or
+                    // out-of-order webhook can corrupt a genuinely Paid invoice:
+                    //   - A late 'cancelled' (abandoned-checkout) event arriving AFTER a successful
+                    //     payment must be ignored — it does not mean the paid order was voided.
+                    //   - Replays of an already-applied 'refunded'/cancellation are no-ops.
+                    // So we only ACT on the legitimate transition for each event type:
+                    //   'cancelled' acts only on an AwaitingPayment invoice (checkout abandoned);
+                    //   'refunded'  acts only on a Paid invoice (money was actually returned).
+                    // Note: InvoiceStatus has no 'Cancelled' member, so a voided checkout is
+                    // recorded as Refunded (consistent with the prior behaviour) — idempotency
+                    // therefore keys on the already-Refunded state.
+                    if (cancelledInvoice.Status == InvoiceStatus.Refunded)
+                    {
+                        logger.LogInformation(
+                            "Montonio webhook: invoice {InvoiceId} already refunded/voided — duplicate {Status} for ref {Ref}, ignoring",
+                            cancelledInvoice.Id, status, ref_);
+                        return true;
+                    }
+
+                    if (status == "cancelled" && cancelledInvoice.Status != InvoiceStatus.AwaitingPayment)
+                    {
+                        // A 'cancelled' (abandoned-checkout) event for an invoice that is not
+                        // awaiting payment (e.g. already Paid) is stale/out-of-order — ignore it
+                        // so a successful payment is never downgraded to Refunded.
+                        logger.LogWarning(
+                            "Montonio webhook: ignoring stale 'cancelled' for invoice {InvoiceId} in status {Status} (ref {Ref})",
+                            cancelledInvoice.Id, cancelledInvoice.Status, ref_);
+                        return true;
+                    }
+
+                    if (status == "refunded" && cancelledInvoice.Status != InvoiceStatus.Paid)
+                    {
+                        // A genuine refund can only follow a Paid invoice. A 'refunded' event for a
+                        // non-Paid invoice is out-of-order/unexpected — do not cancel the booking.
+                        logger.LogWarning(
+                            "Montonio webhook: ignoring 'refunded' for invoice {InvoiceId} in non-Paid status {Status} (ref {Ref})",
+                            cancelledInvoice.Id, cancelledInvoice.Status, ref_);
+                        return true;
+                    }
+
                     cancelledInvoice.Status = status == "refunded"
                         ? InvoiceStatus.Refunded
                         : InvoiceStatus.Refunded; // cancelled order = treat as voided/refunded
@@ -357,6 +411,33 @@ public class MontonioPaymentService(
                     "Montonio webhook: invoice {InvoiceId} already paid — duplicate webhook for ref {Ref}, ignoring",
                     invoice.Id, ref_);
                 return true;
+            }
+
+            // Amount/currency verification — never mark an invoice Paid on a webhook whose
+            // reported total or currency does not match what we billed. The 'data' claim is
+            // already signature-verified, but a mismatch still indicates a tampered/wrong-order
+            // or misconfigured event; refuse rather than under/over-charge silently.
+            if (webhookAmount is null
+                || webhookCurrency is null
+                || webhookAmount.Value != invoice.Amount
+                || !string.Equals(webhookCurrency, "EUR", StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogWarning(
+                    "Montonio webhook: amount/currency mismatch for invoice {InvoiceId} (ref {Ref}). "
+                    + "Webhook reported {WebhookAmount} {WebhookCurrency}, invoice expects {InvoiceAmount} EUR — refusing to mark paid",
+                    invoice.Id, ref_, webhookAmount, webhookCurrency, invoice.Amount);
+                SentrySdk.CaptureMessage(
+                    "Montonio webhook amount/currency mismatch — payment not applied",
+                    scope =>
+                    {
+                        scope.Level = SentryLevel.Warning;
+                        scope.SetExtra("invoiceId",         invoice.Id.ToString());
+                        scope.SetExtra("merchantReference", ref_);
+                        scope.SetExtra("webhookAmount",     webhookAmount?.ToString() ?? "null");
+                        scope.SetExtra("webhookCurrency",   webhookCurrency ?? "null");
+                        scope.SetExtra("invoiceAmount",     invoice.Amount.ToString());
+                    });
+                return false;
             }
 
             invoice.Status = InvoiceStatus.Paid;

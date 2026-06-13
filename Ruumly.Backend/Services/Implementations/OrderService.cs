@@ -79,10 +79,28 @@ public class OrderService(
         return new PaginatedResult<OrderDto>(data, total, page, limit, (page - 1) * limit + data.Count < total);
     }
 
-    public async Task<OrderDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    public async Task<OrderDto?> GetByIdAsync(Guid id, Guid callerId, UserRole callerRole, CancellationToken ct = default)
     {
         var order = await LoadOrder(id, ct);
-        return order is null ? null : MapToDto(order);
+        if (order is null) return null;
+
+        // IDOR guard — mirror GetByBookingIdAsync: Admin always passes; a Provider may only
+        // read their own supplier's order; a Customer may only read their own booking's order.
+        // Use the not-found message so callers can't enumerate other suppliers' order IDs.
+        if (callerRole == UserRole.Customer && order.Booking?.UserId != callerId)
+            throw new ForbiddenException(Msg("ORDER_NOT_FOUND"));
+
+        if (callerRole == UserRole.Provider)
+        {
+            var callerSupplierId = await db.Users
+                .Where(u => u.Id == callerId)
+                .Select(u => u.SupplierId)
+                .FirstOrDefaultAsync(ct);
+            if (callerSupplierId != order.SupplierId)
+                throw new ForbiddenException(Msg("ORDER_NOT_FOUND"));
+        }
+
+        return MapToDto(order);
     }
 
     public async Task<OrderDto?> GetByBookingIdAsync(Guid bookingId, Guid callerId, UserRole callerRole, CancellationToken ct = default)

@@ -218,8 +218,10 @@ interface ApiLocation {
 }
 
 interface ApiSettings {
-  siteName?:     string;
-  heroSubtitle?: string;
+  siteName?:            string;
+  heroSubtitle?:        string;
+  showMovingService?:   boolean;
+  showTrailerService?:  boolean;
 }
 
 // ── Metadata resolution ───────────────────────────────────────────────────────
@@ -297,6 +299,21 @@ async function resolveOgData(
 
   // ── Listing pages (warehouse / moving / trailer) ────────────────────────────
   if ((section === "warehouse" || section === "moving" || section === "trailer") && param) {
+    // Belt-and-suspenders for hidden verticals: even though the backend 404s
+    // disabled-type listings (so apiFetch returns null below), explicitly skip
+    // building a listing preview for moving/trailer when the corresponding
+    // service flag is off — otherwise a shared link to a hidden vertical could
+    // leak a rich OG card. On settings-fetch failure we leave it to the listing
+    // fetch result (stay resilient rather than over-suppress).
+    if (section === "moving" || section === "trailer") {
+      const settings = await apiFetch<ApiSettings>(`${api}/api/settings/public`);
+      const enabled =
+        section === "moving" ? settings?.showMovingService : settings?.showTrailerService;
+      if (settings && enabled === false) {
+        return { lang, title: DEFAULT_TITLE, description: DEFAULT_DESC, image: DEFAULT_IMAGE };
+      }
+    }
+
     const listing = await apiFetch<ApiListing>(`${api}/api/listings/${encodeURIComponent(param)}?lang=${lang}`);
 
     if (listing) {

@@ -26,7 +26,7 @@ public class OrderLeadStatusTests
     {
         public Task<DTOs.PaginatedResult<DTOs.Responses.OrderDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 50, Guid? supplierId = null, CancellationToken ct = default)
             => throw new NotImplementedException();
-        public Task<DTOs.Responses.OrderDto?> GetByIdAsync(Guid id, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<DTOs.Responses.OrderDto?> GetByIdAsync(Guid id, Guid callerId, Models.Enums.UserRole callerRole, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<DTOs.Responses.OrderDto?> GetByBookingIdAsync(Guid bookingId, Guid callerId, UserRole callerRole, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<DTOs.Responses.OrderDto> ApproveAsync(Guid id, Guid approvedByUserId, CancellationToken ct = default) => throw new NotImplementedException();
         public Task<DTOs.Responses.OrderDto> RejectAsync(Guid id, string reason, Guid rejectedByUserId, CancellationToken ct = default) => throw new NotImplementedException();

@@ -18,6 +18,7 @@ zone_name = "ruumly.eu"
 
 # ── Local dev override ─────────────────────────────────────────────────────────
 # wrangler dev passes requests to the real API; the Vercel origin is unreachable
-# from a local Worker, so non-crawler requests are returned with a 204 stub.
+# from a local Worker, so non-crawler requests are answered with a 200 HTML debug
+# page (renderDevDebugPage) instead of being forwarded to origin.
 [dev]
 port = 8787

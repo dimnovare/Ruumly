@@ -90,6 +90,8 @@ public class MontonioWebhookIdempotencyTests : IDisposable
         {
             merchant_reference = merchantReference,
             payment_status     = paymentStatus,
+            grand_total        = 95m,      // must match the seeded invoice Amount (95m)
+            currency           = "EUR",
         });
         var jwt = new JwtSecurityToken(
             claims: [new System.Security.Claims.Claim("data", data)],

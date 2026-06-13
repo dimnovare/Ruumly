@@ -35,7 +35,11 @@ public class ListingService(
         if (!string.IsNullOrWhiteSpace(f.City) && f.City.Length > 100)
             return PaginatedResult<ListingDto>.Empty(f.Page, f.Limit);
 
-        var cacheKey = $"listings:search:{HashFilters(f)}:{language ?? "_"}";
+        // Read vertical-visibility flags once and fold them into the cache key so a
+        // toggle change can't be served stale, and hidden verticals never appear.
+        var (showMoving, showTrailer) = await GetVerticalVisibilityAsync(ct);
+
+        var cacheKey = $"listings:search:{HashFilters(f)}:{language ?? "_"}:m{(showMoving ? 1 : 0)}t{(showTrailer ? 1 : 0)}";
         var cached   = await cache.GetStringAsync(cacheKey, ct);
         if (cached is not null)
         {
@@ -78,6 +82,11 @@ public class ListingService(
         {
             query = query.Where(l => l.Type == parsedType);
         }
+
+        // ── Storage-only launch guard ─────────────────────────────────────────
+        // Exclude disabled verticals BEFORE Count/pagination so totals stay correct.
+        if (!showMoving)  query = query.Where(l => l.Type != ListingType.Moving);
+        if (!showTrailer) query = query.Where(l => l.Type != ListingType.Trailer);
 
         // ── Country filter ────────────────────────────────────────────────────
         if (!string.IsNullOrWhiteSpace(f.Country))
@@ -230,6 +239,14 @@ public class ListingService(
 
         if (listing is null) return null;
 
+        // Storage-only launch guard: treat a listing in a disabled vertical as
+        // non-existent (=> controller 404), so deep links and the OG worker get a
+        // 404 rather than live data. Checked before the view-count bump.
+        var (showMoving, showTrailer) = await GetVerticalVisibilityAsync();
+        if ((listing.Type == ListingType.Moving  && !showMoving) ||
+            (listing.Type == ListingType.Trailer && !showTrailer))
+            return null;
+
         if (db.Database.IsRelational())
             await db.Listings
                 .Where(l => l.Id == id)
@@ -264,6 +281,10 @@ public class ListingService(
             }
         };
 
+        // Storage-only launch guard: drop disabled verticals BEFORE Take(4) so the
+        // featured rail never surfaces hidden Moving/Trailer listings.
+        var (showMoving, showTrailer) = await GetVerticalVisibilityAsync();
+
         // Badge priority: Promoted(4) > BestValue(3) > Closest(2) > Cheapest(1)
         var listings = await db.Listings
             .Include(l => l.Supplier)
@@ -272,6 +293,8 @@ public class ListingService(
             .ToListAsync();
 
         var result = listings
+            .Where(l => (showMoving  || l.Type != ListingType.Moving)
+                     && (showTrailer || l.Type != ListingType.Trailer))
             .OrderByDescending(l => l.Badge switch
             {
                 ListingBadge.Promoted  => 4,
@@ -295,6 +318,22 @@ public class ListingService(
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    // Storage-only launch guard: Moving/Trailer verticals are hidden behind admin
+    // toggles (showMovingService / showTrailerService in PlatformSettings). The
+    // public listings API must honour these so deep links and the OG worker can't
+    // leak hidden verticals. Settings are stored as string "true"/"false"; a missing
+    // row defaults to enabled (mirrors SitemapController). One read per call.
+    private async Task<(bool showMoving, bool showTrailer)> GetVerticalVisibilityAsync(CancellationToken ct = default)
+    {
+        var showMoving = await db.PlatformSettings
+            .Where(s => s.Key == "showMovingService")
+            .Select(s => s.Value).FirstOrDefaultAsync(ct) != "false";
+        var showTrailer = await db.PlatformSettings
+            .Where(s => s.Key == "showTrailerService")
+            .Select(s => s.Value).FirstOrDefaultAsync(ct) != "false";
+        return (showMoving, showTrailer);
+    }
 
     private static string HashFilters(ListingSearchRequest f)
     {

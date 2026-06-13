@@ -360,7 +360,9 @@ public class AuthController(
 
     [HttpPost("apply-provider-public")]
     [AllowAnonymous]
-    [EnableRateLimiting("auth")]
+    // Tighter "public-email" policy (5 / 10 min / IP): this anonymous endpoint sends
+    // a verification email to a user-supplied address — limit spam amplification.
+    [EnableRateLimiting("public-email")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -373,6 +375,19 @@ public class AuthController(
             return BadRequest(new { error = "Valid contact email is required." });
 
         var lang = request.Language ?? "et";
+
+        // Idempotency guard: deduplicate by ContactEmail BEFORE creating any rows.
+        // If a Supplier already exists for this contact email (or one was just created),
+        // return the same success response WITHOUT inserting new User/Supplier rows or
+        // re-queuing the verification email. Stops row-spam and email-bombing of a
+        // third-party address by anyone replaying the form. Legit first submissions are
+        // unaffected because no matching supplier exists yet.
+        var existingApplication = await db.Suppliers
+            .Where(s => s.ContactEmail == request.ContactEmail)
+            .Select(s => new { s.Id })
+            .FirstOrDefaultAsync();
+        if (existingApplication is not null)
+            return Ok(new { applicationId = existingApplication.Id, message = "Application received. Please check your email." });
 
         await using var tx = await db.Database.BeginTransactionAsync();
         try
@@ -637,7 +652,9 @@ public class AuthController(
 
     [HttpPost("notify-interest")]
     [AllowAnonymous]
-    [EnableRateLimiting("auth")]
+    // Tighter "public-email" policy (5 / 10 min / IP): anonymous endpoint that fires an
+    // admin notification email per submission — curb unauthenticated spam amplification.
+    [EnableRateLimiting("public-email")]
     public async Task<IActionResult> NotifyInterest([FromBody] NotifyInterestRequest body)
     {
         if (string.IsNullOrWhiteSpace(body.Email) ||

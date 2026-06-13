@@ -229,16 +229,13 @@ public class BookingService(
                     throw new ConflictException(Msg("DATES_BLOCKED"));
             }
 
-            // 1b. Check for overlapping confirmed/active bookings on this listing
+            // 1b. Check for overlapping confirmed/active bookings on this listing.
             // Moving-type listings are one-time services with no date range — skip overlap check.
+            // Storage is open-ended/monthly (null EndDate = ongoing), so the capacity guard MUST
+            // run even when request.EndDate is null; otherwise open-ended bookings skip the check
+            // entirely and overbook. Treat a null EndDate as +infinity on both the request side
+            // (newEnd sentinel) and the existing-row side (b.EndDate == null means still occupied).
             if (listing.Type != ListingType.Moving &&
-                !string.IsNullOrEmpty(request.EndDate) &&
-                DateTime.TryParseExact(
-                    request.EndDate, "yyyy-MM-dd",
-                    System.Globalization.CultureInfo.InvariantCulture,
-                    System.Globalization.DateTimeStyles.AssumeUniversal |
-                    System.Globalization.DateTimeStyles.AdjustToUniversal,
-                    out var endDateCheck) &&
                 DateTime.TryParseExact(
                     request.StartDate, "yyyy-MM-dd",
                     System.Globalization.CultureInfo.InvariantCulture,
@@ -247,7 +244,20 @@ public class BookingService(
                     out var startDateCheck))
             {
                 var startUtc = startDateCheck;
-                var endUtc   = endDateCheck;
+
+                // Open-ended request (no EndDate) is treated as running to +infinity, so we use a
+                // far-future sentinel for the new booking's end when computing overlap.
+                DateTime newEnd = DateTime.MaxValue;
+                if (!string.IsNullOrEmpty(request.EndDate) &&
+                    DateTime.TryParseExact(
+                        request.EndDate, "yyyy-MM-dd",
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        System.Globalization.DateTimeStyles.AssumeUniversal |
+                        System.Globalization.DateTimeStyles.AdjustToUniversal,
+                        out var endDateCheck))
+                {
+                    newEnd = endDateCheck;
+                }
 
                 // Advisory lock prevents concurrent overlap-check races on PostgreSQL.
                 // Skipped on InMemory (tests) where row-level contention cannot occur.
@@ -259,6 +269,9 @@ public class BookingService(
                 }
 
                 var totalUnits  = listing.QuantityTotal ?? 1;
+                // A row occupies the unit when it overlaps [startUtc, newEnd):
+                // existing open-ended rows (b.EndDate == null) are still occupying, and any row
+                // whose EndDate is after our start collides with us up to our (possibly infinite) end.
                 var bookedCount = await db.Bookings
                     .CountAsync(b =>
                         b.ListingId == request.ListingId &&
@@ -266,9 +279,8 @@ public class BookingService(
                          b.Status == BookingStatus.Confirmed ||
                          b.Status == BookingStatus.Active    ||
                          b.Status == BookingStatus.Reserved) &&
-                        b.EndDate.HasValue &&
-                        b.StartDate < endUtc &&
-                        b.EndDate.Value > startUtc);
+                        (b.EndDate == null || b.EndDate.Value > startUtc) &&
+                        b.StartDate < newEnd);
 
                 if (bookedCount >= totalUnits)
                     throw new ArgumentException(Msg("NO_UNITS_AVAILABLE"));

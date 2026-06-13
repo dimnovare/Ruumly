@@ -185,6 +185,17 @@ builder.Services.AddRateLimiter(options =>
             QueueLimit  = 0,
         }));
 
+    // Anonymous endpoints that send email to third-party / unverified addresses
+    // (apply-provider-public, notify-interest). Tighter than "auth" (10/min) to
+    // curb unauthenticated email-spam amplification — no CAPTCHA in front of these.
+    options.AddPolicy("public-email", ctx =>
+        RateLimitPartition.GetFixedWindowLimiter(IpKey(ctx), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window      = TimeSpan.FromMinutes(10),
+            QueueLimit  = 0,
+        }));
+
     options.AddPolicy("upload", ctx =>
         RateLimitPartition.GetFixedWindowLimiter(IpKey(ctx), _ => new FixedWindowRateLimiterOptions
         {

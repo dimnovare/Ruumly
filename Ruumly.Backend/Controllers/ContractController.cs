@@ -140,8 +140,14 @@ public class ContractController(
 
                 // Write identity-verified fields directly to the SignedContract row.
                 signed.SigningMethod  = signingMethod;
-                signed.VerifiedName   = session.VerifiedName;
-                signed.VerifiedIdCode = req.TenantIdCode; // supplied by the frontend from the form
+                signed.VerifiedName   = session.VerifiedName; // authoritative — from the eID certificate
+                // VerifiedIdCode is deliberately left null on the eID path. The Smart-ID/Mobile-ID
+                // session only exposes an HMAC PersonalCodeHash, never the raw personal code, so no
+                // gateway-verified id code is available here. We must NOT promote req.TenantIdCode (a
+                // client-supplied form value) to the legally "verified" field — that would be a
+                // non-repudiation hole. VerifiedIdCode is only ever populated from a gateway-verified
+                // source (the Dokobit completion path). The unverified client value remains in the
+                // separate TenantIdCode field (set by ContractService.SignAsync).
                 await db.SaveChangesAsync();
 
                 return Ok(new SignedContractDto(

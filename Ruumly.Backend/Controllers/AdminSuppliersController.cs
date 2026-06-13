@@ -253,8 +253,14 @@ public class AdminSuppliersController(
         if (body.PollingEnabled == true && supplier.NextPollAt == null)
             supplier.NextPollAt = DateTime.UtcNow;
         if (body.PollingEndpoint is not null)
+        {
+            // SSRF guard — validate at write time like ApiEndpoint, so a polling
+            // endpoint pointing at loopback/private/metadata hosts is never persisted.
+            if (!string.IsNullOrWhiteSpace(body.PollingEndpoint) && !OutboundEndpointValidator.IsAllowed(body.PollingEndpoint))
+                return BadRequest(new { error = "Endpoint URL is not allowed (must be a public HTTPS host)." });
             supplier.PollingEndpoint = string.IsNullOrWhiteSpace(body.PollingEndpoint)
                 ? null : body.PollingEndpoint;
+        }
 
         // Slug: validate uniqueness + shape, allow clearing.
         if (body.Slug is not null)

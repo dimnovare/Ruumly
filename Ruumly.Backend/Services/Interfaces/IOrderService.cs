@@ -8,7 +8,7 @@ namespace Ruumly.Backend.Services.Interfaces;
 public interface IOrderService
 {
     Task<PaginatedResult<OrderDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 50, Guid? supplierId = null, CancellationToken ct = default);
-    Task<OrderDto?>       GetByIdAsync(Guid id, CancellationToken ct = default);
+    Task<OrderDto?>       GetByIdAsync(Guid id, Guid callerId, UserRole callerRole, CancellationToken ct = default);
     Task<OrderDto?>       GetByBookingIdAsync(Guid bookingId, Guid callerId, UserRole callerRole, CancellationToken ct = default);
     Task<OrderDto>        ApproveAsync(Guid id, Guid approvedByUserId, CancellationToken ct = default);
     Task<OrderDto>        RejectAsync(Guid id, string reason, Guid rejectedByUserId, CancellationToken ct = default);
