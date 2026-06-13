@@ -321,6 +321,123 @@ public class AdminSettingsController(
         return CreatedAtAction(nameof(GetListing), new { id = listing.Id }, AdminMappers.MapListing(listing));
     }
 
+    // ── POST /api/admin/listings/bulk ──────────────────────────────────────────
+    /// <summary>
+    /// Bulk-create many listings for one supplier from a pasted CSV/TSV. Each row
+    /// is validated and created independently — one bad row never aborts the batch.
+    /// Reuses the single-create find-or-create SupplierLocation behaviour, caching
+    /// one location per city so a multi-row import never duplicates locations.
+    /// </summary>
+    [HttpPost("listings/bulk")]
+    public async Task<IActionResult> BulkCreateListings([FromBody] BulkCreateListingsRequest body)
+    {
+        var supplier = await Db.Suppliers.FindAsync(body.SupplierId);
+        if (supplier is null) return NotFound(Error("Supplier not found"));
+        if (body.Listings is null || body.Listings.Count == 0)
+            return BadRequest(Error("No rows to import"));
+        if (body.Listings.Count > 200)
+            return BadRequest(Error("Too many rows (max 200 per import)"));
+
+        var now            = DateTime.UtcNow;
+        var results        = new List<BulkRowResult>();
+        var createdIds     = new List<Guid>();
+        var locationByCity = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
+
+        for (var i = 0; i < body.Listings.Count; i++)
+        {
+            var row = body.Listings[i];
+            try
+            {
+                if (string.IsNullOrWhiteSpace(row.Title))
+                    throw new InvalidOperationException("Title is required");
+                if (string.IsNullOrWhiteSpace(row.City))
+                    throw new InvalidOperationException("City is required");
+                if (!Enum.TryParse<ListingType>(row.Type, ignoreCase: true, out var type))
+                    throw new InvalidOperationException($"Invalid type '{row.Type}' — use warehouse, moving or trailer");
+                if (row.PriceFrom <= 0 || row.PriceFrom >= 100_000)
+                    throw new InvalidOperationException("Price must be between 0 and 100000");
+
+                var city = row.City.Trim();
+                if (!locationByCity.TryGetValue(city, out var locationId))
+                {
+                    var existing = await Db.SupplierLocations.FirstOrDefaultAsync(sl =>
+                        sl.SupplierId == body.SupplierId && sl.City == city && sl.IsActive);
+                    if (existing is null)
+                    {
+                        existing = new SupplierLocation
+                        {
+                            Id          = Guid.NewGuid(),
+                            SupplierId  = body.SupplierId,
+                            Name        = city,
+                            Address     = row.Address ?? string.Empty,
+                            City        = city,
+                            Country     = supplier.Country ?? "EE",
+                            Lat         = 0,
+                            Lng         = 0,
+                            IsActive    = true,
+                            CreatedAt   = now,
+                            UpdatedAt   = now,
+                            Description = string.Empty,
+                            ImagesJson  = "[]",
+                            IsSynthetic = true,
+                        };
+                        Db.SupplierLocations.Add(existing);
+                        await Db.SaveChangesAsync();
+                    }
+                    locationId = existing.Id;
+                    locationByCity[city] = locationId;
+                }
+
+                var listing = new Listing
+                {
+                    Id           = Guid.NewGuid(),
+                    Type         = type,
+                    Title        = row.Title.Trim(),
+                    SupplierId   = body.SupplierId,
+                    Address      = row.Address ?? string.Empty,
+                    City         = city,
+                    Lat          = 0,
+                    Lng          = 0,
+                    PriceFrom    = row.PriceFrom,
+                    PriceUnit    = string.IsNullOrWhiteSpace(row.PriceUnit) ? "€/month" : row.PriceUnit!.Trim(),
+                    AvailableNow = true,
+                    IsActive     = true,
+                    Description  = row.Description ?? string.Empty,
+                    ImagesJson   = "[]",
+                    FeaturesJson = "{}",
+                    LocationId   = locationId,
+                    QuantityTotal = row.QuantityTotal,
+                    SizeM2       = row.SizeM2,
+                    CreatedAt    = now,
+                    UpdatedAt    = now,
+                };
+                Db.Listings.Add(listing);
+                await Db.SaveChangesAsync();
+                createdIds.Add(listing.Id);
+                results.Add(new BulkRowResult(i, row.Title, true, listing.Id, null));
+            }
+            catch (Exception ex)
+            {
+                results.Add(new BulkRowResult(i, row.Title ?? string.Empty, false, null, ex.Message));
+            }
+        }
+
+        if (createdIds.Count > 0)
+        {
+            Audit("listing.bulk_created", User.GetUserEmail(), supplier.Name, $"{createdIds.Count} listings imported");
+            await Db.SaveChangesAsync();
+            foreach (var id in createdIds)
+                await listingService.InvalidateListingAsync(id);
+        }
+
+        return Ok(new
+        {
+            created = createdIds.Count,
+            failed  = results.Count(r => !r.Ok),
+            results,
+        });
+    }
+
     [HttpPatch("listings/{id:guid}")]
     public async Task<IActionResult> PatchListing(Guid id, [FromBody] PatchAdminListingRequest body)
     {

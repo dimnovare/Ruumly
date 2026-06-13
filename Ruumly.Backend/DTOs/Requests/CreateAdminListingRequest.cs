@@ -26,6 +26,23 @@ public record CreateAdminListingRequest(
 
 public record UpdateImagesRequest(List<string> Images);
 
+/// <summary>One row of a bulk listing import (minimal fields; the rest default).</summary>
+public record BulkListingRow(
+    string   Title,
+    string   Type,
+    string   City,
+    string?  Address,
+    decimal  PriceFrom,
+    string?  PriceUnit,
+    decimal? SizeM2,
+    int?     QuantityTotal,
+    string?  Description
+);
+
+public record BulkCreateListingsRequest(Guid SupplierId, List<BulkListingRow> Listings);
+
+public record BulkRowResult(int Index, string Title, bool Ok, Guid? ListingId, string? Error);
+
 public record PatchAdminListingRequest(
     string?             Type,
     string?             Title,
