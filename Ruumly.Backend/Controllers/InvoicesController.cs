@@ -43,15 +43,35 @@ public class InvoicesController(IInvoiceService invoiceService, RuumlyDbContext 
     /// <summary>
     /// Returns only the id and status for the invoice linked to a booking.
     /// Lightweight alternative to the full GET when only payment status is needed.
+    /// Allowed anonymously so a payment return can poll status even if the user
+    /// got logged out during the redirect: the bookingId GUID is the capability.
+    /// The anonymous path returns status-only (id + status) — no PII, amounts or
+    /// customer data — and skips the role-based IDOR check (no user identity to check).
+    /// Authenticated callers keep the existing ownership-checked path.
     /// </summary>
     [HttpGet("by-booking/{bookingId:guid}/status")]
+    [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetStatus(Guid bookingId)
     {
-        var invoice = await invoiceService.GetByBookingIdAsync(bookingId, User.GetUserId(), User.GetUserRole());
-        if (invoice is null) return NotFound();
-        return Ok(new { invoice.Id, invoice.Status });
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            var invoice = await invoiceService.GetByBookingIdAsync(bookingId, User.GetUserId(), User.GetUserRole());
+            if (invoice is null) return NotFound();
+            return Ok(new { invoice.Id, invoice.Status });
+        }
+
+        // Anonymous: status-only projection straight from the DB, keyed solely by
+        // the bookingId GUID. Selecting Id + Status guarantees no PII/amounts leak.
+        var inv = await db.Invoices
+            .Where(i => i.BookingId == bookingId)
+            .Select(i => new { i.Id, i.Status })
+            .FirstOrDefaultAsync();
+        if (inv is null) return NotFound();
+        // Match the authenticated/DTO shape: status as a lowercased string, not the
+        // raw enum, so the frontend's string comparisons work on the anon path too.
+        return Ok(new { inv.Id, Status = inv.Status.ToString().ToLowerInvariant() });
     }
 
     /// <summary>

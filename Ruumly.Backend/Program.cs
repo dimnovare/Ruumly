@@ -228,6 +228,18 @@ builder.Services.AddRateLimiter(options =>
             QueueLimit  = 0,
         }));
 
+    // Anonymous Dokobit signing postback (dokobit/callback). Partitioned by IP since the
+    // caller is unauthenticated (Dokobit's server). The endpoint always 200s and re-fetches
+    // status server-to-server, so a modest cap curbs abuse without dropping legitimate
+    // per-signature callbacks.
+    options.AddPolicy("dokobit", ctx =>
+        RateLimitPartition.GetFixedWindowLimiter(IpKey(ctx), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window      = TimeSpan.FromMinutes(1),
+            QueueLimit  = 0,
+        }));
+
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.OnRejected = async (context, cancellationToken) =>
     {

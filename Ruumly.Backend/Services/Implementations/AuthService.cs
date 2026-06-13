@@ -194,6 +194,8 @@ public class AuthService(
         var user = await db.Users
             .FirstOrDefaultAsync(u => u.GoogleId == payload.Subject);
 
+        var isNewUser = false;
+
         if (user is null)
         {
             // Try to find by email (user may have registered with password first)
@@ -234,6 +236,7 @@ public class AuthService(
                     Language      = Lang,
                 };
                 db.Users.Add(user);
+                isNewUser = true;
             }
 
             await db.SaveChangesAsync();
@@ -247,7 +250,7 @@ public class AuthService(
         user.LastLoginAt = DateTime.UtcNow;
 
         // 5. Issue Ruumly JWT pair (same as email/password login)
-        return await GenerateAuthResponseAsync(user);
+        return await GenerateAuthResponseAsync(user, isNewUser);
     }
 
     public async Task RequestPasswordResetAsync(string email)
@@ -315,7 +318,7 @@ public class AuthService(
 
     // ─── Private helpers ──────────────────────────────────────────────────────
 
-    private async Task<AuthResponse> GenerateAuthResponseAsync(User user)
+    private async Task<AuthResponse> GenerateAuthResponseAsync(User user, bool isNewUser = false)
     {
         var accessToken   = GenerateJwt(user);
         var refreshToken  = GenerateRawRefreshToken();
@@ -334,7 +337,7 @@ public class AuthService(
         await db.SaveChangesAsync();
 
         var csrfToken = ComputeCsrfToken(refreshToken);
-        return new AuthResponse(MapToDto(user), accessToken, refreshToken, csrfToken);
+        return new AuthResponse(MapToDto(user), accessToken, refreshToken, csrfToken, isNewUser);
     }
 
     public string ComputeCsrfToken(string rawRefreshToken)

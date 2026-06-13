@@ -157,6 +157,27 @@ public class ContractController(
             }
             catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
             catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
+            catch (Exception ex) when (ex is DbUpdateException or DbUpdateConcurrencyException)
+            {
+                // Concurrent/duplicate eID sign for the same booking lost the race on the
+                // one-contract-per-booking constraint. The check-then-INSERT in SignAsync is not
+                // atomic, so the loser surfaces a constraint violation here. Re-read the contract
+                // the winner committed and return it (idempotent) instead of a 500. AsNoTracking
+                // sidesteps the identity-map conflict left by the failed SaveChanges on `db`.
+                logger.LogWarning(ex,
+                    "Concurrent eID signing for booking {BookingId}; returning the already-signed contract.",
+                    req.BookingId);
+
+                var winner = await db.SignedContracts.AsNoTracking()
+                    .FirstOrDefaultAsync(c => c.BookingId == req.BookingId);
+                if (winner is not null)
+                    return Ok(new SignedContractDto(
+                        winner.Id, winner.BookingId, winner.RenderedHtml,
+                        winner.TenantName, winner.TenantIdCode, winner.TenantEmail,
+                        winner.SignedAt.ToString("o")));
+
+                return Conflict(new { error = "Contract signing is already in progress for this booking." });
+            }
         }
 
         // ── Canvas acknowledgment path (default) ──────────────────────────────
@@ -501,6 +522,7 @@ public class ContractController(
     /// </summary>
     [HttpPost("dokobit/callback")]
     [AllowAnonymous]
+    [EnableRateLimiting("dokobit")]
     public async Task<IActionResult> DokobitCallback(CancellationToken ct)
     {
         if (!dokobitService.IsEnabled)
