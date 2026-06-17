@@ -398,6 +398,7 @@ public class ListingService(
         Type:        l.Type.ToString().ToLower(),
         Title:       l.Title,
         SupplierName: l.Supplier?.Name ?? string.Empty,
+        SupplierSlug: l.Supplier?.Slug,
         Address:     l.Location?.Address ?? l.Address,
         City:        l.Location?.City    ?? l.City,
         Lat:         l.Location?.Lat     ?? l.Lat,

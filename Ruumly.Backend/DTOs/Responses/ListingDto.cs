@@ -5,6 +5,7 @@ public record ListingDto(
     string           Type,          // "warehouse" | "moving" | "trailer"
     string           Title,
     string           SupplierName,
+    string?          SupplierSlug,
     string           Address,
     string           City,
     double           Lat,

@@ -41,6 +41,7 @@ public class SupplierCommerceFlagsTests
             ContactName            = "Partner Contact",
             ContactEmail           = "partner@ruumly.eu",
             ContactPhone           = "+37255555555",
+            Slug                   = "commerce-partner",
             BookingEnabled         = true,
             ContractSigningEnabled = true,
             DirectPaymentEnabled   = true,
@@ -70,6 +71,7 @@ public class SupplierCommerceFlagsTests
             ContactName            = "Partner Contact",
             ContactEmail           = "partner@ruumly.eu",
             ContactPhone           = "+37255555555",
+            Slug                   = "commerce-partner",
             BookingEnabled         = true,
             ContractSigningEnabled = true,
             DirectPaymentEnabled   = true,
@@ -92,6 +94,7 @@ public class SupplierCommerceFlagsTests
 
         var dto = AdminMappers.MapListing(listing);
 
+        dto.SupplierSlug.Should().Be("commerce-partner");
         dto.BookingEnabled.Should().BeTrue();
         dto.ContractSigningEnabled.Should().BeTrue();
         dto.DirectPaymentEnabled.Should().BeTrue();
