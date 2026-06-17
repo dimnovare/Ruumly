@@ -366,6 +366,9 @@ FodyWeavers.xsd
 /app/uploads/
 uploads/
 
+# Frontend is maintained in its own repository.
+/estonia-space-hub/
+
 # Claude Code AI assistant (project-local settings and history — not for source control)
 .claude/
 .claude/settings.local.json
@@ -376,3 +379,4 @@ appsettings.Development.json
 appsettings.Local.json
 appsettings.*.local.json
 secrets.json
+.gstack/
