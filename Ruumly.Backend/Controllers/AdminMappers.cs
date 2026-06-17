@@ -51,6 +51,10 @@ internal static class AdminMappers
             ? MapIntegrationSettings(s.IntegrationSettings)
             : null,
         BillingModel:        s.BillingModel.ToString().ToLower(),
+        BookingEnabled:      s.BookingEnabled,
+        ContractSigningEnabled: s.ContractSigningEnabled,
+        DirectPaymentEnabled: s.DirectPaymentEnabled,
+        RuumlyPaymentEnabled: s.RuumlyPaymentEnabled,
         Tier:                s.Tier.ToString(),
         CommissionRate:      pricingConfig?.ForTier(s.Tier).CustomerDiscountRate
                              ?? TierRules.CustomerDiscountRate(s.Tier),
@@ -151,6 +155,7 @@ internal static class AdminMappers
         Type:        l.Type.ToString().ToLower(),
         Title:       l.Title,
         SupplierName: l.Supplier?.Name ?? string.Empty,
+        SupplierSlug: l.Supplier?.Slug,
         Address:     l.Location?.Address ?? l.Address,
         City:        l.Location?.City    ?? l.City,
         Lat:         l.Location?.Lat     ?? l.Lat,
@@ -184,5 +189,9 @@ internal static class AdminMappers
         LocationId:      l.LocationId,
         ViewCount:       l.ViewCount,
         IsVerified:      l.Supplier?.IsVerified ?? false,
-        FoundingPartner: l.Supplier?.FoundingPartner ?? false);
+        FoundingPartner: l.Supplier?.FoundingPartner ?? false,
+        BookingEnabled:  l.Supplier?.BookingEnabled ?? false,
+        ContractSigningEnabled: l.Supplier?.ContractSigningEnabled ?? false,
+        DirectPaymentEnabled: l.Supplier?.DirectPaymentEnabled ?? false,
+        RuumlyPaymentEnabled: l.Supplier?.RuumlyPaymentEnabled ?? false);
 }

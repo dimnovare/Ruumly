@@ -912,7 +912,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
                              .OrderBy(u => u.PriceFrom)
                              .Select(u => new ListingDto(
                                  u.Id, u.Type.ToString().ToLower(), u.Title,
-                                 l.Supplier?.Name ?? "", l.Address, l.City,
+                                 l.Supplier?.Name ?? "", l.Supplier?.Slug, l.Address, l.City,
                                  l.Lat, l.Lng, u.PriceFrom, u.PriceUnit, u.AvailableNow,
                                  u.Badge?.ToString().ToLower(), u.Rating, u.ReviewCount,
                                  u.Description, u.Images, u.Features,
@@ -922,7 +922,11 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
                                  u.VatRate, u.PricesIncludeVat, u.SupplierId,
                                  u.SizeM2, u.QuantityTotal, u.LocationId, u.ViewCount,
                                  l.Supplier?.IsVerified ?? false,
-                                 l.Supplier?.FoundingPartner ?? false))
+                                 l.Supplier?.FoundingPartner ?? false,
+                                 l.Supplier?.BookingEnabled ?? false,
+                                 l.Supplier?.ContractSigningEnabled ?? false,
+                                 l.Supplier?.DirectPaymentEnabled ?? false,
+                                 l.Supplier?.RuumlyPaymentEnabled ?? false))
                              .ToList(),
             Rating:               avgRating,
             ReviewCount:          totalReviews,

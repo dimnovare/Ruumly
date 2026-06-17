@@ -94,6 +94,7 @@ public class OverlapDetectionTests
             ContactName  = "Contact",
             ContactEmail = "supplier@test.ee",
             ContactPhone = "+372 5000 0000",
+            BookingEnabled = true,
         };
 
         var listing = new Listing

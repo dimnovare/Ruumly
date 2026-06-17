@@ -17,7 +17,11 @@ public record CreateSupplierRequest(
     string? Notes,
     string? Iban,
     string? BankAccountName,
-    string? BankName);
+    string? BankName,
+    bool? BookingEnabled,
+    bool? ContractSigningEnabled,
+    bool? DirectPaymentEnabled,
+    bool? RuumlyPaymentEnabled);
 
 public record UpdateSupplierRequest(
     // Core operational fields
@@ -39,6 +43,11 @@ public record UpdateSupplierRequest(
     string? Iban,
     string? BankAccountName,
     string? BankName,
+    // Optional commerce capabilities
+    bool? BookingEnabled,
+    bool? ContractSigningEnabled,
+    bool? DirectPaymentEnabled,
+    bool? RuumlyPaymentEnabled,
     // Partner page fields (all optional — null = leave unchanged)
     string?  Slug,
     bool?    IsPartnerPagePublished,

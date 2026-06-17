@@ -398,6 +398,7 @@ public class ListingService(
         Type:        l.Type.ToString().ToLower(),
         Title:       l.Title,
         SupplierName: l.Supplier?.Name ?? string.Empty,
+        SupplierSlug: l.Supplier?.Slug,
         Address:     l.Location?.Address ?? l.Address,
         City:        l.Location?.City    ?? l.City,
         Lat:         l.Location?.Lat     ?? l.Lat,
@@ -428,7 +429,11 @@ public class ListingService(
         LocationId:      l.LocationId,
         ViewCount:       l.ViewCount,
         IsVerified:      l.Supplier?.IsVerified ?? false,
-        FoundingPartner: l.Supplier?.FoundingPartner ?? false);
+        FoundingPartner: l.Supplier?.FoundingPartner ?? false,
+        BookingEnabled:  l.Supplier?.BookingEnabled ?? false,
+        ContractSigningEnabled: l.Supplier?.ContractSigningEnabled ?? false,
+        DirectPaymentEnabled: l.Supplier?.DirectPaymentEnabled ?? false,
+        RuumlyPaymentEnabled: l.Supplier?.RuumlyPaymentEnabled ?? false);
     }
 
     private static string? BadgeToString(ListingBadge? badge) => badge switch

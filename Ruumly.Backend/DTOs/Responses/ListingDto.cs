@@ -5,6 +5,7 @@ public record ListingDto(
     string           Type,          // "warehouse" | "moving" | "trailer"
     string           Title,
     string           SupplierName,
+    string?          SupplierSlug,
     string           Address,
     string           City,
     double           Lat,
@@ -31,5 +32,9 @@ public record ListingDto(
     Guid?            LocationId,
     int              ViewCount,
     bool             IsVerified,
-    bool             FoundingPartner
+    bool             FoundingPartner,
+    bool             BookingEnabled,
+    bool             ContractSigningEnabled,
+    bool             DirectPaymentEnabled,
+    bool             RuumlyPaymentEnabled
 );

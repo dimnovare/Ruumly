@@ -205,6 +205,9 @@ public class BookingService(
                 .FirstOrDefaultAsync(l => l.Id == request.ListingId && l.IsActive)
                 ?? throw new NotFoundException(Msg("LISTING_NOT_FOUND"));
 
+            if (!listing.Supplier.BookingEnabled)
+                throw new ForbiddenException(Msg("BOOKING_DISABLED"));
+
             // 1a. BlockedDates check — reject if any day in the range is blocked for this location
             if (listing.LocationId.HasValue &&
                 DateOnly.TryParseExact(request.StartDate, "yyyy-MM-dd",

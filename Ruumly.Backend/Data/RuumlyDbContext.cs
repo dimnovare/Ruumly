@@ -35,6 +35,9 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
     public DbSet<ContractTemplate> ContractTemplates  => Set<ContractTemplate>();
     public DbSet<SignedContract>   SignedContracts     => Set<SignedContract>();
     public DbSet<DemandLead>       DemandLeads        => Set<DemandLead>();
+    public DbSet<PaidFeature>      PaidFeatures       => Set<PaidFeature>();
+    public DbSet<SupplierPaidFeature> SupplierPaidFeatures => Set<SupplierPaidFeature>();
+    public DbSet<PaidFeatureRequest> PaidFeatureRequests => Set<PaidFeatureRequest>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -84,6 +87,9 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
         model.Entity<Notification>().Property(e => e.Channel).HasConversion<string>();
         model.Entity<OrderRoutingRule>().Property(e => e.ServiceType).HasConversion<string>();
         model.Entity<OrderRoutingRule>().Property(e => e.PostingChannel).HasConversion<string>();
+        model.Entity<PaidFeature>().Property(e => e.Category).HasConversion<string>();
+        model.Entity<PaidFeature>().Property(e => e.Scope).HasConversion<string>();
+        model.Entity<PaidFeatureRequest>().Property(e => e.Status).HasConversion<string>();
 
         // ─── Unique indexes ───
         model.Entity<User>()
@@ -386,6 +392,68 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
             e.Property(d => d.Category).HasConversion<string>();
             e.Property(d => d.Status).HasConversion<string>();
         });
+
+        // ─── Paid feature catalog / activations ───
+        model.Entity<PaidFeature>()
+            .HasIndex(f => f.Code)
+            .IsUnique();
+
+        model.Entity<SupplierPaidFeature>()
+            .HasOne(f => f.Supplier)
+            .WithMany()
+            .HasForeignKey(f => f.SupplierId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        model.Entity<SupplierPaidFeature>()
+            .HasOne(f => f.PaidFeature)
+            .WithMany()
+            .HasForeignKey(f => f.PaidFeatureId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        model.Entity<SupplierPaidFeature>()
+            .HasOne(f => f.Listing)
+            .WithMany()
+            .HasForeignKey(f => f.ListingId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        model.Entity<SupplierPaidFeature>()
+            .HasOne(f => f.Location)
+            .WithMany()
+            .HasForeignKey(f => f.LocationId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        model.Entity<SupplierPaidFeature>()
+            .HasIndex(f => new { f.SupplierId, f.IsActive, f.EndsAt });
+
+        model.Entity<SupplierPaidFeature>()
+            .HasIndex(f => new { f.PaidFeatureId, f.SupplierId, f.ListingId, f.LocationId });
+
+        model.Entity<PaidFeatureRequest>()
+            .HasOne(r => r.Supplier)
+            .WithMany()
+            .HasForeignKey(r => r.SupplierId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        model.Entity<PaidFeatureRequest>()
+            .HasOne(r => r.PaidFeature)
+            .WithMany()
+            .HasForeignKey(r => r.PaidFeatureId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        model.Entity<PaidFeatureRequest>()
+            .HasOne(r => r.Listing)
+            .WithMany()
+            .HasForeignKey(r => r.ListingId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        model.Entity<PaidFeatureRequest>()
+            .HasOne(r => r.Location)
+            .WithMany()
+            .HasForeignKey(r => r.LocationId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        model.Entity<PaidFeatureRequest>()
+            .HasIndex(r => new { r.SupplierId, r.Status, r.CreatedAt });
 
         // ─── PlatformSetting primary key ───
         model.Entity<PlatformSetting>().HasKey(s => s.Key);
