@@ -95,6 +95,15 @@ public class Supplier
 
     public BillingModel BillingModel { get; set; } = BillingModel.Marketplace;
 
+    // ── Optional commerce capabilities ──────────────────────────────────────
+    // Suppliers are free directory partners by default. Admins can enable these
+    // capabilities one by one when a partner wants managed bookings, contracts,
+    // or payment collection through Ruumly.
+    public bool BookingEnabled { get; set; } = false;
+    public bool ContractSigningEnabled { get; set; } = false;
+    public bool DirectPaymentEnabled { get; set; } = false;
+    public bool RuumlyPaymentEnabled { get; set; } = false;
+
     // TODO(billing): add BillingMode { B2C, B2B } enum.
     // B2C suppliers (default): listings show VAT-inclusive prices to all visitors.
     // B2B suppliers: listings show VAT-exclusive prices when the customer is a

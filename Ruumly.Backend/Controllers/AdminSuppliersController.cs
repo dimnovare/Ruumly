@@ -133,6 +133,10 @@ public class AdminSuppliersController(
             Iban                = body.Iban,
             BankAccountName     = body.BankAccountName,
             BankName            = body.BankName,
+            BookingEnabled      = body.BookingEnabled ?? false,
+            ContractSigningEnabled = body.ContractSigningEnabled ?? false,
+            DirectPaymentEnabled = body.DirectPaymentEnabled ?? false,
+            RuumlyPaymentEnabled = body.RuumlyPaymentEnabled ?? false,
             IsActive            = true,
             OnboardingStartedAt = DateTime.UtcNow,
             CreatedAt           = DateTime.UtcNow,
@@ -207,6 +211,13 @@ public class AdminSuppliersController(
         if (body.Iban is not null)             supplier.Iban = body.Iban;
         if (body.BankAccountName is not null)  supplier.BankAccountName = body.BankAccountName;
         if (body.BankName is not null)         supplier.BankName = body.BankName;
+        if (body.BookingEnabled.HasValue)      supplier.BookingEnabled = body.BookingEnabled.Value;
+        if (body.ContractSigningEnabled.HasValue)
+            supplier.ContractSigningEnabled = body.ContractSigningEnabled.Value;
+        if (body.DirectPaymentEnabled.HasValue)
+            supplier.DirectPaymentEnabled = body.DirectPaymentEnabled.Value;
+        if (body.RuumlyPaymentEnabled.HasValue)
+            supplier.RuumlyPaymentEnabled = body.RuumlyPaymentEnabled.Value;
 
         // ── Partner page fields ───────────────────────────────────────────────
         if (body.IsPartnerPagePublished.HasValue)

@@ -99,6 +99,7 @@ public class BookingIdempotencyTests
             ContactEmail    = "s@test.ee",
             ContactPhone    = "+372 5000 0000",
             BillingModel    = BillingModel.Marketplace,
+            BookingEnabled  = true,
         };
 
         var listing = new Listing

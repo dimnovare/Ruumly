@@ -5,6 +5,7 @@ using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.DTOs.Responses;
+using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Implementations;
@@ -83,7 +84,8 @@ public class BookingServiceTests
     private static async Task<(Supplier supplier, Listing listing, User user)> SeedBasicAsync(
         RuumlyDbContext db,
         decimal priceFrom  = 100m,
-        bool    isActive   = true)
+        bool    isActive   = true,
+        bool    bookingEnabled = true)
     {
         var supplier = new Supplier
         {
@@ -93,6 +95,7 @@ public class BookingServiceTests
             ContactName       = "Contact",
             ContactEmail      = "supplier@test.ee",
             ContactPhone      = "+372 5000 0000",
+            BookingEnabled    = bookingEnabled,
         };
 
         var listing = new Listing
@@ -126,6 +129,19 @@ public class BookingServiceTests
         await db.SaveChangesAsync();
 
         return (supplier, listing, user);
+    }
+
+    [Fact]
+    public async Task CreateAsync_Rejects_When_Supplier_Booking_Disabled()
+    {
+        await using var db = CreateDb();
+        var (_, listing, user) = await SeedBasicAsync(db, bookingEnabled: false);
+        var service = MakeService(db);
+
+        var act = async () => await service.CreateAsync(MakeBookingRequest(listing.Id), user.Id);
+
+        await act.Should().ThrowAsync<ForbiddenException>()
+            .WithMessage(ErrorMessages.Get("BOOKING_DISABLED", "et"));
     }
 
     private static async Task SeedExtrasAsync(RuumlyDbContext db, Guid listingId, params (string Key, decimal CustomerPrice)[] extras)

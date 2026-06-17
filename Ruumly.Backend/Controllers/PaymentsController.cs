@@ -50,8 +50,29 @@ public class PaymentsController(
             invoice.Booking.UserId != userId)
             return Forbid();
 
+        var supplier = invoice.Booking.Supplier;
+        var method = request.PaymentMethod.Trim().ToLowerInvariant();
+        var isDirectPayment = method == "later";
+
+        if (isDirectPayment)
+        {
+            if (supplier?.DirectPaymentEnabled != true)
+                return BadRequest(new
+                {
+                    error = ErrorMessages.Get("DIRECT_PAYMENT_DISABLED", Request.GetLang())
+                });
+        }
+        else
+        {
+            if (supplier?.RuumlyPaymentEnabled != true)
+                return BadRequest(new
+                {
+                    error = ErrorMessages.Get("RUUMLY_PAYMENT_DISABLED", Request.GetLang())
+                });
+        }
+
         // Rebate suppliers are paid directly — Ruumly does not collect payment on their behalf.
-        if (invoice.Booking.Supplier?.BillingModel == BillingModel.Rebate)
+        if (!isDirectPayment && supplier?.BillingModel == BillingModel.Rebate)
             return BadRequest(new { error = "Payment is not processed through Ruumly for this supplier." });
 
         string paymentUrl;

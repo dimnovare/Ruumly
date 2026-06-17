@@ -428,7 +428,11 @@ public class ListingService(
         LocationId:      l.LocationId,
         ViewCount:       l.ViewCount,
         IsVerified:      l.Supplier?.IsVerified ?? false,
-        FoundingPartner: l.Supplier?.FoundingPartner ?? false);
+        FoundingPartner: l.Supplier?.FoundingPartner ?? false,
+        BookingEnabled:  l.Supplier?.BookingEnabled ?? false,
+        ContractSigningEnabled: l.Supplier?.ContractSigningEnabled ?? false,
+        DirectPaymentEnabled: l.Supplier?.DirectPaymentEnabled ?? false,
+        RuumlyPaymentEnabled: l.Supplier?.RuumlyPaymentEnabled ?? false);
     }
 
     private static string? BadgeToString(ListingBadge? badge) => badge switch

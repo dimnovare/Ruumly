@@ -121,6 +121,9 @@ public class BookingPaymentFlowTests
             ContactPhone    = "+372 5000 0000",
             BillingModel    = BillingModel.Marketplace,
             IntegrationType = IntegrationType.Manual,
+            BookingEnabled  = true,
+            DirectPaymentEnabled = true,
+            RuumlyPaymentEnabled = true,
         };
 
         var listing = new Listing
