@@ -549,7 +549,10 @@ public class AdminSuppliersController(
         if (supplier.OnboardingStartedAt is null)
             supplier.OnboardingStartedAt = DateTime.UtcNow;
         user.SupplierId    = supplier.Id;
-        user.Role          = UserRole.Provider;
+        // Never downgrade an existing Admin when linking them to a supplier
+        // (an admin who also owns a supplier must keep admin access).
+        if (user.Role != UserRole.Admin)
+            user.Role      = UserRole.Provider;
 
         var actorName = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "admin";
         Audit(
@@ -898,7 +901,8 @@ public class AdminSuppliersController(
         supplier.OnboardingStartedAt = DateTime.UtcNow;
         supplier.UpdatedAt           = DateTime.UtcNow;
 
-        if (user is not null)
+        // Never downgrade an existing Admin when approving their linked supplier.
+        if (user is not null && user.Role != UserRole.Admin)
             user.Role = UserRole.Provider;
 
         Audit("supplier.approved", User.GetUserEmail() ?? "admin", supplier.Name, $"SupplierId: {id}");
