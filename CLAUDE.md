@@ -6,9 +6,12 @@ Worker is in workers/social-preview/. Frontend lives in estonia-space-hub/ (sepa
 gitignored here).
 
 ## Current focus
-Storage-only launch in Estonia. Moving/Trailer hidden behind admin toggles
-(showMovingService / showTrailerService). Read docs/ROADMAP.md before proposing new
-features — we are in a go-to-market phase, not a build phase.
+Pivoted to a **free partner-acquisition marketplace** — all three verticals public
+(Storage, Moving, Trailers); showMovingService / showTrailerService default visible and
+admin-toggleable. Listing is free; monetization is optional paid features/boosts
+(PaidFeature / ProviderBoosts), never mandatory plans or commission in public/partner UI.
+Booking/payment/contract infra stays, enabled optionally per partner. This supersedes the
+storage-only direction in docs/ROADMAP.md.
 
 ## Conventions
 - Run dotnet/EF from the Ruumly.Backend/ folder.
