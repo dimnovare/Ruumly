@@ -318,10 +318,31 @@ public class AdminSuppliersController(
         var supplier = await Db.Suppliers.FindAsync(id);
         if (supplier is null) return NotFound(Error("Supplier not found."));
 
-        supplier.IsActive  = false;
-        supplier.UpdatedAt = DateTime.UtcNow;
-        Audit("supplier.deleted", User.GetUserEmail(), supplier.Name, null);
+        var now = DateTime.UtcNow;
+
+        supplier.IsActive               = false;
+        supplier.IsPartnerPagePublished = false;
+        supplier.PollingEnabled         = false;
+        supplier.NextPollAt             = null;
+        supplier.UpdatedAt              = now;
+
+        await Db.SupplierLocations
+            .Where(l => l.SupplierId == id && l.IsActive)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(l => l.IsActive, false)
+                .SetProperty(l => l.UpdatedAt, now));
+
+        await Db.Listings
+            .Where(l => l.SupplierId == id && l.IsActive)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(l => l.IsActive, false)
+                .SetProperty(l => l.UpdatedAt, now));
+
+        Audit("supplier.removed_from_marketplace", User.GetUserEmail(), supplier.Name, null);
         await Db.SaveChangesAsync();
+
+        if (supplier.Slug is not null)
+            await cache.RemoveAsync($"supplier:profile:{supplier.Slug}");
 
         return NoContent();
     }
