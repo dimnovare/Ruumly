@@ -146,7 +146,16 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         // Public/customer callers can't access synthetic Locations directly;
         // their listings are surfaced via /api/listings search results instead.
         var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
-        if ((!isAuthenticated || User.GetUserRole() == UserRole.Customer) && location.IsSynthetic)
+        var isPublicCaller  = !isAuthenticated || User.GetUserRole() == UserRole.Customer;
+        if (isPublicCaller && location.IsSynthetic)
+            return NotFound(new { error = ErrorMessages.Get("LOCATION_NOT_FOUND", Request.GetLang()) });
+
+        // Removing/unpublishing a partner (or a location) must hide its page from
+        // public search immediately (HANDOFF §6). An inactive location, or one whose
+        // supplier has been removed from the marketplace (Supplier.IsActive = false),
+        // returns a 404 to public/customer callers; providers (own) and admins still
+        // see it so they can re-publish.
+        if (isPublicCaller && (!location.IsActive || location.Supplier is null || !location.Supplier.IsActive))
             return NotFound(new { error = ErrorMessages.Get("LOCATION_NOT_FOUND", Request.GetLang()) });
 
         // Providers can only see their own locations

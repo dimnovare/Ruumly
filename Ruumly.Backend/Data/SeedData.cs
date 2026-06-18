@@ -58,6 +58,7 @@ public static class SeedData
             await SeedReviewsAsync(db);
             await SeedPlatformSettingsAsync(db);
             await SeedFeatureDefinitionsAsync(db);
+            await SeedPaidFeatureCatalogAsync(db);
             await SeedKookonAsync(db);   // env-gated: Development only
             await SeedBoxoAsync(db);     // env-gated: Development only
             Console.WriteLine("[Seed] Complete.");
@@ -2577,6 +2578,87 @@ public static class SeedData
 
         await db.SaveChangesAsync();
         Console.WriteLine("[Seed] Feature definitions seeded.");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // PAID FEATURE CATALOG — the optional marketplace add-on storefront.
+    // Mirrors the prototype DATA.catalog (handoff/prototype/app/data.js). These are
+    // OPTIONAL promotion/tools requested by partners and activated by admin — never
+    // mandatory plans/tiers/commission. Free items have PriceAmount 0 and read as
+    // "free" in the UI. Idempotent: skips entirely once any PaidFeature row exists.
+    // ─────────────────────────────────────────────────────────────────────────
+    private static async Task SeedPaidFeatureCatalogAsync(RuumlyDbContext db)
+    {
+        if (await db.PaidFeatures.AnyAsync()) return;
+
+        // (code, name, description, category, scope, priceAmount, billingInterval, isActive)
+        // priceAmount 0 => free / optional (shows a "Free" tag in the catalog UI).
+        // billingInterval mirrors the prototype unit: "month" | "one_time" | "placement" | "manual".
+        var items = new (string Code, string Name, string Desc,
+                         PaidFeatureCategory Cat, PaidFeatureScope Scope,
+                         decimal Price, string Interval)[]
+        {
+            // ── Visibility ──────────────────────────────────────────────────────
+            ("featured_search", "Featured listing in search", "Pin a unit to the top of relevant search results.",        PaidFeatureCategory.Visibility, PaidFeatureScope.Listing,  29m, "month"),
+            ("featured_map",    "Featured location on map",    "A highlighted, larger map pin for a location.",            PaidFeatureCategory.Visibility, PaidFeatureScope.Location, 24m, "month"),
+            ("homepage",        "Homepage placement",          "Appear in the rotating homepage spotlight.",               PaidFeatureCategory.Visibility, PaidFeatureScope.Supplier, 79m, "month"),
+            ("city_pages",      "City / category page placement", "Top slot on Tallinn, Tartu & category pages.",          PaidFeatureCategory.Visibility, PaidFeatureScope.Location, 39m, "month"),
+            ("highlight_card",  "Highlighted card",            "Premium visual treatment & accent border.",                PaidFeatureCategory.Visibility, PaidFeatureScope.Listing,  19m, "month"),
+            ("badge_available", "“Available now” badge", "Fast-response / live-availability badge.",               PaidFeatureCategory.Visibility, PaidFeatureScope.Listing,  12m, "month"),
+            ("seasonal",        "Seasonal campaign placement", "Moving season, student moving, summer trailers.",          PaidFeatureCategory.Visibility, PaidFeatureScope.Supplier, 49m, "manual"),
+
+            // ── Trust ───────────────────────────────────────────────────────────
+            ("verified_badge",  "Verified partner badge",      "Ruumly-verified identity & registry check.",               PaidFeatureCategory.Trust, PaidFeatureScope.Supplier, 0m,  "manual"),
+            ("reviewed_profile","Ruumly-reviewed profile",     "Editorial polish + reviewed seal on your page.",           PaidFeatureCategory.Trust, PaidFeatureScope.Supplier, 59m, "one_time"),
+            ("photo_review",    "Photo quality review",        "We review & advise on your listing photos.",               PaidFeatureCategory.Trust, PaidFeatureScope.Listing,  39m, "one_time"),
+            ("review_campaign", "Review collection campaign",  "Automated review requests to past customers.",             PaidFeatureCategory.Trust, PaidFeatureScope.Supplier, 29m, "month"),
+            ("response_badge",  "Response-time badge",         "Show a verified fast-response indicator.",                 PaidFeatureCategory.Trust, PaidFeatureScope.Supplier, 12m, "month"),
+
+            // ── Lead generation (acquisition-visibility bucket) ─────────────────
+            ("lead_fields",     "Extra lead form fields",      "Qualify enquiries with custom questions.",                 PaidFeatureCategory.Visibility, PaidFeatureScope.Supplier, 15m, "month"),
+            ("priority_lead",   "Priority lead notification",  "Instant push + SMS for new requests.",                     PaidFeatureCategory.Visibility, PaidFeatureScope.Supplier, 19m, "month"),
+            ("lead_export",     "Lead export",                 "CSV export of all enquiries & leads.",                     PaidFeatureCategory.Visibility, PaidFeatureScope.Supplier, 9m,  "month"),
+            ("call_tracking",   "Tracked call / WhatsApp CTA", "Measure calls and chats from your listings.",              PaidFeatureCategory.Visibility, PaidFeatureScope.Supplier, 24m, "month"),
+            ("sponsored_landing","Sponsored category page",    "A dedicated landing page for your service.",               PaidFeatureCategory.Visibility, PaidFeatureScope.Supplier, 89m, "month"),
+            ("newsletter",      "Newsletter / social mention", "Featured in a Ruumly newsletter or post.",                 PaidFeatureCategory.Visibility, PaidFeatureScope.Supplier, 49m, "placement"),
+            ("blog",            "Blog / article placement",    "A written feature on the Ruumly blog.",                    PaidFeatureCategory.Visibility, PaidFeatureScope.Supplier, 129m,"placement"),
+
+            // ── Operations & tools ──────────────────────────────────────────────
+            ("bulk_import",     "Bulk / CSV import",           "Import units from a spreadsheet or pasted table.",         PaidFeatureCategory.Operations, PaidFeatureScope.Supplier, 0m,  "manual"),
+            ("done_for_you",    "Done-for-you data import",    "We set up your catalogue for you.",                        PaidFeatureCategory.Operations, PaidFeatureScope.Supplier, 99m, "one_time"),
+            ("places_prefill",  "Google Places prefill",       "Auto-fill location data from Google.",                     PaidFeatureCategory.Operations, PaidFeatureScope.Location, 0m,  "manual"),
+            ("calendar_sync",   "iCal / calendar sync",        "Two-way sync with your booking calendar.",                 PaidFeatureCategory.Operations, PaidFeatureScope.Supplier, 15m, "month"),
+            ("api_dispatch",    "API integration dispatch",    "Push bookings to your own system via API.",                PaidFeatureCategory.Operations, PaidFeatureScope.Supplier, 39m, "month"),
+            ("booking_enable",  "Booking enablement",          "Let customers book & reserve online.",                     PaidFeatureCategory.Commerce,   PaidFeatureScope.Listing,  0m,  "manual"),
+            ("payments",        "Online payments",             "Direct or Ruumly-managed checkout.",                       PaidFeatureCategory.Commerce,   PaidFeatureScope.Supplier, 0m,  "manual"),
+            ("contracts",       "Contract templates & signing","Upload .docx, auto-fill & e-sign (Dokobit).",              PaidFeatureCategory.Commerce,   PaidFeatureScope.Supplier, 19m, "month"),
+            ("analytics_export","Analytics & report export",   "Advanced dashboards and CSV reports.",                     PaidFeatureCategory.Operations, PaidFeatureScope.Supplier, 19m, "month"),
+        };
+
+        var now = DateTime.UtcNow;
+        var sort = 0;
+        foreach (var it in items)
+        {
+            db.PaidFeatures.Add(new PaidFeature
+            {
+                Id              = G($"paidfeature:{it.Code}"),
+                Code            = it.Code,
+                Name            = it.Name,
+                Description     = it.Desc,
+                Category        = it.Cat,
+                Scope           = it.Scope,
+                PriceAmount     = it.Price,
+                PriceCurrency   = "EUR",
+                BillingInterval = it.Interval,
+                IsActive        = true,
+                SortOrder       = sort++,
+                CreatedAt       = now,
+                UpdatedAt       = now,
+            });
+        }
+
+        await db.SaveChangesAsync();
+        Console.WriteLine($"[Seed] Paid feature catalog seeded ({items.Length} items).");
     }
 
     // ─────────────────────────────────────────────────────────────────────────
