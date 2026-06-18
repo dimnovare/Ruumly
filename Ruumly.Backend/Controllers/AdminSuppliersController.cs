@@ -347,6 +347,134 @@ public class AdminSuppliersController(
         return NoContent();
     }
 
+    /// <summary>
+    /// FULLY deletes a supplier and its dependent rows (locations, listings + extras,
+    /// integration settings, contract templates, polling logs, paid-feature activations
+    /// and requests, draft rebate invoices, unpaid payout entries) inside a single
+    /// transaction, and unlinks any users (SupplierId → null, Provider role → Customer).
+    ///
+    /// Distinct from <see cref="DeleteSupplier"/>, which only hides the supplier from the
+    /// marketplace. This is a hard delete. To protect record integrity it REFUSES when the
+    /// supplier has real commercial/financial history — any orders, bookings, paid payout
+    /// entries, or non-draft rebate invoices — because deleting those would either break
+    /// referential integrity or erase financial records. In that case callers should use the
+    /// soft-hide (DELETE /suppliers/{id}) instead.
+    /// </summary>
+    [HttpDelete("suppliers/{id:guid}/purge")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> PurgeSupplier(Guid id)
+    {
+        var supplier = await Db.Suppliers.FindAsync(id);
+        if (supplier is null) return NotFound(Error("Supplier not found."));
+
+        // ── Referential-integrity / financial-history guard ───────────────────────
+        // These reference the supplier via Restrict (or carry money) and must not be
+        // silently destroyed. If any exist, refuse the hard delete.
+        var hasOrders = await Db.Orders.IgnoreQueryFilters()
+            .AnyAsync(o => o.SupplierId == id);
+        var hasBookings = await Db.Bookings.IgnoreQueryFilters()
+            .AnyAsync(b => b.SupplierId == id);
+        var hasPaidPayouts = await Db.PayoutEntries
+            .AnyAsync(p => p.SupplierId == id && p.Status == PayoutStatus.Paid);
+        var hasIssuedRebates = await Db.RebateInvoices
+            .AnyAsync(r => r.SupplierId == id && r.Status != RebateInvoiceStatus.Draft);
+
+        if (hasOrders || hasBookings || hasPaidPayouts || hasIssuedRebates)
+            return Conflict(Error(
+                "Supplier has commercial or financial history (orders, bookings, paid " +
+                "payouts, or issued rebate invoices) and cannot be hard-deleted. " +
+                "Use the marketplace removal (hide) instead."));
+
+        var now      = DateTime.UtcNow;
+        var slug     = supplier.Slug;
+        var name     = supplier.Name;
+
+        await using var tx = await Db.Database.BeginTransactionAsync();
+        try
+        {
+            // Collect dependent IDs needed for grandchild deletes.
+            var locationIds = await Db.SupplierLocations
+                .Where(l => l.SupplierId == id)
+                .Select(l => l.Id).ToListAsync();
+
+            var listingIds = await Db.Listings
+                .Where(l => l.SupplierId == id)
+                .Select(l => l.Id).ToListAsync();
+
+            // Leaf → root deletes. No bookings/orders exist (guarded above), so there are
+            // no reviews, signed contracts, payouts-from-orders, or rebates beyond drafts.
+            if (locationIds.Count > 0)
+                await Db.BlockedDates
+                    .Where(b => locationIds.Contains(b.LocationId)).ExecuteDeleteAsync();
+
+            if (listingIds.Count > 0)
+                await Db.ListingExtras
+                    .Where(le => listingIds.Contains(le.ListingId)).ExecuteDeleteAsync();
+
+            // Unpaid payout entries (Pending/etc.) — safe to drop since no Paid rows exist.
+            await Db.PayoutEntries.Where(p => p.SupplierId == id).ExecuteDeleteAsync();
+            // Draft rebate invoices only (non-draft guarded above).
+            await Db.RebateInvoices.Where(r => r.SupplierId == id).ExecuteDeleteAsync();
+
+            await Db.PaidFeatureRequests.Where(r => r.SupplierId == id).ExecuteDeleteAsync();
+            await Db.SupplierPaidFeatures.Where(f => f.SupplierId == id).ExecuteDeleteAsync();
+            await Db.PollingLogs.Where(pl => pl.SupplierId == id).ExecuteDeleteAsync();
+            await Db.ContractTemplates.Where(ct => ct.SupplierId == id).ExecuteDeleteAsync();
+            await Db.OrderRoutingRules
+                .Where(rr => rr.SupplierId == id).ExecuteDeleteAsync();
+            await Db.Listings.Where(l => l.SupplierId == id).ExecuteDeleteAsync();
+            await Db.SupplierLocations.Where(sl => sl.SupplierId == id).ExecuteDeleteAsync();
+            await Db.IntegrationSettings.Where(si => si.SupplierId == id).ExecuteDeleteAsync();
+
+            // Unlink users: clear FK and demote Provider → Customer (never touch Admins).
+            var linkedUsers = await Db.Users.Where(u => u.SupplierId == id).ToListAsync();
+            foreach (var u in linkedUsers)
+            {
+                u.SupplierId = null;
+                if (u.Role == UserRole.Provider)
+                    u.Role = UserRole.Customer;
+            }
+
+            Db.Suppliers.Remove(supplier);
+
+            Db.AuditLogs.Add(new AuditLog
+            {
+                Id        = Guid.NewGuid(),
+                Action    = "supplier.purged",
+                Actor     = User.GetUserEmail(),
+                Target    = name,
+                Detail    = $"Hard-deleted supplier {id}. " +
+                            $"Unlinked {linkedUsers.Count} user(s); " +
+                            $"removed {listingIds.Count} listing(s), {locationIds.Count} location(s).",
+                CreatedAt = now,
+            });
+
+            await Db.SaveChangesAsync();
+            await tx.CommitAsync();
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg && pg.SqlState == "23503")
+        {
+            // Foreign-key violation: a dependent row we did not anticipate still references
+            // the supplier. Roll back and refuse rather than leaving a half-deleted graph.
+            await tx.RollbackAsync();
+            logger.LogWarning(ex,
+                "Hard-delete of supplier {SupplierId} blocked by unexpected FK reference", id);
+            return Conflict(Error(
+                "Supplier still has dependent records and cannot be hard-deleted safely. " +
+                "Use the marketplace removal (hide) instead."));
+        }
+        catch
+        {
+            await tx.RollbackAsync();
+            throw;
+        }
+
+        if (slug is not null)
+            await cache.RemoveAsync($"supplier:profile:{slug}");
+
+        return NoContent();
+    }
+
     [HttpPatch("suppliers/{id:guid}/status")]
     public async Task<IActionResult> UpdateSupplierStatus(Guid id, [FromBody] UpdateSupplierStatusRequest body)
     {
