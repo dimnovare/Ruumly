@@ -11,6 +11,11 @@ public record ActivatePaidFeatureRequest(
     DateTime? EndsAt,
     string? AdminNotes);
 
+// Admin toggles a single catalog paid-feature on for a partner (supplier scope,
+// no listing/location). Mirrors ActivatePaidFeatureRequest minus scheduling.
+public record ActivateSupplierPaidFeatureRequest(
+    Guid PaidFeatureId);
+
 public record DeclinePaidFeatureRequest(
     string? AdminNotes);
 

@@ -991,6 +991,143 @@ public class AdminSuppliersController(
         });
     }
 
+    // ── Per-supplier paid-feature activation ──────────────────────────────────
+
+    /// <summary>
+    /// Activates a catalog paid-feature for a supplier at supplier scope
+    /// (no listing/location). Idempotent: if an active activation for
+    /// (supplierId, paidFeatureId, null listing, null location) already exists it
+    /// is returned unchanged. Mirrors AdminPaidFeaturesController.ActivateRequest.
+    /// </summary>
+    [HttpPost("suppliers/{id:guid}/paid-features")]
+    public async Task<IActionResult> ActivatePaidFeature(
+        Guid id, [FromBody] ActivateSupplierPaidFeatureRequest body)
+    {
+        var supplier = await Db.Suppliers.FindAsync(id);
+        if (supplier is null) return NotFound(Error("Supplier not found."));
+
+        var feature = await Db.PaidFeatures.FirstOrDefaultAsync(f => f.Id == body.PaidFeatureId);
+        if (feature is null) return NotFound(Error("Paid feature not found."));
+
+        var now = DateTime.UtcNow;
+
+        var existingActivation = await Db.SupplierPaidFeatures
+            .Include(f => f.PaidFeature)
+            .FirstOrDefaultAsync(f =>
+                f.SupplierId == id &&
+                f.PaidFeatureId == body.PaidFeatureId &&
+                f.ListingId == null &&
+                f.LocationId == null &&
+                f.IsActive);
+
+        if (existingActivation is not null)
+            return Ok(PaidFeatureMappers.MapActivation(existingActivation));
+
+        var activation = new SupplierPaidFeature
+        {
+            Id            = Guid.NewGuid(),
+            SupplierId    = id,
+            PaidFeatureId = feature.Id,
+            ListingId     = null,
+            LocationId    = null,
+            StartsAt      = now,
+            IsActive      = true,
+            CreatedAt     = now,
+            UpdatedAt     = now,
+            PaidFeature   = feature,
+        };
+        Db.SupplierPaidFeatures.Add(activation);
+
+        ApplyCommerceCapability(supplier, feature.Code);
+
+        Audit(
+            "paid_feature.activated",
+            User.GetUserEmail(),
+            supplier.Name,
+            $"{feature.Code} activated for supplier {id}");
+
+        await Db.SaveChangesAsync();
+
+        return Ok(PaidFeatureMappers.MapActivation(activation));
+    }
+
+    /// <summary>
+    /// Soft-deactivates the supplier-scoped activation of a catalog paid-feature
+    /// and flips the matching commerce capability back off.
+    /// </summary>
+    [HttpDelete("suppliers/{id:guid}/paid-features/{paidFeatureId:guid}")]
+    public async Task<IActionResult> DeactivatePaidFeature(Guid id, Guid paidFeatureId)
+    {
+        var activation = await Db.SupplierPaidFeatures
+            .Include(f => f.PaidFeature)
+            .FirstOrDefaultAsync(f =>
+                f.SupplierId == id &&
+                f.PaidFeatureId == paidFeatureId &&
+                f.ListingId == null &&
+                f.LocationId == null &&
+                f.IsActive);
+
+        if (activation is null)
+            return NotFound(Error("Active paid feature not found for this supplier."));
+
+        var now = DateTime.UtcNow;
+        activation.IsActive  = false;
+        activation.UpdatedAt = now;
+
+        var supplier = await Db.Suppliers.FindAsync(id);
+        if (supplier is not null)
+            RemoveCommerceCapability(supplier, activation.PaidFeature.Code);
+
+        Audit(
+            "paid_feature.deactivated",
+            User.GetUserEmail(),
+            supplier?.Name ?? id.ToString(),
+            $"{activation.PaidFeature.Code} deactivated for supplier {id}");
+
+        await Db.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    // Mirrors AdminPaidFeaturesController.ApplyCommerceCapability.
+    private static void ApplyCommerceCapability(Supplier supplier, string featureCode)
+    {
+        switch (featureCode)
+        {
+            case "booking_tools":
+                supplier.BookingEnabled = true;
+                break;
+            case "contract_tools":
+                supplier.ContractSigningEnabled = true;
+                break;
+            case "ruumly_payment_collection":
+                supplier.RuumlyPaymentEnabled = true;
+                break;
+            case "direct_payment_tools":
+                supplier.DirectPaymentEnabled = true;
+                break;
+        }
+    }
+
+    private static void RemoveCommerceCapability(Supplier supplier, string featureCode)
+    {
+        switch (featureCode)
+        {
+            case "booking_tools":
+                supplier.BookingEnabled = false;
+                break;
+            case "contract_tools":
+                supplier.ContractSigningEnabled = false;
+                break;
+            case "ruumly_payment_collection":
+                supplier.RuumlyPaymentEnabled = false;
+                break;
+            case "direct_payment_tools":
+                supplier.DirectPaymentEnabled = false;
+                break;
+        }
+    }
+
     // ── Mappers ───────────────────────────────────────────────────────────────
 
     private static SupplierIntegrationDto MapIntegration(Supplier s)
