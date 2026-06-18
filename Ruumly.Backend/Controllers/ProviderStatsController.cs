@@ -299,6 +299,41 @@ public class ProviderStatsController(RuumlyDbContext db) : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Reviews left on the provider's listings. Admins may pass ?supplierId= to
+    /// scope to one supplier, or omit it to read across all suppliers. Providers
+    /// are always pinned to their own linked supplier. Newest first. Shape matches
+    /// the frontend <c>Review</c> type consumed by the dashboard Reviews tab.
+    /// </summary>
+    [HttpGet("reviews")]
+    public async Task<IActionResult> GetReviews([FromQuery] Guid? supplierId = null)
+    {
+        var scope = await ResolveScopeAsync(supplierId);
+        if (scope.Error is not null) return scope.Error;
+
+        var query = db.Reviews.Include(r => r.User).AsQueryable();
+        if (!scope.AggregateAll)
+            query = query.Where(r => r.SupplierId == scope.SupplierId);
+
+        var reviews = await query
+            .OrderByDescending(r => r.CreatedAt)
+            .Take(100)
+            .Select(r => new
+            {
+                id        = r.Id,
+                bookingId = r.BookingId,
+                listingId = r.ListingId,
+                userId    = r.UserId,
+                userName  = r.User != null ? r.User.Name : "Anonymous",
+                rating    = r.Rating,
+                comment   = r.Comment,
+                createdAt = r.CreatedAt,
+            })
+            .ToListAsync();
+
+        return Ok(reviews);
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Helpers
     // ─────────────────────────────────────────────────────────────────────────
