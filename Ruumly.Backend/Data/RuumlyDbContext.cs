@@ -106,6 +106,20 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
             .IsUnique()
             .HasFilter("\"RegistryCode\" IS NOT NULL");
 
+        // Public partner pages are looked up by slug; uniqueness was only enforced
+        // in app code. Make the DB the source of truth (and speed the lookup).
+        model.Entity<Supplier>()
+            .HasIndex(e => e.Slug)
+            .IsUnique()
+            .HasFilter("\"Slug\" IS NOT NULL");
+
+        // The Montonio webhook finds the invoice by PaymentOrderId on every payment
+        // callback — index it (and enforce one invoice per payment order).
+        model.Entity<Invoice>()
+            .HasIndex(i => i.PaymentOrderId)
+            .IsUnique()
+            .HasFilter("\"PaymentOrderId\" IS NOT NULL");
+
         model.Entity<RefreshToken>()
             .HasIndex(e => e.TokenHash)
             .IsUnique();

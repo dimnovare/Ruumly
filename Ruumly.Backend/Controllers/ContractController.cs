@@ -180,6 +180,16 @@ public class ContractController(
             }
         }
 
+        // ── Identity-assurance guard ──────────────────────────────────────────
+        // When qualified eID signing is configured (Dokobit and/or Smart-ID/Mobile-ID),
+        // the server must NOT accept an unverified canvas acknowledgment as a completed,
+        // payment-clearing contract. The web UI only offers eID in that case, but a
+        // scripted client could POST signingMethod=canvas with a self-declared id code
+        // and a 1x1 PNG to skip qualified signing — close that off server-side. Canvas
+        // remains valid only on deployments with no eID provider configured.
+        if (dokobitService.IsEnabled || identityService is not null)
+            return BadRequest(new { error = "A qualified e-signature is required. Please complete signing via the eID flow." });
+
         // ── Canvas acknowledgment path (default) ──────────────────────────────
         try
         {
@@ -506,7 +516,7 @@ public class ContractController(
         // Older/incomplete rows are deliberately reprocessed so transient failures self-heal.
         if ((contract.Status == "completed" && HasDokobitArtifacts(contract))
             || contract.Status is "cancelled" or "error")
-            return Ok(new { status = contract.Status, signedDocumentUrl = contract.SignedDocumentUrl });
+            return Ok(new { status = contract.Status, hasSignedDocument = !string.IsNullOrWhiteSpace(contract.SignedDocumentUrl) });
 
         var result = await dokobitService.GetStatusAsync(signingToken, ct);
         await ApplyDokobitResultAsync(contract, signingToken, result, ct);
@@ -581,7 +591,11 @@ public class ContractController(
                         {
                             var name = $"signed-contracts/{contract.BookingId:N}/{signingToken}.pdf";
                             using var stream = new MemoryStream(pdfBytes);
-                            contract.SignedDocumentUrl = await storageService.UploadAsync(stream, name, "application/pdf");
+                            // Store the object KEY (not a public URL). The signed PDF contains
+                            // verified national-ID PII; it must only ever be read back through
+                            // the auth-gated download endpoint, never via a public URL.
+                            var stored = await storageService.UploadWithKeyAsync(stream, name, "application/pdf");
+                            contract.SignedDocumentUrl = stored.Key;
                         }
                     }
                     catch (Exception ex)
@@ -668,15 +682,38 @@ public class ContractController(
         if (contract is null)
             return NotFound(new { error = "No signed contract found for this booking." });
 
-        // Prefer the R2-stored signed PDF (Dokobit path).
+        // Prefer the R2-stored signed PDF (Dokobit path). Stream the bytes back
+        // THROUGH this auth-gated endpoint — never hand out a public R2 URL, since
+        // the PDF carries verified national-ID PII. SignedDocumentUrl now holds the
+        // object KEY; legacy rows may hold a full public URL, which we reduce to a key.
         if (!string.IsNullOrEmpty(contract.SignedDocumentUrl))
-            return Ok(new { url = contract.SignedDocumentUrl });
+        {
+            var key = ResolveStorageKey(contract.SignedDocumentUrl);
+            var bytes = await storageService.DownloadAsync(key);
+            if (bytes is { Length: > 0 })
+                return File(bytes, "application/pdf", $"contract-{bookingId:N}.pdf");
+            // PDF missing/unreadable — fall through to the HTML snapshot if present.
+        }
 
         // Fallback: return the canvas-signed rendered HTML snapshot.
         if (!string.IsNullOrEmpty(contract.RenderedHtml))
             return Content(contract.RenderedHtml, "text/html");
 
         return NotFound(new { error = "Contract document is not yet available." });
+    }
+
+    /// <summary>
+    /// Reduces a stored SignedDocumentUrl to an R2 object key. New rows store the
+    /// key directly; older rows may hold a full public URL — strip the public base.
+    /// </summary>
+    private string ResolveStorageKey(string stored)
+    {
+        if (!stored.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            return stored;
+        var publicBase = (configuration["Storage:R2PublicUrl"] ?? "").TrimEnd('/') + "/";
+        if (publicBase.Length > 1 && stored.StartsWith(publicBase, StringComparison.OrdinalIgnoreCase))
+            return stored[publicBase.Length..];
+        return new Uri(stored).AbsolutePath.TrimStart('/');
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

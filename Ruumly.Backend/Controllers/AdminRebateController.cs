@@ -193,9 +193,19 @@ public class AdminRebateController(RuumlyDbContext db) : AdminBaseController(db)
         return Ok(new { invoice.Id, status = "paid" });
     }
 
-    /// <summary>Provider's own rebate invoices. Admin may pass ?supplierId= to view any supplier.</summary>
-    [HttpGet("/api/supplier/rebate-invoices")]
-    [Authorize(Roles = "Provider,Admin")]
+}
+
+/// <summary>
+/// Provider-facing rebate invoices. Lives OUTSIDE AdminBaseController so the
+/// Admin-only class filter does not apply — a Provider must be able to read
+/// their own rebate invoices. Admin may pass ?supplierId= to impersonate.
+/// </summary>
+[ApiController]
+[Route("api/supplier/rebate-invoices")]
+[Authorize(Roles = "Provider,Admin")]
+public class SupplierRebateController(RuumlyDbContext db) : ControllerBase
+{
+    [HttpGet]
     public async Task<IActionResult> GetForSupplier()
     {
         Guid? supplierId;
@@ -206,15 +216,14 @@ public class AdminRebateController(RuumlyDbContext db) : AdminBaseController(db)
         }
         else
         {
-            var userId = User.GetUserId();
-            var user   = await Db.Users.FindAsync(userId);
+            var user = await db.Users.FindAsync(User.GetUserId());
             supplierId = user?.SupplierId;
         }
 
         if (supplierId is null)
-            return BadRequest(Error("No supplier linked."));
+            return BadRequest(new { error = "No supplier linked." });
 
-        var invoices = await Db.RebateInvoices
+        var invoices = await db.RebateInvoices
             .Where(r => r.SupplierId == supplierId)
             .OrderByDescending(r => r.Period)
             .Take(24)   // last 2 years of monthly invoices
@@ -222,10 +231,10 @@ public class AdminRebateController(RuumlyDbContext db) : AdminBaseController(db)
                 r.Id,
                 period        = r.Period.ToString("yyyy-MM"),
                 bookingsCount = r.OrderCount,
-                totalValue    = (decimal?)null,   // not tracked in model; can add later
+                totalValue    = (decimal?)null,
                 rebateAmount  = r.TotalMargin,
                 status        = r.Status.ToString().ToLower(),
-                dueDate       = (string?)null,    // not in model; add to RebateInvoice if needed
+                dueDate       = (string?)null,
                 sentAt        = r.SentAt,
                 paidAt        = r.PaidAt,
                 createdAt     = r.CreatedAt.ToString("yyyy-MM-dd"),

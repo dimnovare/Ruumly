@@ -146,6 +146,16 @@ public class AuthService(
         if (stored.IsRevoked || stored.ExpiresAt < DateTime.UtcNow)
             throw new UnauthorizedAccessException(Msg("INVALID_REFRESH_TOKEN"));
 
+        // A blocked account must not be able to self-renew access tokens. Login
+        // already rejects Blocked; refresh did not, so a blocked/compromised
+        // session could stay alive for the full refresh window.
+        if (stored.User.Status == UserStatus.Blocked)
+        {
+            stored.IsRevoked = true;
+            await db.SaveChangesAsync();
+            throw new ForbiddenException(Msg("ACCOUNT_BLOCKED"));
+        }
+
         stored.IsRevoked = true;
         await db.SaveChangesAsync();
 

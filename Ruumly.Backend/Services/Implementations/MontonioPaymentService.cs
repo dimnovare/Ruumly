@@ -431,6 +431,29 @@ public class MontonioPaymentService(
                 return true;
             }
 
+            // Terminal-refund guard (symmetric to the refund branch's guard): a late
+            // 'paid' event for an invoice that was already refunded/voided — e.g. the
+            // customer cancelled during the PSP redirect window, so booking/order/payout
+            // are already Cancelled — must NOT silently re-mark it Paid. That would record
+            // money as collected against a dead booking with no refund trigger. Escalate
+            // for manual refund reconciliation instead.
+            if (invoice.Status is InvoiceStatus.Refunded or InvoiceStatus.PendingRefund)
+            {
+                logger.LogWarning(
+                    "Montonio webhook: 'paid' event for already-refunded/cancelled invoice {InvoiceId} (ref {Ref}, status {Status}) — NOT marking paid; manual refund reconciliation required",
+                    invoice.Id, ref_, invoice.Status);
+                SentrySdk.CaptureMessage(
+                    "Montonio 'paid' webhook for refunded/cancelled invoice — manual refund required",
+                    scope =>
+                    {
+                        scope.Level = SentryLevel.Warning;
+                        scope.SetExtra("invoiceId",         invoice.Id.ToString());
+                        scope.SetExtra("merchantReference", ref_);
+                        scope.SetExtra("invoiceStatus",     invoice.Status.ToString());
+                    });
+                return true; // ack so Montonio stops retrying; reconciliation is manual
+            }
+
             // Amount/currency verification — never mark an invoice Paid on a webhook whose
             // reported total or currency does not match what we billed. The 'data' claim is
             // already signature-verified, but a mismatch still indicates a tampered/wrong-order

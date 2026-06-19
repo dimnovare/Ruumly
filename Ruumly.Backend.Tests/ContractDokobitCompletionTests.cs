@@ -57,7 +57,7 @@ public class ContractDokobitCompletionTests
         contract.Status.Should().Be("completed");
         contract.VerifiedIdCode.Should().Be("60001019906");
         contract.VerifiedName.Should().Be("MARY ÄNN TESTNUMBER");
-        contract.SignedDocumentUrl.Should().Be("https://files.test/signed.pdf");
+        contract.SignedDocumentUrl.Should().Be("signed-contracts/test.pdf");
         dokobit.StatusCalls.Should().Be(1);
         dokobit.DownloadCalls.Should().Be(1);
         storage.UploadCalls.Should().Be(1);
@@ -80,7 +80,7 @@ public class ContractDokobitCompletionTests
         contract.Status.Should().Be("completed");
         contract.VerifiedIdCode.Should().Be("60001019906");
         contract.VerifiedName.Should().Be("MARY ÄNN TESTNUMBER");
-        contract.SignedDocumentUrl.Should().Be("https://files.test/signed.pdf");
+        contract.SignedDocumentUrl.Should().Be("signed-contracts/test.pdf");
     }
 
     private static DokobitStatusResult CompletedResult() =>
@@ -186,8 +186,13 @@ public class ContractDokobitCompletionTests
         }
 
         public Task<StoredObject> UploadWithKeyAsync(
-            Stream stream, string fileName, string contentType) =>
-            throw new NotSupportedException();
+            Stream stream, string fileName, string contentType)
+        {
+            UploadCalls++;
+            // Signed PDFs are stored by KEY (not public URL) so they can only be
+            // read back through the auth-gated download endpoint.
+            return Task.FromResult(new StoredObject("signed-contracts/test.pdf", "https://files.test/signed.pdf"));
+        }
 
         public Task<byte[]?> DownloadAsync(string key) => throw new NotSupportedException();
         public Task DeleteAsync(string publicUrl) => throw new NotSupportedException();

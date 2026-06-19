@@ -43,7 +43,9 @@ public class CloudflareR2StorageService(
         await _s3.PutObjectAsync(request);
 
         var url = $"{publicUrl}/{key}";
-        logger.LogInformation("Uploaded to R2: {Url}", url);
+        // Log the key only — never the full public URL. Some objects (signed
+        // contracts) are sensitive and the URL must not leak into logs.
+        logger.LogInformation("Uploaded to R2: {Key}", key);
         return new StoredObject(key, url);
     }
 

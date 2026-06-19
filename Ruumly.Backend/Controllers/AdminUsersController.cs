@@ -79,6 +79,12 @@ public class AdminUsersController(RuumlyDbContext db) : AdminBaseController(db)
             user.Name, $"{prev} → {status}");
         await Db.SaveChangesAsync();
 
+        // Blocking must terminate live sessions, not just stop new logins:
+        // revoke every outstanding refresh token so the user cannot self-renew.
+        if (status == UserStatus.Blocked)
+            await Db.RefreshTokens.Where(t => t.UserId == id && !t.IsRevoked)
+                .ExecuteUpdateAsync(s => s.SetProperty(t => t.IsRevoked, true));
+
         return Ok(AdminMappers.MapUser(user));
     }
 
@@ -113,8 +119,15 @@ public class AdminUsersController(RuumlyDbContext db) : AdminBaseController(db)
             user.SupplierId = newSupplierId;
         }
 
+        var roleLowered = body.Role is not null && user.Role != UserRole.Admin; // demotion away from Admin
         Audit("user.updated", User.GetUserEmail(), user.Name, null);
         await Db.SaveChangesAsync();
+
+        // Revoke live sessions when this PATCH blocks the account or lowers its
+        // role, so a stale elevated/blocked token cannot keep refreshing.
+        if (user.Status == UserStatus.Blocked || roleLowered)
+            await Db.RefreshTokens.Where(t => t.UserId == id && !t.IsRevoked)
+                .ExecuteUpdateAsync(s => s.SetProperty(t => t.IsRevoked, true));
 
         return Ok(new
         {

@@ -383,6 +383,12 @@ public class OrderService(
 
         var confirmerName = confirmer?.Name ?? "Partner";
 
+        // Terminal-state guard: a cancelled/rejected/completed order must not be
+        // resurrected to Confirmed/Active (e.g. confirming an already-refunded
+        // booking). Mirrors the guard in ApproveAsync.
+        if (order.Status is OrderStatus.Cancelled or OrderStatus.Rejected or OrderStatus.Completed)
+            throw new ArgumentException(Msg("ORDER_WRONG_STATUS"));
+
         var tl = EmailTranslations.For(order.Booking?.User?.Language);
 
         order.Status      = OrderStatus.Confirmed;
@@ -417,6 +423,10 @@ public class OrderService(
 
         if (booking is not null)
         {
+            // Never re-activate a finalised booking (cancelled/refunded or completed).
+            if (booking.Status is BookingStatus.Cancelled or BookingStatus.Completed)
+                throw new ArgumentException(Msg("ORDER_WRONG_STATUS"));
+
             booking.Status    = BookingStatus.Active;
             booking.UpdatedAt = DateTime.UtcNow;
 
@@ -454,6 +464,11 @@ public class OrderService(
             ?? throw new NotFoundException(Msg("ORDER_NOT_FOUND"));
 
         if (!Enum.TryParse<OrderStatus>(request.Status, ignoreCase: true, out var newStatus))
+            throw new ArgumentException(Msg("ORDER_WRONG_STATUS"));
+
+        // Don't allow transitions OUT of a terminal state (cancelled/rejected/
+        // completed) — admin override must not re-open a refunded/closed order.
+        if (order.Status is OrderStatus.Cancelled or OrderStatus.Rejected or OrderStatus.Completed)
             throw new ArgumentException(Msg("ORDER_WRONG_STATUS"));
 
         var tl = EmailTranslations.For(order.Booking?.User?.Language);
