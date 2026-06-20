@@ -481,9 +481,59 @@ public class MontonioPaymentService(
                 return false;
             }
 
+            // Atomic paid transition (audit MEDIUM fix): the previous read-check-write
+            // (read Status, check not Paid/Refunded, set Paid, SaveChanges) was not atomic —
+            // two concurrent identical webhooks could both pass the check and double-process
+            // (double dispatch/enqueue). Flip to Paid with a single guarded UPDATE that only
+            // affects rows still in AwaitingPayment/Pending, and capture the affected-row count.
+            // Exactly one row updated ⇒ this is the winning webhook ⇒ run post-payment dispatch.
+            // Zero rows ⇒ a concurrent/duplicate webhook already won (or the row moved to a
+            // terminal state between our earlier read and this update) ⇒ treat as already
+            // processed and ack (return true). The Refunded/PendingRefund and amount/currency
+            // guards above still run first and are preserved unchanged.
+            var paidAt = DateTime.UtcNow;
+            int rowsUpdated;
+            if (db.Database.IsRelational())
+            {
+                rowsUpdated = await db.Invoices
+                    .Where(i => i.Id == invoice.Id
+                                && (i.Status == InvoiceStatus.AwaitingPayment
+                                    || i.Status == InvoiceStatus.Pending))
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(i => i.Status, InvoiceStatus.Paid)
+                        .SetProperty(i => i.PaidAt, paidAt));
+            }
+            else
+            {
+                // InMemory provider (tests) has no ExecuteUpdate — emulate the same guarded
+                // conditional update on the tracked entity so behaviour matches the relational path.
+                if (invoice.Status is InvoiceStatus.AwaitingPayment or InvoiceStatus.Pending)
+                {
+                    invoice.Status = InvoiceStatus.Paid;
+                    invoice.PaidAt = paidAt;
+                    await db.SaveChangesAsync();
+                    rowsUpdated = 1;
+                }
+                else
+                {
+                    rowsUpdated = 0;
+                }
+            }
+
+            if (rowsUpdated == 0)
+            {
+                // Another concurrent/duplicate webhook already transitioned this invoice to Paid
+                // (or it moved to a terminal state) — already processed, ack without re-dispatching.
+                logger.LogInformation(
+                    "Montonio webhook: invoice {InvoiceId} paid transition already applied by a concurrent webhook (ref {Ref}) — acking without re-dispatch",
+                    invoice.Id, ref_);
+                return true;
+            }
+
+            // Refresh the tracked entity so subsequent reads reflect the committed Paid state
+            // (the relational ExecuteUpdate bypasses the change tracker).
             invoice.Status = InvoiceStatus.Paid;
-            invoice.PaidAt = DateTime.UtcNow;
-            await db.SaveChangesAsync();
+            invoice.PaidAt = paidAt;
 
             logger.LogInformation(
                 "Invoice {InvoiceId} paid via Montonio. BookingId={BookingId} Amount={Amount}",

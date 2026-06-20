@@ -12,7 +12,10 @@ public class SecurityHeadersMiddleware(RequestDelegate next, IWebHostEnvironment
 
         context.Response.Headers["Content-Security-Policy"] =
             "default-src 'self'; " +
-            "script-src 'self' 'unsafe-inline' " +
+            // No 'unsafe-inline' in script-src: the only API-served HTML is the
+            // canvas-signed contract snapshot, which carries no inline <script>.
+            // style-src keeps 'unsafe-inline' (Tailwind/inline styles, contract <style>).
+            "script-src 'self' " +
                 "https://accounts.google.com " +
                 "https://www.googletagmanager.com; " +
             "style-src 'self' 'unsafe-inline' " +

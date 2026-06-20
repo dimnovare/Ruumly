@@ -50,8 +50,10 @@ public class SupplierPollingService(
                 ? supplier.PollingEndpoint
                 : supplier.ApiEndpoint;
 
-            // 3b. SSRF guard — reject loopback, private ranges, non-HTTP(S) schemes
-            if (!OutboundEndpointValidator.IsAllowed(endpoint))
+            // 3b. SSRF guard — reject loopback, private ranges, non-HTTP(S) schemes.
+            // Async variant resolves the hostname via DNS and rejects if it points at a
+            // private/loopback/link-local/CGNAT/metadata IP (e.g. 169.254.169.254).
+            if (!await OutboundEndpointValidator.IsAllowedAsync(endpoint, ct))
             {
                 const string msg = "API endpoint rejected: private IP address or disallowed scheme.";
                 logger.LogWarning(

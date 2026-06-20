@@ -176,6 +176,7 @@ public class PaymentsController(
     /// </summary>
     [HttpPost("webhook")]
     [AllowAnonymous]
+    [EnableRateLimiting("webhook")]
     public async Task<IActionResult> Webhook(
         [FromBody] MontonioWebhookPayload payload)
     {

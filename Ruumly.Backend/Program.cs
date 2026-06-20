@@ -152,17 +152,76 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-// ─── Rate limiting (per-client partitioned) ───
-static string IpKey(HttpContext ctx)
+// ─── Cloudflare egress ranges ───
+// Source: https://www.cloudflare.com/ips/  (IPv4: /ips-v4, IPv6: /ips-v6)
+// Snapshot date: 2026-06-18. Cloudflare changes these rarely; refresh if edge
+// connectivity ever fails the IsCloudflareIp check. These are the networks
+// Cloudflare connects to our origin FROM, so a request whose RemoteIpAddress is
+// in one of these ranges genuinely transited Cloudflare and its CF-Connecting-IP
+// / X-Forwarded-For headers can be trusted. Parsed once at startup.
+var cloudflareNetworks = new[]
 {
-    // CF-Connecting-IP is injected by Cloudflare and unavailable to clients directly.
-    // Fall back to X-Forwarded-For (populated by UseForwardedHeaders above) or socket IP.
-    var cfIp = ctx.Request.Headers["CF-Connecting-IP"].FirstOrDefault();
-    if (!string.IsNullOrWhiteSpace(cfIp)) return cfIp;
-    return ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+    // IPv4
+    "173.245.48.0/20",
+    "103.21.244.0/22",
+    "103.22.200.0/22",
+    "103.31.4.0/22",
+    "141.101.64.0/18",
+    "108.162.192.0/18",
+    "190.93.240.0/20",
+    "188.114.96.0/20",
+    "197.234.240.0/22",
+    "198.41.128.0/17",
+    "162.158.0.0/15",
+    "104.16.0.0/13",
+    "104.24.0.0/14",
+    "172.64.0.0/13",
+    "131.0.72.0/22",
+    // IPv6
+    "2400:cb00::/32",
+    "2606:4700::/32",
+    "2803:f800::/32",
+    "2405:b500::/32",
+    "2405:8100::/32",
+    "2a06:98c0::/29",
+    "2c0f:f248::/32",
+}
+.Select(System.Net.IPNetwork.Parse)
+.ToArray();
+
+static bool IsCloudflareIp(System.Net.IPAddress? remote, System.Net.IPNetwork[] cfNetworks)
+{
+    if (remote is null) return false;
+    // Normalise IPv4-mapped IPv6 (e.g. ::ffff:104.16.0.1) so it matches the IPv4 CIDRs.
+    if (remote.IsIPv4MappedToIPv6) remote = remote.MapToIPv4();
+    foreach (var net in cfNetworks)
+        if (net.Contains(remote)) return true;
+    return false;
 }
 
-static string UserOrIpKey(HttpContext ctx) =>
+// ─── Rate limiting (per-client partitioned) ───
+string IpKey(HttpContext ctx)
+{
+    // Only trust client-supplied forwarding headers when the request actually reached
+    // us THROUGH Cloudflare (RemoteIpAddress is a CF edge IP). A direct-to-origin
+    // attacker can set CF-Connecting-IP / X-Forwarded-For to anything to rotate around
+    // per-IP login/email limits, so we ignore those headers unless the socket peer is
+    // inside Cloudflare's published egress ranges.
+    var remote = ctx.Connection.RemoteIpAddress;
+    if (IsCloudflareIp(remote, cloudflareNetworks))
+    {
+        var cfIp = ctx.Request.Headers["CF-Connecting-IP"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(cfIp)) return cfIp;
+        var xff = ctx.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(xff))
+            // X-Forwarded-For is a comma-separated chain; the left-most entry is the
+            // original client as recorded by Cloudflare.
+            return xff.Split(',')[0].Trim();
+    }
+    return remote?.ToString() ?? "unknown";
+}
+
+string UserOrIpKey(HttpContext ctx) =>
     ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
     ?? IpKey(ctx);
 
@@ -224,6 +283,18 @@ builder.Services.AddRateLimiter(options =>
         RateLimitPartition.GetFixedWindowLimiter(UserOrIpKey(ctx), _ => new FixedWindowRateLimiterOptions
         {
             PermitLimit = 30,
+            Window      = TimeSpan.FromMinutes(1),
+            QueueLimit  = 0,
+        }));
+
+    // Anonymous Montonio payment webhook (payments/webhook). Partitioned by IP since the
+    // caller is unauthenticated (Montonio's server, verified by JWT signature, not auth).
+    // Generous cap so legit Montonio delivery/retry bursts are never dropped, while still
+    // bounding the JWT-crypto + DB-lookup cost of a direct-to-origin flood.
+    options.AddPolicy("webhook", ctx =>
+        RateLimitPartition.GetFixedWindowLimiter(IpKey(ctx), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 120,
             Window      = TimeSpan.FromMinutes(1),
             QueueLimit  = 0,
         }));

@@ -208,7 +208,14 @@ public class BookingService(
             if (!listing.Supplier.BookingEnabled)
                 throw new ForbiddenException(Msg("BOOKING_DISABLED"));
 
-            // 1a. BlockedDates check — reject if any day in the range is blocked for this location
+            // 1a. BlockedDates check — reject if any day in the range is blocked for this location.
+            // BlockedDate is inherently location-scoped: it keys ONLY on LocationId (there is no
+            // ListingId/SupplierId column on the model), so a per-location blocked-date calendar
+            // exists only for listings attached to a SupplierLocation. Standalone listings
+            // (LocationId == null) have no parent location and therefore no blocked-date calendar
+            // to consult — the check is correctly a no-op for them, not a silent bypass of an
+            // existing rule. The Date.HasValue branch below runs only when there is a location to
+            // scope the query to, keeping the SupplierLocation FK invariant intact.
             if (listing.LocationId.HasValue &&
                 DateOnly.TryParseExact(request.StartDate, "yyyy-MM-dd",
                     System.Globalization.CultureInfo.InvariantCulture,
@@ -266,9 +273,8 @@ public class BookingService(
                 // Skipped on InMemory (tests) where row-level contention cannot occur.
                 if (db.Database.IsRelational())
                 {
-                    var listingIdLong = (long)(listing.Id.GetHashCode() & 0x7FFFFFFF);
                     await db.Database.ExecuteSqlRawAsync(
-                        "SELECT pg_advisory_xact_lock({0})", listingIdLong);
+                        "SELECT pg_advisory_xact_lock({0})", AdvisoryLockKey(listing.Id));
                 }
 
                 var totalUnits  = listing.QuantityTotal ?? 1;
@@ -401,7 +407,15 @@ public class BookingService(
                 SupplierId     = listing.SupplierId,
                 StartDate      = startDate,
                 EndDate        = endDate,
-                Duration       = request.Duration,
+                // Duration is otherwise stored verbatim from the client and never cross-checked,
+                // letting a caller claim e.g. "1 day" while booking a 6-month range (it shows on
+                // the invoice and confirmation emails). When an EndDate is present we derive the
+                // authoritative period server-side from the date range + the listing's PriceUnit,
+                // so the stored/displayed value always matches the actual booked span. Open-ended
+                // bookings (no EndDate) have no range to derive from, so the client value stands.
+                Duration       = endDate.HasValue
+                    ? DeriveDuration(startDate, endDate.Value, listing.PriceUnit, request.Duration)
+                    : request.Duration,
                 ExtrasSnapshot = extrasSnapshots,
                 BasePrice      = basePrice,
                 PlatformPrice  = platformPrice,
@@ -604,6 +618,57 @@ public class BookingService(
         CreatedAt:       o.CreatedAt.ToString("yyyy-MM-dd HH:mm"),
         SentAt:          o.SentAt?.ToString("yyyy-MM-dd HH:mm")
     );
+
+    /// <summary>
+    /// Stable 64-bit pg_advisory_xact_lock key for a listing. Derived from the full
+    /// Guid bytes (XOR of both 64-bit halves) rather than the old
+    /// (listing.Id.GetHashCode() &amp; 0x7FFFFFFF), which truncated to 31 bits and caused
+    /// needless cross-listing lock collisions. Determinism is preserved.
+    /// </summary>
+    private static long AdvisoryLockKey(Guid listingId)
+    {
+        var bytes = listingId.ToByteArray();
+        var hi = BitConverter.ToInt64(bytes, 0);
+        var lo = BitConverter.ToInt64(bytes, 8);
+        return hi ^ lo;
+    }
+
+    /// <summary>
+    /// Derives an authoritative booking-duration label from the actual date range and the
+    /// listing's price unit, e.g. a 60-day booking on a "/month" listing → "2 kuu". Mirrors the
+    /// unit lookup used by <see cref="CalculateDurationPrice"/> so the displayed period and the
+    /// charged amount agree. For one-off units (hour/time) the span is irrelevant, so the
+    /// client-supplied label is kept verbatim.
+    /// </summary>
+    private static string DeriveDuration(DateTime startDate, DateTime endDate, string priceUnit, string clientDuration)
+    {
+        var days = Math.Max(1, (endDate - startDate).Days);
+        var unit = (priceUnit ?? "").ToLower().Replace("€", "").Trim().TrimStart('/');
+
+        // One-off units have no duration semantics — keep whatever the client sent.
+        if (unit is "hour" or "tund" or "valanda" or "stunda" or "час"
+                or "time" or "kord" or "kartas" or "reize" or "раз")
+        {
+            return clientDuration;
+        }
+
+        decimal daysPerUnit = unit switch
+        {
+            "day"   or "päev"  or "diena"  or "день"               => 1m,
+            "week"  or "nädal" or "savaitė" or "nedēļa" or "неделя" => 7m,
+            "month" or "kuu"   or "mėnuo"  or "mēnesis" or "месяц"  => 30.44m,
+            _                                                       => 30.44m, // default: assume monthly
+        };
+
+        // Round up to whole units so a partial period still reads as at least one unit.
+        var unitCount = (int)Math.Ceiling(days / daysPerUnit);
+        if (unitCount < 1) unitCount = 1;
+
+        // Reuse the listing's own (localized) price-unit token so no new translation is needed,
+        // matching the existing "1 kuu" style. Fall back to the client value if the unit is blank.
+        var unitLabel = (priceUnit ?? "").Trim().TrimStart('/').Trim();
+        return string.IsNullOrEmpty(unitLabel) ? clientDuration : $"{unitCount} {unitLabel}";
+    }
 
     private static decimal CalculateDurationPrice(decimal priceFrom, string priceUnit, DateTime startDate, DateTime endDate)
     {
