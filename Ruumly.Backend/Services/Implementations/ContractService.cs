@@ -94,6 +94,57 @@ public class ContractService(
             : 24;
     }
 
+    /// <summary>
+    /// Validates a canvas signature data URL: correct prefix, decodable base64, real
+    /// PNG header, sane IHDR dimensions (rejects a 1x1/degenerate PNG), and a size
+    /// ceiling. A full-size blank canvas (the type-your-name a11y path) still passes.
+    /// </summary>
+    private static void ValidateCanvasSignature(string dataUrl)
+    {
+        const string prefix = "data:image/png;base64,";
+        if (string.IsNullOrEmpty(dataUrl) || !dataUrl.StartsWith(prefix, StringComparison.Ordinal))
+            throw new ArgumentException("SignatureDataUrl must be a data:image/png;base64,... string.");
+        if (dataUrl.Length > MaxSignatureSizeBytes)
+            throw new ArgumentException("Signature image is too large (max 500 KB).");
+
+        byte[] bytes;
+        try { bytes = Convert.FromBase64String(dataUrl[prefix.Length..]); }
+        catch (FormatException) { throw new ArgumentException("Signature is not valid base64 PNG data."); }
+
+        ReadOnlySpan<byte> pngMagic = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+        if (bytes.Length < 24 || !bytes.AsSpan(0, 8).SequenceEqual(pngMagic))
+            throw new ArgumentException("Signature must be a valid PNG image.");
+
+        // IHDR width/height are big-endian 32-bit ints at byte offsets 16 and 20.
+        int width  = (bytes[16] << 24) | (bytes[17] << 16) | (bytes[18] << 8) | bytes[19];
+        int height = (bytes[20] << 24) | (bytes[21] << 16) | (bytes[22] << 8) | bytes[23];
+        if (width < 50 || height < 20)
+            throw new ArgumentException("Signature image is too small to be a valid signature.");
+    }
+
+    /// <summary>
+    /// Builds the appended signature block (drawn image + self-declared signer metadata)
+    /// for the rendered contract snapshot. Explicitly labelled self-declared / not
+    /// identity-verified, matching the free canvas method.
+    /// </summary>
+    private static string BuildSignatureBlock(SignContractRequest req, string? ip)
+    {
+        var name   = HttpUtility.HtmlEncode(req.TenantName);
+        var idPart = string.IsNullOrWhiteSpace(req.TenantIdCode)
+            ? ""
+            : " (" + HttpUtility.HtmlEncode(req.TenantIdCode) + ")";
+        var ipPart = string.IsNullOrWhiteSpace(ip) ? "" : ", IP " + HttpUtility.HtmlEncode(ip);
+        var when   = DateTime.UtcNow.ToString("dd.MM.yyyy HH:mm");
+        // SignatureDataUrl is validated as a PNG data URL above; safe to embed.
+        return "<hr/><div style=\"margin-top:24px\">"
+             + "<p style=\"font-size:13px;color:#555;margin:0 0 6px\"><strong>Signature</strong> "
+             + "(self-declared, not identity-verified):</p>"
+             + "<img src=\"" + req.SignatureDataUrl + "\" alt=\"Signature\" "
+             + "style=\"max-width:320px;border:1px solid #ddd;border-radius:6px;background:#fff\"/>"
+             + "<p style=\"font-size:12px;color:#777;margin:8px 0 0\">Signed by " + name + idPart
+             + ", " + when + " UTC" + ipPart + "</p></div>";
+    }
+
     public async Task<SignedContract> SignAsync(
         SignContractRequest req,
         string              tenantEmail,
@@ -106,12 +157,10 @@ public class ContractService(
         if (existing is not null)
             return existing;
 
-        // Validate signature data URL
-        const string expectedPrefix = "data:image/png;base64,";
-        if (!req.SignatureDataUrl.StartsWith(expectedPrefix, StringComparison.Ordinal))
-            throw new ArgumentException("SignatureDataUrl must be a data:image/png;base64,... string.");
-        if (req.SignatureDataUrl.Length > MaxSignatureSizeBytes)
-            throw new ArgumentException("Signature image is too large (max 500 KB).");
+        // Validate the drawn signature image server-side (prefix + real PNG header +
+        // sane dimensions + size ceiling). Rejects the 1x1 / arbitrary-bytes payload
+        // while still accepting a full-size blank canvas (the type-your-name a11y path).
+        ValidateCanvasSignature(req.SignatureDataUrl);
 
         // Render the contract with tenant-specific values substituted
         var rendered = await RenderAsync(req.ContractTemplateId, req.BookingId, ct);
@@ -121,6 +170,11 @@ public class ContractService(
         rendered = rendered
             .Replace("{{tenant_name}}",    HttpUtility.HtmlEncode(req.TenantName))
             .Replace("{{tenant_id_code}}", HttpUtility.HtmlEncode(req.TenantIdCode ?? ""));
+
+        // Embed the actual drawn signature + signer metadata INTO the contract snapshot,
+        // so the document a tenant/partner downloads visibly carries the signature
+        // (previously the PNG was stored separately and never shown on the artifact).
+        rendered += BuildSignatureBlock(req, ip);
 
         // Compute SHA-256 of rendered HTML for tamper-evidence (canvas path).
         var renderedHashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(rendered));

@@ -19,14 +19,22 @@ public class StaleBookingCleanupJob(RuumlyDbContext db, ILogger<StaleBookingClea
     {
         var expiryHours = await ResolveExpiryHoursAsync();
         var cutoff      = DateTime.UtcNow.AddHours(-expiryHours);
+        // Bank-transfer bookings are reconciled manually (admin marks Paid on receipt),
+        // which takes business days — give them a much longer window than the 24h
+        // sign-then-pay void, so a legitimate in-flight transfer isn't auto-cancelled.
+        var bankTransferDays = await ResolveBankTransferExpiryDaysAsync();
+        var btCutoff         = DateTime.UtcNow.AddDays(-bankTransferDays);
 
         var staleBookings = await db.Bookings
             .Include(b => b.Order)
             .Include(b => b.SignedContract)
             .Where(b => b.Status == BookingStatus.Pending
-                     && b.CreatedAt < cutoff
                      && !db.Invoices.Any(i => i.BookingId == b.Id
-                                           && i.Status == InvoiceStatus.Paid))
+                                           && i.Status == InvoiceStatus.Paid)
+                     && (
+                         (db.Invoices.Any(i => i.BookingId == b.Id && i.PaymentMethod == "bank_transfer") && b.CreatedAt < btCutoff)
+                         || (!db.Invoices.Any(i => i.BookingId == b.Id && i.PaymentMethod == "bank_transfer") && b.CreatedAt < cutoff)
+                     ))
             .ToListAsync();
 
         var contractsVoided = 0;
@@ -129,5 +137,20 @@ public class StaleBookingCleanupJob(RuumlyDbContext db, ILogger<StaleBookingClea
             return hours;
 
         return DefaultExpiryHours;
+    }
+
+    /// <summary>Longer auto-void window (days) for manually-reconciled bank transfers. Fallback: 7.</summary>
+    public const string BankTransferExpiryDaysSettingKey = "booking.bankTransferExpiryDays";
+    private const int DefaultBankTransferExpiryDays = 7;
+
+    private async Task<int> ResolveBankTransferExpiryDaysAsync()
+    {
+        var value = await db.PlatformSettings
+            .Where(s => s.Key == BankTransferExpiryDaysSettingKey)
+            .Select(s => s.Value)
+            .FirstOrDefaultAsync();
+        return value is not null && int.TryParse(value, out var days) && days > 0
+            ? days
+            : DefaultBankTransferExpiryDays;
     }
 }

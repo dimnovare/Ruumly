@@ -153,7 +153,8 @@ public class ContractController(
                 return Ok(new SignedContractDto(
                     signed.Id, signed.BookingId, signed.RenderedHtml,
                     signed.TenantName, signed.TenantIdCode, signed.TenantEmail,
-                    signed.SignedAt.ToString("o")));
+                    signed.SignedAt.ToString("o"),
+                    signed.SigningMethod, !string.IsNullOrEmpty(signed.VerifiedIdCode)));
             }
             catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
             catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
@@ -174,7 +175,8 @@ public class ContractController(
                     return Ok(new SignedContractDto(
                         winner.Id, winner.BookingId, winner.RenderedHtml,
                         winner.TenantName, winner.TenantIdCode, winner.TenantEmail,
-                        winner.SignedAt.ToString("o")));
+                        winner.SignedAt.ToString("o"),
+                        winner.SigningMethod, !string.IsNullOrEmpty(winner.VerifiedIdCode)));
 
                 return Conflict(new { error = "Contract signing is already in progress for this booking." });
             }
@@ -197,7 +199,8 @@ public class ContractController(
             return Ok(new SignedContractDto(
                 signed.Id, signed.BookingId, signed.RenderedHtml,
                 signed.TenantName, signed.TenantIdCode, signed.TenantEmail,
-                signed.SignedAt.ToString("o")));
+                signed.SignedAt.ToString("o"),
+                signed.SigningMethod, !string.IsNullOrEmpty(signed.VerifiedIdCode)));
         }
         catch (KeyNotFoundException ex)
         {
@@ -228,7 +231,8 @@ public class ContractController(
         return Ok(new SignedContractDto(
             contract.Id, contract.BookingId, contract.RenderedHtml,
             contract.TenantName, contract.TenantIdCode, contract.TenantEmail,
-            contract.SignedAt.ToString("o")));
+            contract.SignedAt.ToString("o"),
+            contract.SigningMethod, !string.IsNullOrEmpty(contract.VerifiedIdCode)));
     }
 
     // ─── Smart-ID / Mobile-ID identity verification endpoints ────────────────

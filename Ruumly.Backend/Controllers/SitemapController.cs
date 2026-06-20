@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
+using System.Globalization;
 using System.Text;
 
 namespace Ruumly.Backend.Controllers;
@@ -36,6 +37,27 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
             sb.AppendLine($"    <xhtml:link rel=\"alternate\" hreflang=\"x-default\" href=\"{BaseUrl}/et{path}\"/>");
             sb.AppendLine("  </url>");
         }
+    }
+
+    // Turns a raw city name into the ASCII slug used by the frontend CityPage
+    // routes (/{lang}/storage/<slug>): strip combining diacritics, lower-case,
+    // collapse whitespace runs to single hyphens. "Pärnu" → "parnu",
+    // "Rīga" → "riga", "Jõhvi" → "johvi".
+    private static string SlugifyCity(string city)
+    {
+        if (string.IsNullOrWhiteSpace(city)) return string.Empty;
+
+        var normalized = city.Trim().Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder(normalized.Length);
+        foreach (var c in normalized)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                sb.Append(c);
+        }
+
+        var ascii = sb.ToString().Normalize(NormalizationForm.FormC).ToLowerInvariant();
+        // Collapse any run of whitespace into a single hyphen.
+        return string.Join("-", ascii.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
     }
 
     [HttpGet("sitemap.xml")]
@@ -113,14 +135,24 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
             AppendLangUrlSet(sb, path, "0.8", "weekly", lastMod);
         }
 
-        var cities = await db.Listings
+        var rawCities = await db.Listings
             .Where(l => l.IsActive && l.City != null && l.Supplier != null && l.Supplier.IsActive)
-            .Select(l => l.City!.ToLower())
+            .Select(l => l.City!)
             .Distinct()
             .ToListAsync();
 
-        foreach (var city in cities)
-            AppendLangUrlSet(sb, $"/storage/{city.Replace(" ", "-")}", "0.8", "weekly");
+        // Emit ASCII slugs consistent with the frontend CityPage routes
+        // (/{lang}/storage/<slug>) and CITY_MAP keys: strip diacritics, lower-case,
+        // hyphenate spaces. "Pärnu" → "parnu", "Rīga" → "riga". Dedupe after
+        // slugifying so accented/unaccented variants don't produce two URLs.
+        var citySlugs = rawCities
+            .Select(SlugifyCity)
+            .Where(s => s.Length > 0)
+            .Distinct()
+            .ToList();
+
+        foreach (var slug in citySlugs)
+            AppendLangUrlSet(sb, $"/storage/{slug}", "0.8", "weekly");
 
         sb.AppendLine("</urlset>");
 

@@ -44,7 +44,9 @@ public class SettingsController(RuumlyDbContext db) : ControllerBase
             "defaultLanguage",
             "currency",
             "featuredPartners",
+            "bankTransfer.enabled",
             // Note: "inviteCode" is NOT included — the actual code stays server-side only
+            // Note: bank account number/IBAN is NOT public — returned only by /payments/initiate after signing
         };
 
         // Prefixes whose keys are also public (e.g. aboutPage.enabled, aboutPage.mission.en)
@@ -90,6 +92,7 @@ public class SettingsController(RuumlyDbContext db) : ControllerBase
             heroDiscount         = settings.GetValueOrDefault("heroDiscount",    "10"),
             defaultLanguage      = settings.GetValueOrDefault("defaultLanguage", "et"),
             currency             = settings.GetValueOrDefault("currency",        "EUR"),
+            bankTransferEnabled  = settings.GetValueOrDefault("bankTransfer.enabled", "false") == "true",
             featuredPartners,
             // About page — pass all aboutPage.* keys as a sub-dictionary
             aboutPage = settings
