@@ -70,7 +70,9 @@ public static class PlatformDefaultContract
 
         "## 4. Fees",
         "The rent is {{monthly_price}} per month. The total amount payable for the agreed term is "
-            + "{{total_price}}. All fees are due in advance for each rental period.",
+            + "{{total_price}}. All fees are due in advance for each rental period. Where bank transfer "
+            + "is offered, payment is made to the platform's bank account using the payment reference "
+            + "provided to the Tenant at checkout.",
 
         "## 5. Conditional Upon Payment",
         "{{payment_condition_clause}}",
@@ -102,9 +104,10 @@ public static class PlatformDefaultContract
             + "resolved amicably shall be settled by the competent court of the Republic of Estonia.",
 
         "## 11. Signatures",
-        "By signing electronically, the Tenant {{tenant_name}} confirms having read and agreed to this "
-            + "Agreement on {{today}}. The electronic signature has the same legal effect as a handwritten "
-            + "signature.",
+        "By submitting an electronic acknowledgment (a drawn or typed signature), the Tenant "
+            + "{{tenant_name}} confirms having read and agreed to this Agreement on {{today}}. The Tenant's "
+            + "name and ID code ({{tenant_id_code}}) are self-declared and have not been identity-verified; "
+            + "this acknowledgment is not a qualified electronic signature under eIDAS.",
     };
 
     /// <summary>

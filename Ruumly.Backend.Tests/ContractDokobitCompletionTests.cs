@@ -196,6 +196,16 @@ public class ContractDokobitCompletionTests
 
         public Task<byte[]?> DownloadAsync(string key) => throw new NotSupportedException();
         public Task DeleteAsync(string publicUrl) => throw new NotSupportedException();
+
+        public Task<string> UploadPrivateAsync(Stream stream, string fileName, string contentType)
+        {
+            UploadCalls++;
+            // Signed PDFs now route to the PRIVATE bucket; return a stable key so the
+            // completion path stores a key (not a public URL), same contract as before.
+            return Task.FromResult("signed-contracts/test.pdf");
+        }
+
+        public Task<byte[]?> DownloadPrivateAsync(string key) => throw new NotSupportedException();
     }
 
     private sealed class UnusedContractService : IContractService

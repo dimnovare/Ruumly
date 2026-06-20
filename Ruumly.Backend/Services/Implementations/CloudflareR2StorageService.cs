@@ -65,6 +65,44 @@ public class CloudflareR2StorageService(
         }
     }
 
+    /// <summary>Private bucket for sensitive docs; falls back to the default bucket when unset.</summary>
+    private string PrivateBucket =>
+        string.IsNullOrWhiteSpace(config["Storage:R2ContractBucketName"])
+            ? config["Storage:R2BucketName"]!
+            : config["Storage:R2ContractBucketName"]!;
+
+    public async Task<string> UploadPrivateAsync(Stream stream, string fileName, string contentType)
+    {
+        var now = DateTime.UtcNow;
+        var key = $"{now.Year}/{now.Month:D2}/{fileName}";
+        await _s3.PutObjectAsync(new PutObjectRequest
+        {
+            BucketName            = PrivateBucket,
+            Key                   = key,
+            InputStream           = stream,
+            ContentType           = contentType,
+            DisablePayloadSigning = true,
+        });
+        // Key only — private objects are never exposed via a public URL.
+        logger.LogInformation("Uploaded to private R2: {Key}", key);
+        return key;
+    }
+
+    public async Task<byte[]?> DownloadPrivateAsync(string key)
+    {
+        try
+        {
+            using var resp = await _s3.GetObjectAsync(PrivateBucket, key);
+            using var ms = new MemoryStream();
+            await resp.ResponseStream.CopyToAsync(ms);
+            return ms.ToArray();
+        }
+        catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+    }
+
     public async Task DeleteAsync(string publicUrl)
     {
         var bucket   = config["Storage:R2BucketName"]!;

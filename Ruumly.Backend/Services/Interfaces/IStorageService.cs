@@ -25,6 +25,17 @@ public interface IStorageService
     /// Delete a file by its full public URL. No-op if the file does not exist.
     /// </summary>
     Task DeleteAsync(string publicUrl);
+
+    /// <summary>
+    /// Upload to the PRIVATE bucket (Storage:R2ContractBucketName, falling back to the
+    /// default bucket when unset). Returns the storage key only — private objects have
+    /// NO public URL and must be read back via <see cref="DownloadPrivateAsync"/> through
+    /// an authenticated endpoint. Use for sensitive docs (signed contracts with PII).
+    /// </summary>
+    Task<string> UploadPrivateAsync(Stream stream, string fileName, string contentType);
+
+    /// <summary>Download bytes of a private-bucket object by key. Null if absent.</summary>
+    Task<byte[]?> DownloadPrivateAsync(string key);
 }
 
 /// <summary>A stored object: its stable storage key and its public URL.</summary>

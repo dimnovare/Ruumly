@@ -595,11 +595,10 @@ public class ContractController(
                         {
                             var name = $"signed-contracts/{contract.BookingId:N}/{signingToken}.pdf";
                             using var stream = new MemoryStream(pdfBytes);
-                            // Store the object KEY (not a public URL). The signed PDF contains
-                            // verified national-ID PII; it must only ever be read back through
-                            // the auth-gated download endpoint, never via a public URL.
-                            var stored = await storageService.UploadWithKeyAsync(stream, name, "application/pdf");
-                            contract.SignedDocumentUrl = stored.Key;
+                            // Store the object KEY in the PRIVATE bucket (no public URL). The signed
+                            // PDF contains verified national-ID PII; it is read back only through the
+                            // auth-gated download endpoint, never via a public URL.
+                            contract.SignedDocumentUrl = await storageService.UploadPrivateAsync(stream, name, "application/pdf");
                         }
                     }
                     catch (Exception ex)
@@ -693,7 +692,10 @@ public class ContractController(
         if (!string.IsNullOrEmpty(contract.SignedDocumentUrl))
         {
             var key = ResolveStorageKey(contract.SignedDocumentUrl);
-            var bytes = await storageService.DownloadAsync(key);
+            // Read from the private bucket; fall back to the default bucket for any
+            // legacy contract uploaded before the private-bucket split.
+            var bytes = await storageService.DownloadPrivateAsync(key)
+                        ?? await storageService.DownloadAsync(key);
             if (bytes is { Length: > 0 })
                 return File(bytes, "application/pdf", $"contract-{bookingId:N}.pdf");
             // PDF missing/unreadable — fall through to the HTML snapshot if present.
