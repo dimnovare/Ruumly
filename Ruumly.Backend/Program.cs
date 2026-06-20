@@ -545,6 +545,8 @@ var app = builder.Build();
 // ─── Middleware pipeline ───
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseMiddleware<SecurityHeadersMiddleware>();
+// Optional origin lock — no-op unless SECURITY__ORIGINSECRET is set (see middleware doc).
+app.UseMiddleware<OriginAuthMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
