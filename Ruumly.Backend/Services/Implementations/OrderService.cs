@@ -273,7 +273,7 @@ public class OrderService(
             // here. The real confirmation — and the customer-facing confirmed email —
             // fires in ConfirmAsync when the partner actually acknowledges (webhook,
             // poll, or admin/provider "Mark confirmed").
-            booking.Status    = BookingStatus.Confirmed;
+            booking.Status    = BookingStatus.AwaitingConfirmation;
             booking.UpdatedAt = DateTime.UtcNow;
 
             db.BookingTimelines.Add(new BookingTimeline
@@ -281,7 +281,7 @@ public class OrderService(
                 Id        = Guid.NewGuid(),
                 BookingId = booking.Id,
                 Event     = tl.TimelineOrderApproved,
-                Status    = BookingStatus.Confirmed,
+                Status    = BookingStatus.AwaitingConfirmation,
                 CreatedAt = DateTime.UtcNow,
             });
 

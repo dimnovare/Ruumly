@@ -359,7 +359,7 @@ public class SupplierTeamController(
         var bookings = await db.Bookings
             .Include(b => b.Listing)
             .Where(b => b.SupplierId == user.SupplierId &&
-                   (b.Status == BookingStatus.Reserved || b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Active))
+                   (b.Status == BookingStatus.Reserved || (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.AwaitingConfirmation) || b.Status == BookingStatus.Active))
             .ToListAsync();
 
         // Strip CRLF/newlines from user-supplied iCal fields to prevent injection

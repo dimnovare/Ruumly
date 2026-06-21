@@ -6,7 +6,11 @@ public enum IntegrationType { Api, Email, Manual }
 public enum IntegrationHealth { Healthy, Degraded, Offline }
 public enum ApprovalMode { Auto, Admin, Provider }
 public enum PostingMode { Api, Email, Manual }
-public enum BookingStatus { Pending, Reserved, Confirmed, Active, Completed, Cancelled }
+// AwaitingConfirmation is appended last (stable int value). It means: the request
+// was approved and forwarded to the partner, but the partner has not yet confirmed.
+// For all occupancy/overlap/stats logic it is treated EXACTLY like Confirmed; only
+// the customer-facing label differs ("Awaiting partner confirmation" vs "Confirmed").
+public enum BookingStatus { Pending, Reserved, Confirmed, Active, Completed, Cancelled, AwaitingConfirmation }
 // Failed is appended last to keep existing persisted int values stable. It is a
 // terminal state set when dispatch to the partner permanently fails after retries.
 public enum OrderStatus { Created, Sending, Sent, Confirmed, Rejected, Active, Completed, Cancelled, Failed }

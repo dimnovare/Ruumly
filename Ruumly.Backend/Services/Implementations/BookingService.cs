@@ -285,7 +285,7 @@ public class BookingService(
                     .CountAsync(b =>
                         b.ListingId == request.ListingId &&
                         (b.Status == BookingStatus.Pending   ||   // guard: back+resubmit without idempotency key
-                         b.Status == BookingStatus.Confirmed ||
+                         (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.AwaitingConfirmation) ||
                          b.Status == BookingStatus.Active    ||
                          b.Status == BookingStatus.Reserved) &&
                         (b.EndDate == null || b.EndDate.Value > startUtc) &&

@@ -52,6 +52,7 @@ public class OrderLeadStatusTests
             ApprovedBy: o.ApprovedBy,
             ApprovedAt: o.ApprovedAt?.ToString("yyyy-MM-dd HH:mm"),
             PostingChannel: o.PostingChannel?.ToString().ToLower(),
+            ApprovalMode: o.ApprovalMode.ToString().ToLower(),
             SentAt: o.SentAt?.ToString("yyyy-MM-dd HH:mm"),
             ConfirmedAt: o.ConfirmedAt?.ToString("yyyy-MM-dd HH:mm"),
             Notes: o.Notes, CreatedAt: o.CreatedAt.ToString("yyyy-MM-dd HH:mm"),

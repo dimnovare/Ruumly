@@ -91,7 +91,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
             DateTime.TryParse(availableTo,   out var to))
         {
             var bookedListingIds = await db.Bookings
-                .Where(b => (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Active || b.Status == BookingStatus.Reserved)
+                .Where(b => ((b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.AwaitingConfirmation) || b.Status == BookingStatus.Active || b.Status == BookingStatus.Reserved)
                     && b.StartDate < to && (!b.EndDate.HasValue || b.EndDate > from))
                 .Select(b => b.ListingId)
                 .Distinct()
@@ -112,7 +112,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         {
             bookedCounts = await db.Bookings
                 .Where(b => allListingIds.Contains(b.ListingId)
-                         && (b.Status == BookingStatus.Confirmed
+                         && ((b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.AwaitingConfirmation)
                              || b.Status == BookingStatus.Active
                              || b.Status == BookingStatus.Reserved)
                          && b.StartDate <= nowUtc
@@ -860,7 +860,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         var now = DateTime.UtcNow;
         return await db.Bookings
             .Where(b => listingIds.Contains(b.ListingId)
-                     && (b.Status == BookingStatus.Confirmed
+                     && ((b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.AwaitingConfirmation)
                          || b.Status == BookingStatus.Active
                          || b.Status == BookingStatus.Reserved)
                      && b.StartDate <= now

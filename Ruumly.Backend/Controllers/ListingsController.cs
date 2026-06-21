@@ -103,7 +103,7 @@ public class ListingsController(IListingService listingService, RuumlyDbContext 
         var bookedCount = await db.Bookings
             .CountAsync(b =>
                 b.ListingId == id &&
-                (b.Status == BookingStatus.Confirmed ||
+                ((b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.AwaitingConfirmation) ||
                  b.Status == BookingStatus.Active    ||
                  b.Status == BookingStatus.Reserved) &&
                 b.EndDate.HasValue &&

@@ -39,12 +39,12 @@ public class ProviderStatsController(RuumlyDbContext db) : ControllerBase
                 ThisMonthRevenue  = (decimal?)g.Where(b => b.CreatedAt >= monthStart)
                                                .Sum(b => b.Total),
                 ActiveBookings    = g.Count(b => b.Status == BookingStatus.Reserved
-                                              || b.Status == BookingStatus.Confirmed
+                                              || (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.AwaitingConfirmation)
                                               || b.Status == BookingStatus.Active),
                 TotalRevenue      = (decimal?)g.Where(b => b.Status != BookingStatus.Cancelled)
                                                .Sum(b => b.Total),
                 BookedListingCount = g.Where(b => b.Status == BookingStatus.Reserved
-                                               || b.Status == BookingStatus.Confirmed
+                                               || (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.AwaitingConfirmation)
                                                || b.Status == BookingStatus.Active)
                                       .Select(b => b.ListingId)
                                       .Distinct()

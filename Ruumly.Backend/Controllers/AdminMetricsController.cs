@@ -29,7 +29,7 @@ public class AdminMetricsController(RuumlyDbContext db) : AdminBaseController(db
         var bookingsLast24h     = await Db.Bookings.CountAsync(b => b.CreatedAt >= h24);
         var bookingsLast7d      = await Db.Bookings.CountAsync(b => b.CreatedAt >= d7);
         var pendingPayment      = await Db.Bookings.CountAsync(b => b.Status == BookingStatus.Pending);
-        var confirmedBookings   = await Db.Bookings.CountAsync(b => b.Status == BookingStatus.Confirmed
+        var confirmedBookings   = await Db.Bookings.CountAsync(b => (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.AwaitingConfirmation)
                                                                   || b.Status == BookingStatus.Active
                                                                   || b.Status == BookingStatus.Completed);
         var cancelledBookings   = await Db.Bookings.CountAsync(b => b.Status == BookingStatus.Cancelled);
