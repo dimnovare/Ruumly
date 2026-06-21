@@ -304,6 +304,17 @@ public class BookingService(
                 DateTime.TryParse(request.EndDate, out var durationEnd) &&
                 durationEnd > durationStart)
             {
+                // Storage minimum commitment: a supplier-set MinBookingMonths guards against
+                // sub-period bookings (e.g. a 1-day booking on a €49/month unit pro-rated to
+                // ~€1.61). Open-ended (no end date) storage rentals are ongoing and exempt.
+                if (listing.Type == ListingType.Warehouse
+                    && listing.MinBookingMonths is int minMonths && minMonths > 1)
+                {
+                    var bookedMonths = (durationEnd - durationStart).TotalDays / 30.44;
+                    if (bookedMonths + 0.01 < minMonths)
+                        throw new ArgumentException(Msg("BOOKING_BELOW_MIN_PERIOD"));
+                }
+
                 basePrice = CalculateDurationPrice(listing.PriceFrom, listing.PriceUnit, durationStart, durationEnd);
             }
             else

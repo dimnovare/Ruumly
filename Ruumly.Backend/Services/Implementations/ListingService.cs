@@ -426,6 +426,9 @@ public class ListingService(
         // in the UI and then surprise the customer with the country default at charge.
         VatRate:         l.VatRate ?? PricingConfigService.GetDefaultVatRate(l.Location?.Country),
         PricesIncludeVat: l.PricesIncludeVat,
+        DepositAmount:           l.DepositAmount,
+        RequiresLicenseCategory: l.RequiresLicenseCategory,
+        MinBookingMonths:        l.MinBookingMonths,
         SupplierId:      l.SupplierId,
         SizeM2:          l.SizeM2,
         QuantityTotal:   l.QuantityTotal,

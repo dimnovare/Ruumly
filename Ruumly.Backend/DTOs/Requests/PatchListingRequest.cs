@@ -10,6 +10,9 @@ public record PatchListingRequest(
     decimal?      VatRate,
     bool?         IsActive,
     List<string>? Images,
+    decimal?      DepositAmount            = null,
+    string?       RequiresLicenseCategory  = null,
+    int?          MinBookingMonths         = null,
     Dictionary<string, object>?  Features                 = null,
     Dictionary<string, string>?  DescriptionTranslations  = null
 );

@@ -327,6 +327,9 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
             Description      = body.Description ?? string.Empty,
             VatRate          = body.VatRate,
             PricesIncludeVat = body.PricesIncludeVat,
+            DepositAmount           = body.DepositAmount,
+            RequiresLicenseCategory = body.RequiresLicenseCategory,
+            MinBookingMonths        = body.MinBookingMonths,
             FeaturesJson     = body.Features is not null
                                    ? System.Text.Json.JsonSerializer.Serialize(body.Features)
                                    : "{}",
@@ -365,6 +368,9 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         if (body.SizeM2.HasValue)            listing.SizeM2        = body.SizeM2.Value;
         if (body.QuantityTotal.HasValue)     listing.QuantityTotal = body.QuantityTotal.Value;
         if (body.VatRate.HasValue)           listing.VatRate       = body.VatRate.Value;
+        if (body.DepositAmount.HasValue)     listing.DepositAmount = body.DepositAmount.Value;
+        if (body.RequiresLicenseCategory is not null) listing.RequiresLicenseCategory = body.RequiresLicenseCategory;
+        if (body.MinBookingMonths.HasValue)  listing.MinBookingMonths = body.MinBookingMonths.Value;
         if (body.IsActive.HasValue)          listing.IsActive      = body.IsActive.Value;
         if (body.Images    is not null)      listing.Images    = body.Images;
         if (body.Features  is not null)      listing.Features  = body.Features;
@@ -928,7 +934,9 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
                                  u.PartnerDiscountRateOverride, u.ClientDiscountRateOverride,
                                  l.Supplier?.ClientDiscountRate,
                                  null, null,  // EffectiveCustomerDiscount, EffectivePartnerDiscount — not computed in nested location view
-                                 u.VatRate, u.PricesIncludeVat, u.SupplierId,
+                                 u.VatRate, u.PricesIncludeVat,
+                                 u.DepositAmount, u.RequiresLicenseCategory, u.MinBookingMonths,
+                                 u.SupplierId,
                                  u.SizeM2, u.QuantityTotal, u.LocationId, u.ViewCount,
                                  l.Supplier?.IsVerified ?? false,
                                  l.Supplier?.FoundingPartner ?? false,

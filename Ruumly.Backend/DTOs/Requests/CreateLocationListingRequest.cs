@@ -15,5 +15,8 @@ public record CreateLocationListingRequest(
     string?     Description,
     decimal?    VatRate,
     bool        PricesIncludeVat,
+    decimal?    DepositAmount = null,
+    string?     RequiresLicenseCategory = null,
+    int?        MinBookingMonths = null,
     Dictionary<string, object>? Features = null
 );

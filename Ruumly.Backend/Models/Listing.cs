@@ -55,6 +55,14 @@ public class Listing
     public decimal? VatRate { get; set; }
     public bool PricesIncludeVat { get; set; } = true;
 
+    // Per-vertical commercial fields:
+    //  - DepositAmount: refundable security deposit (trailer especially; storage sometimes).
+    //  - RequiresLicenseCategory: driving-licence class a trailer renter must hold (e.g. "B" / "BE").
+    //  - MinBookingMonths: minimum committed rental period for storage (guards sub-period bookings).
+    public decimal? DepositAmount { get; set; }
+    public string? RequiresLicenseCategory { get; set; }
+    public int? MinBookingMonths { get; set; }
+
     /// <summary>
     /// JSON array of image URLs. First element is the cover image.
     /// Exposes as Images; Images[0] maps to the frontend `image` field.
