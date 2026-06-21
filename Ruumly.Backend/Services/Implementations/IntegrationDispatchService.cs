@@ -19,6 +19,21 @@ public class IntegrationDispatchService(
 {
     public async Task DispatchAsync(Order order, Supplier supplier)
     {
+        // Idempotency guard: if this order was already posted to the partner (API
+        // success or email sent — both write a Posted fulfillment event; Manual writes
+        // Posting, not Posted), do NOT forward again. Protects against racing triggers
+        // (payment webhook + admin approve) and Hangfire retries re-entering after a
+        // partial success, which would otherwise create duplicate partner orders.
+        var alreadyPosted = await db.FulfillmentEvents
+            .AnyAsync(e => e.OrderId == order.Id && e.Status == FulfillmentStatus.Posted);
+        if (alreadyPosted)
+        {
+            logger.LogInformation(
+                "Order {OrderId} already has a Posted fulfillment event — skipping duplicate dispatch.",
+                order.Id);
+            return;
+        }
+
         // Defense-in-depth: even if a stale order somehow has a non-Manual channel
         // while the integration is deactivated, refuse to forward.
         var settings = await db.IntegrationSettings
@@ -273,6 +288,15 @@ public class IntegrationDispatchService(
 
     private async Task DispatchManualAsync(Order order)
     {
+        // Resolve the customer's language so the customer-visible timeline event is
+        // localized (the internal FulfillmentEvent detail below stays English — it is
+        // redacted from the customer projection).
+        var lang = await db.Bookings
+            .Where(b => b.Id == order.BookingId)
+            .Select(b => b.User != null ? b.User.Language : null)
+            .FirstOrDefaultAsync();
+        var tl = EmailTranslations.For(lang);
+
         order.Status         = OrderStatus.Sending;
         order.PostingChannel = PostingMode.Manual;
         order.UpdatedAt      = DateTime.UtcNow;
@@ -293,7 +317,7 @@ public class IntegrationDispatchService(
         {
             Id        = Guid.NewGuid(),
             OrderId   = order.Id,
-            Event     = "Awaiting operator action",
+            Event     = tl.TimelineAwaitingApproval,
             Status    = OrderStatus.Sending,
             Detail    = "Manual integration — operator must notify partner",
             CreatedAt = DateTime.UtcNow,

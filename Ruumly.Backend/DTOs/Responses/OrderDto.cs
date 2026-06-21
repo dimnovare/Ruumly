@@ -35,6 +35,7 @@ public record OrderDto(
     string?           ApprovedBy,
     string?           ApprovedAt,
     string?           PostingChannel,
+    string?           ApprovalMode,
     string?           SentAt,
     string?           ConfirmedAt,
     string            Notes,

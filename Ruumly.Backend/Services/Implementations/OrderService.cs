@@ -265,6 +265,14 @@ public class OrderService(
 
         if (booking is not null)
         {
+            // Approval FORWARDS the request to the partner — it is NOT yet a partner
+            // confirmation. We keep the booking out of the auto-expire window (status
+            // Confirmed, not Reserved — BackgroundCleanupService voids stale Reserved
+            // bookings), but we record an honest "approved & sent" timeline event and
+            // deliberately do NOT send the customer a "booking confirmed" notification
+            // here. The real confirmation — and the customer-facing confirmed email —
+            // fires in ConfirmAsync when the partner actually acknowledges (webhook,
+            // poll, or admin/provider "Mark confirmed").
             booking.Status    = BookingStatus.Confirmed;
             booking.UpdatedAt = DateTime.UtcNow;
 
@@ -272,17 +280,10 @@ public class OrderService(
             {
                 Id        = Guid.NewGuid(),
                 BookingId = booking.Id,
-                Event     = tl.TimelinePartnerConfirmed,
+                Event     = tl.TimelineOrderApproved,
                 Status    = BookingStatus.Confirmed,
                 CreatedAt = DateTime.UtcNow,
             });
-
-            await NotifyBookingStatusAsync(
-                booking,
-                notificationTitle: tl.NotifBookingConfirmed,
-                notificationBody:  $"{booking.Listing?.Title ?? order.ListingTitle} — {tl.NotifBookingConfirmedBody}",
-                emailSubject:      tl.BookingStatusConfirmedSubject,
-                emailBody:         tl.BookingStatusConfirmedBody);
 
             await db.SaveChangesAsync(ct);
         }
@@ -623,6 +624,7 @@ public class OrderService(
         SupplierPrice     = 0m,
         Margin            = 0m,
         PostingChannel    = null,
+        ApprovalMode      = null,
         ProviderNotes     = null,
         LastContactAt     = null,
         FulfillmentEvents = new List<FulfillmentEventDto>(),
@@ -656,6 +658,7 @@ public class OrderService(
         ApprovedBy:       o.ApprovedBy,
         ApprovedAt:       o.ApprovedAt?.ToString("yyyy-MM-dd HH:mm"),
         PostingChannel:   o.PostingChannel?.ToString().ToLower(),
+        ApprovalMode:     o.ApprovalMode.ToString().ToLower(),
         SentAt:           o.SentAt?.ToString("yyyy-MM-dd HH:mm"),
         ConfirmedAt:      o.ConfirmedAt?.ToString("yyyy-MM-dd HH:mm"),
         Notes:            o.Notes,
