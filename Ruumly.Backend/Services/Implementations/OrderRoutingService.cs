@@ -128,15 +128,22 @@ public class OrderRoutingService(
 
         db.Orders.Add(order);
 
-        db.PayoutEntries.Add(new PayoutEntry
+        // Only owe a payout when money actually flows THROUGH Ruumly — i.e. the
+        // marketplace model, which is the same gate that generates the customer
+        // invoice (BookingService). For the rebate model the customer pays the partner
+        // directly, so a Pending PayoutEntry would double-count money Ruumly never received.
+        if (supplier.BillingModel == BillingModel.Marketplace)
         {
-            Id             = Guid.NewGuid(),
-            SupplierId     = supplier.Id,
-            OrderId        = order.Id,
-            SupplierAmount = supplierPrice + extrasSupplierTotal,
-            PlatformMargin = margin,
-            Status         = PayoutStatus.Pending,
-        });
+            db.PayoutEntries.Add(new PayoutEntry
+            {
+                Id             = Guid.NewGuid(),
+                SupplierId     = supplier.Id,
+                OrderId        = order.Id,
+                SupplierAmount = supplierPrice + extrasSupplierTotal,
+                PlatformMargin = margin,
+                Status         = PayoutStatus.Pending,
+            });
+        }
 
         // Resolve language for timeline/notification strings
         var bookingUser = await db.Users.FindAsync(booking.UserId);

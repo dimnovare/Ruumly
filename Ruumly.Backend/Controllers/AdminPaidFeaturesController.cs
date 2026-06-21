@@ -208,13 +208,19 @@ public class AdminPaidFeaturesController(RuumlyDbContext db) : AdminBaseControll
     {
         switch (featureCode)
         {
+            // Accept both the *_tools codes and the catalog/seed codes (booking_enable,
+            // contracts, payments) — the seeded PaidFeature.Code values did not match
+            // the *_tools cases, so enabling a commerce feature silently no-op'd.
             case "booking_tools":
+            case "booking_enable":
                 supplier.BookingEnabled = true;
                 break;
             case "contract_tools":
+            case "contracts":
                 supplier.ContractSigningEnabled = true;
                 break;
             case "ruumly_payment_collection":
+            case "payments":
                 supplier.RuumlyPaymentEnabled = true;
                 break;
             case "direct_payment_tools":
