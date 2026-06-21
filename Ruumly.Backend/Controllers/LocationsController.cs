@@ -452,7 +452,8 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         if (!DateOnly.TryParse(body.Date, out var date))
             return BadRequest(new { error = "Invalid date format. Use yyyy-MM-dd." });
 
-        var exists = await db.BlockedDates.AnyAsync(b => b.LocationId == id && b.Date == date);
+        var exists = await db.BlockedDates.AnyAsync(b =>
+            b.LocationId == id && b.Date == date && b.ListingId == body.ListingId);
         if (exists)
             return Conflict(new { error = "This date is already blocked." });
 
@@ -460,6 +461,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         {
             Id         = Guid.NewGuid(),
             LocationId = id,
+            ListingId  = body.ListingId,
             Date       = date,
             Reason     = body.Reason,
             CreatedAt  = DateTime.UtcNow,
@@ -468,7 +470,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         db.BlockedDates.Add(blocked);
         await db.SaveChangesAsync();
 
-        return StatusCode(201, new { blocked.Id, blocked.LocationId, date = blocked.Date.ToString("yyyy-MM-dd"), blocked.Reason });
+        return StatusCode(201, new { blocked.Id, blocked.LocationId, blocked.ListingId, date = blocked.Date.ToString("yyyy-MM-dd"), blocked.Reason });
     }
 
     // ── DELETE /api/locations/{id}/blocked-dates/{dateId} ─────────────────────

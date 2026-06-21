@@ -232,6 +232,9 @@ public class BookingService(
 
                 var hasBlockedDate = await db.BlockedDates.AnyAsync(b =>
                     b.LocationId == listing.LocationId.Value &&
+                    // A blackout with no ListingId blocks the whole location; one scoped
+                    // to a listing only blocks that listing.
+                    (b.ListingId == null || b.ListingId == listing.Id) &&
                     b.Date >= bookingStartDate &&
                     b.Date <= bookingEndDate);
 

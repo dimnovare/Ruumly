@@ -5,6 +5,9 @@ public class BlockedDate
     public Guid Id { get; set; }
     public Guid LocationId { get; set; }
     public SupplierLocation Location { get; set; } = null!;
+    // null = the whole location is blocked that day; set = only that one listing
+    // (e.g. a single trailer offline while the rest of the location stays bookable).
+    public Guid? ListingId { get; set; }
     public DateOnly Date { get; set; }
     public string? Reason { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

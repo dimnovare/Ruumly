@@ -135,24 +135,33 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
             AppendLangUrlSet(sb, path, "0.8", "weekly", lastMod);
         }
 
-        var rawCities = await db.Listings
+        // Per-vertical city hubs: emit /storage/<city>, /moving/<city>, /trailer/<city>
+        // only for cities that actually have an active listing of that vertical (gated by
+        // the platform's showMoving/showTrailer flags). Slugs are ASCII, consistent with
+        // the frontend CityPage routes ("Pärnu" → "parnu", "Rīga" → "riga").
+        var rawCityTypes = await db.Listings
             .Where(l => l.IsActive && l.City != null && l.Supplier != null && l.Supplier.IsActive)
-            .Select(l => l.City!)
+            .Select(l => new { l.City, l.Type })
             .Distinct()
             .ToListAsync();
 
-        // Emit ASCII slugs consistent with the frontend CityPage routes
-        // (/{lang}/storage/<slug>) and CITY_MAP keys: strip diacritics, lower-case,
-        // hyphenate spaces. "Pärnu" → "parnu", "Rīga" → "riga". Dedupe after
-        // slugifying so accented/unaccented variants don't produce two URLs.
-        var citySlugs = rawCities
-            .Select(SlugifyCity)
-            .Where(s => s.Length > 0)
-            .Distinct()
-            .ToList();
+        var cityHubs = new HashSet<string>();
+        foreach (var ct in rawCityTypes)
+        {
+            var slug = SlugifyCity(ct.City!);
+            if (slug.Length == 0) continue;
+            var hub = ct.Type switch
+            {
+                Models.Enums.ListingType.Moving  => showMoving  ? "moving"  : null,
+                Models.Enums.ListingType.Trailer => showTrailer ? "trailer" : null,
+                _                                 => "storage",
+            };
+            if (hub is null) continue;
+            cityHubs.Add($"/{hub}/{slug}");
+        }
 
-        foreach (var slug in citySlugs)
-            AppendLangUrlSet(sb, $"/storage/{slug}", "0.8", "weekly");
+        foreach (var path in cityHubs)
+            AppendLangUrlSet(sb, path, "0.8", "weekly");
 
         sb.AppendLine("</urlset>");
 
