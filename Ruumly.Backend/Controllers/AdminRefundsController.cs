@@ -26,7 +26,7 @@ public class AdminRefundsController(
     /// entry. Actual bank transfer is handled manually by the admin team.
     /// </summary>
     [HttpPost("{id:guid}/refund")]
-    public async Task<IActionResult> Refund(Guid id)
+    public async Task<IActionResult> Refund(Guid id, [FromBody] RefundRequest? body = null)
     {
         var booking = await Db.Bookings
             .Include(b => b.Invoice)
@@ -47,6 +47,13 @@ public class AdminRefundsController(
         // Mark invoice as pending refund — manual bank transfer follows
         invoice.Status = InvoiceStatus.PendingRefund;
 
+        // Support a partial refund: a retained call-out fee, a withheld trailer deposit,
+        // a mid-month storage exit. Default to the full invoice amount when none given.
+        var refundAmount = body?.RefundAmount is decimal ra && ra > 0m && ra <= invoice.Amount
+            ? ra
+            : invoice.Amount;
+        var isPartial = refundAmount < invoice.Amount;
+
         // Record timeline entry
         Db.BookingTimelines.Add(new BookingTimeline
         {
@@ -62,7 +69,9 @@ public class AdminRefundsController(
             action: "booking.refund_initiated",
             actor:  User.Identity?.Name ?? "admin",
             target: booking.Id.ToString(),
-            detail: $"Invoice {invoice.Id}, amount €{invoice.Amount:F2}");
+            detail: $"Invoice {invoice.Id}, refund €{refundAmount:F2} of €{invoice.Amount:F2}"
+                    + (isPartial ? " (partial)" : "")
+                    + (string.IsNullOrWhiteSpace(body?.Reason) ? "" : $" — {body!.Reason!.Trim()}"));
 
         await Db.SaveChangesAsync();
 
@@ -80,11 +89,13 @@ public class AdminRefundsController(
 
         return Ok(new
         {
-            bookingId = booking.Id,
-            invoiceId = invoice.Id,
-            amount    = invoice.Amount,
-            status    = invoice.Status.ToString().ToLower(),
-            message   = "Refund initiated. Invoice marked as pending refund.",
+            bookingId    = booking.Id,
+            invoiceId    = invoice.Id,
+            amount       = invoice.Amount,
+            refundAmount,
+            isPartial,
+            status       = invoice.Status.ToString().ToLower(),
+            message      = "Refund initiated. Invoice marked as pending refund.",
         });
     }
 
@@ -263,3 +274,7 @@ public class AdminRefundsController(
 /// <summary>Optional body for the manual mark-paid action: the bank reference and a
 /// note the operator matched the wire transfer against (recorded in the audit log).</summary>
 public record MarkInvoicePaidRequest(string? Reference, string? Note, decimal? ReceivedAmount = null);
+
+/// <summary>Optional body for a refund: a partial RefundAmount (defaults to the full
+/// invoice when omitted) and an optional reason, both recorded in the audit trail.</summary>
+public record RefundRequest(decimal? RefundAmount = null, string? Reason = null);
