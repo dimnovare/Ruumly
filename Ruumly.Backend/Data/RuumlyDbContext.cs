@@ -38,6 +38,7 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
     public DbSet<PaidFeature>      PaidFeatures       => Set<PaidFeature>();
     public DbSet<SupplierPaidFeature> SupplierPaidFeatures => Set<SupplierPaidFeature>();
     public DbSet<PaidFeatureRequest> PaidFeatureRequests => Set<PaidFeatureRequest>();
+    public DbSet<Dispute>          Disputes           => Set<Dispute>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -407,6 +408,16 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
             e.HasIndex(d => d.SupplierId);
             e.Property(d => d.Category).HasConversion<string>();
             e.Property(d => d.Status).HasConversion<string>();
+        });
+
+        // ─── Dispute ───
+        model.Entity<Dispute>(e =>
+        {
+            e.HasIndex(d => d.Status);
+            e.HasIndex(d => new { d.SupplierId, d.Status });
+            e.Property(d => d.Type).HasConversion<string>();
+            e.Property(d => d.Status).HasConversion<string>();
+            e.Property(d => d.RaisedByRole).HasConversion<string>();
         });
 
         // ─── Paid feature catalog / activations ───
