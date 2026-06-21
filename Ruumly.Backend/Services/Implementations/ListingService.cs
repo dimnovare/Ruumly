@@ -131,6 +131,31 @@ public class ListingService(
         if (f.AvailableNow == true)
             query = query.Where(l => l.AvailableNow);
 
+        // ── Date-availability filter (trailer/moving: "free on these dates") ───
+        if (!string.IsNullOrWhiteSpace(f.AvailableFrom)
+            && DateOnly.TryParse(f.AvailableFrom, out var availFrom))
+        {
+            var availTo = !string.IsNullOrWhiteSpace(f.AvailableTo)
+                && DateOnly.TryParse(f.AvailableTo, out var parsedTo) && parsedTo >= availFrom
+                ? parsedTo : availFrom;
+            var fromUtc = availFrom.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+            var toUtc   = availTo.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc);
+
+            // Exclude listings blacked out anywhere in the window (whole-location or the
+            // listing specifically), or already at capacity (occupying bookings ≥ QuantityTotal).
+            query = query.Where(l =>
+                !db.BlockedDates.Any(b =>
+                    b.LocationId == l.LocationId &&
+                    (b.ListingId == null || b.ListingId == l.Id) &&
+                    b.Date >= availFrom && b.Date <= availTo)
+                && db.Bookings.Count(b =>
+                    b.ListingId == l.Id &&
+                    (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.AwaitingConfirmation
+                     || b.Status == BookingStatus.Active || b.Status == BookingStatus.Reserved) &&
+                    b.StartDate < toUtc &&
+                    (b.EndDate == null || b.EndDate > fromUtc)) < (l.QuantityTotal ?? 1));
+        }
+
         // ── Full-text search via indexed tsvector column ──────────────────────
         // EF.Functions.PlainToTsQuery MUST be called inline within the lambda for EF Core
         // to translate it to a server-side plainto_tsquery() call. Hoisting it to a local

@@ -11,6 +11,10 @@ public record ListingSearchRequest
     [FromQuery(Name = "sort")]         [MaxLength(30)]  public string?  Sort         { get; init; }
     [FromQuery(Name = "q")]            [MaxLength(200)] public string?  Q            { get; init; }
     [FromQuery(Name = "availableNow")] public bool?    AvailableNow { get; init; }
+    // Date-availability window (yyyy-MM-dd): "free on these dates" — trailer (a rental
+    // range) and moving (a service date). Excludes listings blacked out or at capacity.
+    [FromQuery(Name = "availableFrom")] public string? AvailableFrom { get; init; }
+    [FromQuery(Name = "availableTo")]   public string? AvailableTo   { get; init; }
     [FromQuery(Name = "country")]      public string?  Country      { get; init; }
     [FromQuery(Name = "minSize")]      public decimal? MinSize      { get; init; }
     [FromQuery(Name = "maxSize")]      public decimal? MaxSize      { get; init; }
