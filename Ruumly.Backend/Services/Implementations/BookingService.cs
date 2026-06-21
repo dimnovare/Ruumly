@@ -646,8 +646,9 @@ public class BookingService(
         var unit = (priceUnit ?? "").ToLower().Replace("€", "").Trim().TrimStart('/');
 
         // One-off units have no duration semantics — keep whatever the client sent.
-        if (unit is "hour" or "tund" or "valanda" or "stunda" or "час"
-                or "time" or "kord" or "kartas" or "reize" or "раз")
+        if (unit is "hour" or "h" or "tund" or "valanda" or "stunda" or "час"
+                or "time" or "kord" or "kartas" or "reize" or "раз"
+                or "one-time" or "onetime")
         {
             return clientDuration;
         }
@@ -683,14 +684,18 @@ public class BookingService(
             "day"   or "päev"  or "diena"  or "день"               => 1m,
             "week"  or "nädal" or "savaitė" or "nedēļa" or "неделя" => 7m,
             "month" or "kuu"   or "mėnuo"  or "mēnesis" or "месяц"  => 30.44m,
-            "hour"  or "tund"  or "valanda" or "stunda" or "час"    => 1m / 24m,
-            "time"  or "kord"  or "kartas" or "reize" or "раз"      => 1m,
+            "hour"  or "h"     or "tund"  or "valanda" or "stunda" or "час" => 1m / 24m,
+            "time"  or "kord"  or "kartas" or "reize" or "раз"
+                    or "one-time" or "onetime"                      => 1m,
             _                                                       => 30.44m, // default: assume monthly
         };
 
-        // For one-time price units (hour/time), price is flat regardless of duration.
-        if (unit is "hour" or "tund" or "valanda" or "stunda" or "час"
-                or "time" or "kord" or "kartas" or "reize" or "раз")
+        // Flat price units: one-time/fixed (a move, a job) and hourly (actual hours are
+        // agreed off-platform, so the listed hourly rate is shown as the flat "from" price).
+        // These do not scale with the booked date range.
+        if (unit is "hour" or "h" or "tund" or "valanda" or "stunda" or "час"
+                or "time" or "kord" or "kartas" or "reize" or "раз"
+                or "one-time" or "onetime")
         {
             return priceFrom;
         }
