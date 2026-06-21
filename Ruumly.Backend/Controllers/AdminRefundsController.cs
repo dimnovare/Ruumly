@@ -135,17 +135,26 @@ public class AdminRefundsController(
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> AdminMarkInvoicePaid(
         Guid id,
-        [FromServices] IInvoiceService invoiceService)
+        [FromServices] IInvoiceService invoiceService,
+        [FromBody] MarkInvoicePaidRequest? body = null)
     {
         try
         {
             var invoice = await invoiceService.MarkPaidAsync(id);
 
+            // Capture the operator-supplied bank reference + note in the audit trail —
+            // this is the reconciliation record for the manual (no-PSP) bank-transfer flow.
+            var detail = "Invoice manually marked as paid by admin";
+            if (!string.IsNullOrWhiteSpace(body?.Reference))
+                detail += $". Bank ref: {body!.Reference!.Trim()}";
+            if (!string.IsNullOrWhiteSpace(body?.Note))
+                detail += $". Note: {body!.Note!.Trim()}";
+
             Audit(
                 action: "invoice.manual_mark_paid",
                 actor:  User.Identity?.Name ?? "admin",
                 target: id.ToString(),
-                detail: "Invoice manually marked as paid by admin");
+                detail: detail);
             await Db.SaveChangesAsync();
 
             return Ok(invoice);
@@ -244,3 +253,7 @@ public class AdminRefundsController(
         });
     }
 }
+
+/// <summary>Optional body for the manual mark-paid action: the bank reference and a
+/// note the operator matched the wire transfer against (recorded in the audit log).</summary>
+public record MarkInvoicePaidRequest(string? Reference, string? Note);

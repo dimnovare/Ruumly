@@ -135,13 +135,30 @@ public class AdminSettingsController(
     // ══════════════════════════════════════════════════════════════════════════
 
     [HttpGet("audit-log")]
-    public async Task<IActionResult> GetAuditLog([FromQuery] int page = 1, [FromQuery] int limit = 100)
+    public async Task<IActionResult> GetAuditLog(
+        [FromQuery] int page = 1,
+        [FromQuery] int limit = 100,
+        [FromQuery] string? actor = null,
+        [FromQuery] string? action = null,
+        [FromQuery] string? target = null,
+        [FromQuery] DateTime? from = null,
+        [FromQuery] DateTime? to = null)
     {
         page  = Math.Max(1, page);
         limit = Math.Clamp(limit, 1, 200);
 
-        var total = await Db.AuditLogs.CountAsync();
-        var items = await Db.AuditLogs
+        // Server-side filtering so the accountability log stays usable at scale
+        // (find "who did X" / "all actions on order Y last week") instead of pulling
+        // the whole table and filtering in the browser.
+        var query = Db.AuditLogs.AsQueryable();
+        if (!string.IsNullOrWhiteSpace(actor))  query = query.Where(a => a.Actor.Contains(actor));
+        if (!string.IsNullOrWhiteSpace(action)) query = query.Where(a => a.Action.Contains(action));
+        if (!string.IsNullOrWhiteSpace(target)) query = query.Where(a => a.Target.Contains(target));
+        if (from.HasValue)                      query = query.Where(a => a.CreatedAt >= from.Value);
+        if (to.HasValue)                        query = query.Where(a => a.CreatedAt <= to.Value);
+
+        var total = await query.CountAsync();
+        var items = await query
             .OrderByDescending(a => a.CreatedAt)
             .Skip((page - 1) * limit)
             .Take(limit)
