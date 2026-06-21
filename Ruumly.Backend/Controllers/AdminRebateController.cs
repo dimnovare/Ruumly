@@ -59,11 +59,15 @@ public class AdminRebateController(RuumlyDbContext db) : AdminBaseController(db)
             .ToHashSet();
 
         // Aggregate payout stats for all due suppliers in one round trip.
+        // Exclude Cancelled (refunded/voided) AND Accrued (fulfillment not yet
+        // confirmed): a rebate invoice only bills the partner for orders they
+        // actually fulfilled, never for provisioned-but-unconfirmed ones.
         var payoutStats = await Db.PayoutEntries
             .Where(p => supplierIds.Contains(p.SupplierId)
                      && p.CreatedAt >= period
                      && p.CreatedAt < periodEnd
-                     && p.Status != PayoutStatus.Cancelled)
+                     && p.Status != PayoutStatus.Cancelled
+                     && p.Status != PayoutStatus.Accrued)
             .GroupBy(p => p.SupplierId)
             .Select(g => new
             {

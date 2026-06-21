@@ -168,6 +168,30 @@ public class LaunchGuardTests : IDisposable
         unchanged.ConfirmedAt.Should().BeNull("a refused confirm must not stamp ConfirmedAt");
     }
 
+    // ─── (1b) ConfirmAsync: promotes an Accrued payout to Pending ───────────────
+
+    [Fact]
+    public async Task ConfirmAsync_PromotesAccruedPayoutToPending()
+    {
+        var db = CreateDb();
+        // A live order routed to a partner, payout provisioned but not yet owed.
+        var order = await SeedOrderAsync(db, OrderStatus.Sent, BookingStatus.AwaitingConfirmation);
+        db.PayoutEntries.Add(new PayoutEntry
+        {
+            Id = Guid.NewGuid(), SupplierId = order.SupplierId, OrderId = order.Id,
+            SupplierAmount = 87m, PlatformMargin = 8m, Status = PayoutStatus.Accrued,
+        });
+        await db.SaveChangesAsync();
+        var service = MakeOrderService(db);
+
+        await service.ConfirmAsync(order.Id, Guid.NewGuid());
+
+        (await db.Orders.FindAsync(order.Id))!.Status.Should().Be(OrderStatus.Confirmed);
+        (await db.PayoutEntries.FirstAsync(p => p.OrderId == order.Id)).Status
+            .Should().Be(PayoutStatus.Pending,
+                "confirming fulfillment turns the provisioned (Accrued) payout into a real obligation");
+    }
+
     // ─── (2) UpdateStatusAsync: cannot transition OUT of a terminal state ───────
 
     [Theory]

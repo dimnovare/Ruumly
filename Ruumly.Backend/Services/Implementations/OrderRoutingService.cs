@@ -141,7 +141,9 @@ public class OrderRoutingService(
                 OrderId        = order.Id,
                 SupplierAmount = supplierPrice + extrasSupplierTotal,
                 PlatformMargin = margin,
-                Status         = PayoutStatus.Pending,
+                // Accrued, not Pending: nothing is owed until the partner confirms
+                // fulfillment. ConfirmAsync promotes this to Pending.
+                Status         = PayoutStatus.Accrued,
             });
         }
 

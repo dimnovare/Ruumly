@@ -126,7 +126,8 @@ public class AdminRefundsController(
             .FirstOrDefaultAsync();
         var payout = await Db.PayoutEntries
             .FirstOrDefaultAsync(p => p.OrderId == refundedOrderId
-                                   && p.Status == PayoutStatus.Pending);
+                                   && (p.Status == PayoutStatus.Pending
+                                    || p.Status == PayoutStatus.Accrued));
         if (payout is not null)
         {
             payout.Status = PayoutStatus.Cancelled;
@@ -215,10 +216,11 @@ public class AdminRefundsController(
         order.Status    = OrderStatus.Cancelled;
         order.UpdatedAt = now;
 
-        // Cancel payout entry
+        // Cancel payout entry (Accrued if unconfirmed, Pending if already promoted)
         var payout = await Db.PayoutEntries
             .FirstOrDefaultAsync(p => p.OrderId == order.Id
-                                   && p.Status == PayoutStatus.Pending);
+                                   && (p.Status == PayoutStatus.Pending
+                                    || p.Status == PayoutStatus.Accrued));
         if (payout is not null)
             payout.Status = PayoutStatus.Cancelled;
 

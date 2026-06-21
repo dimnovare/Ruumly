@@ -379,7 +379,8 @@ public class MontonioPaymentService(
                         }
                         var refundedPayout = await db.PayoutEntries
                             .FirstOrDefaultAsync(p => p.OrderId == refundedOrder.Id
-                                                   && p.Status == PayoutStatus.Pending);
+                                                   && (p.Status == PayoutStatus.Pending
+                                                    || p.Status == PayoutStatus.Accrued));
                         if (refundedPayout is not null)
                             refundedPayout.Status = PayoutStatus.Cancelled;
                     }

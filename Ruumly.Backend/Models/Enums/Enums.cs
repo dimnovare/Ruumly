@@ -22,7 +22,12 @@ public enum NotificationType { Booking, Alert, System, Order, Review, Payment }
 public enum ListingBadge { Cheapest, Closest, BestValue, Promoted }
 public enum NotificationChannel { InApp, Email }
 public enum SupplierTier { Starter = 0, Standard = 1, Premium = 2 }
-public enum PayoutStatus { Pending, Paid, Disputed, Cancelled }
+// Accrued is appended last (stable int value). It means: a payout was provisioned
+// at order-creation, but fulfillment is not yet confirmed, so Ruumly does not owe it
+// to the partner yet. ConfirmAsync flips Accrued -> Pending once the partner confirms;
+// cancel/refund paths cancel both Accrued and Pending. Rebate margin only aggregates
+// payouts that have left Accrued (i.e. fulfilled), so unfulfilled orders never bill.
+public enum PayoutStatus { Pending, Paid, Disputed, Cancelled, Accrued }
 public enum BillingModel { Marketplace = 0, Rebate = 1 }
 public enum RebateInvoiceStatus { Draft, Sent, Paid, Overdue }
 public enum LeadStatus { New, Contacted, Won, Lost }

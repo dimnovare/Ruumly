@@ -401,6 +401,15 @@ public class OrderService(
         order.ConfirmedAt = DateTime.UtcNow;
         order.UpdatedAt   = DateTime.UtcNow;
 
+        // Fulfillment confirmed: the payout Ruumly provisioned at order-creation now
+        // becomes a real obligation. Promote Accrued -> Pending so it enters the
+        // payable queue (AdminPayoutsController) and counts toward rebate margin.
+        var accruedPayouts = await db.PayoutEntries
+            .Where(p => p.OrderId == order.Id && p.Status == PayoutStatus.Accrued)
+            .ToListAsync(ct);
+        foreach (var payout in accruedPayouts)
+            payout.Status = PayoutStatus.Pending;
+
         db.FulfillmentEvents.Add(new FulfillmentEvent
         {
             Id        = Guid.NewGuid(),

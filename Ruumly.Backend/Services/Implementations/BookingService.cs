@@ -550,10 +550,13 @@ public class BookingService(
             booking.Order.UpdatedAt = now;
             // Order also stays visible — only set IsDeleted for hard-delete.
 
-            // Cancel the pending payout entry so the supplier is not paid for a cancelled order.
+            // Cancel the provisioned payout entry so the supplier is not paid for a
+            // cancelled order — whether it is still Accrued (unconfirmed) or already
+            // promoted to Pending (confirmed, awaiting disbursement).
             var payout = await db.PayoutEntries
                 .FirstOrDefaultAsync(p => p.OrderId == booking.Order.Id
-                                       && p.Status == PayoutStatus.Pending);
+                                       && (p.Status == PayoutStatus.Pending
+                                        || p.Status == PayoutStatus.Accrued));
             if (payout is not null)
                 payout.Status = PayoutStatus.Cancelled;
         }
