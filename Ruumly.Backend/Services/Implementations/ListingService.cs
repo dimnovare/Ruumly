@@ -186,6 +186,7 @@ public class ListingService(
         // so (int)l.Supplier.Tier translates to "Tier"::int in SQL and Postgres
         // throws 22P02 ("Starter" cannot cast to int). Use a CASE WHEN expression
         // EF can translate without casting from text.
+        var boostNow = DateTime.UtcNow;
         query = f.Sort switch
         {
             "cheapest"   => query.OrderBy(l => l.PriceFrom)
@@ -208,9 +209,18 @@ public class ListingService(
                                  .ThenByDescending(l => l.Supplier!.Tier == SupplierTier.Premium  ? 3
                                                       : l.Supplier!.Tier == SupplierTier.Standard ? 2
                                                       : 1),
-            // "best" (and any unknown value) = balanced default: tier first,
-            // then rating, then recency.
-            _            => query.OrderByDescending(l => l.Supplier!.Tier == SupplierTier.Premium  ? 3
+            // "best" (and any unknown value) = balanced default. An ACTIVE "featured_search"
+            // paid feature (the boost partners buy to "pin a unit to the top of relevant
+            // search results") ranks first — so the purchased placement actually changes
+            // what customers see. Then tier, rating, recency.
+            _            => query.OrderByDescending(l => db.SupplierPaidFeatures.Any(spf =>
+                                     spf.IsActive
+                                     && spf.StartsAt <= boostNow
+                                     && (spf.EndsAt == null || spf.EndsAt > boostNow)
+                                     && spf.PaidFeature.Code == "featured_search"
+                                     && (spf.ListingId == l.Id
+                                         || (spf.ListingId == null && spf.SupplierId == l.SupplierId))))
+                                 .ThenByDescending(l => l.Supplier!.Tier == SupplierTier.Premium  ? 3
                                                       : l.Supplier!.Tier == SupplierTier.Standard ? 2
                                                       : 1)
                                  .ThenByDescending(l => l.Rating)
