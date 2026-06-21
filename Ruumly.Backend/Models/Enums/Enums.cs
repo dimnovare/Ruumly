@@ -7,7 +7,9 @@ public enum IntegrationHealth { Healthy, Degraded, Offline }
 public enum ApprovalMode { Auto, Admin, Provider }
 public enum PostingMode { Api, Email, Manual }
 public enum BookingStatus { Pending, Reserved, Confirmed, Active, Completed, Cancelled }
-public enum OrderStatus { Created, Sending, Sent, Confirmed, Rejected, Active, Completed, Cancelled }
+// Failed is appended last to keep existing persisted int values stable. It is a
+// terminal state set when dispatch to the partner permanently fails after retries.
+public enum OrderStatus { Created, Sending, Sent, Confirmed, Rejected, Active, Completed, Cancelled, Failed }
 public enum FulfillmentStatus { AwaitingApproval, Approved, Rejected, Posting, Posted, Confirmed, Failed, Completed }
 public enum InvoiceStatus { Pending, AwaitingPayment, Paid, Overdue, PendingRefund, Refunded }
 public enum ListingType { Warehouse, Moving, Trailer }

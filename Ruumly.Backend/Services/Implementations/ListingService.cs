@@ -421,7 +421,10 @@ public class ListingService(
         ClientDiscountRate:          l.Supplier?.ClientDiscountRate,
         EffectiveCustomerDiscount:   customer,
         EffectivePartnerDiscount:    partner,
-        VatRate:         l.VatRate,
+        // Resolve to the effective rate the backend actually charges (never null),
+        // so a VAT-exclusive listing with no explicit rate doesn't render as 0% VAT
+        // in the UI and then surprise the customer with the country default at charge.
+        VatRate:         l.VatRate ?? PricingConfigService.GetDefaultVatRate(l.Location?.Country),
         PricesIncludeVat: l.PricesIncludeVat,
         SupplierId:      l.SupplierId,
         SizeM2:          l.SizeM2,

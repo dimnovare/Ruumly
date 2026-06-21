@@ -61,8 +61,43 @@ public class BackgroundOrderDispatchService(
     {
         var order = await db.Orders
             .Include(o => o.Supplier)
+            .Include(o => o.Booking).ThenInclude(b => b!.User)
             .FirstOrDefaultAsync(o => o.Id == orderId);
         if (order is null) return;
+
+        // Move the order to the terminal Failed state so it stops looking "in flight"
+        // (Sending/Sent) to admin/provider/customer and surfaces in the Failed tab.
+        // Guard: never overwrite a state that already resolved (a late webhook may
+        // have confirmed/cancelled it between the last retry and this notification).
+        if (order.Status is not (OrderStatus.Confirmed or OrderStatus.Active
+            or OrderStatus.Completed or OrderStatus.Rejected or OrderStatus.Cancelled))
+        {
+            var tl = EmailTranslations.For(order.Booking?.User?.Language);
+            order.Status    = OrderStatus.Failed;
+            order.UpdatedAt = DateTime.UtcNow;
+
+            db.FulfillmentEvents.Add(new FulfillmentEvent
+            {
+                Id        = Guid.NewGuid(),
+                OrderId   = order.Id,
+                Status    = FulfillmentStatus.Failed,
+                Actor     = "system",
+                ActorRole = UserRole.Admin,
+                Detail    = $"Dispatch failed after retries: {errorMessage}",
+                CreatedAt = DateTime.UtcNow,
+            });
+
+            // Customer-visible timeline entry — Event is localized; the error Detail
+            // is omitted here (it lives on the redacted FulfillmentEvent above).
+            db.OrderTimelines.Add(new OrderTimeline
+            {
+                Id        = Guid.NewGuid(),
+                OrderId   = order.Id,
+                Event     = $"{tl.TimelineStatusChanged}: {OrderStatus.Failed}",
+                Status    = OrderStatus.Failed,
+                CreatedAt = DateTime.UtcNow,
+            });
+        }
 
         var admins = await db.Users
             .Where(u => u.Role == UserRole.Admin)

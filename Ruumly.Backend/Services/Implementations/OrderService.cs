@@ -79,7 +79,10 @@ public class OrderService(
             .Take(limit)
             .ToListAsync(ct);
 
-        var data = orders.Select(MapToDto).ToList();
+        // Customers get a redacted projection: never expose margin, supplier price,
+        // posting channel or raw fulfillment/timeline detail (partner endpoints).
+        var redact = role == UserRole.Customer;
+        var data = orders.Select(o => redact ? Redact(MapToDto(o)) : MapToDto(o)).ToList();
         return new PaginatedResult<OrderDto>(data, total, page, limit, (page - 1) * limit + data.Count < total);
     }
 
@@ -155,7 +158,8 @@ public class OrderService(
                 throw new ForbiddenException(Msg("ORDER_NOT_FOUND"));
         }
 
-        return MapToDto(order);
+        var dto = MapToDto(order);
+        return callerRole == UserRole.Customer ? Redact(dto) : dto;
     }
 
     public async Task<OrderDto?> GetByBookingIdAsync(Guid bookingId, Guid callerId, UserRole callerRole, CancellationToken ct = default)
@@ -184,7 +188,8 @@ public class OrderService(
                 throw new ForbiddenException(Msg("ORDER_NOT_FOUND"));
         }
 
-        return MapToDto(order);
+        var dto = MapToDto(order);
+        return callerRole == UserRole.Customer ? Redact(dto) : dto;
     }
 
     // ─── Approve ──────────────────────────────────────────────────────────────
@@ -605,6 +610,24 @@ public class OrderService(
             .FirstOrDefaultAsync(o => o.Id == id, ct);
 
     public OrderDto MapToDto(Order o) => MapOrderToDto(o);
+
+    /// <summary>
+    /// Strips internal commercial/operational fields a customer must never see:
+    /// the platform margin, what the partner is paid, the posting channel, raw
+    /// fulfillment events (whose Detail embeds partner endpoints/recipients) and
+    /// any timeline Detail (approver names, endpoints). Customer-facing prices
+    /// (BasePrice / PlatformPrice / ExtrasTotal / Total) are deliberately kept.
+    /// </summary>
+    private static OrderDto Redact(OrderDto d) => d with
+    {
+        SupplierPrice     = 0m,
+        Margin            = 0m,
+        PostingChannel    = null,
+        ProviderNotes     = null,
+        LastContactAt     = null,
+        FulfillmentEvents = new List<FulfillmentEventDto>(),
+        Timeline          = d.Timeline.Select(t => t with { Detail = null }).ToList(),
+    };
 
     private static OrderDto MapOrderToDto(Order o) => new(
         Id:               o.Id,

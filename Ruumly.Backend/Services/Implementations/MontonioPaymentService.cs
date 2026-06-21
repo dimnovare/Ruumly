@@ -227,10 +227,16 @@ public class MontonioPaymentService(
             handler.ValidateToken(token,
                 new TokenValidationParameters
                 {
-                    ValidateIssuer   = false,
-                    ValidateAudience = false,
-                    IssuerSigningKey = key,
-                    ClockSkew        = TimeSpan.FromSeconds(30),
+                    ValidateIssuer          = false,
+                    ValidateAudience        = false,
+                    IssuerSigningKey        = key,
+                    ValidateIssuerSigningKey = true,
+                    RequireSignedTokens     = true,
+                    // Pin the algorithm to the symmetric HMAC Montonio actually uses,
+                    // closing the door on algorithm-confusion classes if an asymmetric
+                    // key is ever introduced. Money-path verifier — explicit hardening.
+                    ValidAlgorithms         = new[] { "HS256" },
+                    ClockSkew               = TimeSpan.FromSeconds(30),
                 }, out var validated);
 
             var jwt = (JwtSecurityToken)validated;

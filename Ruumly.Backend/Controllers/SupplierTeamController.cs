@@ -86,6 +86,15 @@ public class SupplierTeamController(
             return NotFound(new { message = "No supplier linked to this account." });
         }
 
+        // Validate the invited identity before creating a User row / sending mail
+        // (mirrors the email validation used elsewhere; prevents junk rows + wasted sends).
+        if (string.IsNullOrWhiteSpace(request.Email)
+            || request.Email.Length > 320
+            || !System.Net.Mail.MailAddress.TryCreate(request.Email, out _))
+            return BadRequest(new { message = "A valid email address is required." });
+        if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length > 200)
+            return BadRequest(new { message = "A name (max 200 characters) is required." });
+
         // Find or create the invited user
         var existing = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
         if (existing is not null)
