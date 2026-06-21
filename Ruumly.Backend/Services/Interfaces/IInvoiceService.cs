@@ -9,5 +9,5 @@ public interface IInvoiceService
     Task<PaginatedResult<InvoiceDto>> GetAllAsync(Guid userId, UserRole role, int page = 1, int limit = 100);
     Task<InvoiceDto?>       GetByBookingIdAsync(Guid bookingId, Guid userId, UserRole role);
     Task<InvoiceDto>        GenerateAsync(Guid bookingId, string? paymentMethod = null);
-    Task<InvoiceDto>        MarkPaidAsync(Guid id);
+    Task<InvoiceDto>        MarkPaidAsync(Guid id, string? paymentReference = null);
 }

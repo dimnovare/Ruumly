@@ -140,13 +140,19 @@ public class AdminRefundsController(
     {
         try
         {
-            var invoice = await invoiceService.MarkPaidAsync(id);
+            var invoice = await invoiceService.MarkPaidAsync(id, body?.Reference);
 
-            // Capture the operator-supplied bank reference + note in the audit trail —
-            // this is the reconciliation record for the manual (no-PSP) bank-transfer flow.
+            // Capture the operator-supplied bank reference + received amount + note in the
+            // audit trail — the reconciliation record for the manual (no-PSP) bank-transfer
+            // flow. The reference is also persisted on the invoice (PaymentOrderId).
             var detail = "Invoice manually marked as paid by admin";
             if (!string.IsNullOrWhiteSpace(body?.Reference))
                 detail += $". Bank ref: {body!.Reference!.Trim()}";
+            if (body?.ReceivedAmount is decimal received)
+            {
+                var match = Math.Abs(received - invoice.Amount) < 0.01m ? "MATCH" : "MISMATCH";
+                detail += $". Received €{received:F2} (expected €{invoice.Amount:F2}) — {match}";
+            }
             if (!string.IsNullOrWhiteSpace(body?.Note))
                 detail += $". Note: {body!.Note!.Trim()}";
 
@@ -256,4 +262,4 @@ public class AdminRefundsController(
 
 /// <summary>Optional body for the manual mark-paid action: the bank reference and a
 /// note the operator matched the wire transfer against (recorded in the audit log).</summary>
-public record MarkInvoicePaidRequest(string? Reference, string? Note);
+public record MarkInvoicePaidRequest(string? Reference, string? Note, decimal? ReceivedAmount = null);

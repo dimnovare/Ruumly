@@ -321,7 +321,7 @@ public class BookingStateMachineTests : IDisposable
             Task.FromResult<InvoiceDto?>(null);
         public Task<InvoiceDto> GenerateAsync(Guid bid, string? paymentMethod = null) =>
             Task.FromResult(new InvoiceDto(bid, bid, 0m, "pending", "2026-01-01", null, ""));
-        public Task<InvoiceDto> MarkPaidAsync(Guid id) =>
+        public Task<InvoiceDto> MarkPaidAsync(Guid id, string? paymentReference = null) =>
             Task.FromResult(new InvoiceDto(id, id, 0m, "paid", "2026-01-01", "2026-01-01", ""));
     }
 

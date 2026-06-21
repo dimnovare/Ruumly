@@ -112,7 +112,7 @@ public class InvoiceService(
         return MapToDto(invoice);
     }
 
-    public async Task<InvoiceDto> MarkPaidAsync(Guid id)
+    public async Task<InvoiceDto> MarkPaidAsync(Guid id, string? paymentReference = null)
     {
         var invoice = await db.Invoices.FindAsync(id)
             ?? throw new NotFoundException($"Invoice {id} not found.");
@@ -123,6 +123,10 @@ public class InvoiceService(
 
         invoice.Status = InvoiceStatus.Paid;
         invoice.PaidAt = DateTime.UtcNow;
+        // Persist the operator-supplied bank reference so the manual (no-PSP) wire can be
+        // reconciled to this invoice later — not just left in the audit log.
+        if (!string.IsNullOrWhiteSpace(paymentReference))
+            invoice.PaymentOrderId = paymentReference.Trim();
         await db.SaveChangesAsync();
 
         logger.LogInformation(
