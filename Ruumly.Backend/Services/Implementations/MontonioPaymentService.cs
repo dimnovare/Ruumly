@@ -71,11 +71,17 @@ public class MontonioPaymentService(
             return "";
         }
 
-        // Sign-then-pay guard (acceptance criterion #1): a Montonio payment order cannot be
-        // created for a booking that has no COMPLETED signed contract. Applies only to the
-        // pay-now path (the "later"/rebate path returned above and never reaches Montonio).
-        var hasCompletedContract = await db.SignedContracts
-            .AnyAsync(c => c.BookingId == invoice.BookingId && c.Status == "completed");
+        // Sign-then-pay guard: a Montonio payment order cannot be created for a booking
+        // that has no COMPLETED signed contract. Applies only to STORAGE — the only vertical
+        // with a contract template today (a trailer/moving customer must not have to sign a
+        // storage agreement). Also only the pay-now path (later/rebate returned above).
+        var listingType = await db.Bookings
+            .Where(b => b.Id == invoice.BookingId)
+            .Select(b => b.Listing.Type)
+            .FirstOrDefaultAsync();
+        var hasCompletedContract = listingType != Models.Enums.ListingType.Warehouse
+            || await db.SignedContracts
+                .AnyAsync(c => c.BookingId == invoice.BookingId && c.Status == "completed");
         if (!hasCompletedContract)
         {
             logger.LogWarning(

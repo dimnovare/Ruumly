@@ -67,12 +67,22 @@ public class PaymentsController(
             if (!string.Equals(enabled, "true", StringComparison.OrdinalIgnoreCase))
                 return BadRequest(new { error = ErrorMessages.Get("DIRECT_PAYMENT_DISABLED", Request.GetLang()) });
 
-            // Sign-then-pay: the rental must be signed before we issue payment instructions.
-            var hasSigned = await db.SignedContracts
-                .AnyAsync(c => c.BookingId == invoice.BookingId && c.Status == "completed");
-            if (!hasSigned)
-                return Conflict(new { code = ContractNotSignedException.Code,
-                    error = "This rental must be signed before payment can be made." });
+            // Sign-then-pay applies only to STORAGE — the only vertical with a contract
+            // template today. A trailer/moving customer must not be forced to sign a
+            // STORAGE agreement before paying. (Add per-vertical templates to re-enable
+            // signing for those verticals.)
+            var listingType = await db.Bookings
+                .Where(b => b.Id == invoice.BookingId)
+                .Select(b => b.Listing.Type)
+                .FirstOrDefaultAsync();
+            if (listingType == Models.Enums.ListingType.Warehouse)
+            {
+                var hasSigned = await db.SignedContracts
+                    .AnyAsync(c => c.BookingId == invoice.BookingId && c.Status == "completed");
+                if (!hasSigned)
+                    return Conflict(new { code = ContractNotSignedException.Code,
+                        error = "This rental must be signed before payment can be made." });
+            }
 
             invoice.PaymentMethod = "bank_transfer";
             if (invoice.Status == InvoiceStatus.Pending)
