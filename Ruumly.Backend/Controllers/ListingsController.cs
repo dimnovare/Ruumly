@@ -106,9 +106,12 @@ public class ListingsController(IListingService listingService, RuumlyDbContext 
                 ((b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.AwaitingConfirmation) ||
                  b.Status == BookingStatus.Active    ||
                  b.Status == BookingStatus.Reserved) &&
-                b.EndDate.HasValue &&
                 b.StartDate < endUtc &&
-                b.EndDate.Value > startUtc);
+                // Open-ended (null EndDate) bookings are ongoing month-to-month storage
+                // rentals — they still occupy a unit. Mirror the booking-overlap guard so
+                // this public count agrees with the booking outcome (was excluding them,
+                // over-reporting availability and then rejecting the booking).
+                (b.EndDate == null || b.EndDate.Value > startUtc));
 
         var available = totalUnits - bookedCount;
 
