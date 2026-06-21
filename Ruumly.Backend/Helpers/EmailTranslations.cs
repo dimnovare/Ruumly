@@ -107,11 +107,21 @@ public static class EmailTranslations
         string RefundInitiatedDesc,
         // Supplier approval welcome
         string SupplierWelcomeSubject,
-        string SupplierWelcomeBodyTpl
+        string SupplierWelcomeBodyTpl,
+        // Quote-request reply (partner → customer, one-time moving/trailer price)
+        string QuoteReplySubject,
+        string QuoteReplyBodyTpl
     )
     {
         public string SupplierWelcomeBody(string name) =>
             SupplierWelcomeBodyTpl.Replace("{name}", name);
+
+        public string QuoteReplyBody(string name, string partner, string listing, string price) =>
+            QuoteReplyBodyTpl
+                .Replace("{name}", name)
+                .Replace("{partner}", partner)
+                .Replace("{listing}", listing)
+                .Replace("{price}", price);
     }
 
     private static readonly EmailStrings Et = new(
@@ -213,7 +223,9 @@ public static class EmailTranslations
         RefundInitiatedTitle:          "Tagasimakse algatatud",
         RefundInitiatedDesc:           "Tagasimakse broneeringu #{bookingRef} jaoks on algatatud. Summa kantakse teie kontole 3–5 tööpäeva jooksul.",
         SupplierWelcomeSubject:        "Tere tulemast Ruumlysse!",
-        SupplierWelcomeBodyTpl:        "Tere {name}!\n\nTeie taotlus on heaks kiidetud. Saate nüüd sisse logida ja oma kuulutusi hallata.\n\nTeretulemast!\n\nRuumly meeskond"
+        SupplierWelcomeBodyTpl:        "Tere {name}!\n\nTeie taotlus on heaks kiidetud. Saate nüüd sisse logida ja oma kuulutusi hallata.\n\nTeretulemast!\n\nRuumly meeskond",
+        QuoteReplySubject:             "Ruumly — teie hinnapakkumine",
+        QuoteReplyBodyTpl:             "Tere {name}!\n\nPartner {partner} saatis hinnapakkumise teenusele \"{listing}\": {price}.\n\nVõtke partneriga otse ühendust või vastake sellele e-kirjale kokkuleppe sõlmimiseks.\n\nRuumly meeskond"
     );
 
     private static readonly EmailStrings En = new(
@@ -315,7 +327,9 @@ public static class EmailTranslations
         RefundInitiatedTitle:          "Refund initiated",
         RefundInitiatedDesc:           "A refund for booking #{bookingRef} has been initiated. The amount will be transferred to your account within 3–5 business days.",
         SupplierWelcomeSubject:        "Welcome to Ruumly!",
-        SupplierWelcomeBodyTpl:        "Hi {name},\n\nYour application has been approved. You can now log in and start managing your listings.\n\nWelcome aboard!\n\nThe Ruumly team"
+        SupplierWelcomeBodyTpl:        "Hi {name},\n\nYour application has been approved. You can now log in and start managing your listings.\n\nWelcome aboard!\n\nThe Ruumly team",
+        QuoteReplySubject:             "Ruumly — your quote",
+        QuoteReplyBodyTpl:             "Hi {name},\n\nPartner {partner} has sent a quote for \"{listing}\": {price}.\n\nContact the partner directly or reply to this email to arrange the service.\n\nThe Ruumly team"
     );
 
     private static readonly EmailStrings Ru = new(
@@ -416,7 +430,9 @@ public static class EmailTranslations
         RefundInitiatedTitle:          "Возврат инициирован",
         RefundInitiatedDesc:           "Возврат средств для бронирования #{bookingRef} инициирован. Сумма будет переведена на ваш счёт в течение 3–5 рабочих дней.",
         SupplierWelcomeSubject:        "Добро пожаловать в Ruumly!",
-        SupplierWelcomeBodyTpl:        "Здравствуйте, {name}!\n\nВаша заявка одобрена. Теперь вы можете войти и управлять своими объявлениями.\n\nДобро пожаловать!\n\nКоманда Ruumly"
+        SupplierWelcomeBodyTpl:        "Здравствуйте, {name}!\n\nВаша заявка одобрена. Теперь вы можете войти и управлять своими объявлениями.\n\nДобро пожаловать!\n\nКоманда Ruumly",
+        QuoteReplySubject:             "Ruumly — ваше ценовое предложение",
+        QuoteReplyBodyTpl:             "Здравствуйте, {name}!\n\nПартнёр {partner} отправил предложение по услуге «{listing}»: {price}.\n\nСвяжитесь с партнёром напрямую или ответьте на это письмо, чтобы договориться.\n\nКоманда Ruumly"
     );
 
     private static readonly EmailStrings Lv = new(
@@ -518,7 +534,9 @@ public static class EmailTranslations
         RefundInitiatedTitle:          "Atmaksa uzsākta",
         RefundInitiatedDesc:           "Atmaksa rezervācijai #{bookingRef} ir uzsākta. Summa tiks pārskaitīta uz jūsu kontu 3–5 darba dienu laikā.",
         SupplierWelcomeSubject:        "Laipni lūgti Ruumly!",
-        SupplierWelcomeBodyTpl:        "Sveiki, {name}!\n\nJūsu pieteikums ir apstiprināts. Tagad varat pieteikties un sākt pārvaldīt savus sludinājumus.\n\nLaipni lūdzam!\n\nRuumly komanda"
+        SupplierWelcomeBodyTpl:        "Sveiki, {name}!\n\nJūsu pieteikums ir apstiprināts. Tagad varat pieteikties un sākt pārvaldīt savus sludinājumus.\n\nLaipni lūdzam!\n\nRuumly komanda",
+        QuoteReplySubject:             "Ruumly — jūsu cenas piedāvājums",
+        QuoteReplyBodyTpl:             "Sveiki, {name}!\n\nPartneris {partner} nosūtīja cenas piedāvājumu pakalpojumam \"{listing}\": {price}.\n\nSazinieties ar partneri tieši vai atbildiet uz šo e-pastu, lai vienotos.\n\nRuumly komanda"
     );
 
     private static readonly EmailStrings Lt = new(
@@ -620,7 +638,9 @@ public static class EmailTranslations
         RefundInitiatedTitle:          "Grąžinimas pradėtas",
         RefundInitiatedDesc:           "Grąžinimas rezervacijos #{bookingRef} buvo pradėtas. Suma bus pervesta į jūsų sąskaitą per 3–5 darbo dienas.",
         SupplierWelcomeSubject:        "Sveiki atvykę į Ruumly!",
-        SupplierWelcomeBodyTpl:        "Sveiki, {name}!\n\nJūsų paraiška buvo patvirtinta. Dabar galite prisijungti ir pradėti tvarkyti savo skelbimus.\n\nSveikiname prisijungus!\n\nRuumly komanda"
+        SupplierWelcomeBodyTpl:        "Sveiki, {name}!\n\nJūsų paraiška buvo patvirtinta. Dabar galite prisijungti ir pradėti tvarkyti savo skelbimus.\n\nSveikiname prisijungus!\n\nRuumly komanda",
+        QuoteReplySubject:             "Ruumly — jūsų kainos pasiūlymas",
+        QuoteReplyBodyTpl:             "Sveiki, {name}!\n\nPartneris {partner} atsiuntė kainos pasiūlymą paslaugai \"{listing}\": {price}.\n\nSusisiekite su partneriu tiesiogiai arba atsakykite į šį laišką, kad susitartumėte.\n\nRuumly komanda"
     );
 
     public static EmailStrings For(string? lang) =>

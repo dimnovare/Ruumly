@@ -6,6 +6,9 @@ using Ruumly.Backend.Controllers;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.Models;
+using Ruumly.Backend.DTOs;
+using Ruumly.Backend.DTOs.Responses;
+using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
 using Ruumly.Backend.Validators;
 
@@ -14,6 +17,16 @@ namespace Ruumly.Backend.Tests;
 public class ContactFormTests
 {
     private static RuumlyDbContext CreateDb() => TestDbContext.Create();
+
+    private sealed class NoOpNotifications : INotificationService
+    {
+        public Task<PaginatedResult<NotificationDto>> GetAllAsync(Guid userId, int page = 1, int limit = 50)
+            => Task.FromResult(new PaginatedResult<NotificationDto>([], 0, page, limit, false));
+        public Task MarkReadAsync(Guid id, Guid userId) => Task.CompletedTask;
+        public Task MarkAllReadAsync(Guid userId) => Task.CompletedTask;
+        public Task CreateAsync(Guid userId, NotificationType type, string title, string desc,
+            string? actionUrl = null, string? entityId = null, string? entityType = null) => Task.CompletedTask;
+    }
 
     private sealed class CapturingEmailQueue : IBackgroundEmailQueue
     {
@@ -32,7 +45,7 @@ public class ContactFormTests
     }
 
     private static SupportController MakeController(RuumlyDbContext db, IBackgroundEmailQueue emailQueue)
-        => new SupportController(db, emailQueue)
+        => new SupportController(db, emailQueue, new NoOpNotifications())
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
         };

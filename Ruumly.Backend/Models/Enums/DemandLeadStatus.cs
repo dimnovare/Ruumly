@@ -6,4 +6,6 @@ public enum DemandLeadStatus
     Contacted,
     Converted,
     Dismissed,
+    // Appended last (stable int value). The partner has sent the customer a price.
+    Quoted,
 }

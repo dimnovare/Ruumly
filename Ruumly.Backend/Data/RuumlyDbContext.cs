@@ -403,6 +403,8 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
         model.Entity<DemandLead>(e =>
         {
             e.HasIndex(d => d.Email);
+            // Partner-facing leads view filters by SupplierId; generic leads have it null.
+            e.HasIndex(d => d.SupplierId);
             e.Property(d => d.Category).HasConversion<string>();
             e.Property(d => d.Status).HasConversion<string>();
         });

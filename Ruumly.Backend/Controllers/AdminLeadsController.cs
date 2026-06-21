@@ -34,14 +34,25 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
             .Select(d => new
             {
                 d.Id,
+                d.Name,
                 d.Email,
+                d.Phone,
                 d.City,
-                category   = d.Category.ToString().ToLower(),
+                category     = d.Category.ToString().ToLower(),
                 d.Query,
                 d.Language,
                 d.CreatedAt,
-                status     = d.Status.ToString().ToLower(),
+                status       = d.Status.ToString().ToLower(),
                 d.AdminNotes,
+                // Routing + quote (null for generic demand-capture leads)
+                d.SupplierId,
+                supplierName = d.SupplierId == null
+                    ? null
+                    : Db.Suppliers.Where(s => s.Id == d.SupplierId).Select(s => s.Name).FirstOrDefault(),
+                d.ListingId,
+                d.QuotedPrice,
+                d.QuotedAt,
+                d.ProviderNotes,
             })
             .ToListAsync();
 

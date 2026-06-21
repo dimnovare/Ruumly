@@ -14,4 +14,17 @@ public class DemandLead
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DemandLeadStatus Status { get; set; } = DemandLeadStatus.New;
     public string? AdminNotes { get; set; }
+
+    // ── Routing + quote lifecycle (moving/trailer "request a quote") ──────────
+    // A lead captured from a specific listing is routed to that listing's partner
+    // (SupplierId set); generic demand-capture leads leave SupplierId null and stay
+    // in the admin-only CRM. The partner responds with a one-time QuotedPrice.
+    public Guid? SupplierId { get; set; }
+    public Guid? ListingId { get; set; }
+    [MaxLength(120)] public string? Name { get; set; }
+    [MaxLength(40)]  public string? Phone { get; set; }
+    public decimal? QuotedPrice { get; set; }
+    public DateTime? QuotedAt { get; set; }
+    public DateTime? RespondedAt { get; set; }
+    [MaxLength(2000)] public string? ProviderNotes { get; set; }
 }
