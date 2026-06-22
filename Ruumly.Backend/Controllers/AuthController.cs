@@ -371,7 +371,7 @@ public class AuthController(
         // Validate required fields
         if (string.IsNullOrWhiteSpace(request.CompanyName))
             return BadRequest(new { error = "Company name is required." });
-        if (string.IsNullOrWhiteSpace(request.ContactEmail) || !request.ContactEmail.Contains('@'))
+        if (!EmailValidation.IsValid(request.ContactEmail))
             return BadRequest(new { error = "Valid contact email is required." });
 
         var lang = request.Language ?? "et";
@@ -657,9 +657,7 @@ public class AuthController(
     [EnableRateLimiting("public-email")]
     public async Task<IActionResult> NotifyInterest([FromBody] NotifyInterestRequest body)
     {
-        if (string.IsNullOrWhiteSpace(body.Email) ||
-            !body.Email.Contains('@') ||
-            body.Email.Length > 200)
+        if (!EmailValidation.IsValid(body.Email))
             return BadRequest(new { error = "Invalid email." });
 
         var city = (body.City ?? "").Trim();

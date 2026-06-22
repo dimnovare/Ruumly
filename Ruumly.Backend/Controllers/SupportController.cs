@@ -65,9 +65,7 @@ public class SupportController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RequestQuote([FromBody] QuoteLeadRequest req)
     {
-        if (string.IsNullOrWhiteSpace(req.Email) ||
-            !req.Email.Contains('@') ||
-            req.Email.Length > 200)
+        if (!EmailValidation.IsValid(req.Email))
             return BadRequest(new { error = "Invalid email." });
 
         var listing = await db.Listings

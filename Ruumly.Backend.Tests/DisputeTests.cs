@@ -70,7 +70,8 @@ public class DisputeTests
         => new(db, notif, new NoOpEmailQueue()) { ControllerContext = Ctx(userId, role, email) };
 
     private static AdminDisputesController MakeAdmin(RuumlyDbContext db, CapturingNotifications notif)
-        => new(db, notif) { ControllerContext = Ctx(Guid.NewGuid(), UserRole.Admin, "admin@x.ee") };
+        => new(db, notif, Microsoft.Extensions.Logging.Abstractions.NullLogger<AdminDisputesController>.Instance)
+            { ControllerContext = Ctx(Guid.NewGuid(), UserRole.Admin, "admin@x.ee") };
 
     [Fact]
     public async Task Raise_OwnBooking_CreatesOpenDispute_AndNotifiesAdmin()

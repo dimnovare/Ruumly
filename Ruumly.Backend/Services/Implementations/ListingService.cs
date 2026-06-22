@@ -188,6 +188,29 @@ public class ListingService(
         // throws 22P02 ("Starter" cannot cast to int). Use a CASE WHEN expression
         // EF can translate without casting from text.
         var boostNow = DateTime.UtcNow;
+
+        // Pre-load the owners of ACTIVE "featured_search" boosts in ONE query instead of
+        // running a correlated SupplierPaidFeatures subquery per result row. Listing-scoped
+        // boosts (ListingId != null) pin a specific unit; supplier-scoped boosts
+        // (ListingId == null) pin all of a supplier's listings. We hydrate both id sets here
+        // and let EF translate HashSet.Contains(...) to a single SQL IN (...) list below.
+        var activeFeaturedBoosts = await db.SupplierPaidFeatures
+            .Where(spf => spf.IsActive
+                          && spf.StartsAt <= boostNow
+                          && (spf.EndsAt == null || spf.EndsAt > boostNow)
+                          && spf.PaidFeature.Code == "featured_search")
+            .Select(spf => new { spf.ListingId, spf.SupplierId })
+            .ToListAsync(ct);
+
+        var featuredListingIds = activeFeaturedBoosts
+            .Where(b => b.ListingId != null)
+            .Select(b => b.ListingId!.Value)
+            .ToHashSet();
+        var featuredSupplierIds = activeFeaturedBoosts
+            .Where(b => b.ListingId == null)
+            .Select(b => b.SupplierId)
+            .ToHashSet();
+
         query = f.Sort switch
         {
             "cheapest"   => query.OrderBy(l => l.PriceFrom)
@@ -214,13 +237,8 @@ public class ListingService(
             // paid feature (the boost partners buy to "pin a unit to the top of relevant
             // search results") ranks first — so the purchased placement actually changes
             // what customers see. Then tier, rating, recency.
-            _            => query.OrderByDescending(l => db.SupplierPaidFeatures.Any(spf =>
-                                     spf.IsActive
-                                     && spf.StartsAt <= boostNow
-                                     && (spf.EndsAt == null || spf.EndsAt > boostNow)
-                                     && spf.PaidFeature.Code == "featured_search"
-                                     && (spf.ListingId == l.Id
-                                         || (spf.ListingId == null && spf.SupplierId == l.SupplierId))))
+            _            => query.OrderByDescending(l => featuredListingIds.Contains(l.Id)
+                                                       || featuredSupplierIds.Contains(l.SupplierId))
                                  .ThenByDescending(l => l.Supplier!.Tier == SupplierTier.Premium  ? 3
                                                       : l.Supplier!.Tier == SupplierTier.Standard ? 2
                                                       : 1)

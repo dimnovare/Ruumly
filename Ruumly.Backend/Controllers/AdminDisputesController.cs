@@ -11,7 +11,8 @@ namespace Ruumly.Backend.Controllers;
 [Route("api/admin/disputes")]
 public class AdminDisputesController(
     RuumlyDbContext db,
-    INotificationService notificationService) : AdminBaseController(db)
+    INotificationService notificationService,
+    ILogger<AdminDisputesController> logger) : AdminBaseController(db)
 {
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -73,10 +74,14 @@ public class AdminDisputesController(
         return Ok(new { total, page, limit, items });
     }
 
-    private static List<string> DeserializeEvidence(string json)
+    private List<string> DeserializeEvidence(string json)
     {
         try { return System.Text.Json.JsonSerializer.Deserialize<List<string>>(json) ?? []; }
-        catch { return []; }
+        catch
+        {
+            logger.LogWarning("Failed to deserialize dispute evidence (len={Len})", json?.Length ?? 0);
+            return [];
+        }
     }
 
     [HttpPatch("{id:guid}")]
