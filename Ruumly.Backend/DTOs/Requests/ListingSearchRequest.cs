@@ -21,6 +21,10 @@ public record ListingSearchRequest
     [FromQuery(Name = "sizeCategory")] public string?  SizeCategory { get; init; }
     [FromQuery(Name = "supplierId")]   public Guid?    SupplierId   { get; init; }
     [FromQuery(Name = "locationId")]   public Guid?    LocationId   { get; init; }
+    // Browse-all / map / stats contexts (e.g. the homepage map) want EVERY active
+    // listing, including those grouped under a real Location (which generic search
+    // hides to avoid duplicate location-card + listing-card display). Opt-in bypass.
+    [FromQuery(Name = "includeGrouped")] public bool?  IncludeGrouped { get; init; }
     [FromQuery(Name = "page")]         public int      Page         { get; init; } = 1;
     [FromQuery(Name = "limit")]        public int      Limit        { get; init; } = 50;
 }

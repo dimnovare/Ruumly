@@ -67,7 +67,8 @@ public class ListingService(
         // — those are surfaced via Location detail pages — UNLESS the caller is
         // explicitly drilling into a supplier or location, in which case they want
         // everything.
-        var hasExplicitTarget = f.SupplierId.HasValue || f.LocationId.HasValue;
+        var hasExplicitTarget = f.SupplierId.HasValue || f.LocationId.HasValue
+                                || (f.IncludeGrouped ?? false);
         if (!hasExplicitTarget)
         {
             query = query.Where(l => l.LocationId == null
