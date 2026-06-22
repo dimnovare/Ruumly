@@ -739,11 +739,22 @@ Console.WriteLine($"[Ruumly] Health (public):  http://localhost:{port}/health");
 Console.WriteLine($"[Ruumly] Health (details): http://localhost:{port}/health/details (admin auth required)");
 app.Run();
 
+// NOTE: top-level local function — not directly unit-testable from the test
+// project. If this needs test coverage, promote it to a static method on a
+// testable type; do not restructure Program.cs just for that.
+//
+// Parses a Railway-style postgres://user:password@host:port/db URI into an
+// Npgsql connection string. UserInfo is split on the FIRST ':' only so that
+// passwords containing ':' survive, and both user/password are URL-decoded
+// (e.g. %40 -> '@', %3A -> ':') via Uri.UnescapeDataString. UnescapeDataString
+// is a no-op for inputs without '%' sequences, so the produced string is
+// identical to the previous implementation for normal (unencoded) URLs.
 static string ParseDatabaseUrl(string databaseUrl)
 {
     var uri = new Uri(databaseUrl);
-    var userInfo = uri.UserInfo.Split(':');
-    var username = userInfo[0];
-    var password = userInfo.Length > 1 ? userInfo[1] : string.Empty;
-    return $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true;Maximum Pool Size=100;Minimum Pool Size=2;Connection Idle Lifetime=300;Connection Pruning Interval=10";
+    var userInfo = uri.UserInfo.Split(':', 2);
+    var username = Uri.UnescapeDataString(userInfo[0]);
+    var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : string.Empty;
+    var database = Uri.UnescapeDataString(uri.AbsolutePath.TrimStart('/'));
+    return $"Host={uri.Host};Port={uri.Port};Database={database};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true;Maximum Pool Size=100;Minimum Pool Size=2;Connection Idle Lifetime=300;Connection Pruning Interval=10";
 }
