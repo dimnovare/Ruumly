@@ -107,7 +107,8 @@ public class BookingService(
         var data = bookings.Select(b => MapToDto(
             b,
             invoiceIds.GetValueOrDefault(b.Id),
-            reviewedBookingIds.Contains(b.Id)
+            reviewedBookingIds.Contains(b.Id),
+            includeInternal: role != UserRole.Customer
         )).ToList();
         return new PaginatedResult<BookingDto>(data, total, page, limit, (page - 1) * limit + data.Count < total);
     }
@@ -145,7 +146,7 @@ public class BookingService(
 
         var hasReview = await db.Reviews.AnyAsync(r => r.BookingId == booking.Id);
 
-        return MapToDto(booking, invoiceId, hasReview);
+        return MapToDto(booking, invoiceId, hasReview, includeInternal: role != UserRole.Customer);
     }
 
     public async Task<BookingDto> CreateAsync(CreateBookingRequest request, Guid userId)
@@ -586,7 +587,10 @@ public class BookingService(
 
     // ─── Mapping ──────────────────────────────────────────────────────────────
 
-    private static BookingDto MapToDto(Booking b, Guid? invoiceId, bool hasReview = false) => new(
+    // includeInternal=false redacts supplier-private pricing (SupplierPrice/Margin)
+    // from the nested Order — used when the DTO is served to a Customer, who must
+    // never see the partner's cost or the platform margin on their own booking.
+    private static BookingDto MapToDto(Booking b, Guid? invoiceId, bool hasReview = false, bool includeInternal = true) => new(
         Id:           b.Id,
         ListingId:    b.ListingId,
         ListingTitle: b.Listing?.Title ?? string.Empty,
@@ -612,7 +616,7 @@ public class BookingService(
                 Event:  t.Event,
                 Status: t.Status.ToString().ToLower()
             )).ToList(),
-        Order:     b.Order is null ? null : MapOrderToDto(b.Order),
+        Order:     b.Order is null ? null : MapOrderToDto(b.Order, includeInternal),
         InvoiceId: invoiceId,
         ReservedUntil: b.ReservedUntil?.ToString("yyyy-MM-ddTHH:mm:ssZ"),
         IsReservation: b.Status == BookingStatus.Reserved,
@@ -623,15 +627,16 @@ public class BookingService(
         Notes:         b.Notes
     );
 
-    private static OrderSummaryDto MapOrderToDto(Order o) => new(
+    private static OrderSummaryDto MapOrderToDto(Order o, bool includeInternal = true) => new(
         Id:              o.Id,
         Status:          o.Status.ToString().ToLower(),
         IntegrationType: o.IntegrationType.ToString().ToLower(),
         SupplierName:    o.Supplier?.Name ?? string.Empty,
-        SupplierPrice:   o.SupplierPrice,
+        // Supplier-private: cleared for customer-facing responses.
+        SupplierPrice:   includeInternal ? o.SupplierPrice : 0m,
         ExtrasTotal:     o.ExtrasTotal,
         Total:           o.Total,
-        Margin:          o.Margin,
+        Margin:          includeInternal ? o.Margin : 0m,
         CreatedAt:       o.CreatedAt.ToString("yyyy-MM-dd HH:mm"),
         SentAt:          o.SentAt?.ToString("yyyy-MM-dd HH:mm")
     );

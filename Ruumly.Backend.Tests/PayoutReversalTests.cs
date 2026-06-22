@@ -121,6 +121,30 @@ public class PayoutReversalTests
     }
 
     [Fact]
+    public async Task Refund_PaidInvoice_CancelsPayout_IncludingAccrued()
+    {
+        // Regression: Refund() used to mark the invoice PendingRefund but leave the
+        // payout live, so a later ConfirmAsync promoted Accrued -> Pending and paid the
+        // supplier for a refunded booking. Refund must cancel the payout like the other
+        // refund paths. Seed the payout as Accrued (the dangerous, unconfirmed case).
+        var db = TestDbContext.Create();
+        var (booking, _, payout) = Seed(
+            db, BookingStatus.Confirmed, OrderStatus.Confirmed,
+            invoiceStatus: InvoiceStatus.Paid, createdAt: DateTime.UtcNow);
+        var accrued = await db.PayoutEntries.FindAsync(payout.Id);
+        accrued!.Status = PayoutStatus.Accrued;
+        await db.SaveChangesAsync();
+
+        var result = await MakeController(db).Refund(booking.Id, null);
+
+        result.Should().BeOfType<OkObjectResult>();
+        (await db.PayoutEntries.FindAsync(payout.Id))!.Status
+            .Should().Be(PayoutStatus.Cancelled, "a refunded booking must never pay the supplier");
+        (await db.Invoices.FirstAsync(i => i.BookingId == booking.Id)).Status
+            .Should().Be(InvoiceStatus.PendingRefund);
+    }
+
+    [Fact]
     public async Task CancelAndRefund_PaidInvoice_CancelsPayout_MarksPendingRefund_AndCancelsBooking()
     {
         var db = TestDbContext.Create();

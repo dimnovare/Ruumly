@@ -47,6 +47,21 @@ public class AdminRefundsController(
         // Mark invoice as pending refund — manual bank transfer follows
         invoice.Status = InvoiceStatus.PendingRefund;
 
+        // Cancel the supplier payout so a refunded booking can never pay out — even if
+        // the order is later confirmed (Accrued -> Pending promotion). Mirrors the same
+        // guard in MarkRefunded/CancelAndRefund; without it a refund here leaves the
+        // payout live and the supplier gets paid for money the customer got back.
+        var orderId = await Db.Orders
+            .Where(o => o.BookingId == booking.Id)
+            .Select(o => o.Id)
+            .FirstOrDefaultAsync();
+        var payout = await Db.PayoutEntries
+            .FirstOrDefaultAsync(p => p.OrderId == orderId
+                                   && (p.Status == PayoutStatus.Pending
+                                    || p.Status == PayoutStatus.Accrued));
+        if (payout is not null)
+            payout.Status = PayoutStatus.Cancelled;
+
         // Support a partial refund: a retained call-out fee, a withheld trailer deposit,
         // a mid-month storage exit. Default to the full invoice amount when none given.
         var refundAmount = body?.RefundAmount is decimal ra && ra > 0m && ra <= invoice.Amount

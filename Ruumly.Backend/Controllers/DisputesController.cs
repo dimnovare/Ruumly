@@ -34,6 +34,10 @@ public class DisputesController(
             return BadRequest(new { error = "A booking or order reference is required." });
         if (string.IsNullOrWhiteSpace(body.Subject))
             return BadRequest(new { error = "Subject is required." });
+        if (body.Subject.Length > 150)
+            return BadRequest(new { error = "Subject must be 150 characters or fewer." });
+        if (body.Description is { Length: > 4000 })
+            return BadRequest(new { error = "Description must be 4000 characters or fewer." });
         if (!Enum.TryParse<DisputeType>(body.Type, ignoreCase: true, out var type))
             return BadRequest(new { error = $"Invalid dispute type '{body.Type}'." });
 
@@ -112,8 +116,11 @@ public class DisputesController(
 
     [HttpGet("mine")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> Mine()
+    public async Task<IActionResult> Mine([FromQuery] int page = 1, [FromQuery] int limit = 50)
     {
+        page  = Math.Max(1, page);
+        limit = Math.Clamp(limit, 1, 100);
+
         var userId = User.GetUserId();
         var role   = User.GetUserRole();
 
@@ -129,11 +136,14 @@ public class DisputesController(
         }
         // Admin: all — but the admin queue endpoint is the richer view.
 
+        var total = await query.CountAsync();
         var rows = await query
             .OrderByDescending(d => d.CreatedAt)
+            .Skip((page - 1) * limit)
+            .Take(limit)
             .ToListAsync();
 
-        return Ok(new { items = rows.Select(Map) });
+        return Ok(new { items = rows.Select(Map), total, page, limit });
     }
 
     private static object Map(Dispute d) => new

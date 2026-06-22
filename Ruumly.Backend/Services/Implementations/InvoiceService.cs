@@ -92,6 +92,15 @@ public class InvoiceService(
             .FirstOrDefaultAsync(b => b.Id == bookingId)
             ?? throw new NotFoundException($"Booking {bookingId} not found.");
 
+        // A payable invoice must have a positive amount. A €0 total means a pricing
+        // bug upstream; without this guard the Montonio webhook's amount check passes
+        // for 0 == 0, marking the invoice Paid and dispatching the order to the
+        // supplier for a zero-revenue booking. Fail loudly instead.
+        if (booking.Total <= 0m)
+            throw new ArgumentException(
+                $"Cannot generate an invoice for booking {bookingId}: total is {booking.Total}. " +
+                "A payable invoice requires a positive amount.");
+
         var invoice = new Invoice
         {
             Id          = Guid.NewGuid(),

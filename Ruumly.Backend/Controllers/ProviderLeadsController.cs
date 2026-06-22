@@ -24,11 +24,16 @@ public class ProviderLeadsController(
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetLeads(
         [FromQuery] Guid?   supplierId = null,
-        [FromQuery] string? status     = null)
+        [FromQuery] string? status     = null,
+        [FromQuery] int     page       = 1,
+        [FromQuery] int     limit      = 50)
     {
+        page  = Math.Max(1, page);
+        limit = Math.Clamp(limit, 1, 100);
+
         var sid = await ResolveSupplierIdAsync(supplierId);
         if (sid is null)
-            return Ok(new { items = Array.Empty<object>() });
+            return Ok(new { items = Array.Empty<object>(), total = 0, page, limit });
 
         var query = db.DemandLeads.Where(d => d.SupplierId == sid);
 
@@ -36,8 +41,11 @@ public class ProviderLeadsController(
             Enum.TryParse<DemandLeadStatus>(status, ignoreCase: true, out var parsed))
             query = query.Where(d => d.Status == parsed);
 
+        var total = await query.CountAsync();
         var items = await query
             .OrderByDescending(d => d.CreatedAt)
+            .Skip((page - 1) * limit)
+            .Take(limit)
             .Select(d => new
             {
                 d.Id,
@@ -56,7 +64,7 @@ public class ProviderLeadsController(
             })
             .ToListAsync();
 
-        return Ok(new { items });
+        return Ok(new { items, total, page, limit });
     }
 
     [HttpPatch("{id:guid}")]
