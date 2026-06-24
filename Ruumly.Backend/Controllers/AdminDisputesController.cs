@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.Helpers;
+using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
 
@@ -96,6 +97,25 @@ public class AdminDisputesController(
         if (body.AdminNotes is { Length: > 4000 } || body.Resolution is { Length: > 2000 })
             return BadRequest(Error("Notes or resolution too long."));
 
+        // Admin-confirmed refund: validate eligibility up-front so resolve + refund are
+        // atomic (either both apply or the request is rejected before anything changes).
+        var issueRefund = body.IssueRefund == true;
+        Booking? refundBooking = null;
+        Invoice? refundInvoice = null;
+        Guid refundOrderId = default;
+        if (issueRefund)
+        {
+            if (dispute.BookingId is not Guid bid)
+                return BadRequest(Error("This dispute is not linked to a booking, so it cannot be refunded."));
+            refundBooking = await Db.Bookings.Include(b => b.User).FirstOrDefaultAsync(b => b.Id == bid);
+            if (refundBooking is null)
+                return BadRequest(Error("The disputed booking no longer exists."));
+            refundInvoice = await Db.Invoices.FirstOrDefaultAsync(i => i.BookingId == bid);
+            if (refundInvoice is null || refundInvoice.Status != InvoiceStatus.Paid)
+                return BadRequest(Error("Cannot issue a refund: the booking has no paid invoice."));
+            refundOrderId = await Db.Orders.Where(o => o.BookingId == bid).Select(o => o.Id).FirstOrDefaultAsync();
+        }
+
         var becameTerminal = false;
         if (!string.IsNullOrEmpty(body.Status) &&
             Enum.TryParse<DisputeStatus>(body.Status, ignoreCase: true, out var newStatus))
@@ -121,7 +141,45 @@ public class AdminDisputesController(
         Audit("dispute.updated", User.Identity?.Name ?? "admin", dispute.Id.ToString(),
               $"Status: {dispute.Status}");
 
+        // Execute the refund in the same transaction: invoice -> PendingRefund (manual
+        // bank transfer follows) and cancel the supplier payout (Pending or Accrued) so
+        // the partner is never paid for a refunded booking. Mirrors AdminRefundsController.
+        var refundIssued = false;
+        if (issueRefund && refundInvoice is not null && refundBooking is not null)
+        {
+            refundInvoice.Status = InvoiceStatus.PendingRefund;
+            var payout = await Db.PayoutEntries.FirstOrDefaultAsync(p => p.OrderId == refundOrderId
+                && (p.Status == PayoutStatus.Pending || p.Status == PayoutStatus.Accrued));
+            if (payout is not null) payout.Status = PayoutStatus.Cancelled;
+
+            Db.BookingTimelines.Add(new BookingTimeline
+            {
+                Id = Guid.NewGuid(), BookingId = refundBooking.Id,
+                Event = "Refund initiated (dispute resolved)",
+                Status = refundBooking.Status, CreatedAt = DateTime.UtcNow,
+            });
+            var amount = dispute.AmountClaimed is decimal a && a > 0m && a <= refundInvoice.Amount
+                ? a : refundInvoice.Amount;
+            Audit("dispute.refund_issued", User.Identity?.Name ?? "admin", dispute.Id.ToString(),
+                  $"Booking {refundBooking.Id}, invoice {refundInvoice.Id} -> PendingRefund, amount €{amount:F2}");
+            refundIssued = true;
+        }
+
         await Db.SaveChangesAsync();
+
+        // Notify the customer of the refund (in their language).
+        if (refundIssued && refundBooking is not null)
+        {
+            var tl = EmailTranslations.For(refundBooking.User?.Language ?? "et");
+            var bookingRef = refundBooking.Id.ToString()[..8].ToUpper();
+            await notificationService.CreateAsync(
+                refundBooking.UserId, NotificationType.Payment,
+                title:      tl.RefundInitiatedTitle,
+                desc:       tl.RefundInitiatedDesc.Replace("{bookingRef}", bookingRef),
+                actionUrl:  "/account?tab=bookings",
+                entityId:   refundBooking.Id.ToString(),
+                entityType: "booking");
+        }
 
         // Tell the raiser their claim has been resolved/rejected (in-app).
         if (becameTerminal && dispute.RaisedByUserId is Guid raiser)
@@ -140,8 +198,12 @@ public class AdminDisputesController(
             dispute.AdminNotes,
             dispute.Resolution,
             dispute.ResolvedAt,
+            refundIssued,
         });
     }
 }
 
-public record UpdateDisputeRequest(string? Status, string? AdminNotes, string? Resolution);
+// IssueRefund: admin-confirmed dispute → refund. When true (and status is being set
+// to resolved), the linked booking's paid invoice is marked PendingRefund and the
+// supplier payout is cancelled, in the same transaction as the resolution.
+public record UpdateDisputeRequest(string? Status, string? AdminNotes, string? Resolution, bool? IssueRefund = null);
