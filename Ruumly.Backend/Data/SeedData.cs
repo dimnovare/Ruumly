@@ -2425,7 +2425,7 @@ public static class SeedData
         {
             ["siteName"]            = ("Ruumly",         "Platform name"),
             ["siteEmail"]           = ("info@ruumly.eu", "Contact email"),
-            ["sitePhone"]           = ("+372 5555 1234", "Contact phone"),
+            ["sitePhone"]           = ("+372 5649 7933", "Contact phone"),
             ["defaultLanguage"]     = ("et",             "Default UI language"),
             ["currency"]            = ("EUR",            "Currency code"),
             ["commissionRate"]      = ("5",              "Platform commission % on base price"),
@@ -2495,6 +2495,12 @@ public static class SeedData
             ["blog.enabled"]          = ("false", "Controls whether /blog route renders (true shows blog, false returns 404)"),
             ["blog.showInNav"]        = ("false", "Show Blog link in top navigation (requires blog.enabled=true)"),
             ["blog.showInFooter"]     = ("true",  "Show Blog link in footer (requires blog.enabled=true)"),
+            // ── Bank-transfer payment (admin enables in prod when ready) ────
+            ["bankTransfer.enabled"]     = ("false",                  "Allow customers to pay by bank transfer to the platform account"),
+            ["bankTransfer.accountName"] = ("Valguse Kodu OÜ",        "Platform bank-transfer recipient name"),
+            ["bankTransfer.iban"]        = ("EE112200221070782014",   "Platform bank-transfer IBAN"),
+            ["bankTransfer.bic"]         = ("HABAEE2X",               "Platform bank-transfer BIC/SWIFT"),
+            ["bankTransfer.bankName"]    = ("Swedbank",               "Platform bank-transfer bank name"),
         };
 
         db.PlatformSettings.AddRange(defaults.Select(kv => new PlatformSetting
