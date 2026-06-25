@@ -28,6 +28,33 @@ public class ProviderPaidFeaturesController(RuumlyDbContext db) : ControllerBase
         return Ok(features.Select(PaidFeatureMappers.MapFeature).ToList());
     }
 
+    /// <summary>
+    /// Ruumly's bank account so a partner can pay for a paid feature by transfer
+    /// (no PSP at launch). Authenticated (Provider/Admin) — the platform IBAN is
+    /// never public. The partner quotes reference RUUMLY-{first 8 chars of the
+    /// PaidFeatureRequest id}, which admins reconcile when marking it activated.
+    /// </summary>
+    [HttpGet("payment-info")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> PaymentInfo()
+    {
+        var keys = new[]
+        {
+            "bankTransfer.accountName", "bankTransfer.iban",
+            "bankTransfer.bic", "bankTransfer.bankName",
+        };
+        var s = await db.PlatformSettings
+            .Where(p => keys.Contains(p.Key))
+            .ToDictionaryAsync(p => p.Key, p => p.Value);
+        return Ok(new
+        {
+            accountName = s.GetValueOrDefault("bankTransfer.accountName", ""),
+            iban        = s.GetValueOrDefault("bankTransfer.iban", ""),
+            bic         = s.GetValueOrDefault("bankTransfer.bic", ""),
+            bankName    = s.GetValueOrDefault("bankTransfer.bankName", ""),
+        });
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetMine()
     {
