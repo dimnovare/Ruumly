@@ -59,15 +59,23 @@ public class ProviderPaidFeaturesController(RuumlyDbContext db) : ControllerBase
     public async Task<IActionResult> GetMine()
     {
         var supplierId = await GetSupplierIdAsync();
-        if (supplierId is null)
-            return NotFound(new { message = "No supplier linked to this account." });
 
+        // The catalog is platform-wide, so always return it. Only the supplier-scoped
+        // parts (active features + requests) need a supplier. An admin viewing the
+        // provider dashboard without impersonating a partner (no ?supplierId=) still
+        // gets the catalog to browse — the page renders gracefully instead of 404ing.
         var now = DateTime.UtcNow;
         var catalogEntities = await db.PaidFeatures
             .Where(f => f.IsActive)
             .OrderBy(f => f.SortOrder)
             .ThenBy(f => f.Name)
             .ToListAsync();
+
+        if (supplierId is null)
+            return Ok(new ProviderPaidFeaturesDto(
+                Catalog: catalogEntities.Select(PaidFeatureMappers.MapFeature).ToList(),
+                ActiveFeatures: [],
+                Requests: []));
 
         var active = await db.SupplierPaidFeatures
             .Include(f => f.PaidFeature)
