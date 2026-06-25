@@ -168,9 +168,118 @@ public class AuthServiceTests
         refreshed.AccessToken.Should().NotBeNullOrWhiteSpace();
         refreshed.RefreshToken.Should().NotBe(oldToken);
 
-        // Old token is revoked — using it again should throw
+        // The old token is rotation-revoked. Replaying it OUTSIDE the reuse-grace must
+        // throw. (Within the 10s grace it would be honoured as a concurrent-refresh
+        // replay — covered separately by the reuse-grace tests below.) Backdate the
+        // revocation past the grace window so this asserts the hard-rejection path.
+        var oldHash = HashTokenForTest(oldToken);
+        var predecessor = await db.RefreshTokens.SingleAsync(t => t.TokenHash == oldHash);
+        predecessor.RevokedAt = DateTime.UtcNow.AddSeconds(-11);
+        await db.SaveChangesAsync();
+
         var act = async () => await service.RefreshAsync(oldToken);
         await act.Should().ThrowAsync<UnauthorizedAccessException>();
+    }
+
+    // ─── Refresh-token reuse-grace (multi-tab rotation race) ────────────────
+
+    // Helper: rotate once, then look up the now-revoked predecessor token row so the
+    // test can adjust its RevokedAt to simulate "n seconds ago".
+    private static async Task<RefreshToken> RotatedPredecessor(
+        RuumlyDbContext db, AuthService service, string oldRawToken)
+    {
+        await service.RefreshAsync(oldRawToken);
+        var oldHash = HashTokenForTest(oldRawToken);
+        return await db.RefreshTokens.SingleAsync(t => t.TokenHash == oldHash);
+    }
+
+    private static string HashTokenForTest(string token) =>
+        Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
+            System.Text.Encoding.UTF8.GetBytes(token))).ToLowerInvariant();
+
+    [Fact]
+    public async Task Refresh_Within_Grace_Accepts_Rotation_Revoked_Token_Without_Reissuing_Cookie()
+    {
+        var db      = CreateDb();
+        var service = MakeService(db);
+
+        var initial  = await service.RegisterAsync(MakeRegisterRequest());
+        var oldToken = initial.RefreshToken;
+
+        // First refresh rotates the cookie (predecessor becomes rotation-revoked).
+        var firstRefresh = await service.RefreshAsync(oldToken);
+        firstRefresh.RefreshToken.Should().NotBeNullOrWhiteSpace();
+        firstRefresh.RefreshToken.Should().NotBe(oldToken);
+
+        // Confirm the predecessor was revoked BY ROTATION (ReplacedByTokenId set, RevokedAt recent).
+        var predecessor = await db.RefreshTokens.SingleAsync(t => t.TokenHash == HashTokenForTest(oldToken));
+        predecessor.IsRevoked.Should().BeTrue();
+        predecessor.RevokedAt.Should().NotBeNull();
+        predecessor.ReplacedByTokenId.Should().NotBeNull();
+
+        // Second tab replays the SAME old cookie within the grace window.
+        var graceReplay = await service.RefreshAsync(oldToken);
+
+        // Gets a valid, fresh access token for the same user...
+        graceReplay.AccessToken.Should().NotBeNullOrWhiteSpace();
+        ReadSubClaim(graceReplay.AccessToken).Should().Be(initial.User.Id.ToString());
+        graceReplay.CsrfToken.Should().NotBeNullOrWhiteSpace();
+
+        // ...but NO new refresh token → controller skips Set-Cookie, the already-rotated cookie stays intact.
+        graceReplay.RefreshToken.Should().BeEmpty();
+
+        // And the grace path must NOT have rotated again (no extra active token minted).
+        var activeCount = await db.RefreshTokens.CountAsync(t => !t.IsRevoked);
+        activeCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Refresh_After_Grace_Window_Rejects_Rotation_Revoked_Token()
+    {
+        var db      = CreateDb();
+        var service = MakeService(db);
+
+        var initial  = await service.RegisterAsync(MakeRegisterRequest());
+        var oldToken = initial.RefreshToken;
+
+        var predecessor = await RotatedPredecessor(db, service, oldToken);
+
+        // Backdate the revocation to 11s ago — outside the 10s grace.
+        predecessor.RevokedAt = DateTime.UtcNow.AddSeconds(-11);
+        await db.SaveChangesAsync();
+
+        var act = async () => await service.RefreshAsync(oldToken);
+        await act.Should().ThrowAsync<UnauthorizedAccessException>();
+    }
+
+    [Fact]
+    public async Task Refresh_Rejects_Logout_Revoked_Token_Even_Within_Grace_Window()
+    {
+        var db      = CreateDb();
+        var service = MakeService(db);
+
+        var initial  = await service.RegisterAsync(MakeRegisterRequest());
+        var token    = initial.RefreshToken;
+
+        // Logout revokes WITHOUT rotation → ReplacedByTokenId stays null.
+        await service.LogoutAsync(token);
+
+        var revoked = await db.RefreshTokens.SingleAsync(t => t.TokenHash == HashTokenForTest(token));
+        revoked.IsRevoked.Should().BeTrue();
+        revoked.RevokedAt.Should().NotBeNull();
+        revoked.ReplacedByTokenId.Should().BeNull();  // distinguishes it from a rotation-revoke
+
+        // Even though RevokedAt is well inside the 10s window, a logout-killed token must stay rejected.
+        var act = async () => await service.RefreshAsync(token);
+        await act.Should().ThrowAsync<UnauthorizedAccessException>();
+    }
+
+    // Decodes the `sub` (subject = user id) claim from a JWT without signature validation.
+    private static string ReadSubClaim(string jwt)
+    {
+        var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+        var token   = handler.ReadJwtToken(jwt);
+        return token.Subject;
     }
 
     [Fact]

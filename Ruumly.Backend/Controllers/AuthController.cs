@@ -96,7 +96,14 @@ public class AuthController(
         }
 
         var response = await authService.RefreshAsync(refreshToken);
-        SetRefreshCookie(response.RefreshToken, RefreshTokenExpiryDays);
+
+        // Reuse-grace replay (concurrent multi-tab refresh): the service returns a fresh
+        // access token but an EMPTY refresh token to signal "the cookie was already
+        // rotated by the first refresh — do not overwrite it". Only (re)set the cookie
+        // when a NEW refresh token was actually issued.
+        if (!string.IsNullOrEmpty(response.RefreshToken))
+            SetRefreshCookie(response.RefreshToken, RefreshTokenExpiryDays);
+
         return Ok(response);
     }
 
@@ -540,10 +547,13 @@ public class AuthController(
         user.Status       = UserStatus.Deleted;
         user.DeletedAt    = DateTime.UtcNow;
 
-        // Revoke all refresh tokens
+        // Revoke all refresh tokens. Session kill: ReplacedByTokenId stays null so the
+        // refresh reuse-grace never resurrects these tokens.
         await db.RefreshTokens
             .Where(t => t.UserId == userId && !t.IsRevoked)
-            .ExecuteUpdateAsync(s => s.SetProperty(t => t.IsRevoked, true));
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(t => t.IsRevoked, true)
+                .SetProperty(t => t.RevokedAt, DateTime.UtcNow));
 
         db.AuditLogs.Add(new AuditLog
         {

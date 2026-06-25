@@ -134,6 +134,13 @@ public class AuthService(
         return await GenerateAuthResponseAsync(user);
     }
 
+    // Reuse-grace window for the refresh-token rotation race. Defense-in-depth for a
+    // MULTI-TAB simultaneous reload: rotation is single-use, so two near-simultaneous
+    // refreshes carrying the same (now-rotated) cookie would otherwise make the 2nd
+    // fail → 401 → spurious logout. Within this window a token that was revoked by
+    // NORMAL ROTATION is treated as a benign concurrent-refresh replay.
+    private static readonly TimeSpan RefreshReuseGrace = TimeSpan.FromSeconds(10);
+
     public async Task<AuthResponse> RefreshAsync(string refreshToken)
     {
         var tokenHash = HashToken(refreshToken);
@@ -143,8 +150,39 @@ public class AuthService(
             .FirstOrDefaultAsync(t => t.TokenHash == tokenHash)
             ?? throw new UnauthorizedAccessException(Msg("INVALID_REFRESH_TOKEN"));
 
-        if (stored.IsRevoked || stored.ExpiresAt < DateTime.UtcNow)
+        // Expiry is absolute — never graced.
+        if (stored.ExpiresAt < DateTime.UtcNow)
             throw new UnauthorizedAccessException(Msg("INVALID_REFRESH_TOKEN"));
+
+        if (stored.IsRevoked)
+        {
+            // Reuse-grace: a token revoked by NORMAL ROTATION (ReplacedByTokenId set)
+            // within the last few seconds is a concurrent-refresh replay from another
+            // tab, not a stolen-token reuse. Logout / password-reset / change-password /
+            // account-deletion / blocked-account revocations leave ReplacedByTokenId
+            // null and are NEVER graced — an explicitly killed session stays killed.
+            var isRotationRevoke = stored.ReplacedByTokenId is not null;
+            var withinGrace = stored.RevokedAt is { } revokedAt
+                && DateTime.UtcNow - revokedAt <= RefreshReuseGrace;
+
+            if (isRotationRevoke && withinGrace)
+            {
+                // A blocked account must not self-renew even via the grace path.
+                if (stored.User.Status == UserStatus.Blocked)
+                    throw new ForbiddenException(Msg("ACCOUNT_BLOCKED"));
+
+                // Mint a fresh ACCESS token (+ authoritative user + csrf for the
+                // ALREADY-ROTATED cookie) but DO NOT rotate again and DO NOT issue a
+                // new refresh token. The first refresh already rotated the cookie;
+                // the controller must NOT overwrite it. We signal "leave the cookie
+                // alone" by returning an empty RefreshToken (controller skips Set-Cookie).
+                var graceAccess = GenerateJwt(stored.User);
+                var graceCsrf = ComputeCsrfToken(refreshToken);
+                return new AuthResponse(MapToDto(stored.User), graceAccess, string.Empty, graceCsrf);
+            }
+
+            throw new UnauthorizedAccessException(Msg("INVALID_REFRESH_TOKEN"));
+        }
 
         // A blocked account must not be able to self-renew access tokens. Login
         // already rejects Blocked; refresh did not, so a blocked/compromised
@@ -152,14 +190,20 @@ public class AuthService(
         if (stored.User.Status == UserStatus.Blocked)
         {
             stored.IsRevoked = true;
+            stored.RevokedAt = DateTime.UtcNow;
             await db.SaveChangesAsync();
             throw new ForbiddenException(Msg("ACCOUNT_BLOCKED"));
         }
 
+        // Normal rotation: mint the successor first so we can link this token to it,
+        // marking the revocation as a rotation (graceable) rather than a kill.
+        var (response, newTokenId) = await GenerateAuthResponseWithTokenIdAsync(stored.User);
         stored.IsRevoked = true;
+        stored.RevokedAt = DateTime.UtcNow;
+        stored.ReplacedByTokenId = newTokenId;
         await db.SaveChangesAsync();
 
-        return await GenerateAuthResponseAsync(stored.User);
+        return response;
     }
 
     public async Task LogoutAsync(string refreshToken)
@@ -171,7 +215,10 @@ public class AuthService(
 
         if (stored is null) return;
 
+        // Logout is an explicit session kill: leave ReplacedByTokenId null so the
+        // reuse-grace never resurrects this token, even within the grace window.
         stored.IsRevoked = true;
+        stored.RevokedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
     }
 
@@ -316,11 +363,17 @@ public class AuthService(
         user.PasswordResetToken  = null;
         user.PasswordResetExpiry = null;
 
-        // Revoke all refresh tokens for security
+        // Revoke all refresh tokens for security. Password reset is a session kill:
+        // leave ReplacedByTokenId null so the reuse-grace never resurrects these.
         var tokens = await db.RefreshTokens
             .Where(t => t.UserId == user.Id)
             .ToListAsync();
-        foreach (var t in tokens) t.IsRevoked = true;
+        var now = DateTime.UtcNow;
+        foreach (var t in tokens)
+        {
+            t.IsRevoked = true;
+            t.RevokedAt = now;
+        }
 
         await db.SaveChangesAsync();
         return true;
@@ -329,15 +382,22 @@ public class AuthService(
     // ─── Private helpers ──────────────────────────────────────────────────────
 
     private async Task<AuthResponse> GenerateAuthResponseAsync(User user, bool isNewUser = false)
+        => (await GenerateAuthResponseWithTokenIdAsync(user, isNewUser)).Response;
+
+    // Returns both the response and the newly-minted refresh token's id so callers
+    // (rotation in RefreshAsync) can record the predecessor → successor link.
+    private async Task<(AuthResponse Response, Guid NewTokenId)> GenerateAuthResponseWithTokenIdAsync(
+        User user, bool isNewUser = false)
     {
         var accessToken   = GenerateJwt(user);
         var refreshToken  = GenerateRawRefreshToken();
         var tokenHash     = HashToken(refreshToken);
         var expiryDays    = int.TryParse(config["Jwt:RefreshTokenExpiryDays"], out var ed) ? ed : 7;
+        var newTokenId    = Guid.NewGuid();
 
         db.RefreshTokens.Add(new RefreshToken
         {
-            Id        = Guid.NewGuid(),
+            Id        = newTokenId,
             UserId    = user.Id,
             TokenHash = tokenHash,
             ExpiresAt = DateTime.UtcNow.AddDays(expiryDays),
@@ -347,7 +407,7 @@ public class AuthService(
         await db.SaveChangesAsync();
 
         var csrfToken = ComputeCsrfToken(refreshToken);
-        return new AuthResponse(MapToDto(user), accessToken, refreshToken, csrfToken, isNewUser);
+        return (new AuthResponse(MapToDto(user), accessToken, refreshToken, csrfToken, isNewUser), newTokenId);
     }
 
     public string ComputeCsrfToken(string rawRefreshToken)
@@ -422,11 +482,13 @@ public class AuthService(
 
         user.PasswordHash = BC.HashPassword(request.NewPassword, workFactor: 12);
 
-        // Revoke all refresh tokens — require re-login on all devices
+        // Revoke all refresh tokens — require re-login on all devices. Session kill:
+        // ReplacedByTokenId stays null so the reuse-grace never resurrects these.
         await db.RefreshTokens
             .Where(t => t.UserId == userId && !t.IsRevoked)
-            .ExecuteUpdateAsync(s =>
-                s.SetProperty(t => t.IsRevoked, true));
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(t => t.IsRevoked, true)
+                .SetProperty(t => t.RevokedAt, DateTime.UtcNow));
 
         await db.SaveChangesAsync();
     }
