@@ -125,6 +125,109 @@ public class ListingsController(IListingService listingService, RuumlyDbContext 
         });
     }
 
+    /// <summary>
+    /// Public, read-only calendar feed of UNAVAILABLE days for a single listing.
+    /// Powers the customer-facing availability calendar on the detail page.
+    ///
+    /// Returns ONLY date strings (yyyy-MM-dd). No customer PII, no booking ids,
+    /// no prices, no names — just which days the unit cannot be booked, derived from:
+    ///   1. Provider blackout dates that block the whole parent location (ListingId == null),
+    ///   2. Provider blackout dates scoped to this specific listing (ListingId == this id),
+    ///   3. Days on which every unit of this listing is already taken by an active
+    ///      (non-cancelled, non-completed) booking — i.e. fully-booked days.
+    ///
+    /// The window defaults to today..+120 days and is capped at 365 days so the
+    /// response stays small and cache-friendly. Empty DB → empty "blocked" array
+    /// (the unit reads as fully available).
+    /// </summary>
+    [HttpGet("{id:guid}/blocked-dates")]
+    [AllowAnonymous]
+    [EnableRateLimiting("search")]
+    [ResponseCache(Duration = 300)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetPublicBlockedDates(
+        Guid id,
+        [FromQuery] string? from = null,
+        [FromQuery] string? to   = null)
+    {
+        var listing = await db.Listings
+            .Where(l => l.Id == id && l.IsActive)
+            .Select(l => new { l.Id, l.LocationId, l.QuantityTotal })
+            .FirstOrDefaultAsync();
+        if (listing is null)
+            return NotFound();
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var windowStart = DateOnly.TryParse(from, out var f) && f >= today ? f : today;
+        var windowEnd   = DateOnly.TryParse(to,   out var t) ? t : windowStart.AddDays(120);
+        // Clamp the window to at most 365 days to keep the payload bounded.
+        if (windowEnd <= windowStart) windowEnd = windowStart.AddDays(120);
+        if (windowEnd > windowStart.AddDays(365)) windowEnd = windowStart.AddDays(365);
+
+        var blocked = new HashSet<DateOnly>();
+
+        // 1 + 2. Provider blackout dates — whole-location blocks and listing-scoped
+        //        blocks both make this unit unbookable that day.
+        var blackoutQuery = db.BlockedDates
+            .Where(b => b.Date >= windowStart && b.Date <= windowEnd)
+            .Where(b =>
+                (listing.LocationId != null && b.LocationId == listing.LocationId && b.ListingId == null)
+                || b.ListingId == id);
+        foreach (var d in await blackoutQuery.Select(b => b.Date).ToListAsync())
+            blocked.Add(d);
+
+        // 3. Fully-booked days. Pull active bookings that overlap the window and
+        //    mark each day where occupancy reaches the unit's total capacity.
+        var capacity = listing.QuantityTotal ?? 1;
+        var windowStartUtc = DateTime.SpecifyKind(windowStart.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
+        var windowEndUtc   = DateTime.SpecifyKind(windowEnd.AddDays(1).ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
+
+        var bookingRanges = await db.Bookings
+            .Where(b => b.ListingId == id
+                     && ((b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.AwaitingConfirmation)
+                         || b.Status == BookingStatus.Active
+                         || b.Status == BookingStatus.Reserved)
+                     && b.StartDate < windowEndUtc
+                     && (b.EndDate == null || b.EndDate.Value > windowStartUtc))
+            .Select(b => new { b.StartDate, b.EndDate })
+            .ToListAsync();
+
+        if (bookingRanges.Count > 0)
+        {
+            // Per-day occupancy across the window; a day is "blocked" only when every
+            // unit is taken. Open-ended (null EndDate) bookings run to the window end.
+            var occupancy = new Dictionary<DateOnly, int>();
+            foreach (var r in bookingRanges)
+            {
+                var rangeStart = DateOnly.FromDateTime(r.StartDate);
+                if (rangeStart < windowStart) rangeStart = windowStart;
+                var rangeEnd = r.EndDate.HasValue
+                    ? DateOnly.FromDateTime(r.EndDate.Value).AddDays(-1) // EndDate is exclusive checkout day
+                    : windowEnd;
+                if (rangeEnd > windowEnd) rangeEnd = windowEnd;
+                for (var d = rangeStart; d <= rangeEnd; d = d.AddDays(1))
+                    occupancy[d] = occupancy.GetValueOrDefault(d) + 1;
+            }
+            foreach (var (day, count) in occupancy)
+                if (count >= capacity) blocked.Add(day);
+        }
+
+        var dates = blocked
+            .Where(d => d >= windowStart && d <= windowEnd)
+            .OrderBy(d => d)
+            .Select(d => d.ToString("yyyy-MM-dd"))
+            .ToList();
+
+        return Ok(new
+        {
+            listingId   = id,
+            from        = windowStart.ToString("yyyy-MM-dd"),
+            to          = windowEnd.ToString("yyyy-MM-dd"),
+            blockedDates = dates,
+        });
+    }
+
     // Falls back to the first Accept-Language tag (e.g. "et-EE" → "et") when the
     // ?lang= query parameter is not supplied. Returns null if neither is present.
     private string? ResolveLanguageFromHeader()
