@@ -2607,6 +2607,13 @@ public static class SeedData
             // ── Visibility ──────────────────────────────────────────────────────
             ("featured_search", "Featured listing in search", "Pin a unit to the top of relevant search results.",        PaidFeatureCategory.Visibility, PaidFeatureScope.Listing,  29m, "month"),
             ("featured_map",    "Featured location on map",    "A highlighted, larger map pin for a location.",            PaidFeatureCategory.Visibility, PaidFeatureScope.Location, 24m, "month"),
+            // Vertical-scoped equivalents of featured_search / featured_map — same column shape
+            // and price as their siblings. service_area_boost = the moving-vertical "featured in
+            // search" boost (also lifts /moving/<city> & /moving/<from>-to-<to> pages, which run
+            // through the same search ordering). pickup_location_boost = the trailer-vertical
+            // "featured on map" boost (emphasised map pin + higher trailer search ranking).
+            ("service_area_boost",   "Service-area boost",        "Rank higher for movers on your service-area city & route pages.", PaidFeatureCategory.Visibility, PaidFeatureScope.Listing, 29m, "month"),
+            ("pickup_location_boost","Pickup-location map boost", "Make your pickup location stand out on the map.",                  PaidFeatureCategory.Visibility, PaidFeatureScope.Listing, 24m, "month"),
             ("homepage",        "Homepage placement",          "Appear in the rotating homepage spotlight.",               PaidFeatureCategory.Visibility, PaidFeatureScope.Supplier, 79m, "month"),
             ("city_pages",      "City / category page placement", "Top slot on Tallinn, Tartu & category pages.",          PaidFeatureCategory.Visibility, PaidFeatureScope.Location, 39m, "month"),
             ("highlight_card",  "Highlighted card",            "Premium visual treatment & accent border.",                PaidFeatureCategory.Visibility, PaidFeatureScope.Listing,  19m, "month"),

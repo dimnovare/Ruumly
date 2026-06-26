@@ -189,25 +189,54 @@ public class ListingService(
         // EF can translate without casting from text.
         var boostNow = DateTime.UtcNow;
 
-        // Pre-load the owners of ACTIVE "featured_search" boosts in ONE query instead of
-        // running a correlated SupplierPaidFeatures subquery per result row. Listing-scoped
-        // boosts (ListingId != null) pin a specific unit; supplier-scoped boosts
-        // (ListingId == null) pin all of a supplier's listings. We hydrate both id sets here
-        // and let EF translate HashSet.Contains(...) to a single SQL IN (...) list below.
+        // Pre-load the owners of ACTIVE visibility boosts in ONE query instead of running a
+        // correlated SupplierPaidFeatures subquery per result row. Listing-scoped boosts
+        // (ListingId != null) pin a specific unit; supplier-scoped boosts (ListingId == null)
+        // pin all of a supplier's listings. We hydrate both id sets here and let EF translate
+        // HashSet.Contains(...) to a single SQL IN (...) list below.
+        //
+        // Three boost codes drive search ordering, all via the SAME mechanism:
+        //   featured_search      — generic, any vertical (the original).
+        //   service_area_boost   — the moving-vertical equivalent; only lifts Moving listings,
+        //                          which also covers /moving/<city> and /moving/<from>-to-<to>
+        //                          pages (they hit this same search ordering, filtered to moving).
+        //   pickup_location_boost — the trailer-vertical equivalent; only lifts Trailer listings.
+        var boostCodes = new[] { "featured_search", "service_area_boost", "pickup_location_boost" };
         var activeFeaturedBoosts = await db.SupplierPaidFeatures
             .Where(spf => spf.IsActive
                           && spf.StartsAt <= boostNow
                           && (spf.EndsAt == null || spf.EndsAt > boostNow)
-                          && spf.PaidFeature.Code == "featured_search")
-            .Select(spf => new { spf.ListingId, spf.SupplierId })
+                          && boostCodes.Contains(spf.PaidFeature.Code))
+            .Select(spf => new { spf.ListingId, spf.SupplierId, spf.PaidFeature.Code })
             .ToListAsync(ct);
 
+        // Generic featured_search applies to any listing type.
         var featuredListingIds = activeFeaturedBoosts
-            .Where(b => b.ListingId != null)
+            .Where(b => b.Code == "featured_search" && b.ListingId != null)
             .Select(b => b.ListingId!.Value)
             .ToHashSet();
         var featuredSupplierIds = activeFeaturedBoosts
-            .Where(b => b.ListingId == null)
+            .Where(b => b.Code == "featured_search" && b.ListingId == null)
+            .Select(b => b.SupplierId)
+            .ToHashSet();
+
+        // Moving-scoped boost — only emphasises Moving listings.
+        var movingBoostListingIds = activeFeaturedBoosts
+            .Where(b => b.Code == "service_area_boost" && b.ListingId != null)
+            .Select(b => b.ListingId!.Value)
+            .ToHashSet();
+        var movingBoostSupplierIds = activeFeaturedBoosts
+            .Where(b => b.Code == "service_area_boost" && b.ListingId == null)
+            .Select(b => b.SupplierId)
+            .ToHashSet();
+
+        // Trailer-scoped boost — only emphasises Trailer listings.
+        var trailerBoostListingIds = activeFeaturedBoosts
+            .Where(b => b.Code == "pickup_location_boost" && b.ListingId != null)
+            .Select(b => b.ListingId!.Value)
+            .ToHashSet();
+        var trailerBoostSupplierIds = activeFeaturedBoosts
+            .Where(b => b.Code == "pickup_location_boost" && b.ListingId == null)
             .Select(b => b.SupplierId)
             .ToHashSet();
 
@@ -233,12 +262,21 @@ public class ListingService(
                                  .ThenByDescending(l => l.Supplier!.Tier == SupplierTier.Premium  ? 3
                                                       : l.Supplier!.Tier == SupplierTier.Standard ? 2
                                                       : 1),
-            // "best" (and any unknown value) = balanced default. An ACTIVE "featured_search"
-            // paid feature (the boost partners buy to "pin a unit to the top of relevant
-            // search results") ranks first — so the purchased placement actually changes
-            // what customers see. Then tier, rating, recency.
-            _            => query.OrderByDescending(l => featuredListingIds.Contains(l.Id)
-                                                       || featuredSupplierIds.Contains(l.SupplierId))
+            // "best" (and any unknown value) = balanced default. An ACTIVE visibility boost
+            // (the placement partners buy to "pin a unit to the top of relevant search
+            // results") ranks first — so the purchased placement actually changes what
+            // customers see. featured_search applies to any listing; service_area_boost only
+            // lifts Moving listings; pickup_location_boost only lifts Trailer listings. Then
+            // tier, rating, recency.
+            _            => query.OrderByDescending(l =>
+                                       featuredListingIds.Contains(l.Id)
+                                    || featuredSupplierIds.Contains(l.SupplierId)
+                                    || (l.Type == ListingType.Moving
+                                        && (movingBoostListingIds.Contains(l.Id)
+                                            || movingBoostSupplierIds.Contains(l.SupplierId)))
+                                    || (l.Type == ListingType.Trailer
+                                        && (trailerBoostListingIds.Contains(l.Id)
+                                            || trailerBoostSupplierIds.Contains(l.SupplierId))))
                                  .ThenByDescending(l => l.Supplier!.Tier == SupplierTier.Premium  ? 3
                                                       : l.Supplier!.Tier == SupplierTier.Standard ? 2
                                                       : 1)
@@ -255,8 +293,19 @@ public class ListingService(
             .Take(limit)
             .ToListAsync(ct);
 
+        // Mirror the default-sort boost predicate so the frontend "Featured" treatment
+        // (card badge + emphasised map pin) lights up exactly when a boost ranks the
+        // listing. Evaluated in memory over the already-materialised page.
+        bool IsBoosted(Listing l) =>
+               featuredListingIds.Contains(l.Id)
+            || featuredSupplierIds.Contains(l.SupplierId)
+            || (l.Type == ListingType.Moving
+                && (movingBoostListingIds.Contains(l.Id) || movingBoostSupplierIds.Contains(l.SupplierId)))
+            || (l.Type == ListingType.Trailer
+                && (trailerBoostListingIds.Contains(l.Id) || trailerBoostSupplierIds.Contains(l.SupplierId)));
+
         var result = new PaginatedResult<ListingDto>(
-            items.Select(l => MapToDto(l, language, pricingConfig)).ToList(),
+            items.Select(l => MapToDto(l, language, pricingConfig, isFeatured: IsBoosted(l))).ToList(),
             total,
             page,
             limit,
@@ -438,7 +487,8 @@ public class ListingService(
             : l.Description;
     }
 
-    private static ListingDto MapToDto(Listing l, string? language, PricingConfig pricingConfig)
+    private static ListingDto MapToDto(Listing l, string? language, PricingConfig pricingConfig,
+        bool isFeatured = false)
     {
         var (partner, customer) = PricingHelpers.ComputeEffectiveDiscounts(
             listingPartnerOverride:  l.PartnerDiscountRateOverride,
@@ -493,7 +543,8 @@ public class ListingService(
         BookingEnabled:  l.Supplier?.BookingEnabled ?? false,
         ContractSigningEnabled: l.Supplier?.ContractSigningEnabled ?? false,
         DirectPaymentEnabled: l.Supplier?.DirectPaymentEnabled ?? false,
-        RuumlyPaymentEnabled: l.Supplier?.RuumlyPaymentEnabled ?? false);
+        RuumlyPaymentEnabled: l.Supplier?.RuumlyPaymentEnabled ?? false,
+        IsFeatured: isFeatured);
     }
 
     private static string? BadgeToString(ListingBadge? badge) => badge switch

@@ -39,5 +39,9 @@ public record ListingDto(
     bool             BookingEnabled,
     bool             ContractSigningEnabled,
     bool             DirectPaymentEnabled,
-    bool             RuumlyPaymentEnabled
+    bool             RuumlyPaymentEnabled,
+    // True when an ACTIVE visibility boost (featured_search / featured_map /
+    // service_area_boost / pickup_location_boost) currently applies to this listing.
+    // Drives the "Featured" card treatment and the emphasised map pin on the frontend.
+    bool             IsFeatured = false
 );
