@@ -220,8 +220,11 @@ public class BookingPaymentFlowTests
         string? idempotencyKey = null) => new()
     {
         ListingId      = listingId,
-        StartDate      = "2026-07-01",
-        EndDate        = "2026-08-01",
+        // Dynamic future dates — hardcoded ones rot: BookingService rejects a
+        // StartDate in the past, so a fixed date breaks the suite once reality
+        // catches up with it.
+        StartDate      = DateTime.UtcNow.AddDays(7).ToString("yyyy-MM-dd"),
+        EndDate        = DateTime.UtcNow.AddDays(38).ToString("yyyy-MM-dd"),
         Duration       = "1 kuu",
         Extras         = [],
         ContactName    = "Test Customer",

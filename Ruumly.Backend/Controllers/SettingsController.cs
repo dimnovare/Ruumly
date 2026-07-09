@@ -45,6 +45,8 @@ public class SettingsController(RuumlyDbContext db) : ControllerBase
             "currency",
             "featuredPartners",
             "bankTransfer.enabled",
+            "conciergeFirst",
+            "conciergeCities",
             // Note: "inviteCode" is NOT included — the actual code stays server-side only
             // Note: bank account number/IBAN is NOT public — returned only by /payments/initiate after signing
         };
@@ -93,6 +95,10 @@ public class SettingsController(RuumlyDbContext db) : ControllerBase
             defaultLanguage      = settings.GetValueOrDefault("defaultLanguage", "et"),
             currency             = settings.GetValueOrDefault("currency",        "EUR"),
             bankTransferEnabled  = settings.GetValueOrDefault("bankTransfer.enabled", "false") == "true",
+            // Concierge pivot: demand-first landing (intake form before browse)
+            // and the cities where the concierge currently operates.
+            conciergeFirst       = settings.GetValueOrDefault("conciergeFirst",  "true") == "true",
+            conciergeCities      = settings.GetValueOrDefault("conciergeCities", "Tallinn, Harjumaa"),
             featuredPartners,
             // About page — pass all aboutPage.* keys as a sub-dictionary
             aboutPage = settings

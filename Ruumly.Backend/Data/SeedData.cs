@@ -2456,6 +2456,9 @@ public static class SeedData
             ["showTestimonials"]     = ("false",      "Show testimonials/social-proof section on homepage (placeholder quotes until real reviews exist)"),
             ["heroSubtitle"]         = ("Üks platvorm — laopinnad, kolimine ja haagised. Leia asukoht, vali sobiv ühik, broneeri.", "Homepage hero subtitle — supports {discount} placeholder"),
             ["heroDiscount"]         = ("10",         "Discount percentage shown on homepage"),
+            // ── Concierge pivot (demand-first) ─────────────────────────────
+            ["conciergeFirst"]       = ("true",              "Demand-first landing: concierge intake form is the primary CTA"),
+            ["conciergeCities"]      = ("Tallinn, Harjumaa", "Comma-separated cities/regions where the concierge currently operates"),
             // ── Pricing config (read by IPricingConfigService) ──────────────
             ["defaultPartnerDiscount"]         = ("15",  "Default partner discount % shown to customer"),
             ["tier.starter.customerDiscount"]  = ("5",   "Starter tier: customer discount %"),

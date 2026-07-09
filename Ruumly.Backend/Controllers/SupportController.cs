@@ -131,4 +131,100 @@ public class SupportController(
 
         return Ok(new { success = true });
     }
+
+    /// <summary>
+    /// Public concierge intake — the demand-first pivot's front door. The visitor
+    /// describes what they need (categories, from/to city, date, free-text details)
+    /// without picking a listing; we store it as a <see cref="DemandLead"/> with
+    /// <c>Source = "concierge"</c> and the admin team finds/contacts a partner.
+    /// Anonymous by design: no account, no listing, no payment at this stage.
+    /// </summary>
+    [HttpPost("leads/request")]
+    [AllowAnonymous]
+    [EnableRateLimiting("public-email")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RequestConcierge([FromBody] ConciergeRequest req)
+    {
+        if (!EmailValidation.IsValid(req.Email))
+            return BadRequest(new { error = "Invalid email." });
+        if (string.IsNullOrWhiteSpace(req.City))
+            return BadRequest(new { error = "City is required." });
+
+        static string? Clamp(string? s, int max)
+        {
+            var trimmed = s?.Trim();
+            if (string.IsNullOrEmpty(trimmed)) return null;
+            return trimmed.Length > max ? trimmed[..max] : trimmed;
+        }
+
+        var city   = Clamp(req.City, 100)!;
+        var toCity = Clamp(req.ToCity, 100);
+
+        // Parse the requested categories ("warehouse" | "moving" | "trailer",
+        // case-insensitive). Exactly one valid category maps to that enum value;
+        // zero or several fall back to Any — the admin routes it manually.
+        var validCategories = (req.Categories ?? [])
+            .Select(c => c?.Trim().ToLowerInvariant())
+            .Where(c => c is "warehouse" or "moving" or "trailer")
+            .Distinct()
+            .ToList();
+        var category = validCategories.Count == 1
+            ? validCategories[0] switch
+            {
+                "warehouse" => DemandLeadCategory.Warehouse,
+                "moving"    => DemandLeadCategory.Moving,
+                _           => DemandLeadCategory.Trailer,
+            }
+            : DemandLeadCategory.Any;
+
+        var lang = req.Language?.Trim().ToLowerInvariant();
+        if (lang is not ("et" or "en" or "ru" or "lv" or "lt"))
+            lang = "et";
+
+        // Compact ENGLISH machine summary for the admin list view — never
+        // translated labels. E.g. "concierge: moving+warehouse | Tallinn→Tartu | 2026-08-15".
+        var parts = new List<string>
+        {
+            validCategories.Count > 0 ? string.Join('+', validCategories) : "any",
+            toCity is not null ? $"{city}→{toCity}" : city,
+        };
+        if (req.NeedDate is { } needDate)
+            parts.Add(needDate.ToString("yyyy-MM-dd"));
+        var query = $"concierge: {string.Join(" | ", parts)}";
+
+        var lead = new DemandLead
+        {
+            Id        = Guid.NewGuid(),
+            Email     = req.Email.Trim(),
+            Name      = Clamp(req.Name, 120),
+            Phone     = Clamp(req.Phone, 40),
+            City      = city,
+            ToCity    = toCity,
+            NeedDate  = req.NeedDate,
+            Details   = Clamp(req.Details, 2000),
+            Category  = category,
+            Query     = query.Length > 500 ? query[..500] : query,
+            Source    = "concierge",
+            Language  = lang,
+            Status    = DemandLeadStatus.New,
+            CreatedAt = DateTime.UtcNow,
+        };
+
+        db.DemandLeads.Add(lead);
+        await db.SaveChangesAsync();
+
+        emailQueue.EnqueueEmail(
+            to:       "admin@ruumly.eu",
+            subject:  $"New concierge request — {lead.City}",
+            textBody: $"From: {lead.Name} <{lead.Email}> {lead.Phone}\n" +
+                      $"Categories: {(validCategories.Count > 0 ? string.Join(", ", validCategories) : "any")}\n" +
+                      $"City: {lead.City}{(lead.ToCity is not null ? $" → {lead.ToCity}" : "")}\n" +
+                      $"Date: {(lead.NeedDate?.ToString("yyyy-MM-dd") ?? "-")}\n" +
+                      $"Language: {lead.Language}\n\n" +
+                      $"{lead.Details}\n\n" +
+                      $"Work it from the admin CRM → Leads.");
+
+        return Ok(new { ok = true });
+    }
 }

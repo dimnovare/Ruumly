@@ -8,4 +8,6 @@ public enum DemandLeadStatus
     Dismissed,
     // Appended last (stable int value). The partner has sent the customer a price.
     Quoted,
+    // Appended last (stable int value). Concierge: no partner could serve the request.
+    Unmatched,
 }

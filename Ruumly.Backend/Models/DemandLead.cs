@@ -27,4 +27,15 @@ public class DemandLead
     public DateTime? QuotedAt { get; set; }
     public DateTime? RespondedAt { get; set; }
     [MaxLength(2000)] public string? ProviderNotes { get; set; }
+
+    // ── Concierge intake (demand-first pivot) ─────────────────────────────────
+    // A concierge request is a structured need ("move me from City to ToCity on
+    // NeedDate") captured before any listing exists for it. Source tags the intake
+    // channel ("concierge"); ContactedAt stamps the first admin touch for
+    // first-response metrics.
+    [MaxLength(100)]  public string? ToCity { get; set; }
+    public DateTime? NeedDate { get; set; }
+    [MaxLength(2000)] public string? Details { get; set; }
+    [MaxLength(40)]   public string? Source { get; set; }
+    public DateTime? ContactedAt { get; set; }
 }
