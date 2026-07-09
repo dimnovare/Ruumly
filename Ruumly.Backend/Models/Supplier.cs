@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Ruumly.Backend.Models.Enums;
 
 namespace Ruumly.Backend.Models;
@@ -71,6 +72,20 @@ public class Supplier
 
     /// <summary>Year founded — for the stats strip on the public page.</summary>
     public int? FoundedYear { get; set; }
+
+    // ── Directory (unclaimed free profiles) ─────────────────────────────────
+    /// <summary>
+    /// True for suppliers imported as unclaimed directory profiles: they get a
+    /// map pin and a public partner page but no logged-in owner and no commerce.
+    /// </summary>
+    public bool IsDirectoryListing { get; set; } = false;
+
+    /// <summary>
+    /// JSON array of service category slugs this provider covers, e.g.
+    /// ["moving","cleaning"]. Slugs match DemandLeadCategory names lower-cased.
+    /// </summary>
+    [MaxLength(400)]
+    public string? ServiceTypesJson { get; set; }
 
     /// <summary>
     /// IBAN for payout transfers (e.g. EE382200221011xxx).

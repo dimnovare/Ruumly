@@ -23,5 +23,11 @@ public record SupplierLocationDto(
     decimal           Rating,
     int               ReviewCount,
     decimal?          BestCustomerDiscount,
-    string?           ExternalId
+    string?           ExternalId,
+    /// <summary>True for unclaimed directory pins: supplier is a directory profile and this site has zero units.</summary>
+    bool              IsDirectory = false,
+    /// <summary>Supplier's partner-page slug, when one is set — lets the map pin link to /partner/{slug}.</summary>
+    string?           SupplierSlug = null,
+    /// <summary>Parsed Supplier.ServiceTypesJson category slugs; empty when none.</summary>
+    List<string>?     ServiceTypes = null
 );

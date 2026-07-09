@@ -110,6 +110,8 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         Dictionary<Guid, int> bookedCounts = [];
         if (allListingIds.Count > 0)
         {
+            // GroupBy must be composed into a projection — the bare
+            // IGrouping enumeration is untranslatable on the InMemory provider.
             bookedCounts = await db.Bookings
                 .Where(b => allListingIds.Contains(b.ListingId)
                          && ((b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.AwaitingConfirmation)
@@ -118,7 +120,8 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
                          && b.StartDate <= nowUtc
                          && (!b.EndDate.HasValue || b.EndDate.Value > nowUtc))
                 .GroupBy(b => b.ListingId)
-                .ToDictionaryAsync(g => g.Key, g => g.Count());
+                .Select(g => new { g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.Key, x => x.Count);
         }
 
         var dtos = new List<SupplierLocationDto>();
@@ -874,7 +877,8 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
                      && b.StartDate <= now
                      && (!b.EndDate.HasValue || b.EndDate.Value > now))
             .GroupBy(b => b.ListingId)
-            .ToDictionaryAsync(g => g.Key, g => g.Count());
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Count);
     }
 
     private static (int available, bool fullyBooked) ComputeAvailability(
@@ -950,7 +954,23 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
             Rating:               avgRating,
             ReviewCount:          totalReviews,
             BestCustomerDiscount: bestDiscount > 0 ? (decimal?)bestDiscount : null,
-            ExternalId:           l.ExternalId
+            ExternalId:           l.ExternalId,
+            IsDirectory:          (l.Supplier?.IsDirectoryListing ?? false) && activeUnits.Count == 0,
+            SupplierSlug:         l.Supplier?.Slug,
+            ServiceTypes:         ParseServiceTypes(l.Supplier?.ServiceTypesJson)
         );
+    }
+
+    private static List<string> ParseServiceTypes(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return [];
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<List<string>>(json) ?? [];
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return [];
+        }
     }
 }

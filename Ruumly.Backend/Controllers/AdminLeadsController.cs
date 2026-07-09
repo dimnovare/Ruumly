@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Ruumly.Backend.Constants;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models.Enums;
@@ -104,8 +105,11 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
     /// <summary>
     /// Top match suggestions for a concierge lead: active listings from active
     /// suppliers in the lead's category (or all categories for Any), same-city
-    /// listings first, then most recently updated. Powers the admin "who can
-    /// serve this request" view.
+    /// listings first, then most recently updated — UNIONed with active directory
+    /// suppliers (unclaimed profiles) whose service types cover the lead's
+    /// category, again same-city first. Listing-based rows come first; directory
+    /// rows carry null listing/price fields. Capped at 10 total. Powers the admin
+    /// "who can serve this request" view.
     /// </summary>
     [HttpGet("leads/{id:guid}/matches")]
     public async Task<IActionResult> GetLeadMatches(Guid id)
@@ -118,13 +122,18 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
 
         if (lead.Category != DemandLeadCategory.Any)
         {
-            var type = lead.Category switch
+            // Directory-only categories (cleaning, packing, vanrental, insurance)
+            // have no ListingType — for those, only directory suppliers can match.
+            ListingType? type = lead.Category switch
             {
                 DemandLeadCategory.Warehouse => ListingType.Warehouse,
                 DemandLeadCategory.Moving    => ListingType.Moving,
-                _                            => ListingType.Trailer,
+                DemandLeadCategory.Trailer   => ListingType.Trailer,
+                _                            => null,
             };
-            query = query.Where(l => l.Type == type);
+            query = type is { } t
+                ? query.Where(l => l.Type == t)
+                : query.Where(l => false);
         }
 
         // ToLower (not ILike) so the same expression runs on both Npgsql and the
@@ -140,13 +149,70 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
                 supplierName = l.Supplier.Name,
                 contactEmail = l.Supplier.ContactEmail,
                 contactPhone = l.Supplier.ContactPhone,
-                listingId    = l.Id,
-                listingTitle = l.Title,
-                listingCity  = l.City,
-                price        = l.PriceFrom,
-                priceUnit    = l.PriceUnit,
+                listingId    = (Guid?)l.Id,
+                listingTitle = (string?)l.Title,
+                listingCity  = (string?)l.City,
+                price        = (decimal?)l.PriceFrom,
+                priceUnit    = (string?)l.PriceUnit,
+                isDirectory  = false,
             })
             .ToListAsync();
+
+        var remaining = 10 - matches.Count;
+        if (remaining > 0)
+        {
+            var directoryQuery = Db.Suppliers
+                .Where(s => s.IsDirectoryListing && s.IsActive);
+
+            if (lead.Category != DemandLeadCategory.Any)
+            {
+                // ServiceTypesJson holds a JSON array of plain lowercase slugs, so
+                // quoted-token containment is exact and runs on both Npgsql (LIKE)
+                // and the InMemory provider.
+                var slugToken = $"\"{ServiceCategories.SlugFor(lead.Category)}\"";
+                directoryQuery = directoryQuery.Where(s =>
+                    s.ServiceTypesJson != null && s.ServiceTypesJson.Contains(slugToken));
+            }
+
+            var directorySuppliers = await directoryQuery
+                .Select(s => new
+                {
+                    s.Id,
+                    s.Name,
+                    s.ContactEmail,
+                    s.ContactPhone,
+                    s.UpdatedAt,
+                    // Best-matching active location city: lead-city match first.
+                    City = Db.SupplierLocations
+                        .Where(l => l.SupplierId == s.Id && l.IsActive)
+                        .OrderByDescending(l => leadCity != "" && l.City.ToLower() == leadCity)
+                        .Select(l => (string?)l.City)
+                        .FirstOrDefault(),
+                })
+                .ToListAsync();
+
+            var listingSupplierIds = matches.Select(m => m.supplierId).ToHashSet();
+            var directoryRows = directorySuppliers
+                .Where(d => !listingSupplierIds.Contains(d.Id))
+                .OrderByDescending(d => leadCity != "" && (d.City ?? "").ToLower() == leadCity)
+                .ThenByDescending(d => d.UpdatedAt)
+                .Take(remaining)
+                .Select(d => new
+                {
+                    supplierId   = d.Id,
+                    supplierName = d.Name,
+                    contactEmail = d.ContactEmail,
+                    contactPhone = d.ContactPhone,
+                    listingId    = (Guid?)null,
+                    listingTitle = (string?)null,
+                    listingCity  = d.City,
+                    price        = (decimal?)null,
+                    priceUnit    = (string?)null,
+                    isDirectory  = true,
+                });
+
+            matches = matches.Concat(directoryRows).ToList();
+        }
 
         return Ok(matches);
     }

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Ruumly.Backend.Constants;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.Helpers;
@@ -161,21 +162,18 @@ public class SupportController(
         var city   = Clamp(req.City, 100)!;
         var toCity = Clamp(req.ToCity, 100);
 
-        // Parse the requested categories ("warehouse" | "moving" | "trailer",
-        // case-insensitive). Exactly one valid category maps to that enum value;
+        // Parse the requested categories (any ServiceCategories slug — warehouse,
+        // moving, trailer, cleaning, packing, vanrental, insurance — case-
+        // insensitive). Exactly one valid category maps to that enum value;
         // zero or several fall back to Any — the admin routes it manually.
         var validCategories = (req.Categories ?? [])
             .Select(c => c?.Trim().ToLowerInvariant())
-            .Where(c => c is "warehouse" or "moving" or "trailer")
+            .Where(c => c is not null && ServiceCategories.BySlug.ContainsKey(c))
+            .Select(c => c!)
             .Distinct()
             .ToList();
         var category = validCategories.Count == 1
-            ? validCategories[0] switch
-            {
-                "warehouse" => DemandLeadCategory.Warehouse,
-                "moving"    => DemandLeadCategory.Moving,
-                _           => DemandLeadCategory.Trailer,
-            }
+            ? ServiceCategories.BySlug[validCategories[0]]
             : DemandLeadCategory.Any;
 
         var lang = req.Language?.Trim().ToLowerInvariant();

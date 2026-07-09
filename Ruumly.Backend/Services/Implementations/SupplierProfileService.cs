@@ -99,7 +99,9 @@ public class SupplierProfileService(RuumlyDbContext db, IDistributedCache cache)
             LocationCount:    locations.Count,
             ListingCount:     supplier.Listings.Count(l => l.IsActive),
             Locations:        locations,
-            HasGoogleReviews: !string.IsNullOrEmpty(supplier.GooglePlaceId));
+            HasGoogleReviews: !string.IsNullOrEmpty(supplier.GooglePlaceId),
+            IsDirectory:      supplier.IsDirectoryListing,
+            ServiceTypes:     ParseServiceTypes(supplier.ServiceTypesJson));
 
         await cache.SetStringAsync(
             cacheKey,
@@ -108,5 +110,18 @@ public class SupplierProfileService(RuumlyDbContext db, IDistributedCache cache)
             ct);
 
         return dto;
+    }
+
+    private static List<string>? ParseServiceTypes(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return null;
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(json);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 }

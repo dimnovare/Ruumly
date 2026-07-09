@@ -20,7 +20,11 @@ public record SupplierProfileDto(
     int     ListingCount,
     List<SupplierProfileLocationDto> Locations,
     /// <summary>True when a Google Place ID is configured — lets the frontend decide whether to render the reviews section.</summary>
-    bool    HasGoogleReviews);
+    bool    HasGoogleReviews,
+    /// <summary>True for unclaimed directory profiles (imported, no owner, no commerce).</summary>
+    bool    IsDirectory = false,
+    /// <summary>Service category slugs from Supplier.ServiceTypesJson; null/empty when none.</summary>
+    List<string>? ServiceTypes = null);
 
 public record SupplierProfileLocationDto(
     Guid     Id,
