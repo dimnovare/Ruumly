@@ -20,4 +20,22 @@ public static class ServiceCategories
     /// <summary>Slug for a concrete category ("cleaning"); Any → "any".</summary>
     public static string SlugFor(DemandLeadCategory category) =>
         category.ToString().ToLowerInvariant();
+
+    /// <summary>
+    /// Tolerant parse of a Supplier.ServiceTypesJson value (JSON array of slugs).
+    /// Null, empty, or malformed input yields an empty list — directory rows must
+    /// never fail a request because one imported record carries bad JSON.
+    /// </summary>
+    public static List<string> ParseServiceTypes(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return [];
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<List<string>>(json) ?? [];
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return [];
+        }
+    }
 }

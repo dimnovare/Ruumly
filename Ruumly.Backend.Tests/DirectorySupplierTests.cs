@@ -292,6 +292,8 @@ public class DirectorySupplierTests
         Prop(items[0], "priceUnit").Should().BeNull();
         Prop(items[0], "contactEmail").Should().Be("tallinnclean@x.ee");
         Prop(items[0], "listingCity").Should().Be("tallinn");
+        ((IEnumerable<string>)Prop(items[0], "serviceTypes")!)
+            .Should().Contain("cleaning", "the admin must see which services a directory supplier covers");
         Prop(items[1], "supplierId").Should().Be(tartu.Id);
     }
 

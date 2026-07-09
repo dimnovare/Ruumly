@@ -155,6 +155,7 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
                 price        = (decimal?)l.PriceFrom,
                 priceUnit    = (string?)l.PriceUnit,
                 isDirectory  = false,
+                serviceTypes = new List<string>(),
             })
             .ToListAsync();
 
@@ -182,6 +183,7 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
                     s.ContactEmail,
                     s.ContactPhone,
                     s.UpdatedAt,
+                    s.ServiceTypesJson,
                     // Best-matching active location city: lead-city match first.
                     City = Db.SupplierLocations
                         .Where(l => l.SupplierId == s.Id && l.IsActive)
@@ -209,6 +211,9 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
                     price        = (decimal?)null,
                     priceUnit    = (string?)null,
                     isDirectory  = true,
+                    // Which services this directory supplier covers — essential for
+                    // routing Any-category leads where no slug filter was applied.
+                    serviceTypes = ServiceCategories.ParseServiceTypes(d.ServiceTypesJson),
                 });
 
             matches = matches.Concat(directoryRows).ToList();

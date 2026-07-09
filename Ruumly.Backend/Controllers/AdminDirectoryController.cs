@@ -158,6 +158,22 @@ public partial class AdminDirectoryController(RuumlyDbContext db) : AdminBaseCon
         if (row.Lng is not { } lng || lng is < MinLng or > MaxLng)
             return $"lng is required and must be within {MinLng}-{MaxLng}";
 
+        // Imported rows come from scraped third-party data and render on public
+        // pages (map popups, partner pages) — refuse anything markup-shaped and
+        // require sane URL schemes/emails so poisoned data never persists.
+        foreach (var (label, value) in new[]
+                 { ("name", row.Name), ("city", row.City), ("address", row.Address), ("tagline", row.Tagline) })
+        {
+            if (value is not null && (value.Contains('<') || value.Contains('>')))
+                return $"{label} must not contain '<' or '>'";
+        }
+        if (!IsNullOrHttpUrl(row.WebsiteUrl))
+            return "websiteUrl must start with http:// or https://";
+        if (!IsNullOrHttpUrl(row.LogoUrl))
+            return "logoUrl must start with http:// or https://";
+        if (!string.IsNullOrWhiteSpace(row.ContactEmail) && !EmailValidation.IsValid(row.ContactEmail))
+            return "contactEmail is not a valid email address";
+
         var serviceTypes = NormalizeServiceTypes(row.ServiceTypes);
         if (serviceTypes.Count == 0)
             return "serviceTypes must be a non-empty array";
@@ -168,6 +184,11 @@ public partial class AdminDirectoryController(RuumlyDbContext db) : AdminBaseCon
 
         return null;
     }
+
+    private static bool IsNullOrHttpUrl(string? url) =>
+        string.IsNullOrWhiteSpace(url)
+        || url.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+        || url.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
 
     private static List<string> NormalizeServiceTypes(List<string>? raw) =>
         (raw ?? [])

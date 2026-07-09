@@ -78,9 +78,31 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         if (!string.IsNullOrWhiteSpace(city))
             query = query.Where(l => l.City.ToLower().Contains(city.ToLower()));
 
-        if (!string.IsNullOrWhiteSpace(type) &&
-            Enum.TryParse<ListingType>(type, true, out var lt))
-            query = query.Where(l => l.Listings.Any(u => u.Type == lt && u.IsActive));
+        if (!string.IsNullOrWhiteSpace(type))
+        {
+            var slug = type.Trim().ToLowerInvariant();
+            if (Enum.TryParse<ListingType>(type, true, out var lt))
+            {
+                // Vertical filter matches inventory-backed locations AND directory
+                // profiles whose supplier covers that service (zero listings).
+                var token = $"\"{slug}\"";
+                query = query.Where(l =>
+                    l.Listings.Any(u => u.Type == lt && u.IsActive)
+                    || (l.Supplier!.IsDirectoryListing
+                        && l.Supplier.ServiceTypesJson != null
+                        && l.Supplier.ServiceTypesJson.Contains(token)));
+            }
+            else if (Constants.ServiceCategories.BySlug.ContainsKey(slug))
+            {
+                // Directory-only categories (cleaning, packing, vanrental, insurance)
+                // have no ListingType — only directory profiles can match.
+                var token = $"\"{slug}\"";
+                query = query.Where(l =>
+                    l.Supplier!.IsDirectoryListing
+                    && l.Supplier.ServiceTypesJson != null
+                    && l.Supplier.ServiceTypesJson.Contains(token));
+            }
+        }
 
         var locations = await query
             .OrderBy(l => l.City)
