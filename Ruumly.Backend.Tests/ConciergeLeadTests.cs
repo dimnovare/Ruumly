@@ -76,7 +76,10 @@ public class ConciergeLeadTests
         var result = await MakeSupport(db, queue).RequestConcierge(new ConciergeRequest(
             Email: "cust@x.ee", City: "Tallinn", Name: "Cust", Phone: "+372 5",
             Categories: ["Moving", "warehouse"], ToCity: "Tartu",
-            NeedDate: new DateTime(2026, 8, 15, 0, 0, 0, DateTimeKind.Utc),
+            // Deliberately Kind=Unspecified — exactly what System.Text.Json produces for a
+            // bare "2026-08-15" body value; the controller must normalize to UTC, otherwise
+            // Npgsql rejects the write to the timestamptz column in production.
+            NeedDate: new DateTime(2026, 8, 15, 0, 0, 0, DateTimeKind.Unspecified),
             Details: "2-room flat plus some pallets", Language: "en"));
 
         result.Should().BeOfType<OkObjectResult>();
@@ -88,6 +91,7 @@ public class ConciergeLeadTests
         lead.City.Should().Be("Tallinn");
         lead.ToCity.Should().Be("Tartu");
         lead.NeedDate.Should().NotBeNull();
+        lead.NeedDate!.Value.Kind.Should().Be(DateTimeKind.Utc, "Unspecified kinds must be normalized before hitting timestamptz");
         lead.Details.Should().Be("2-room flat plus some pallets");
         lead.Language.Should().Be("en");
 

@@ -6,12 +6,16 @@ Worker is in workers/social-preview/. Frontend lives in estonia-space-hub/ (sepa
 gitignored here).
 
 ## Current focus
-Pivoted to a **free partner-acquisition marketplace** — all three verticals public
-(Storage, Moving, Trailers); showMovingService / showTrailerService default visible and
-admin-toggleable. Listing is free; monetization is optional paid features/boosts
-(PaidFeature / ProviderBoosts), never mandatory plans or commission in public/partner UI.
-Booking/payment/contract infra stays, enabled optionally per partner. This supersedes the
-storage-only direction in docs/ROADMAP.md.
+Pivoted (2026-07, after Sergei Anikin's feedback) to a **demand-first concierge**: the
+public front door is "tell us what you need" (POST /api/leads/request → DemandLead with
+Source="concierge"), organized around the life event ("I'm moving"), not the inventory.
+Ops = manual match loop in admin (Received→Contacted→Quoted→Booked/Lost/Unmatched; see
+docs/CONCIERGE-OPS.md). North-star metrics: qualified requests/week, contact rate,
+quote→booking conversion, median first response (GET /api/admin/leads/metrics) — NOT
+partner signups. Geography: Tallinn/Harjumaa first. The marketplace (search, listings,
+booking/payment/contract infra, free listing + optional boosts) stays fully functional as
+the ops layer — the hero flip is gated by the `conciergeFirst` platform setting. Don't
+build deep partner self-serve features unless they improve the manual demand loop.
 
 ## Conventions
 - Run dotnet/EF from the Ruumly.Backend/ folder.

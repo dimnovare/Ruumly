@@ -44,6 +44,12 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
                 d.CreatedAt,
                 status       = d.Status.ToString().ToLower(),
                 d.AdminNotes,
+                // Concierge intake context (null for legacy/routed leads)
+                d.ToCity,
+                d.NeedDate,
+                d.Details,
+                d.Source,
+                d.ContactedAt,
                 // Routing + quote (null for generic demand-capture leads)
                 d.SupplierId,
                 supplierName = d.SupplierId == null

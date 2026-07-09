@@ -84,6 +84,7 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
         var staticPages = new[]
         {
             ("",              "1.0", "daily"),
+            ("/request",      "0.9", "weekly"),
             ("/search",       "0.9", "daily"),
             ("/blog",         "0.7", "weekly"),
             ("/about",        "0.6", "monthly"),

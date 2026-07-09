@@ -201,7 +201,9 @@ public class SupportController(
             Phone     = Clamp(req.Phone, 40),
             City      = city,
             ToCity    = toCity,
-            NeedDate  = req.NeedDate,
+            // JSON binds a bare "yyyy-MM-dd" to Kind=Unspecified, which Npgsql rejects
+            // for timestamptz — normalize to UTC midnight (calendar-date semantics).
+            NeedDate  = req.NeedDate is { } nd ? DateTime.SpecifyKind(nd.Date, DateTimeKind.Utc) : null,
             Details   = Clamp(req.Details, 2000),
             Category  = category,
             Query     = query.Length > 500 ? query[..500] : query,
