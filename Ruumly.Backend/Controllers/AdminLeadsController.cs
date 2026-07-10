@@ -101,6 +101,18 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
                 return BadRequest(Error("Unknown category."));
         }
 
+        // A provided-but-unparseable status is an admin typo (e.g. "lost"), not a
+        // no-op: reject it up front so a silent 200-with-no-change can't masquerade
+        // as a successful transition. Omitted/blank status = leave unchanged.
+        DemandLeadStatus? newStatus = null;
+        if (!string.IsNullOrWhiteSpace(body.Status))
+        {
+            if (!Enum.TryParse<DemandLeadStatus>(body.Status, ignoreCase: true, out var parsedStatus)
+                || !Enum.IsDefined(parsedStatus))
+                return BadRequest(Error($"Invalid status '{body.Status}'."));
+            newStatus = parsedStatus;
+        }
+
         string? newCity = null;
         if (body.City is not null)
         {
@@ -131,12 +143,11 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
             requestEdited = true;
         }
 
-        if (!string.IsNullOrEmpty(body.Status) &&
-            Enum.TryParse<DemandLeadStatus>(body.Status, ignoreCase: true, out var parsedStatus))
+        if (newStatus is { } ns)
         {
             // Shared transition logic — stamps the first-touch ContactedAt once
             // (also used by the offer loop's auto-transitions).
-            DemandLeadLifecycle.MoveTo(lead, parsedStatus);
+            DemandLeadLifecycle.MoveTo(lead, ns);
         }
 
         if (body.AdminNotes is not null)
