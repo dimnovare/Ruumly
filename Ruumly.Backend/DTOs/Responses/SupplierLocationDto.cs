@@ -29,5 +29,7 @@ public record SupplierLocationDto(
     /// <summary>Supplier's partner-page slug, when one is set — lets the map pin link to /partner/{slug}.</summary>
     string?           SupplierSlug = null,
     /// <summary>Parsed Supplier.ServiceTypesJson category slugs; empty when none.</summary>
-    List<string>?     ServiceTypes = null
+    List<string>?     ServiceTypes = null,
+    /// <summary>Supplier logo, when set — lets search cards / map popups show the company mark.</summary>
+    string?           SupplierLogoUrl = null
 );

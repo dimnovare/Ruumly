@@ -979,7 +979,8 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
             ExternalId:           l.ExternalId,
             IsDirectory:          (l.Supplier?.IsDirectoryListing ?? false) && activeUnits.Count == 0,
             SupplierSlug:         l.Supplier?.Slug,
-            ServiceTypes:         ParseServiceTypes(l.Supplier?.ServiceTypesJson)
+            ServiceTypes:         ParseServiceTypes(l.Supplier?.ServiceTypesJson),
+            SupplierLogoUrl:      l.Supplier?.LogoUrl
         );
     }
 
