@@ -172,6 +172,168 @@ public class ConciergeLeadTests
             "the first-touch timestamp is stamped once and never overwritten");
     }
 
+    // ─── Admin request-field corrections ──────────────────────────────────────
+
+    private static async Task<DemandLead> SeedConciergeLead(RuumlyDbContext db)
+    {
+        var lead = new DemandLead
+        {
+            Id = Guid.NewGuid(), Email = "old@x.ee", City = "Tallinn",
+            Category = DemandLeadCategory.Any, Status = DemandLeadStatus.New,
+            Language = "et", Source = "concierge", CreatedAt = DateTime.UtcNow,
+            Name = "Old Name", Phone = "+372 1", ToCity = "Tartu",
+            Details = "old details",
+        };
+        db.DemandLeads.Add(lead);
+        await db.SaveChangesAsync();
+        return lead;
+    }
+
+    [Fact]
+    public async Task UpdateLead_EditsEveryRequestField_RoundTrips()
+    {
+        var db   = TestDbContext.Create();
+        var lead = await SeedConciergeLead(db);
+
+        var result = await MakeAdmin(db).UpdateLead(lead.Id, new UpdateLeadRequest(
+            Name: "New Name", Email: "new@x.ee", Phone: "+372 9999",
+            Category: "moving", City: "Pärnu", ToCity: "Narva",
+            NeedDate: new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Unspecified),
+            Details: "3-room flat, 2nd floor, no lift"));
+
+        result.Should().BeOfType<OkObjectResult>();
+
+        var saved = db.DemandLeads.Single();
+        saved.Name.Should().Be("New Name");
+        saved.Email.Should().Be("new@x.ee");
+        saved.Phone.Should().Be("+372 9999");
+        saved.Category.Should().Be(DemandLeadCategory.Moving);
+        saved.City.Should().Be("Pärnu");
+        saved.ToCity.Should().Be("Narva");
+        saved.Details.Should().Be("3-room flat, 2nd floor, no lift");
+        saved.NeedDate.Should().NotBeNull();
+        saved.NeedDate!.Value.Should().Be(new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc));
+    }
+
+    [Fact]
+    public async Task UpdateLead_NeedDate_NormalizedToUtc()
+    {
+        var db   = TestDbContext.Create();
+        var lead = await SeedConciergeLead(db);
+
+        await MakeAdmin(db).UpdateLead(lead.Id, new UpdateLeadRequest(
+            // Kind=Unspecified is exactly what System.Text.Json binds for a bare
+            // "2026-10-20" — must be normalized to UTC or Npgsql rejects the write.
+            NeedDate: new DateTime(2026, 10, 20, 0, 0, 0, DateTimeKind.Unspecified)));
+
+        var saved = db.DemandLeads.Single();
+        saved.NeedDate!.Value.Kind.Should().Be(DateTimeKind.Utc);
+        saved.NeedDate!.Value.Should().Be(new DateTime(2026, 10, 20, 0, 0, 0, DateTimeKind.Utc));
+    }
+
+    [Fact]
+    public async Task UpdateLead_CategoryAny_IsAccepted()
+    {
+        var db   = TestDbContext.Create();
+        var lead = await SeedConciergeLead(db);
+        lead.Category = DemandLeadCategory.Moving;
+        await db.SaveChangesAsync();
+
+        (await MakeAdmin(db).UpdateLead(lead.Id, new UpdateLeadRequest(Category: "any")))
+            .Should().BeOfType<OkObjectResult>();
+        db.DemandLeads.Single().Category.Should().Be(DemandLeadCategory.Any);
+    }
+
+    [Fact]
+    public async Task UpdateLead_InvalidEmail_Rejected_LeavesLeadUnchanged()
+    {
+        var db   = TestDbContext.Create();
+        var lead = await SeedConciergeLead(db);
+
+        (await MakeAdmin(db).UpdateLead(lead.Id, new UpdateLeadRequest(Email: "not-an-email")))
+            .Should().BeOfType<BadRequestObjectResult>();
+        db.DemandLeads.Single().Email.Should().Be("old@x.ee", "a rejected edit must not mutate the lead");
+    }
+
+    [Fact]
+    public async Task UpdateLead_UnknownCategory_Rejected_LeavesLeadUnchanged()
+    {
+        var db   = TestDbContext.Create();
+        var lead = await SeedConciergeLead(db);
+
+        (await MakeAdmin(db).UpdateLead(lead.Id, new UpdateLeadRequest(Category: "teleportation")))
+            .Should().BeOfType<BadRequestObjectResult>();
+        db.DemandLeads.Single().Category.Should().Be(DemandLeadCategory.Any);
+    }
+
+    [Fact]
+    public async Task UpdateLead_AngleBracketsInTextFields_Rejected()
+    {
+        var db = TestDbContext.Create();
+
+        foreach (var body in new[]
+        {
+            new UpdateLeadRequest(Name:    "<script>alert(1)</script>"),
+            new UpdateLeadRequest(City:    "Tallinn<b>"),
+            new UpdateLeadRequest(ToCity:  "Tartu>"),
+            new UpdateLeadRequest(Details: "a < b"),
+        })
+        {
+            var lead = await SeedConciergeLead(db);
+            (await MakeAdmin(db).UpdateLead(lead.Id, body))
+                .Should().BeOfType<BadRequestObjectResult>();
+        }
+    }
+
+    [Fact]
+    public async Task UpdateLead_EmptyCity_Rejected()
+    {
+        var db   = TestDbContext.Create();
+        var lead = await SeedConciergeLead(db);
+
+        (await MakeAdmin(db).UpdateLead(lead.Id, new UpdateLeadRequest(City: "   ")))
+            .Should().BeOfType<BadRequestObjectResult>();
+        db.DemandLeads.Single().City.Should().Be("Tallinn");
+    }
+
+    [Fact]
+    public async Task UpdateLead_PartialEdit_LeavesOmittedFieldsAndStatusUntouched()
+    {
+        var db   = TestDbContext.Create();
+        var lead = await SeedConciergeLead(db);
+
+        // Edit only the phone — nothing else, including status/ContactedAt, moves.
+        (await MakeAdmin(db).UpdateLead(lead.Id, new UpdateLeadRequest(Phone: "+372 5550000")))
+            .Should().BeOfType<OkObjectResult>();
+
+        var saved = db.DemandLeads.Single();
+        saved.Phone.Should().Be("+372 5550000");
+        saved.Name.Should().Be("Old Name");
+        saved.Email.Should().Be("old@x.ee");
+        saved.City.Should().Be("Tallinn");
+        saved.ToCity.Should().Be("Tartu");
+        saved.Details.Should().Be("old details");
+        saved.Status.Should().Be(DemandLeadStatus.New, "a request-field edit must not change status");
+        saved.ContactedAt.Should().BeNull("a request-field edit is not a first admin touch");
+    }
+
+    [Fact]
+    public async Task UpdateLead_RequestFieldsAndStatus_CanChangeTogether()
+    {
+        var db   = TestDbContext.Create();
+        var lead = await SeedConciergeLead(db);
+
+        (await MakeAdmin(db).UpdateLead(lead.Id, new UpdateLeadRequest(
+            Status: "contacted", AdminNotes: "called them", City: "Rakvere")))
+            .Should().BeOfType<OkObjectResult>();
+
+        var saved = db.DemandLeads.Single();
+        saved.City.Should().Be("Rakvere");
+        saved.Status.Should().Be(DemandLeadStatus.Contacted);
+        saved.AdminNotes.Should().Be("called them");
+        saved.ContactedAt.Should().NotBeNull("moving out of New still stamps first touch");
+    }
+
     // ─── Match suggestions ────────────────────────────────────────────────────
 
     [Fact]

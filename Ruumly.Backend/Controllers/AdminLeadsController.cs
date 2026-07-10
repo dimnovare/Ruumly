@@ -72,6 +72,65 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
         var lead = await Db.DemandLeads.FindAsync(id);
         if (lead is null) return NotFound(Error("Lead not found."));
 
+        // ── Request-field corrections (partial: null/omitted = unchanged) ─────
+        // The admin can fix what the customer submitted. Everything is validated
+        // BEFORE any mutation so a single bad field can't leave a half-applied
+        // edit. For optional fields an explicit empty/whitespace value clears the
+        // field (mirrors the Clamp semantics in the public concierge intake); a
+        // JSON-null / omitted field is left untouched.
+        static bool HasAngle(string s) => s.Contains('<') || s.Contains('>');
+        static string? ClampOpt(string s, int max)
+        {
+            var t = s.Trim();
+            return t.Length == 0 ? null : (t.Length > max ? t[..max] : t);
+        }
+
+        // Validate the fields that can reject up front.
+        if (body.Email is not null && !EmailValidation.IsValid(body.Email))
+            return BadRequest(Error("Invalid email."));
+
+        DemandLeadCategory? newCategory = null;
+        if (body.Category is not null)
+        {
+            var slug = body.Category.Trim().ToLowerInvariant();
+            if (slug == "any")
+                newCategory = DemandLeadCategory.Any;
+            else if (ServiceCategories.BySlug.TryGetValue(slug, out var cat))
+                newCategory = cat;
+            else
+                return BadRequest(Error("Unknown category."));
+        }
+
+        string? newCity = null;
+        if (body.City is not null)
+        {
+            if (HasAngle(body.City)) return BadRequest(Error("City contains invalid characters."));
+            var c = body.City.Trim();
+            if (c.Length == 0) return BadRequest(Error("City cannot be empty."));
+            newCity = c.Length > 100 ? c[..100] : c;
+        }
+
+        if (body.Name    is not null && HasAngle(body.Name))    return BadRequest(Error("Name contains invalid characters."));
+        if (body.ToCity  is not null && HasAngle(body.ToCity))  return BadRequest(Error("Destination contains invalid characters."));
+        if (body.Details is not null && HasAngle(body.Details)) return BadRequest(Error("Details contain invalid characters."));
+
+        // All request-field validation passed — apply the corrections.
+        var requestEdited = false;
+        if (body.Email is not null) { lead.Email = body.Email.Trim(); requestEdited = true; }
+        if (newCity is not null)    { lead.City = newCity; requestEdited = true; }
+        if (newCategory is { } nc)  { lead.Category = nc; requestEdited = true; }
+        if (body.Name is not null)    { lead.Name    = ClampOpt(body.Name, 120);   requestEdited = true; }
+        if (body.Phone is not null)   { lead.Phone   = ClampOpt(body.Phone, 40);   requestEdited = true; }
+        if (body.ToCity is not null)  { lead.ToCity  = ClampOpt(body.ToCity, 100); requestEdited = true; }
+        if (body.Details is not null) { lead.Details = ClampOpt(body.Details, 2000); requestEdited = true; }
+        if (body.NeedDate is { } nd)
+        {
+            // JSON binds a bare "yyyy-MM-dd" to Kind=Unspecified, which Npgsql rejects
+            // for timestamptz — normalize to UTC midnight (calendar-date semantics).
+            lead.NeedDate = DateTime.SpecifyKind(nd.Date, DateTimeKind.Utc);
+            requestEdited = true;
+        }
+
         if (!string.IsNullOrEmpty(body.Status) &&
             Enum.TryParse<DemandLeadStatus>(body.Status, ignoreCase: true, out var parsedStatus))
         {
@@ -84,15 +143,22 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
             lead.AdminNotes = body.AdminNotes;
 
         Audit("demand_lead.updated", User.GetUserId().ToString(), lead.Id.ToString(),
-              $"Status: {lead.Status}, Notes: {(body.AdminNotes is not null ? "updated" : "unchanged")}");
+              $"Status: {lead.Status}, Notes: {(body.AdminNotes is not null ? "updated" : "unchanged")}, " +
+              $"Fields: {(requestEdited ? "edited" : "unchanged")}");
 
         await Db.SaveChangesAsync();
 
         return Ok(new
         {
             lead.Id,
+            lead.Name,
             lead.Email,
+            lead.Phone,
             lead.City,
+            category   = lead.Category.ToString().ToLower(),
+            lead.ToCity,
+            lead.NeedDate,
+            lead.Details,
             status     = lead.Status.ToString().ToLower(),
             lead.AdminNotes,
         });
@@ -282,4 +348,16 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
     }
 }
 
-public record UpdateLeadRequest(string? Status, string? AdminNotes);
+public record UpdateLeadRequest(
+    string? Status = null,
+    string? AdminNotes = null,
+    // Request-field corrections the admin can make to the customer's submission.
+    // All optional — a null/omitted field is left unchanged.
+    string? Name = null,
+    string? Email = null,
+    string? Phone = null,
+    string? Category = null,
+    string? City = null,
+    string? ToCity = null,
+    DateTime? NeedDate = null,
+    string? Details = null);
