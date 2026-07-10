@@ -11,7 +11,10 @@ public class ResendEmailSender(
     private string From =>
         $"{config["Email:FromName"] ?? "Ruumly"} <{config["Email:FromAddress"] ?? "noreply@ruumly.eu"}>";
 
-    public async Task SendAsync(string to, string subject, string textBody, string? htmlBody = null)
+    public Task SendAsync(string to, string subject, string textBody, string? htmlBody = null)
+        => SendAsync(to, subject, textBody, htmlBody, replyTo: null);
+
+    public async Task SendAsync(string to, string subject, string textBody, string? htmlBody, string? replyTo)
     {
         var message = new EmailMessage();
         message.From    = From;
@@ -20,6 +23,8 @@ public class ResendEmailSender(
         message.TextBody = textBody;
         if (!string.IsNullOrWhiteSpace(htmlBody))
             message.HtmlBody = htmlBody;
+        if (!string.IsNullOrWhiteSpace(replyTo))
+            message.ReplyTo = replyTo;   // implicit string → EmailAddressList
 
         try
         {

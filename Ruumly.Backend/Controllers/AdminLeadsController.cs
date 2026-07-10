@@ -75,13 +75,9 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
         if (!string.IsNullOrEmpty(body.Status) &&
             Enum.TryParse<DemandLeadStatus>(body.Status, ignoreCase: true, out var parsedStatus))
         {
-            lead.Status = parsedStatus;
-
-            // First admin touch: any move out of New stamps the first-response
-            // timestamp used by the concierge ops metrics. Stamped once, never
-            // overwritten by later status changes.
-            if (parsedStatus != DemandLeadStatus.New && lead.ContactedAt is null)
-                lead.ContactedAt = DateTime.UtcNow;
+            // Shared transition logic — stamps the first-touch ContactedAt once
+            // (also used by the offer loop's auto-transitions).
+            DemandLeadLifecycle.MoveTo(lead, parsedStatus);
         }
 
         if (body.AdminNotes is not null)

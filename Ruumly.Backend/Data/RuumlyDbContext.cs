@@ -39,6 +39,9 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
     public DbSet<SupplierPaidFeature> SupplierPaidFeatures => Set<SupplierPaidFeature>();
     public DbSet<PaidFeatureRequest> PaidFeatureRequests => Set<PaidFeatureRequest>();
     public DbSet<Dispute>          Disputes           => Set<Dispute>();
+    public DbSet<Offer>            Offers             => Set<Offer>();
+    public DbSet<OfferOption>      OfferOptions       => Set<OfferOption>();
+    public DbSet<ProviderOutreach> ProviderOutreaches => Set<ProviderOutreach>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -408,6 +411,53 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
             e.HasIndex(d => d.SupplierId);
             e.Property(d => d.Category).HasConversion<string>();
             e.Property(d => d.Status).HasConversion<string>();
+        });
+
+        // ─── Offer loop (concierge) ───
+        model.Entity<Offer>(e =>
+        {
+            // The public page resolves offers by token — unique and indexed.
+            e.HasIndex(o => o.Token).IsUnique();
+            e.HasIndex(o => o.DemandLeadId);
+            e.Property(o => o.Status).HasConversion<string>();
+            e.HasOne(o => o.DemandLead)
+                .WithMany()
+                .HasForeignKey(o => o.DemandLeadId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<OfferOption>(e =>
+        {
+            e.HasIndex(o => o.OfferId);
+            e.HasOne(o => o.Offer)
+                .WithMany(x => x.Options)
+                .HasForeignKey(o => o.OfferId)
+                .OnDelete(DeleteBehavior.Cascade);
+            // Supplier linkage is optional (free-form options) — keep the
+            // option alive if the supplier/location disappears.
+            e.HasOne(o => o.Supplier)
+                .WithMany()
+                .HasForeignKey(o => o.SupplierId)
+                .OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(o => o.SupplierLocation)
+                .WithMany()
+                .HasForeignKey(o => o.SupplierLocationId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        model.Entity<ProviderOutreach>(e =>
+        {
+            e.HasIndex(o => o.DemandLeadId);
+            e.HasIndex(o => o.SupplierId);
+            e.Property(o => o.Status).HasConversion<string>();
+            e.HasOne(o => o.DemandLead)
+                .WithMany()
+                .HasForeignKey(o => o.DemandLeadId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(o => o.Supplier)
+                .WithMany()
+                .HasForeignKey(o => o.SupplierId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // ─── Dispute ───

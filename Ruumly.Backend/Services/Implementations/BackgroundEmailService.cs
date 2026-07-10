@@ -26,6 +26,13 @@ public class BackgroundEmailService(
     }
 
     [AutomaticRetry(Attempts = 3, DelaysInSeconds = [60, 300, 600])]
+    public async Task SendWithReplyToAsync(string to, string subject, string textBody, string? htmlBody, string? replyTo)
+    {
+        await emailSender.SendAsync(to, subject, textBody, htmlBody, replyTo);
+        logger.LogInformation("Background email sent to {Email} with subject {Subject}", to, subject);
+    }
+
+    [AutomaticRetry(Attempts = 3, DelaysInSeconds = [60, 300, 600])]
     public async Task SendVerificationEmailAsync(Guid userId)
     {
         var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId);

@@ -101,6 +101,58 @@ Public (rate-limited, anonymous):
    phone** — admin brokers the intro (also = the paywall for later).
 3. offer_chosen_admin_notification (to info@ruumly.eu, ET only is fine).
 
+### 5.1 Implemented backend contract (as built, 2026-07-10 — frontend builds against THIS)
+
+Statuses serialize lowercase: offer `draft|sent|viewed|chosen|expired`, outreach
+`sent|replied|declined|noanswer`. PATCH bodies parse them case-insensitively.
+
+**Admin offer DTO** (returned by every admin offer endpoint):
+`{ id, demandLeadId, token, status, language, customerNote, createdAt, sentAt,
+viewedAt, chosenAt, chosenOptionId, createdBy, options: [{ id, supplierId,
+supplierName, supplierLocationId, title, priceAmount, priceUnit, notes,
+sortOrder }] }` (options sorted by sortOrder). Offer page URL is
+`https://ruumly.eu/{language}/offer/{token}` — construct it from token+language.
+
+- POST /api/admin/leads/{id}/offers body: `{ language?, customerNote?,
+  options?: [{ title, supplierId?, supplierLocationId?, priceAmount?,
+  priceUnit?, notes?, sortOrder? }] }`. Language defaults to the lead's.
+- PATCH /api/admin/offers/{id} body: `{ customerNote?, language?, status?,
+  options? }` — null field = unchanged; non-null `options` REPLACES the whole
+  set (`[]` clears). `status` accepts draft/sent/viewed/expired ("chosen" is
+  400 — only the customer sets it via the public page). Patching a chosen
+  offer → 409.
+- POST /api/admin/offers/{id}/send: no body. 400 if 0 options or lead has no
+  email; 409 if chosen/expired. Draft→sent + SentAt (re-send while sent/viewed
+  allowed: refreshes SentAt, never regresses viewed). Lead auto→Quoted (unless
+  already Converted), ContactedAt stamped once.
+- POST /api/admin/leads/{id}/outreach body `{ supplierIds: [] }` → 200
+  `{ sent: [outreachDto], skipped: [{ supplierId, supplierName, reason:
+  "no_email"|"not_found" }] }`. outreachDto = `{ id, demandLeadId, supplierId,
+  supplierName, sentTo, sentAt, status, note }`. Lead auto New→Contacted.
+- GET /api/admin/leads/{id}/outreach → `[outreachDto]` (additive endpoint —
+  the workspace needs to list sent outreach rows; newest first).
+- PATCH /api/admin/outreach/{id} body `{ status?, note? }` → outreachDto.
+
+**Public** (404 for unknown AND draft AND expired tokens — all identical):
+- GET /api/offers/{token} → `{ status, language, customerNote, sentAt,
+  chosenOptionId, lead: { category, city, toCity, needDate, details },
+  options: [{ id, title, priceAmount, priceUnit, notes, supplierName }] }`.
+  No token echo, no supplier contacts, no customer name/email/phone. "size"
+  from the sketch = `details` (the model has no size field; details is the
+  customer's own free text). First GET of a sent offer → viewed/ViewedAt.
+- POST /api/offers/{token}/choose body `{ optionId }` → 200 `{ ok,
+  chosenOptionId, chosenAt }`; re-choosing the same option → 200 again;
+  a different option → 409; unknown optionId → 400. Notifies info@ruumly.eu.
+- Rate limits: choose uses the same "public-email" policy as /api/leads/request
+  (5/10 min/IP — it can trigger email); GET uses the "search" policy
+  (60/min/IP) so page refreshes behind carrier NAT don't lock customers out.
+
+Emails as built: offer_to_customer + outreach_to_provider in EmailTranslations
+×5 (et/en/ru/lv/lt); outreach language picked by supplier Country (EE→et,
+LV→lv, LT→lt, else en), Reply-To info@ruumly.eu, body = category/route/
+details/date only. offer_chosen_admin_notification is inline ET text (matches
+the existing admin-email convention in SupportController).
+
 ### Admin UI (?tab=leads)
 Lead detail becomes a **workspace** (page or wide drawer):
 - Header: status pipeline chips (click to move), lead facts, contact shortcuts
