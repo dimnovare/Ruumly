@@ -155,6 +155,66 @@ public class SitemapTests
             $"<xhtml:link rel=\"alternate\" hreflang=\"x-default\" href=\"{BaseUrl}/et/storage/tallinn\"/>");
     }
 
+    private static async Task<string> RenderSitemapWithBlogAsync(string? enabled, string? articlesJson)
+    {
+        var db = TestDbContext.Create();
+        if (enabled is not null)
+            db.PlatformSettings.Add(new PlatformSetting { Key = "blog.enabled", Value = enabled });
+        if (articlesJson is not null)
+            db.PlatformSettings.Add(new PlatformSetting { Key = "blog.articles", Value = articlesJson });
+        await db.SaveChangesAsync();
+
+        var controller = new SitemapController(db);
+        var result = await controller.Sitemap() as ContentResult;
+        return result!.Content!;
+    }
+
+    [Fact]
+    public async Task Sitemap_BlogPosts_EmittedPerLanguage_WhenBlogEnabled()
+    {
+        const string articles =
+            """[{"slug":"kolimise-checklist","publishedAt":"2026-07-09T10:00:00Z"},{"slug":"mis-on-ruumly"}]""";
+        var body = await RenderSitemapWithBlogAsync("true", articles);
+
+        foreach (var lang in Langs)
+            body.Should().Contain($"<loc>{BaseUrl}/{lang}/blog/kolimise-checklist</loc>");
+        body.Should().Contain($"<loc>{BaseUrl}/et/blog/mis-on-ruumly</loc>");
+
+        // publishedAt flows through as lastmod on the dated article.
+        var datedBlock = SplitUrlBlocks(body)
+            .First(b => b.Contains($"<loc>{BaseUrl}/et/blog/kolimise-checklist</loc>"));
+        datedBlock.Should().Contain("<lastmod>2026-07-09</lastmod>");
+    }
+
+    [Fact]
+    public async Task Sitemap_BlogPosts_Omitted_WhenBlogDisabledOrUnset()
+    {
+        const string articles = """[{"slug":"kolimise-checklist"}]""";
+
+        var disabled = await RenderSitemapWithBlogAsync("false", articles);
+        disabled.Should().NotContain("/blog/kolimise-checklist");
+
+        var unset = await RenderSitemapWithBlogAsync(null, articles);
+        unset.Should().NotContain("/blog/kolimise-checklist");
+    }
+
+    [Fact]
+    public async Task Sitemap_BlogPosts_MalformedJsonAndBadSlugs_AreSkippedSafely()
+    {
+        // Malformed JSON must not 500 the sitemap.
+        var malformed = await RenderSitemapWithBlogAsync("true", "{not json");
+        malformed.Should().Contain("<urlset");
+        malformed.Should().NotContain("/blog/{");
+
+        // Slugs outside ^[a-z0-9-]{2,120}$ (markup, uppercase) are dropped.
+        const string articles =
+            """[{"slug":"<script>alert(1)</script>"},{"slug":"Valid-Not"},{"slug":"ok-post"}]""";
+        var body = await RenderSitemapWithBlogAsync("true", articles);
+        body.Should().NotContain("<script>");
+        body.Should().NotContain("/blog/Valid-Not");
+        body.Should().Contain($"<loc>{BaseUrl}/et/blog/ok-post</loc>");
+    }
+
     // Google's sitemap fetcher does a HEAD probe before the GET. Without
     // [HttpHead] alongside [HttpGet], ASP.NET returns 405 and Google reports
     // "Couldn't fetch" in Search Console. RFC 7231 requires HEAD support on

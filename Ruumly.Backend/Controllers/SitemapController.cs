@@ -60,6 +60,43 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
         return string.Join("-", ascii.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
     }
 
+    // Tolerant parse of the blog.articles CMS value: returns (slug, lastMod) pairs,
+    // skipping malformed entries. Slugs are constrained to the same charset the
+    // frontend router accepts so a bad CMS edit can't inject markup into the XML.
+    private static List<(string Slug, string? LastMod)> ParseBlogArticles(string? json)
+    {
+        var result = new List<(string, string?)>();
+        if (string.IsNullOrWhiteSpace(json)) return result;
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            if (doc.RootElement.ValueKind != System.Text.Json.JsonValueKind.Array) return result;
+            foreach (var article in doc.RootElement.EnumerateArray())
+            {
+                if (article.ValueKind != System.Text.Json.JsonValueKind.Object) continue;
+                if (!article.TryGetProperty("slug", out var slugEl) ||
+                    slugEl.ValueKind != System.Text.Json.JsonValueKind.String) continue;
+                var slug = slugEl.GetString();
+                if (string.IsNullOrEmpty(slug) ||
+                    !System.Text.RegularExpressions.Regex.IsMatch(slug, "^[a-z0-9-]{2,120}$")) continue;
+
+                string? lastMod = null;
+                if (article.TryGetProperty("publishedAt", out var pubEl) &&
+                    pubEl.ValueKind == System.Text.Json.JsonValueKind.String &&
+                    DateTime.TryParse(pubEl.GetString(), CultureInfo.InvariantCulture,
+                        DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var pub))
+                    lastMod = pub.ToString("yyyy-MM-dd");
+
+                result.Add((slug, lastMod));
+            }
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            // Malformed CMS value — sitemap simply omits blog posts rather than 500ing.
+        }
+        return result;
+    }
+
     [HttpGet("sitemap.xml")]
     [HttpHead("sitemap.xml")]
     [Produces("application/xml")]
@@ -163,6 +200,20 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
 
         foreach (var path in cityHubs)
             AppendLangUrlSet(sb, path, "0.8", "weekly");
+
+        // Blog posts live in the PlatformSettings CMS (key "blog.articles", a JSON
+        // array), not in a table — emit /blog/{slug} only while the blog is enabled.
+        var blogEnabled = await db.PlatformSettings
+            .Where(s => s.Key == "blog.enabled")
+            .Select(s => s.Value).FirstOrDefaultAsync() == "true";
+        if (blogEnabled)
+        {
+            var articlesJson = await db.PlatformSettings
+                .Where(s => s.Key == "blog.articles")
+                .Select(s => s.Value).FirstOrDefaultAsync();
+            foreach (var (slug, lastMod) in ParseBlogArticles(articlesJson))
+                AppendLangUrlSet(sb, $"/blog/{slug}", "0.6", "monthly", lastMod);
+        }
 
         sb.AppendLine("</urlset>");
 
