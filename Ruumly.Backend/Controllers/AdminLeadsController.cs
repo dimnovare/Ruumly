@@ -126,6 +126,23 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
         if (body.ToCity  is not null && HasAngle(body.ToCity))  return BadRequest(Error("Destination contains invalid characters."));
         if (body.Details is not null && HasAngle(body.Details)) return BadRequest(Error("Details contain invalid characters."));
 
+        // needDate is a string like every other editable field ("" clears, a valid
+        // date sets, a malformed date is a real 400): DateTime? can't JSON-bind ""
+        // (the value the frontend sends on clear) — it 400s the whole edit before
+        // this handler runs. Only parse when provided AND non-empty; provided-empty
+        // is a deliberate clear that leaves newNeedDate null.
+        DateTime? newNeedDate = null;
+        if (!string.IsNullOrWhiteSpace(body.NeedDate))
+        {
+            // RoundtripKind keeps a trailing 'Z' as UTC and a bare date as Unspecified
+            // (no timezone shift either way); .Date + SpecifyKind(Utc) then gives the
+            // calendar date at UTC midnight — Npgsql rejects Unspecified on timestamptz.
+            if (!DateTime.TryParse(body.NeedDate, System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.RoundtripKind, out var parsedDate))
+                return BadRequest(Error("Invalid date."));
+            newNeedDate = DateTime.SpecifyKind(parsedDate.Date, DateTimeKind.Utc);
+        }
+
         // All request-field validation passed — apply the corrections.
         var requestEdited = false;
         if (body.Email is not null) { lead.Email = body.Email.Trim(); requestEdited = true; }
@@ -135,11 +152,10 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
         if (body.Phone is not null)   { lead.Phone   = ClampOpt(body.Phone, 40);   requestEdited = true; }
         if (body.ToCity is not null)  { lead.ToCity  = ClampOpt(body.ToCity, 100); requestEdited = true; }
         if (body.Details is not null) { lead.Details = ClampOpt(body.Details, 2000); requestEdited = true; }
-        if (body.NeedDate is { } nd)
+        if (body.NeedDate is not null)
         {
-            // JSON binds a bare "yyyy-MM-dd" to Kind=Unspecified, which Npgsql rejects
-            // for timestamptz — normalize to UTC midnight (calendar-date semantics).
-            lead.NeedDate = DateTime.SpecifyKind(nd.Date, DateTimeKind.Utc);
+            // Provided: "" → clear (newNeedDate stayed null), a valid date → set.
+            lead.NeedDate = newNeedDate;
             requestEdited = true;
         }
 
@@ -370,5 +386,7 @@ public record UpdateLeadRequest(
     string? Category = null,
     string? City = null,
     string? ToCity = null,
-    DateTime? NeedDate = null,
+    // A string (not DateTime?): "" JSON-binds fine and means "clear", matching the
+    // empty-clears convention of the other editable fields (DateTime? can't bind "").
+    string? NeedDate = null,
     string? Details = null);

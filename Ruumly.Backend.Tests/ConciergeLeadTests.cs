@@ -198,7 +198,7 @@ public class ConciergeLeadTests
         var result = await MakeAdmin(db).UpdateLead(lead.Id, new UpdateLeadRequest(
             Name: "New Name", Email: "new@x.ee", Phone: "+372 9999",
             Category: "moving", City: "Pärnu", ToCity: "Narva",
-            NeedDate: new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Unspecified),
+            NeedDate: "2026-09-01",
             Details: "3-room flat, 2nd floor, no lift"));
 
         result.Should().BeOfType<OkObjectResult>();
@@ -222,13 +222,54 @@ public class ConciergeLeadTests
         var lead = await SeedConciergeLead(db);
 
         await MakeAdmin(db).UpdateLead(lead.Id, new UpdateLeadRequest(
-            // Kind=Unspecified is exactly what System.Text.Json binds for a bare
-            // "2026-10-20" — must be normalized to UTC or Npgsql rejects the write.
-            NeedDate: new DateTime(2026, 10, 20, 0, 0, 0, DateTimeKind.Unspecified)));
+            // A bare "yyyy-MM-dd" — must be parsed and normalized to UTC or Npgsql
+            // rejects the write to the timestamptz column.
+            NeedDate: "2026-10-20"));
 
         var saved = db.DemandLeads.Single();
         saved.NeedDate!.Value.Kind.Should().Be(DateTimeKind.Utc);
         saved.NeedDate!.Value.Should().Be(new DateTime(2026, 10, 20, 0, 0, 0, DateTimeKind.Utc));
+    }
+
+    // Exercises the request body through REAL JSON binding (JsonSerializerDefaults.Web,
+    // the same options ASP.NET Core uses) rather than in-process record construction —
+    // the gap that let the original DateTime? NeedDate ship: "" cannot bind to
+    // DateTime? and 400'd the whole edit before the handler ran. As a string it binds,
+    // and "" now clears with the same empty-clears convention as every other field.
+    private static UpdateLeadRequest FromJson(string json) =>
+        System.Text.Json.JsonSerializer.Deserialize<UpdateLeadRequest>(
+            json, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web))!;
+
+    [Fact]
+    public async Task UpdateLead_NeedDate_JsonBinding_Sets_LeavesUnchanged_Clears_AndRejects()
+    {
+        var db   = TestDbContext.Create();
+        var lead = await SeedConciergeLead(db); // NeedDate starts null
+        var admin = MakeAdmin(db);
+
+        // {"needDate":"2026-08-01"} → set, UTC-normalized.
+        (await admin.UpdateLead(lead.Id, FromJson("{\"needDate\":\"2026-08-01\"}")))
+            .Should().BeOfType<OkObjectResult>();
+        lead.NeedDate.Should().Be(new DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc));
+        lead.NeedDate!.Value.Kind.Should().Be(DateTimeKind.Utc);
+
+        // Omitted (a different field patched) → needDate left unchanged.
+        (await admin.UpdateLead(lead.Id, FromJson("{\"name\":\"Kept Date\"}")))
+            .Should().BeOfType<OkObjectResult>();
+        lead.NeedDate.Should().Be(new DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc),
+            "an omitted needDate is a no-op");
+
+        // {"needDate":""} → CLEAR. This is the exact body the frontend sends on clear;
+        // with the old DateTime? it 400'd the whole edit before the handler.
+        (await admin.UpdateLead(lead.Id, FromJson("{\"needDate\":\"\"}")))
+            .Should().BeOfType<OkObjectResult>();
+        lead.NeedDate.Should().BeNull("an explicit empty string clears the date");
+
+        // {"needDate":"not-a-date"} → 400, and no half-applied co-edit.
+        (await admin.UpdateLead(lead.Id, FromJson("{\"needDate\":\"not-a-date\",\"city\":\"Narva\"}")))
+            .Should().BeOfType<BadRequestObjectResult>();
+        lead.NeedDate.Should().BeNull();
+        lead.City.Should().Be("Tallinn", "a malformed date rejects the whole edit — nothing half-applies");
     }
 
     [Fact]
