@@ -198,6 +198,38 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
             cityHubs.Add($"/{hub}/{slug}");
         }
 
+        // Directory providers (unclaimed free profiles) hold their supply as
+        // zero-unit SupplierLocations, NOT Listings — in prod they ARE the supply,
+        // so the listing-based query above emits zero hubs for them and the ranking
+        // /storage/{city} pages never enter the sitemap. Derive city hubs from active
+        // directory locations too: /storage/{city} for every directory city (storage
+        // is the anchor CityPage vertical), plus /moving and /trailer only where a
+        // directory provider in that city actually advertises that service
+        // (Supplier.ServiceTypesJson), gated by the same show flags. The shared
+        // HashSet unions + dedupes these with the listing-based hubs.
+        var directoryCities = await db.SupplierLocations
+            .Where(l => l.IsActive && l.City != "" &&
+                        l.Supplier != null && l.Supplier.IsActive && l.Supplier.IsDirectoryListing)
+            .Select(l => new { l.City, l.Supplier.ServiceTypesJson })
+            .ToListAsync();
+
+        foreach (var dc in directoryCities)
+        {
+            var slug = SlugifyCity(dc.City);
+            if (slug.Length == 0) continue;
+
+            var services = Constants.ServiceCategories.ParseServiceTypes(dc.ServiceTypesJson);
+            // Anchor vertical: emit /storage for every directory city unless the
+            // provider declares an explicit service list that excludes storage
+            // ("warehouse" is the storage slug — see DemandLeadCategory.Warehouse).
+            if (services.Count == 0 || services.Contains("warehouse"))
+                cityHubs.Add($"/storage/{slug}");
+            if (showMoving && services.Contains("moving"))
+                cityHubs.Add($"/moving/{slug}");
+            if (showTrailer && services.Contains("trailer"))
+                cityHubs.Add($"/trailer/{slug}");
+        }
+
         foreach (var path in cityHubs)
             AppendLangUrlSet(sb, path, "0.8", "weekly");
 

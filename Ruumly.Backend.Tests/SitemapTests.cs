@@ -57,6 +57,46 @@ public class SitemapTests
         return result!.Content!;
     }
 
+    // A directory provider (unclaimed free profile) holds its supply as a zero-unit
+    // SupplierLocation, NOT a Listing. In prod that IS the entire supply, so the
+    // sitemap must derive city hubs from directory locations too — otherwise the
+    // ranking /storage/{city} pages never enter the sitemap. Seeds a single directory
+    // location in `city` (with NO Listings anywhere) so only the directory branch can
+    // produce the hub.
+    private static async Task<string> RenderSitemapWithDirectoryLocationAsync(
+        string city, string? serviceTypesJson)
+    {
+        var db = TestDbContext.Create();
+
+        var supplier = new Supplier
+        {
+            Id                 = Guid.NewGuid(),
+            Name               = "Directory Provider",
+            ContactName        = "Contact",
+            ContactEmail       = "d@test.ee",
+            ContactPhone       = "+372 5000 0001",
+            IsActive           = true,
+            IsDirectoryListing = true,
+            ServiceTypesJson   = serviceTypesJson,
+        };
+        var location = new SupplierLocation
+        {
+            Id         = Guid.NewGuid(),
+            SupplierId = supplier.Id,
+            Name       = $"{city} depot",
+            Address    = "Test St 2",
+            City       = city,
+            IsActive   = true,
+        };
+        db.Suppliers.Add(supplier);
+        db.SupplierLocations.Add(location);
+        await db.SaveChangesAsync();
+
+        var controller = new SitemapController(db);
+        var result = await controller.Sitemap() as ContentResult;
+        return result!.Content!;
+    }
+
     private static IReadOnlyList<string> SplitUrlBlocks(string body) =>
         Regex.Matches(body, @"<url>(?:.|\n)*?</url>")
              .Select(m => m.Value)
@@ -153,6 +193,40 @@ public class SitemapTests
         // x-default for the city block points to /et/.
         body.Should().Contain(
             $"<xhtml:link rel=\"alternate\" hreflang=\"x-default\" href=\"{BaseUrl}/et/storage/tallinn\"/>");
+    }
+
+    [Fact]
+    public async Task Sitemap_DirectoryOnlyCity_EmitsStorageHubWithHreflang()
+    {
+        // No Listings seeded at all — the city hub must come from the directory
+        // location. Before the fix this city produced ZERO url blocks (prod symptom).
+        var body = await RenderSitemapWithDirectoryLocationAsync("Tartu", serviceTypesJson: null);
+
+        foreach (var lang in Langs)
+        {
+            body.Should().Contain($"<loc>{BaseUrl}/{lang}/storage/tartu</loc>",
+                "directory-only cities must still produce a /storage/{city} hub");
+            body.Should().Contain(
+                $"<xhtml:link rel=\"alternate\" hreflang=\"{lang}\" href=\"{BaseUrl}/{lang}/storage/tartu\"/>");
+        }
+
+        // x-default for the directory city block points to /et/.
+        body.Should().Contain(
+            $"<xhtml:link rel=\"alternate\" hreflang=\"x-default\" href=\"{BaseUrl}/et/storage/tartu\"/>");
+    }
+
+    [Fact]
+    public async Task Sitemap_DirectoryCity_EmitsServiceHubsFromServiceTypesOnly()
+    {
+        // A directory provider advertising storage + moving yields both hubs and
+        // never invents a /trailer hub it doesn't serve.
+        var body = await RenderSitemapWithDirectoryLocationAsync(
+            "Narva", serviceTypesJson: """["warehouse","moving"]""");
+
+        body.Should().Contain($"<loc>{BaseUrl}/et/storage/narva</loc>");
+        body.Should().Contain($"<loc>{BaseUrl}/et/moving/narva</loc>");
+        body.Should().NotContain($"<loc>{BaseUrl}/et/trailer/narva</loc>",
+            "no directory provider in this city advertises the trailer vertical");
     }
 
     private static async Task<string> RenderSitemapWithBlogAsync(string? enabled, string? articlesJson)
