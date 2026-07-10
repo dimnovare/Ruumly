@@ -11,7 +11,9 @@ public record OfferOptionInput(
     decimal? PriceAmount = null,
     string? PriceUnit = null,
     string? Notes = null,
-    int SortOrder = 0
+    // Nullable so an EXPLICIT 0 is distinguishable from "not provided"
+    // (omitted → the payload index is used).
+    int? SortOrder = null
 );
 
 /// <summary>POST /api/admin/leads/{id}/offers — create a draft offer.</summary>

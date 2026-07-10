@@ -170,6 +170,8 @@ public class OfferLoopTests
 
         var email = queue.Emails.Should().ContainSingle().Subject;
         email.To.Should().Be("cust@x.ee");
+        email.ReplyTo.Should().Be("info@ruumly.eu",
+            "the email invites the customer to reply — replies must not vanish into noreply@");
         email.TextBody.Should().Contain(db.Offers.Single().Token, "the email links to the public offer page");
         email.TextBody.Should().Contain("https://ruumly.eu/en/offer/", "link is localized to the offer language");
         email.TextBody.Should().Contain("Big Movers OÜ");
@@ -231,6 +233,41 @@ public class OfferLoopTests
 
         (await admin.UpdateOffer(offerId, new UpdateOfferRequest(CustomerNote: "nope")))
             .Should().BeOfType<ConflictObjectResult>();
+    }
+
+    [Fact]
+    public async Task UpdateOffer_ExplicitSortOrders_InclZero_DriveOrdering_AdminAndPublic()
+    {
+        var db    = TestDbContext.Create();
+        var lead  = MakeLead(db);
+        var admin = MakeAdmin(db, new CapturingEmailQueue());
+
+        var created = await admin.CreateOffer(lead.Id, new CreateOfferRequest());
+        var offerId = (Guid)Prop(created.Should().BeOfType<OkObjectResult>().Subject.Value!, "id")!;
+
+        // Payload order A,B,C — explicit sortOrders (including an explicit 0)
+        // must win over payload position.
+        var patch = await admin.UpdateOffer(offerId, new UpdateOfferRequest(Options:
+        [
+            new OfferOptionInput("A", SortOrder: 2),
+            new OfferOptionInput("B", SortOrder: 0),
+            new OfferOptionInput("C", SortOrder: 1),
+        ]));
+        var body = patch.Should().BeOfType<OkObjectResult>().Subject.Value!;
+
+        static List<object?> Titles(object dto) =>
+            ((System.Collections.IEnumerable)Prop(dto, "options")!)
+                .Cast<object>().Select(o => Prop(o, "title")).ToList();
+
+        // (explicit sortOrder: 0 must not be silently replaced by the payload index)
+        Titles(body).Should().Equal("B", "C", "A");
+
+        // The customer sees the same deterministic order on the public page.
+        (await admin.SendOffer(offerId)).Should().BeOfType<OkObjectResult>();
+        var result = await MakePublic(db, new CapturingEmailQueue())
+            .GetOffer(db.Offers.Single().Token);
+        Titles(result.Should().BeOfType<OkObjectResult>().Subject.Value!)
+            .Should().Equal("B", "C", "A");
     }
 
     // ─── Public GET ───────────────────────────────────────────────────────────

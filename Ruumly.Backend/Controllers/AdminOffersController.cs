@@ -131,9 +131,10 @@ public class AdminOffersController(
             // AddRange through the DbSet: the new options carry pre-generated
             // Guids, so nav-fixup discovery would track them as Modified (key
             // set ⇒ "existing"), not Added — and the update would then target
-            // rows that don't exist.
+            // rows that don't exist. Relationship fixup puts them into
+            // offer.Options for us (OfferId matches the tracked parent) —
+            // adding them to the nav manually as well would duplicate them.
             Db.OfferOptions.AddRange(options!);
-            offer.Options.AddRange(options!);
         }
 
         Audit("offer.updated", User.GetUserId().ToString(), offer.Id.ToString(),
@@ -166,10 +167,6 @@ public class AdminOffersController(
         if (string.IsNullOrWhiteSpace(lead.Email))
             return BadRequest(Error("The lead has no email address."));
 
-        var t    = EmailTranslations.For(offer.Language);
-        var link = FrontendUrl.Localized(config["AppUrl"], offer.Language, $"offer/{offer.Token}");
-        emailQueue.EnqueueEmail(lead.Email.Trim(), t.OfferSubject, BuildOfferEmailBody(t, offer, link));
-
         // Re-sends refresh SentAt but never regress a Viewed offer back to Sent.
         if (offer.Status == OfferStatus.Draft)
             offer.Status = OfferStatus.Sent;
@@ -182,7 +179,19 @@ public class AdminOffersController(
 
         Audit("offer.sent", User.GetUserId().ToString(), offer.Id.ToString(),
               $"Lead: {lead.Id}, options: {offer.Options.Count}");
+
+        // Save BEFORE enqueueing: Hangfire commits the job on its own
+        // connection, so a failed save here must not leave the customer
+        // holding a live /offer/{token} link to a still-Draft offer.
         await Db.SaveChangesAsync();
+
+        var t    = EmailTranslations.For(offer.Language);
+        var link = FrontendUrl.Localized(config["AppUrl"], offer.Language, $"offer/{offer.Token}");
+        // Reply-To ops inbox — the email explicitly invites the customer to
+        // reply with questions, and replies must not vanish into noreply@.
+        emailQueue.EnqueueEmail(
+            lead.Email.Trim(), t.OfferSubject, BuildOfferEmailBody(t, offer, link),
+            htmlBody: null, replyTo: OpsInbox);
 
         return Ok(MapOffer(offer));
     }
@@ -215,7 +224,7 @@ public class AdminOffersController(
 
         var sent    = new List<object>();
         var skipped = new List<object>();
-        var sentAny = false;
+        var emails  = new List<(string To, string Subject, string Body)>();
 
         foreach (var supplierId in requestedIds)
         {
@@ -246,9 +255,7 @@ public class AdminOffersController(
                 $"{t.OutreachAsk}\n\n" +
                 $"{t.OutreachSignature}";
 
-            emailQueue.EnqueueEmail(
-                supplier.ContactEmail.Trim(), t.OutreachSubject(category, route), emailBody,
-                htmlBody: null, replyTo: OpsInbox);
+            emails.Add((supplier.ContactEmail.Trim(), t.OutreachSubject(category, route), emailBody));
 
             var row = new ProviderOutreach
             {
@@ -261,17 +268,23 @@ public class AdminOffersController(
             };
             Db.ProviderOutreaches.Add(row);
             sent.Add(MapOutreach(row, supplier.Name));
-            sentAny = true;
         }
 
         // First outreach is the first admin touch: New → Contacted (stamps
         // ContactedAt). Leads further down the funnel keep their status.
-        if (sentAny && lead.Status == DemandLeadStatus.New)
+        if (emails.Count > 0 && lead.Status == DemandLeadStatus.New)
             DemandLeadLifecycle.MoveTo(lead, DemandLeadStatus.Contacted);
 
         Audit("lead.outreach_sent", User.GetUserId().ToString(), lead.Id.ToString(),
               $"Sent: {sent.Count}, skipped: {skipped.Count}");
+
+        // Save BEFORE enqueueing: Hangfire commits jobs on its own connection,
+        // so a failed save must not leave providers emailed with no
+        // ProviderOutreach rows (history lost, a retry would double-email).
         await Db.SaveChangesAsync();
+
+        foreach (var (to, subject, emailBody) in emails)
+            emailQueue.EnqueueEmail(to, subject, emailBody, htmlBody: null, replyTo: OpsInbox);
 
         return Ok(new { sent, skipped });
     }
@@ -391,8 +404,9 @@ public class AdminOffersController(
                 PriceAmount        = input.PriceAmount,
                 PriceUnit          = Clamp(input.PriceUnit, 40),
                 Notes              = Clamp(input.Notes, 2000),
-                // Explicit sort orders win; otherwise keep the payload order.
-                SortOrder          = input.SortOrder != 0 ? input.SortOrder : i,
+                // Explicit sort orders win (including an explicit 0);
+                // otherwise keep the payload order.
+                SortOrder          = input.SortOrder ?? i,
             });
         }
         return (options, null);
