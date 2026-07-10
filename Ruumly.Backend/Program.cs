@@ -353,33 +353,10 @@ builder.Services.AddCors(options =>
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
-builder.Services.Configure<ApiBehaviorOptions>(options =>
-{
-    options.InvalidModelStateResponseFactory = context =>
-    {
-        var errors = context.ModelState
-            .Where(e => e.Value?.Errors.Count > 0)
-            .SelectMany(e => e.Value!.Errors.Select(err => err.ErrorMessage))
-            .ToList();
-
-        var message = errors.Count > 0
-            ? string.Join(" ", errors)
-            : "Validation failed.";
-
-        return new BadRequestObjectResult(new
-        {
-            error            = "Bad Request",
-            message,
-            statusCode       = 400,
-            validationErrors = context.ModelState
-                .Where(e => e.Value?.Errors.Count > 0)
-                .ToDictionary(
-                    e => e.Key,
-                    e => e.Value!.Errors.Select(err => err.ErrorMessage).ToArray()
-                )
-        });
-    };
-});
+// The sanitized 400 factory is wired via AddControllers().AddSanitizedValidationErrors()
+// below — it MUST run after the framework's ApiBehaviorOptionsSetup (registered by
+// AddControllers), so it cannot be configured here (a Configure<ApiBehaviorOptions>
+// before AddControllers is silently overwritten by the framework default).
 
 // ─── API Versioning ───
 builder.Services.AddApiVersioning(options =>
@@ -499,6 +476,9 @@ builder.Services.AddHttpContextAccessor();
 
 // ─── Controllers ───
 builder.Services.AddControllers()
+    // Sanitized 400 body for validation + malformed-JSON failures. Chained here
+    // (after AddControllers) so it wins over the framework's leaky default factory.
+    .AddSanitizedValidationErrors()
     .AddJsonOptions(o =>
     {
         o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
