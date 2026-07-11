@@ -106,7 +106,7 @@ public class DisputesController(
                 entityType: "dispute");
 
         emailQueue.EnqueueEmail(
-            to:       "admin@ruumly.eu",
+            to:       await OpsInbox.ResolveAsync(db),
             subject:  $"New dispute ({type}) — {dispute.Subject}",
             textBody: $"From: {dispute.ContactEmail} ({role})\nBooking: {dispute.BookingId}\n"
                     + $"Amount claimed: {dispute.AmountClaimed?.ToString() ?? "—"}\n\n{dispute.Description}");

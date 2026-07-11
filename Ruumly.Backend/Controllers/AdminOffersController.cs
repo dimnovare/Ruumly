@@ -25,7 +25,11 @@ public class AdminOffersController(
     IBackgroundEmailQueue emailQueue,
     IConfiguration config) : AdminBaseController(db)
 {
-    private const string OpsInbox = "info@ruumly.eu";
+    // Reply-To on customer/provider correspondence — matches the info@ address
+    // printed in the email signatures (EmailTranslations). This is NOT the ops
+    // alert destination (see Helpers/OpsInbox); it's where a customer/provider
+    // reply should land, so it stays paired with the signature text.
+    private const string OpsReplyTo = OpsInbox.Fallback;
 
     // ─── Offers ───────────────────────────────────────────────────────────────
 
@@ -191,7 +195,7 @@ public class AdminOffersController(
         // reply with questions, and replies must not vanish into noreply@.
         emailQueue.EnqueueEmail(
             lead.Email.Trim(), t.OfferSubject, BuildOfferEmailBody(t, offer, link),
-            htmlBody: null, replyTo: OpsInbox);
+            htmlBody: null, replyTo: OpsReplyTo);
 
         return Ok(MapOffer(offer));
     }
@@ -284,7 +288,7 @@ public class AdminOffersController(
         await Db.SaveChangesAsync();
 
         foreach (var (to, subject, emailBody) in emails)
-            emailQueue.EnqueueEmail(to, subject, emailBody, htmlBody: null, replyTo: OpsInbox);
+            emailQueue.EnqueueEmail(to, subject, emailBody, htmlBody: null, replyTo: OpsReplyTo);
 
         return Ok(new { sent, skipped });
     }

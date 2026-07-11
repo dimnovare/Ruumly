@@ -22,6 +22,20 @@ public static class ServiceCategories
         category.ToString().ToLowerInvariant();
 
     /// <summary>
+    /// Normalizes a raw list of service-type slugs (trim + lowercase + dedupe)
+    /// and keeps only the ones that are valid <see cref="BySlug"/> categories.
+    /// Unknown slugs are silently dropped so a self-serve applicant's free-form
+    /// input can be persisted safely into Supplier.ServiceTypesJson without
+    /// rejecting the whole application.
+    /// </summary>
+    public static List<string> NormalizeAndValidate(IEnumerable<string>? raw) =>
+        (raw ?? [])
+            .Select(t => t?.Trim().ToLowerInvariant() ?? "")
+            .Where(t => t.Length > 0 && BySlug.ContainsKey(t))
+            .Distinct()
+            .ToList();
+
+    /// <summary>
     /// Tolerant parse of a Supplier.ServiceTypesJson value (JSON array of slugs).
     /// Null, empty, or malformed input yields an empty list — directory rows must
     /// never fail a request because one imported record carries bad JSON.

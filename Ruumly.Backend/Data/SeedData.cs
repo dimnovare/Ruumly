@@ -2425,6 +2425,7 @@ public static class SeedData
         {
             ["siteName"]            = ("Ruumly",         "Platform name"),
             ["siteEmail"]           = ("info@ruumly.eu", "Contact email"),
+            ["opsInbox"]            = ("info@ruumly.eu", "Internal ops/alerts inbox (concierge intake, routed-quote leads, disputes, offer-chosen)"),
             ["sitePhone"]           = ("+372 5649 7933", "Contact phone"),
             ["defaultLanguage"]     = ("et",             "Default UI language"),
             ["currency"]            = ("EUR",            "Currency code"),
