@@ -1,162 +1,139 @@
 # Ruumly — Strategic Roadmap
 
-> **One-line thesis:** The product is built. The company is not. The next phase is
-> revenue plumbing + supply + demand — not more features. Every engineering task
-> below earns its place only by removing revenue friction or helping close a partner.
+> **One-line thesis:** Ruumly is a **demand-first concierge for the "I'm moving" event**.
+> We sell *customers*, not the platform. The public front door is "tell us what you need →
+> we return 2–3 offers." Every task below earns its place only by growing qualified demand,
+> raising the supplier match rate, or proving the loop converts — not by adding features.
 
-Last updated: 2026-05. Owner: Dim. Status of platform: production-grade after 35
-audit passes — zero technical blockers. Focus area: commercial traction.
-
----
-
-## The honest market picture (from ChatGPT deep research + reality)
-
-- Estonia storage TAM ≈ €24–65M/yr. Baltics ≈ €84–216M/yr.
-- At 12% commission, realistic **Year-3 revenue ≈ €0.5–1.5M/yr**; blue-sky ceiling ≈ €2–4M/yr.
-- **€1M ARR is the inflection** from lifestyle business to venture-scale.
-- Ranked failure modes: (1) no partners, (2) low booking conversion, (3) partners
-  don't activate listings, (4) payments broken, (5) runway. Notice: **4 of the top 5
-  are commercial, not technical.**
-
-**Implication:** winning = supply (partners) × demand (bookings) × working payments.
-The platform is ready. Pour energy into the three levers, not the codebase.
+Last updated: 2026-07-11. Owner: Dim. Direction: the 2026-07 Sergei Anikin pivot
+(see `docs/superpowers/specs/2026-07-10-overhaul-design.md` and the `pivot-concierge-direction`
+memory). Status: the concierge loop, the 7-service event framing, the free provider directory
+(163 real Estonian providers), the admin offer/outreach workspace, and the SEO foundation are
+**shipped and live**. Focus now: **run the manual match loop and prove the funnel converts.**
 
 ---
 
-## Phase 0 — Turn on revenue (Week 1–2) · BLOCKER
+## Why the pivot (the honest market picture)
 
-Nothing else matters until money can move. The code is done; this is config + testing.
+Storage/moving is a **low-frequency, high-CAC** category. Selling a marketplace *to partners*
+fails: they join only for incremental profit ("bring me 5 paying clients and I'll join in 5
+minutes"), so partner-acquisition-first is pushing on a string. The leverage is **demand**:
+organize around the life event ("I'm moving" pulls in storage, movers, a van, a trailer,
+packing/boxes, cleaning, insurance — 7 services), capture the request, and hand suppliers
+*real customers who are searching right now*. Supply is then acquired by showing ROI, not by
+selling software. Geography: **Tallinn/Harjumaa first** for the ops loop (density before
+breadth); the directory itself is all-Estonia.
 
-- [ ] **Montonio go-live**: add production AccessKey/SecretKey to backend env (Railway).
-      `MontonioPaymentService.cs` and the webhook (`PaymentsController.Webhook`, JWT-verified)
-      are already implemented — this is credentials + testing, not building.
-- [ ] **End-to-end payment test**: real booking → Montonio checkout → webhook → Order →
-      Invoice → PayoutEntry. Verify the webhook signature path and the failure path.
-- [ ] **Payment fallback**: document a manual-invoice path (wire transfer) for partners
-      who want it, so a Montonio hiccup never blocks a booking.
-- [ ] **Refund/cancellation path**: confirm what happens to an Invoice/PayoutEntry when a
-      booking is cancelled. Add the admin action if missing.
-
-Acceptance: one real euro moves from a test customer to a test payout, end to end.
+**The business problem = the demand→match→offer loop.** Make it work, measure it honestly,
+then charge suppliers for delivered customers. That is the whole plan.
 
 ---
 
-## Phase 1 — Supply engine: first 10 Tallinn storage partners (Week 1–8, parallel)
+## North-star metrics (review weekly) — these ARE the funding story
 
-This is the bottleneck. Mostly founder outreach — but the platform can make "yes" easy.
+| Metric | What it proves | Source |
+|--------|----------------|--------|
+| **Qualified requests / week** | Demand exists and the funnel captures it | `GET /admin/leads/metrics` (concierge-scoped) |
+| **Supplier match rate** | We can actually serve the demand (supply coverage) | matched ÷ worked; `Unmatched` = explicit miss |
+| **Quote → booking conversion** | The offers convert to real deals | offer `chosen` ÷ leads `quoted` |
+| **Median time-to-first-response** | The manual loop is fast enough to win | first admin touch − request time |
 
-**Founder track (not code):**
-- [ ] Build a target list of 30–40 Tallinn storage operators (from the competitor map:
-      independents, mini-storage, container yards — not the big chains first).
-- [ ] Outreach goal: 2 signed partners/month. Lead with "free to list, you only pay when
-      you get a booking" (the 12% free tier is your wedge — cheaper than subscriptions at
-      their volume, per the unit-economics analysis).
-- [ ] White-glove the first 10: you create their listings for them.
-
-**Engineering support (only what removes onboarding friction):**
-- [ ] **Bulk listing import** — admin tool to add a partner's units from a pasted list /
-      CSV, so onboarding a 20-unit operator takes minutes not hours.
-- [ ] **Onboarding checklist** in the provider dashboard (photos, pricing, availability,
-      payout details) with a completion meter — drives listing activation (failure mode #3).
-- [ ] **Google Places prefill** on partner signup (address, hours, photos) — less typing,
-      higher completion.
-
-Acceptance: 10 active Tallinn partners with live, photographed, priced listings.
+NOT tracked as success: partner signups, feature count, marketplace GMV. If qualified
+requests are flat for 3–4 weeks, the problem is demand/GTM, not the product.
 
 ---
 
-## Phase 2 — Demand engine: conversion + content SEO (Week 4–16)
+## Phase 0 — Run the loop + honest metrics (NOW) · the only thing that matters
 
-Reviews UI, trust signals, and Schema.org already exist. The real lever is **content**,
-not a framework migration.
+The tooling shipped today. The job now is **operating it** and **trusting the numbers**.
 
-- [ ] **20 Tallinn storage content pages** (the highest-ROI SEO work): neighbourhood guides
-      ("Storage in Lasnamäe / Mustamäe / Kesklinn"), size guides ("how much storage for a
-      2-room flat"), use-case guides ("storing winter tyres / business stock / moving").
-      Localised ET/EN/RU. Internal-link them to city/listing pages.
-- [ ] **Conversion polish**: make reviews + verified-partner badges prominent on listing
-      cards and detail pages (the components exist — surface them harder).
-- [ ] **Empty-state demand capture**: the `DemandLead` capture is built — make sure every
-      empty search and every "no storage in your city yet" funnels into it, and that admin
-      acts on those leads (they're your supply-acquisition targets too).
-- [ ] **Social previews**: Cloudflare Worker is live — confirm Telegram/WhatsApp/FB previews
-      render for shared listing + city links.
-- [ ] **DEFER full Next.js SSR** until 10+ partners and real organic traffic exist. The
-      Worker already covers social/crawler previews; SSR is a 60–120h migration that only
-      amplifies traffic you don't have yet. Revisit at Phase 4.
+- [ ] **Daily match loop** (founder ops, `docs/CONCIERGE-OPS.md`): every concierge request →
+      review → outreach to matched providers → compile 2–3 options → send the offer → track
+      viewed/chosen. Target the median-first-response metric.
+- [x] Metrics scoped to the concierge funnel (Source="concierge"), match rate computed,
+      choose→converted wired, contact/response no longer polluted by Dismissed/Unmatched.
+- [ ] **First 10 real qualified requests worked end-to-end**, at least a few reaching an
+      offer sent and one chosen — the proof the loop converts.
+- [ ] **Seed demand**: point the directory-launch social posts + the SEO city hubs (now
+      indexable, re-indexing requested) at Tallinn moving/storage intent; watch GSC.
 
-Acceptance: visitor→booking rate measurable and trending up; organic storage queries
-landing on dedicated content pages.
+Acceptance: a real customer request → outreach → offer → chosen, with the metrics reflecting
+it truthfully.
 
 ---
 
-## Phase 3 — Partner stickiness: the value bundle (Month 3–6)
+## Phase 1 — Monetize the loop: charge for delivered customers (Week 2–8)
 
-Once partners exist, make them never want to leave. Ranked by impact/effort (ChatGPT's
-recommendation, which matches the EU context):
+The pivot's revenue model is **"you pay only for real customers,"** and it must become
+backable by facts from Phase 0.
 
-- [ ] **e-Invoicing (high impact)** — auto-generate compliant invoices; EU B2B increasingly
-      requires e-invoice formats (PEPPOL / national networks). Saves partners real admin time.
-- [ ] **Google Business Profile automation (high impact, low effort)** — sync partner
-      address/photos/hours to GBP. Boosts their local SEO → they attribute new renters to you.
-- [ ] **e-Signatures** — `ContractSigningModal.tsx` exists; finish/polish it into a real
-      online rental-agreement signing flow. Speeds onboarding and looks professional.
-- [ ] **Partner analytics** — bookings over time, occupancy, revenue, payout history. Makes
-      the subscription tiers worth paying for as volume grows.
+- [ ] **Prove ROI to a handful of directory providers**: "we sent you N requests near you
+      this week." The outreach emails (lead facts, zero customer PII — we broker the intro)
+      are already the paywall mechanism.
+- [ ] **Introduce a charge per delivered/chosen customer** (per-lead or success fee) once a
+      few suppliers have felt the value. Keep listing free; this is the concierge revenue line.
+- [ ] **Montonio go-live** for the *ops layer* (bookings that do happen still need payments):
+      production keys on Railway; end-to-end booking → checkout → webhook → Order → Invoice →
+      PayoutEntry; document a manual wire-transfer fallback. Payments are built — this is
+      credentials + testing, not building. (Marketplace booking is the demoted ops layer, not
+      the front door, but when a booking occurs the money must move.)
 
-Acceptance: a partner can run their whole storage admin (invoices, contracts, GBP, reports)
-through Ruumly — switching cost becomes high.
+Acceptance: at least one supplier paying for a Ruumly-delivered customer; ops-layer payments live.
 
 ---
 
-## Phase 4 — Scale (Month 6–12)
+## Phase 2 — Widen demand: SEO + content for the 7-service event (Week 4–16)
 
-Only after Estonia shows repeatable supply + demand + revenue.
+The SEO foundation was silently broken (client head never rendered in prod) and is now
+fixed + guarded; the ranking surfaces are the storage city hubs. Amplify from there.
 
-- [ ] **Next.js SSR migration** — now traffic justifies the 60–120h investment (plan already
-      written in `ruumly-nextjs-migration-plan.md`).
-- [ ] **Baltics expansion** — replicate the Tallinn playbook in Riga, then Vilnius. Flip the
-      Moving/Trailer toggles back on if/when those verticals are validated.
-- [ ] **Dynamic pricing** — simple occupancy-based suggestions for partners.
-- [ ] **Insurance white-label** — let customers add coverage at checkout (referral revenue).
+- [ ] **City-hub SEO** for all 7 services (storage/moving/trailer live; cleaning/packing/
+      vanrental/insurance being added), leading with the concierge CTA. Tallinn is the biggest
+      opportunity (116 impressions at pos 49 pre-fix; re-indexing requested).
+- [ ] **Event-intent content**: "moving checklist / 30-day plan", "moving to Tallinn",
+      neighbourhood + size guides — internal-linked home ↔ hubs ↔ categories ↔ request funnel.
+      ET ("laopindade rent / kolimine") + EN ("storage near me / self storage {city}"), the
+      queries GSC actually shows.
+- [ ] **Every empty state → the funnel**: no search result, no provider in a city → /request.
+- [ ] **ruumly-next (SSR) cutover** when traffic justifies it — it already server-renders the
+      per-page head (the durable version of today's client-side fix). Resolve the booking-flow
+      404 risk before flipping the domain (see `ruumly-next/MIGRATION.md`).
 
-Acceptance: €1M+ ARR trajectory; multi-country supply; venture-scale conversation possible.
+Acceptance: qualified-requests/week trending up, driven by organic event-intent traffic.
+
+---
+
+## Phase 3 — Deepen the loop (Month 2–5)
+
+Only after Phase 0 shows the loop converts.
+
+- [ ] **Supplier-side proof surface**: a lite "requests near you this week" view for claimed
+      providers — the ROI story made self-serve.
+- [ ] **Loop quality**: offer expiry + reminder, SMS notify on offer (Estonian numbers),
+      post-move review request feeding provider trust scores.
+- [ ] **Admin efficiency**: outreach reply auto-tracking, per-category templates, response-time
+      SLA surfacing, weekly metrics digest.
+- [ ] **Second city** (Tartu/Pärnu) once Tallinn/Harjumaa repeats.
+
+Acceptance: the loop runs with less founder time per request; a second geography starts.
 
 ---
 
 ## What NOT to do right now (anti-roadmap)
 
-- ❌ Don't migrate to Next.js before you have partners + traffic.
-- ❌ Don't build dynamic pricing / insurance / loans before 10 partners.
-- ❌ Don't add more service verticals (moving, trailer) until storage works — you just
-      focused to storage on purpose; respect that.
-- ❌ Don't run another deep technical audit. 35 passes is enough; the code is not the
-      problem. The next bug that matters is a commercial one.
-
----
-
-## Metrics dashboard (review weekly)
-
-| Metric | Now | Target (M6) | Target (M12) |
-|--------|-----|-------------|--------------|
-| Active partners (Tallinn) | ~1–3 | 10 | 25 |
-| Live, photographed listings | ? | 50+ | 150+ |
-| Bookings / month | ? | 30+ | 150+ |
-| MRR (commission + subs) | ~€0 | €500+ | €2–4k+ |
-| Visitor→booking rate | ? | 5% | 8% |
-| Organic sessions / month | ? | grow | grow |
-
-The three numbers that decide everything: **active partners, bookings/month, MRR.**
-If they're flat for 3 months, the problem is go-to-market, not the product.
+- ❌ Don't rebuild the marketplace as the front door — it stays a demoted, functional ops layer.
+- ❌ Don't chase partner self-serve signups as a success metric — supply follows demand ROI.
+- ❌ Don't add an 8th vertical or new country before Tallinn's loop converts.
+- ❌ Don't ship SEO changes without the production head-in-DOM gate (react-helmet-async taught
+      us: a green dev build is not proof the tags reach prod).
 
 ---
 
 ## Sequencing summary
 
-1. **Now:** Montonio live (Phase 0) — unblocks all revenue.
-2. **Now → M2:** Partner outreach + onboarding tooling (Phase 1) — the bottleneck.
-3. **M1 → M4:** Content SEO + conversion (Phase 2) — demand.
-4. **M3 → M6:** Partner value bundle (Phase 3) — retention.
-5. **M6+:** Next.js + Baltics + pricing (Phase 4) — scale.
+1. **Now:** run the match loop + honest concierge metrics (Phase 0) — the only real work.
+2. **Wk 2–8:** prove supplier ROI → charge per delivered customer; Montonio for the ops layer (Phase 1).
+3. **Wk 4–16:** 7-service SEO + event content to widen demand (Phase 2).
+4. **M2–5:** deepen the loop + a second city (Phase 3).
 
-Run Phases 0–2 in parallel; they don't conflict. Phase 0 is the only hard blocker.
+Phase 0 is the whole game right now. Everything else amplifies a loop that must first convert.

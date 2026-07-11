@@ -26,5 +26,8 @@ build deep partner self-serve features unless they improve the manual demand loo
 - Don't add new verticals or large features without checking docs/ROADMAP.md.
 
 ## Roadmap
-Authoritative plan: docs/ROADMAP.md. For "what's next", pick the top unchecked item in the
-current phase. Phase 0 (Montonio go-live) is the only hard revenue blocker.
+Authoritative plan: docs/ROADMAP.md (rewritten 2026-07 to the concierge direction). For
+"what's next", pick the top unchecked item in the current phase. Phase 0 = run the manual
+match loop + honest concierge-scoped metrics (the whole game right now); Montonio go-live is
+Phase 1 for the demoted ops/booking layer, not the front door. North-star = qualified
+requests/week, supplier match rate, quote→booking, median first response — not partner signups.
