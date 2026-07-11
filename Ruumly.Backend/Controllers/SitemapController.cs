@@ -15,6 +15,13 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
     private const string BaseUrl = "https://ruumly.eu";
     private static readonly string[] Langs = ["et", "en", "ru", "lv", "lt"];
 
+    // Directory-only service categories (no ListingType, no show-flag gate). Each
+    // slug doubles as its city-hub route segment (/cleaning/{city}, …). These map
+    // to the DemandLeadCategory members Cleaning/Packing/VanRental/Insurance and
+    // are the exact frontend CityPage vertical routes.
+    private static readonly string[] DirectoryOnlyCategoryHubs =
+        ["cleaning", "packing", "vanrental", "insurance"];
+
     // Emits five <url> entries (one per language prefix) for a given path.
     // path "" → {BaseUrl}/{lang} (no trailing slash) for the homepage.
     // path "/search" → {BaseUrl}/{lang}/search, etc.
@@ -228,6 +235,13 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
                 cityHubs.Add($"/moving/{slug}");
             if (showTrailer && services.Contains("trailer"))
                 cityHubs.Add($"/trailer/{slug}");
+            // Directory-only event categories (cleaning/packing/vanrental/
+            // insurance): no ListingType, no show-flag gate — emit the city hub
+            // /{category}/{slug} wherever a directory provider in that city
+            // actually advertises the service. The slug IS the route segment.
+            foreach (var svc in DirectoryOnlyCategoryHubs)
+                if (services.Contains(svc))
+                    cityHubs.Add($"/{svc}/{slug}");
         }
 
         foreach (var path in cityHubs)

@@ -182,6 +182,38 @@ public class NotifyInterestTests
     }
 
     [Fact]
+    public async Task ApplyProviderPublic_PersistsServiceTypesIntoServiceTypesJson_NormalizedAndValidated()
+    {
+        var db         = CreateDb();
+        var controller = MakeController(db);
+
+        var result = await controller.ApplyProviderPublic(new SupplierApplicationRequest
+        {
+            CompanyName  = "Clean & Move OÜ",
+            RegistryCode = "87654321",
+            ContactName  = "Applicant",
+            ContactEmail = "apply@example.com",
+            ContactPhone = "+3725550000",
+            // Mixed case + whitespace + a duplicate + an unknown slug.
+            ServiceTypes = ["Cleaning", " moving ", "cleaning", "teleportation"],
+            Language     = "en",
+        });
+
+        result.Should().BeOfType<OkObjectResult>();
+
+        var supplier = db.Suppliers.Single(s => s.ContactEmail == "apply@example.com");
+        supplier.ServiceTypesJson.Should().NotBeNull(
+            "structured service coverage must land in the queryable column, not only the Notes blob");
+
+        var slugs = System.Text.Json.JsonSerializer.Deserialize<List<string>>(supplier.ServiceTypesJson!)!;
+        slugs.Should().BeEquivalentTo(["cleaning", "moving"],
+            "slugs are normalized (trim + lowercase + dedupe) and unknown slugs are dropped");
+
+        // Backward compat: the human-readable Notes blob still carries the raw list.
+        supplier.Notes.Should().Contain("ServiceTypes:");
+    }
+
+    [Fact]
     public async Task NotifyInterest_DuplicateWithin7Days_IsSilentlyIgnored()
     {
         var db = CreateDb();

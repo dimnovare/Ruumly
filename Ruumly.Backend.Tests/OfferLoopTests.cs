@@ -376,6 +376,51 @@ public class OfferLoopTests
     }
 
     [Fact]
+    public async Task ChooseOption_AdvancesLeadToConverted_AndQuoteToBookingCountsIt()
+    {
+        var db    = TestDbContext.Create();
+        var lead  = MakeLead(db);                 // Source="concierge", Status New
+        var offer = await MakeSentOffer(db, lead);
+        var pub   = MakePublic(db, new CapturingEmailQueue());
+
+        (await pub.ChooseOption(offer.Token, new ChooseOptionRequest(offer.Options[0].Id)))
+            .Should().BeOfType<OkObjectResult>();
+
+        var storedLead = db.DemandLeads.Single();
+        storedLead.Status.Should().Be(DemandLeadStatus.Converted,
+            "choosing an option IS booking for the concierge business — the quote→booking north-star must count it");
+        storedLead.ContactedAt.Should().NotBeNull("Converted is genuine contact — first touch is stamped");
+
+        // Idempotent: re-choosing the same option keeps it Converted (no regression,
+        // no double advance).
+        (await pub.ChooseOption(offer.Token, new ChooseOptionRequest(offer.Options[0].Id)))
+            .Should().BeOfType<OkObjectResult>();
+        db.DemandLeads.Single().Status.Should().Be(DemandLeadStatus.Converted);
+
+        // The metric now sees a booking: bookingRate30d = 1 Converted / 1 quoted-or-beyond.
+        var metricsBody = (await MakeAdminLeads(db).GetLeadMetrics())
+            .Should().BeOfType<OkObjectResult>().Subject.Value!;
+        Prop(metricsBody, "bookingRate30d").Should().Be(1d,
+            "a chosen offer converts the lead, so quote→booking conversion counts it");
+    }
+
+    private static AdminLeadsController MakeAdminLeads(RuumlyDbContext db) =>
+        new(db)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(
+                    [
+                        new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+                        new Claim(ClaimTypes.Role, "Admin"),
+                    ], "test")),
+                },
+            },
+        };
+
+    [Fact]
     public async Task ChooseOption_UnknownOptionOrToken_Fails()
     {
         var db    = TestDbContext.Create();

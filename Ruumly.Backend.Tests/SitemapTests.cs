@@ -229,6 +229,30 @@ public class SitemapTests
             "no directory provider in this city advertises the trailer vertical");
     }
 
+    [Fact]
+    public async Task Sitemap_DirectoryCity_EmitsNewEventCategoryHubs()
+    {
+        // A directory provider advertising the new directory-only categories
+        // (cleaning + insurance) must surface /cleaning/{city} and /insurance/{city}
+        // hubs — and never invent hubs for categories it doesn't advertise.
+        var body = await RenderSitemapWithDirectoryLocationAsync(
+            "Tallinn", serviceTypesJson: """["cleaning","insurance"]""");
+
+        foreach (var lang in Langs)
+        {
+            body.Should().Contain($"<loc>{BaseUrl}/{lang}/cleaning/tallinn</loc>",
+                "a directory provider advertising cleaning yields a /cleaning/{city} hub");
+            body.Should().Contain(
+                $"<xhtml:link rel=\"alternate\" hreflang=\"{lang}\" href=\"{BaseUrl}/{lang}/cleaning/tallinn\"/>");
+        }
+        body.Should().Contain($"<loc>{BaseUrl}/et/insurance/tallinn</loc>");
+        body.Should().NotContain($"<loc>{BaseUrl}/et/packing/tallinn</loc>",
+            "no provider in this city advertises packing");
+        body.Should().NotContain($"<loc>{BaseUrl}/et/vanrental/tallinn</loc>");
+        body.Should().NotContain($"<loc>{BaseUrl}/et/storage/tallinn</loc>",
+            "an explicit service list without warehouse suppresses the storage anchor");
+    }
+
     private static async Task<string> RenderSitemapWithBlogAsync(string? enabled, string? articlesJson)
     {
         var db = TestDbContext.Create();

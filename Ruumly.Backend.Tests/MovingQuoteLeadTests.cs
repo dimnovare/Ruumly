@@ -114,11 +114,13 @@ public class MovingQuoteLeadTests
         lead.Category.Should().Be(DemandLeadCategory.Moving);
         lead.Status.Should().Be(DemandLeadStatus.New);
         lead.Email.Should().Be("cust@x.ee");
+        lead.Source.Should().Be("routed", "a routed quote is tagged so it never pollutes the concierge funnel metrics");
 
-        // The owning provider gets an in-app notification, partner + admin get email.
+        // The owning provider gets an in-app notification, partner + ops get email.
         notif.Created.Should().ContainSingle(n => n.UserId == provider.Id);
         queue.Emails.Should().Contain(e => e.To == supplier.ContactEmail);
-        queue.Emails.Should().Contain(e => e.To == "admin@ruumly.eu");
+        queue.Emails.Should().Contain(e => e.To == "info@ruumly.eu",
+            "routed-quote alerts go to the unified ops inbox (opsInbox, default info@)");
     }
 
     [Fact]

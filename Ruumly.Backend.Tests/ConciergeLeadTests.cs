@@ -102,8 +102,8 @@ public class ConciergeLeadTests
         lead.Query.Should().Contain("Tallinn");
         lead.Query.Should().Contain("2026-08-15");
 
-        queue.Emails.Should().ContainSingle(e => e.To == "admin@ruumly.eu",
-            "an unrouted concierge lead is worked by the admin team");
+        queue.Emails.Should().ContainSingle(e => e.To == "info@ruumly.eu",
+            "an unrouted concierge lead alerts the unified ops inbox (opsInbox, default info@)");
     }
 
     [Fact]
@@ -436,6 +436,62 @@ public class ConciergeLeadTests
         Prop(items[1], "listingId").Should().Be(tartuL.Id);
     }
 
+    // ─── Queue filters + needs-response (SLA) view ────────────────────────────
+
+    private static (int Total, List<object> Items) ReadLeads(IActionResult result)
+    {
+        var v     = result.Should().BeOfType<OkObjectResult>().Subject.Value!;
+        var total = (int)v.GetType().GetProperty("total")!.GetValue(v)!;
+        var items = ((System.Collections.IEnumerable)v.GetType().GetProperty("items")!.GetValue(v)!)
+            .Cast<object>().ToList();
+        return (total, items);
+    }
+
+    [Fact]
+    public async Task GetLeads_FiltersBySourceCategoryCity_AndNeedsResponseOrdersOldestUncontactedFirst()
+    {
+        var db  = TestDbContext.Create();
+        var now = DateTime.UtcNow;
+
+        DemandLead Lead(string source, DemandLeadCategory cat, string city,
+            DemandLeadStatus status, DateTime created, DateTime? contactedAt = null) => new()
+        {
+            Id = Guid.NewGuid(), Email = "c@x.ee", City = city, Category = cat,
+            Language = "et", Source = source, Status = status,
+            CreatedAt = created, ContactedAt = contactedAt,
+        };
+
+        var oldNew    = Lead("concierge", DemandLeadCategory.Moving,   "Tallinn", DemandLeadStatus.New,       now.AddDays(-5));
+        var newNew    = Lead("concierge", DemandLeadCategory.Cleaning, "Tartu",   DemandLeadStatus.New,       now.AddDays(-1));
+        var contacted = Lead("concierge", DemandLeadCategory.Moving,   "Tallinn", DemandLeadStatus.Contacted, now.AddDays(-3), now.AddDays(-3).AddMinutes(30));
+        var routed    = Lead("routed",    DemandLeadCategory.Moving,   "Tallinn", DemandLeadStatus.New,       now.AddDays(-2));
+        db.DemandLeads.AddRange(oldNew, newNew, contacted, routed);
+        await db.SaveChangesAsync();
+
+        var admin = MakeAdmin(db);
+
+        // source filter (case-insensitive).
+        ReadLeads(await admin.GetLeads(status: null, source: "CONCIERGE", category: null, city: null))
+            .Total.Should().Be(3, "the routed lead is a different channel");
+        ReadLeads(await admin.GetLeads(status: null, source: "routed", category: null, city: null))
+            .Total.Should().Be(1);
+
+        // category filter (slug, case-insensitive).
+        ReadLeads(await admin.GetLeads(status: null, source: null, category: "Cleaning", city: null))
+            .Total.Should().Be(1, "only the Tartu cleaning lead matches");
+
+        // city filter (case-insensitive).
+        ReadLeads(await admin.GetLeads(status: null, source: null, category: null, city: "tartu"))
+            .Total.Should().Be(1);
+
+        // needsResponse: only New + ContactedAt==null, oldest-first, across all sources.
+        var (needsTotal, needsItems) = ReadLeads(
+            await admin.GetLeads(status: null, source: null, category: null, city: null, needsResponse: true));
+        needsTotal.Should().Be(3, "the Contacted lead is excluded from the SLA view");
+        Prop(needsItems[0], "Id").Should().Be(oldNew.Id, "the oldest un-worked request surfaces first");
+        Prop(needsItems[^1], "Id").Should().Be(newNew.Id, "the newest un-worked request is last");
+    }
+
     // ─── Ops metrics ──────────────────────────────────────────────────────────
 
     [Fact]
@@ -449,6 +505,9 @@ public class ConciergeLeadTests
         {
             Id = Guid.NewGuid(), Email = "c@x.ee", City = "Tallinn",
             Category = DemandLeadCategory.Any, Language = "et",
+            // Source == "concierge" — the north-star funnel only counts the demand
+            // channel; other sources are excluded (see the isolation test below).
+            Source = "concierge",
             CreatedAt = createdAt, Status = status,
             ContactedAt = contactedAt, QuotedPrice = quotedPrice,
         };
@@ -478,6 +537,14 @@ public class ConciergeLeadTests
         Prop(body, "bookingRate30d").Should().Be(0.5);
         // Median of [10, 30, 90] minutes.
         Prop(body, "medianFirstResponseMinutes").Should().Be(30);
+
+        // Match rate: base = leads that left New (Contacted, Quoted, Converted = 3).
+        // Matched = Quoted + Converted (2); the Contacted lead has no offer/replied
+        // outreach so it's not yet a match.
+        var matchRate = Prop(body, "matchRate30d")!;
+        Prop(matchRate, "matched").Should().Be(2);
+        Prop(matchRate, "total").Should().Be(3);
+        ((double)Prop(matchRate, "rate")!).Should().BeApproximately(2.0 / 3.0, 1e-9);
     }
 
     [Fact]
@@ -487,7 +554,7 @@ public class ConciergeLeadTests
         db.DemandLeads.Add(new DemandLead
         {
             Id = Guid.NewGuid(), Email = "c@x.ee", City = "Tallinn",
-            Category = DemandLeadCategory.Any, Language = "et",
+            Category = DemandLeadCategory.Any, Language = "et", Source = "concierge",
             CreatedAt = DateTime.UtcNow, Status = DemandLeadStatus.New,
         });
         await db.SaveChangesAsync();
@@ -497,5 +564,126 @@ public class ConciergeLeadTests
 
         Prop(body, "medianFirstResponseMinutes").Should().BeNull();
         Prop(body, "contactRate30d").Should().Be(0d);
+    }
+
+    // ─── Metrics honesty (concierge scoping + response/contact pollution) ──────
+
+    [Fact]
+    public async Task GetLeadMetrics_OnlyCountsConciergeSource_ExcludesRoutedAndOther()
+    {
+        var db  = TestDbContext.Create();
+        var now = DateTime.UtcNow;
+
+        DemandLead Lead(string? source, DemandLeadStatus status) => new()
+        {
+            Id = Guid.NewGuid(), Email = "c@x.ee", City = "Tallinn",
+            Category = DemandLeadCategory.Any, Language = "et", Source = source,
+            CreatedAt = now.AddDays(-1), Status = status,
+            ContactedAt = status != DemandLeadStatus.New ? now.AddDays(-1).AddMinutes(20) : null,
+        };
+
+        db.DemandLeads.AddRange(
+            Lead("concierge", DemandLeadStatus.New),        // the only demand-funnel request
+            Lead("routed",    DemandLeadStatus.Converted),  // partner-direct — must NOT count
+            Lead("notify-interest", DemandLeadStatus.Quoted),// legacy capture — must NOT count
+            Lead(null,        DemandLeadStatus.Converted));  // untagged legacy — must NOT count
+        await db.SaveChangesAsync();
+
+        var body = (await MakeAdmin(db).GetLeadMetrics())
+            .Should().BeOfType<OkObjectResult>().Subject.Value!;
+
+        Prop(body, "requestsThisWeek").Should().Be(1, "only the concierge lead is a demand-funnel request");
+        Prop(body, "requests30d").Should().Be(1);
+        // The routed/notify/null Converted+Quoted leads must not inflate any rate.
+        Prop(body, "quoteRate30d").Should().Be(0d);
+        Prop(body, "bookingRate30d").Should().Be(0d);
+        var matchRate = Prop(body, "matchRate30d")!;
+        Prop(matchRate, "total").Should().Be(0, "the lone concierge lead is still New — nothing has left New");
+    }
+
+    [Fact]
+    public async Task GetLeadMetrics_DismissedAndUnmatched_DoNotCountAsContactOrResponse()
+    {
+        var db  = TestDbContext.Create();
+        var now = DateTime.UtcNow;
+
+        // Two concierge leads closed WITHOUT genuine contact. The lifecycle must
+        // not stamp ContactedAt for these, and the metrics must not treat them as
+        // contacted or sample them for response time (else dismissing spam makes
+        // the ops team look instant and inflates the contact rate).
+        var dismissed = new DemandLead
+        {
+            Id = Guid.NewGuid(), Email = "spam@x.ee", City = "Tallinn",
+            Category = DemandLeadCategory.Any, Language = "et", Source = "concierge",
+            CreatedAt = now.AddDays(-1), Status = DemandLeadStatus.New,
+        };
+        var unmatched = new DemandLead
+        {
+            Id = Guid.NewGuid(), Email = "nomatch@x.ee", City = "Tallinn",
+            Category = DemandLeadCategory.Any, Language = "et", Source = "concierge",
+            CreatedAt = now.AddDays(-2), Status = DemandLeadStatus.New,
+        };
+        db.DemandLeads.AddRange(dismissed, unmatched);
+        await db.SaveChangesAsync();
+
+        var admin = MakeAdmin(db);
+        (await admin.UpdateLead(dismissed.Id, new UpdateLeadRequest("dismissed"))).Should().BeOfType<OkObjectResult>();
+        (await admin.UpdateLead(unmatched.Id, new UpdateLeadRequest("unmatched"))).Should().BeOfType<OkObjectResult>();
+
+        db.DemandLeads.Single(l => l.Id == dismissed.Id).ContactedAt.Should().BeNull(
+            "dismissing a lead is not genuine customer contact");
+        db.DemandLeads.Single(l => l.Id == unmatched.Id).ContactedAt.Should().BeNull(
+            "an unmatched lead was never actually contacted");
+
+        var body = (await admin.GetLeadMetrics()).Should().BeOfType<OkObjectResult>().Subject.Value!;
+        Prop(body, "requests30d").Should().Be(2);
+        Prop(body, "contactRate30d").Should().Be(0d, "no lead was genuinely contacted");
+        Prop(body, "medianFirstResponseMinutes").Should().BeNull(
+            "closures must never enter the first-response sample");
+    }
+
+    [Fact]
+    public async Task GetLeadMetrics_MatchRate_CountsOfferAndRepliedOutreachSignals()
+    {
+        var db  = TestDbContext.Create();
+        var now = DateTime.UtcNow;
+
+        DemandLead Lead(DemandLeadStatus status) => new()
+        {
+            Id = Guid.NewGuid(), Email = "c@x.ee", City = "Tallinn",
+            Category = DemandLeadCategory.Any, Language = "et", Source = "concierge",
+            CreatedAt = now.AddDays(-3), Status = status,
+            ContactedAt = now.AddDays(-3).AddMinutes(15),
+        };
+
+        // Contacted lead WITH a live offer → matched via the offer signal.
+        var withOffer   = Lead(DemandLeadStatus.Contacted);
+        // Contacted lead WITH a replied outreach → matched via the outreach signal.
+        var withReply   = Lead(DemandLeadStatus.Contacted);
+        // Contacted lead with neither → a genuine miss (worked, not matched).
+        var withNothing = Lead(DemandLeadStatus.Contacted);
+        // Explicit miss.
+        var unmatched   = Lead(DemandLeadStatus.Unmatched);
+        db.DemandLeads.AddRange(withOffer, withReply, withNothing, unmatched);
+
+        db.Offers.Add(new Offer
+        {
+            Id = Guid.NewGuid(), DemandLeadId = withOffer.Id, Token = "tok-1",
+            Status = OfferStatus.Sent, Language = "et",
+        });
+        db.ProviderOutreaches.Add(new ProviderOutreach
+        {
+            Id = Guid.NewGuid(), DemandLeadId = withReply.Id, SupplierId = Guid.NewGuid(),
+            SentTo = "p@x.ee", Status = ProviderOutreachStatus.Replied,
+        });
+        await db.SaveChangesAsync();
+
+        var body = (await MakeAdmin(db).GetLeadMetrics())
+            .Should().BeOfType<OkObjectResult>().Subject.Value!;
+
+        var matchRate = Prop(body, "matchRate30d")!;
+        Prop(matchRate, "total").Should().Be(4, "all four leads left New");
+        Prop(matchRate, "matched").Should().Be(2, "offer + replied-outreach signals count; the bare Contacted and Unmatched do not");
+        ((double)Prop(matchRate, "rate")!).Should().Be(0.5);
     }
 }
