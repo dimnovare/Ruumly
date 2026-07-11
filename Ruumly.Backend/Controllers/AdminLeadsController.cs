@@ -10,9 +10,23 @@ namespace Ruumly.Backend.Controllers;
 [Route("api/admin")]
 public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
 {
+    /// <summary>
+    /// Admin lead queue. All filters are optional and case-insensitive
+    /// (null/blank = ignore): <paramref name="status"/>, <paramref name="source"/>
+    /// (e.g. "concierge" for the demand funnel, "routed"/"notify-interest" for the
+    /// rest), <paramref name="category"/> (a ServiceCategories slug or "any"), and
+    /// <paramref name="city"/>. Default order is newest-first; set
+    /// <paramref name="needsResponse"/>=true to get the SLA view — only untouched
+    /// New leads (ContactedAt == null), oldest-first, so the oldest un-worked
+    /// request is at the top of the queue.
+    /// </summary>
     [HttpGet("leads")]
     public async Task<IActionResult> GetLeads(
-        [FromQuery] string? status,
+        [FromQuery] string? status = null,
+        [FromQuery] string? source = null,
+        [FromQuery] string? category = null,
+        [FromQuery] string? city = null,
+        [FromQuery] bool needsResponse = false,
         [FromQuery] int page = 1,
         [FromQuery] int limit = 50)
     {
@@ -27,9 +41,42 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
             query = query.Where(d => d.Status == parsedStatus);
         }
 
+        if (!string.IsNullOrWhiteSpace(source))
+        {
+            // ToLower (not ILike) so the same expression runs on Npgsql and the
+            // InMemory test provider.
+            var src = source.Trim().ToLower();
+            query = query.Where(d => d.Source != null && d.Source.ToLower() == src);
+        }
+
+        // Category is an enum column — resolve the slug ("any" or a
+        // ServiceCategories slug) to the enum. An unknown slug is ignored (no
+        // filter), matching the null=ignore contract of the other params.
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            var slug = category.Trim().ToLowerInvariant();
+            DemandLeadCategory? cat = slug == "any"
+                ? DemandLeadCategory.Any
+                : ServiceCategories.BySlug.TryGetValue(slug, out var c) ? c : null;
+            if (cat is { } cc)
+                query = query.Where(d => d.Category == cc);
+        }
+
+        if (!string.IsNullOrWhiteSpace(city))
+        {
+            var cityLower = city.Trim().ToLower();
+            query = query.Where(d => d.City.ToLower() == cityLower);
+        }
+
+        // SLA / needs-response view: only genuinely un-worked leads, oldest first.
+        if (needsResponse)
+            query = query.Where(d => d.Status == DemandLeadStatus.New && d.ContactedAt == null);
+
         var total = await query.CountAsync();
-        var leads = await query
-            .OrderByDescending(d => d.CreatedAt)
+        var ordered = needsResponse
+            ? query.OrderBy(d => d.CreatedAt)            // oldest uncontacted first
+            : query.OrderByDescending(d => d.CreatedAt); // newest first (default)
+        var leads = await ordered
             .Skip((page - 1) * limit)
             .Take(limit)
             .Select(d => new
@@ -312,44 +359,95 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
     }
 
     /// <summary>
-    /// Concierge ops funnel over DemandLeads: request volume, contact/quote/
-    /// booking rates and median first-response time for the last 30 days.
-    /// Rates computed in memory over the 30-day slice — lead volumes are tiny
-    /// and this keeps the math identical on Npgsql and the InMemory provider.
+    /// Concierge north-star funnel — the FUNDING STORY, computed honestly over
+    /// the demand funnel ONLY (Source == "concierge"). Partner-direct, routed-
+    /// quote and notify-interest leads are a different channel and must never
+    /// pollute requests-per-week or any funnel rate. Rates are computed in memory
+    /// over the 30-day slice — lead volumes are tiny and this keeps the math
+    /// identical on Npgsql and the InMemory provider.
+    ///
+    /// The four named north-stars: requestsThisWeek (qualified requests/week),
+    /// matchRate30d (supplier match rate), quoteRate30d/bookingRate30d
+    /// (quote→booking conversion) and medianFirstResponseMinutes (time-to-first-
+    /// response). contactRate30d/medianFirstResponseMinutes count only GENUINE
+    /// contact (Contacted/Quoted/Converted with a real ContactedAt) — dismissed
+    /// and unmatched leads are closures, not contact, so they can't make the ops
+    /// team look artificially fast or inflate the contact rate.
     /// </summary>
     [HttpGet("leads/metrics")]
     public async Task<IActionResult> GetLeadMetrics()
     {
+        const string ConciergeSource = "concierge";
         var now      = DateTime.UtcNow;
         var weekAgo  = now.AddDays(-7);
         var monthAgo = now.AddDays(-30);
 
-        var requestsThisWeek = await Db.DemandLeads.CountAsync(d => d.CreatedAt >= weekAgo);
+        var requestsThisWeek = await Db.DemandLeads
+            .CountAsync(d => d.Source == ConciergeSource && d.CreatedAt >= weekAgo);
 
         var last30 = await Db.DemandLeads
-            .Where(d => d.CreatedAt >= monthAgo)
-            .Select(d => new { d.CreatedAt, d.Status, d.ContactedAt, d.RespondedAt, d.QuotedPrice })
+            .Where(d => d.Source == ConciergeSource && d.CreatedAt >= monthAgo)
+            .Select(d => new { d.Id, d.CreatedAt, d.Status, d.ContactedAt, d.RespondedAt, d.QuotedPrice })
             .ToListAsync();
 
         var requests30d    = last30.Count;
-        var contacted      = last30.Count(d => d.ContactedAt != null || d.Status != DemandLeadStatus.New);
+        // Genuine contact only — a real ContactedAt on a forward-moving status.
+        var contactedLeads = last30
+            .Where(d => DemandLeadLifecycle.IsGenuineContact(d.Status) && d.ContactedAt != null)
+            .ToList();
+        var contacted      = contactedLeads.Count;
         var quotedOrBeyond = last30.Count(d => d.QuotedPrice != null
                                             || d.Status == DemandLeadStatus.Quoted
                                             || d.Status == DemandLeadStatus.Converted);
         var converted      = last30.Count(d => d.Status == DemandLeadStatus.Converted);
 
-        // Median minutes from creation to first touch (admin ContactedAt or
-        // partner RespondedAt, whichever came first). Null when no lead in the
-        // window has been touched yet.
-        var responseMinutes = last30
-            .Where(d => d.ContactedAt != null || d.RespondedAt != null)
+        // ── Supplier match rate (a NAMED north-star) ─────────────────────────
+        // matched  = a concierge request the ops team could actually serve: it
+        //            reached Quoted/Converted, OR carries a live offer
+        //            (Sent/Viewed/Chosen), OR a provider replied to outreach.
+        // total    = concierge requests in the window that have LEFT New (i.e.
+        //            the ops team started working them) — an untouched New lead
+        //            is not yet a match or a miss, so it's excluded from the base.
+        // Unmatched is the explicit miss (worked, but no partner could serve it).
+        var leftNew = last30.Where(d => d.Status != DemandLeadStatus.New).ToList();
+        var matchBase = leftNew.Count;
+        int matched = 0;
+        if (matchBase > 0)
+        {
+            var leftNewIds = leftNew.Select(d => d.Id).ToList();
+            var offerMatchedIds = await Db.Offers
+                .Where(o => leftNewIds.Contains(o.DemandLeadId)
+                         && (o.Status == OfferStatus.Sent
+                          || o.Status == OfferStatus.Viewed
+                          || o.Status == OfferStatus.Chosen))
+                .Select(o => o.DemandLeadId)
+                .Distinct()
+                .ToListAsync();
+            var repliedOutreachIds = await Db.ProviderOutreaches
+                .Where(o => leftNewIds.Contains(o.DemandLeadId)
+                         && o.Status == ProviderOutreachStatus.Replied)
+                .Select(o => o.DemandLeadId)
+                .Distinct()
+                .ToListAsync();
+            var matchSignalIds = offerMatchedIds.Concat(repliedOutreachIds).ToHashSet();
+
+            matched = leftNew.Count(d =>
+                d.Status == DemandLeadStatus.Quoted
+                || d.Status == DemandLeadStatus.Converted
+                || matchSignalIds.Contains(d.Id));
+        }
+
+        // Median minutes from creation to first genuine touch (admin ContactedAt,
+        // or an earlier partner RespondedAt). Sample is the genuine-contact set —
+        // never dismissed/unmatched closures. Null when nothing was contacted yet.
+        var responseMinutes = contactedLeads
             .Select(d =>
             {
-                var first = d.ContactedAt is { } c && d.RespondedAt is { } r
-                    ? (c < r ? c : r)
-                    : (d.ContactedAt ?? d.RespondedAt)!.Value;
+                var contactedAt = d.ContactedAt!.Value;
+                var first = d.RespondedAt is { } r && r < contactedAt ? r : contactedAt;
                 return (first - d.CreatedAt).TotalMinutes;
             })
+            .Where(m => m >= 0)
             .OrderBy(m => m)
             .ToList();
 
@@ -370,6 +468,14 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
             contactRate30d = requests30d == 0 ? 0d : contacted / (double)requests30d,
             quoteRate30d   = requests30d == 0 ? 0d : quotedOrBeyond / (double)requests30d,
             bookingRate30d = converted / (double)Math.Max(1, quotedOrBeyond),
+            // Supplier match rate: {matched, total, rate}. total = concierge
+            // requests that left New; rate = matched / total (0 when total is 0).
+            matchRate30d = new
+            {
+                matched,
+                total = matchBase,
+                rate  = matchBase == 0 ? 0d : matched / (double)matchBase,
+            },
             medianFirstResponseMinutes,
         });
     }
