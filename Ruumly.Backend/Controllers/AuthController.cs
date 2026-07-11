@@ -1,8 +1,10 @@
+using System.Text.Json;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Ruumly.Backend.Constants;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.Filters;
@@ -275,6 +277,10 @@ public class AuthController(
             ContactEmail  = request.ContactEmail,
             ContactPhone  = request.ContactPhone,
             Notes         = BuildNotes(request),
+            // Structured service coverage — persisted into the queryable column
+            // (used by directory match/sitemap) instead of only a free-text Notes
+            // blob. Normalized + validated against ServiceCategories.
+            ServiceTypesJson = SerializeServiceTypes(request.ServiceTypes),
             IsActive      = false,
             CreatedAt     = DateTime.UtcNow,
             UpdatedAt     = DateTime.UtcNow,
@@ -491,10 +497,23 @@ public class AuthController(
         ContactEmail = r.ContactEmail,
         ContactPhone = r.ContactPhone,
         Notes        = BuildNotes(r),
+        ServiceTypesJson = SerializeServiceTypes(r.ServiceTypes),
         IsActive     = false,
         CreatedAt    = DateTime.UtcNow,
         UpdatedAt    = DateTime.UtcNow,
     };
+
+    /// <summary>
+    /// Normalizes a self-serve applicant's ServiceTypes into the canonical slug
+    /// set and serializes it for Supplier.ServiceTypesJson (a JSON array of
+    /// slugs, exactly the shape the directory import writes). Unknown slugs are
+    /// dropped; an empty result stores null so nothing invalid ever persists.
+    /// </summary>
+    private static string? SerializeServiceTypes(string[]? serviceTypes)
+    {
+        var normalized = ServiceCategories.NormalizeAndValidate(serviceTypes);
+        return normalized.Count == 0 ? null : JsonSerializer.Serialize(normalized);
+    }
 
     private static IntegrationSettings CreateIntegrationSettings(Guid supplierId) => new()
     {
@@ -698,6 +717,10 @@ public class AuthController(
                 Language  = body.Language ?? "et",
                 CreatedAt = DateTime.UtcNow,
                 Status    = DemandLeadStatus.New,
+                // Legacy "notify me" demand capture — NOT the concierge funnel.
+                // Tagged so the north-star metrics (Source=="concierge") isolate
+                // cleanly and this channel never inflates requests-per-week.
+                Source    = "notify-interest",
             };
 
             db.DemandLeads.Add(lead);

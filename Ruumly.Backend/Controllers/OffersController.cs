@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Constants;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
+using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
@@ -24,8 +25,6 @@ public class OffersController(
     RuumlyDbContext db,
     IBackgroundEmailQueue emailQueue) : ControllerBase
 {
-    private const string OpsInbox = "info@ruumly.eu";
-
     /// <summary>
     /// Sanitized offer for the public page. The first successful GET of a
     /// Sent offer marks it Viewed (read receipt for the admin workspace).
@@ -80,17 +79,27 @@ public class OffersController(
         offer.Status         = OfferStatus.Chosen;
         offer.ChosenAt       = DateTime.UtcNow;
         offer.ChosenOptionId = option.Id;
+
+        // For the concierge business "chosen" == "booked": advance the demand
+        // lead to Converted so the quote→booking north-star counts it (it used to
+        // under-count — the offer was Chosen but the lead never moved). Idempotent
+        // because a re-choose short-circuits above on Status == Chosen, so this
+        // runs exactly once. Never demote an already-converted lead.
+        var lead = offer.DemandLead;
+        if (lead is not null && lead.Status != DemandLeadStatus.Converted)
+            DemandLeadLifecycle.MoveTo(lead, DemandLeadStatus.Converted);
+
         await db.SaveChangesAsync();
 
         // offer_chosen_admin_notification — internal ops inbox, Estonian only
         // (composed inline like the other admin-facing ops emails).
-        var lead  = offer.DemandLead;
+        var opsInbox = await OpsInbox.ResolveAsync(db);
         var price = option.PriceAmount is { } p
             ? $" — {p.ToString("0.##", CultureInfo.InvariantCulture)} €" +
               (string.IsNullOrWhiteSpace(option.PriceUnit) ? "" : $" / {option.PriceUnit}")
             : "";
         emailQueue.EnqueueEmail(
-            to:      OpsInbox,
+            to:      opsInbox,
             subject: $"Ruumly — klient valis pakkumise ({lead?.City})",
             textBody:
                 $"Klient valis pakkumise.\n\n" +

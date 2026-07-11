@@ -98,6 +98,10 @@ public class SupportController(
             Query      = req.Message is { Length: > 500 } longMsg ? longMsg[..500] : req.Message,
             Language   = lang,
             Status     = DemandLeadStatus.New,
+            // Routed to a specific partner from a listing — NOT the concierge
+            // demand funnel. Tagged so the north-star metrics (Source=="concierge")
+            // isolate cleanly and never count partner-direct quote requests.
+            Source     = "routed",
             CreatedAt  = DateTime.UtcNow,
         };
 
@@ -126,7 +130,7 @@ public class SupportController(
                 textBody: $"Name: {lead.Name}\nEmail: {lead.Email}\nPhone: {lead.Phone}\nCity: {city}\n\n{req.Message}\n\nRespond from your Ruumly dashboard → Leads.");
 
         emailQueue.EnqueueEmail(
-            to:       "admin@ruumly.eu",
+            to:       await OpsInbox.ResolveAsync(db),
             subject:  $"New routed quote lead — {listing.Title}",
             textBody: $"Supplier: {listing.Supplier?.Name}\nFrom: {lead.Name} <{lead.Email}> {lead.Phone}\nCity: {city}\nCategory: {lead.Category}\n\n{req.Message}");
 
@@ -215,7 +219,7 @@ public class SupportController(
         await db.SaveChangesAsync();
 
         emailQueue.EnqueueEmail(
-            to:       "admin@ruumly.eu",
+            to:       await OpsInbox.ResolveAsync(db),
             subject:  $"New concierge request — {lead.City}",
             textBody: $"From: {lead.Name} <{lead.Email}> {lead.Phone}\n" +
                       $"Categories: {(validCategories.Count > 0 ? string.Join(", ", validCategories) : "any")}\n" +
