@@ -391,9 +391,18 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
             .ToListAsync();
 
         var requests30d    = last30.Count;
-        // Genuine contact only — a real ContactedAt on a forward-moving status.
+        // Genuine contact == a real ContactedAt, full stop. MoveTo stamps
+        // ContactedAt ONLY on genuine-contact transitions (Contacted/Quoted/
+        // Converted) and never clears it, so a non-null ContactedAt already means
+        // "was genuinely contacted at some point" — INCLUDING a lead later closed
+        // to Dismissed(Lost)/Unmatched, which is the normal end state of a
+        // contacted-but-didn't-book request (Received→Contacted→Quoted→Lost). Also
+        // gating on the CURRENT status would wrongly drop those closed leads while
+        // quotedOrBeyond survives closure (QuotedPrice != null), so contactRate30d
+        // could fall BELOW quoteRate30d — a logically impossible funnel inversion.
+        // Spam New→Dismissed never got a ContactedAt, so it stays excluded here.
         var contactedLeads = last30
-            .Where(d => DemandLeadLifecycle.IsGenuineContact(d.Status) && d.ContactedAt != null)
+            .Where(d => d.ContactedAt != null)
             .ToList();
         var contacted      = contactedLeads.Count;
         var quotedOrBeyond = last30.Count(d => d.QuotedPrice != null

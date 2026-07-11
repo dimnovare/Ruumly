@@ -643,6 +643,52 @@ public class ConciergeLeadTests
     }
 
     [Fact]
+    public async Task GetLeadMetrics_ContactedThenQuotedThenLost_StillCountsAsContact_NoFunnelInversion()
+    {
+        var db  = TestDbContext.Create();
+        var now = DateTime.UtcNow;
+
+        // The NORMAL end state of a worked-but-didn't-book request:
+        // Received → Contacted → Quoted → Lost (Dismissed). It was genuinely
+        // contacted (and quoted), then closed — so it MUST still count in
+        // contactRate30d and the response-time sample, otherwise contactRate can
+        // drop below quoteRate (a logically impossible funnel inversion), because
+        // quotedOrBeyond survives the closure via QuotedPrice.
+        var lead = new DemandLead
+        {
+            Id = Guid.NewGuid(), Email = "lost@x.ee", City = "Tallinn",
+            Category = DemandLeadCategory.Any, Language = "et", Source = "concierge",
+            CreatedAt = now.AddDays(-2), Status = DemandLeadStatus.New,
+        };
+        db.DemandLeads.Add(lead);
+        await db.SaveChangesAsync();
+
+        var admin = MakeAdmin(db);
+        // Contacted → stamps ContactedAt (genuine first touch).
+        (await admin.UpdateLead(lead.Id, new UpdateLeadRequest("contacted"))).Should().BeOfType<OkObjectResult>();
+        lead.ContactedAt.Should().NotBeNull();
+        // A quote was sent (QuotedPrice survives closure), then the lead is Lost.
+        lead.QuotedPrice = 250m;
+        await db.SaveChangesAsync();
+        (await admin.UpdateLead(lead.Id, new UpdateLeadRequest("dismissed"))).Should().BeOfType<OkObjectResult>();
+
+        var stored = db.DemandLeads.Single();
+        stored.Status.Should().Be(DemandLeadStatus.Dismissed, "the lead ended Lost/closed");
+        stored.ContactedAt.Should().NotBeNull("closure never clears a real first-touch");
+
+        var body = (await admin.GetLeadMetrics()).Should().BeOfType<OkObjectResult>().Subject.Value!;
+        var contactRate = (double)Prop(body, "contactRate30d")!;
+        var quoteRate   = (double)Prop(body, "quoteRate30d")!;
+
+        contactRate.Should().Be(1d, "a contacted-then-lost lead is still a genuine contact");
+        quoteRate.Should().Be(1d, "QuotedPrice survives closure");
+        contactRate.Should().BeGreaterThanOrEqualTo(quoteRate,
+            "contactRate can never be below quoteRate — the funnel must not invert");
+        Prop(body, "medianFirstResponseMinutes").Should().NotBeNull(
+            "the real first contact must still enter the response sample");
+    }
+
+    [Fact]
     public async Task GetLeadMetrics_MatchRate_CountsOfferAndRepliedOutreachSignals()
     {
         var db  = TestDbContext.Create();
