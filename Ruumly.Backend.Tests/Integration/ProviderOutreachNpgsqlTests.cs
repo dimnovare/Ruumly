@@ -60,7 +60,9 @@ public class ProviderOutreachNpgsqlTests(PostgresIntegrationFixture pg)
     [Fact]
     public async Task ConcurrentOutreach_SerializationLoserReturnsRetryable409_AndNeverQueues()
     {
-        if (!pg.Available) return;
+        Assert.True(pg.Available,
+            "PostgreSQL integration database unavailable. Start local PostgreSQL on port 5433 " +
+            "or set RUUMLY_TEST_PG before running this focused gate.");
 
         var leadId = Guid.NewGuid();
         var supplierId = Guid.NewGuid();
@@ -75,7 +77,8 @@ public class ProviderOutreachNpgsqlTests(PostgresIntegrationFixture pg)
                 Category = DemandLeadCategory.Moving,
                 Language = "en",
                 Source = "concierge",
-                Status = DemandLeadStatus.New,
+                Status = DemandLeadStatus.Contacted,
+                ContactedAt = DateTime.UtcNow,
                 CreatedAt = DateTime.UtcNow,
             });
             seed.Suppliers.Add(new Supplier
