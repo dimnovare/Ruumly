@@ -238,6 +238,35 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
         });
     }
 
+    [HttpGet("leads/{id:guid}/provider-candidates")]
+    public async Task<IActionResult> GetProviderCandidates(
+        Guid id,
+        [FromQuery] string? q = null,
+        [FromQuery] string scope = "nearby",
+        [FromQuery] string category = "lead",
+        [FromQuery] double radiusKm = 25,
+        [FromQuery] int limit = 50,
+        CancellationToken ct = default)
+    {
+        var lead = await Db.DemandLeads.FindAsync([id], ct);
+        if (lead is null) return NotFound(Error("Lead not found."));
+
+        var allEstonia = string.Equals(scope, "all", StringComparison.OrdinalIgnoreCase);
+        if (!allEstonia && !string.Equals(scope, "nearby", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(Error("scope must be nearby or all."));
+
+        var allCategories = string.Equals(category, "any", StringComparison.OrdinalIgnoreCase);
+        if (!allCategories && !string.Equals(category, "lead", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(Error("category must be lead or any."));
+        if (allCategories && !allEstonia)
+            return BadRequest(Error("category=any requires scope=all."));
+
+        var search = new ProviderCandidateSearch(
+            q?.Trim(), allEstonia, allCategories,
+            Math.Clamp(radiusKm, 1, 250), Math.Clamp(limit, 1, 200));
+        return Ok(await ProviderCandidateFinder.SearchAsync(Db, lead, search, ct));
+    }
+
     /// <summary>
     /// Top match suggestions for a concierge lead: active listings from active
     /// suppliers in the lead's category (or all categories for Any), same-city
