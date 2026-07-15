@@ -380,6 +380,7 @@ appsettings.Local.json
 appsettings.*.local.json
 secrets.json
 .gstack/
+.superpowers/
 
 # Cloudflare wrangler local state
 .wrangler/
