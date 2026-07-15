@@ -1,11 +1,15 @@
+using System.Data;
 using System.Globalization;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using Npgsql;
 using Ruumly.Backend.Constants;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
+using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
@@ -202,6 +206,60 @@ public class AdminOffersController(
 
     // ─── Provider outreach ────────────────────────────────────────────────────
 
+    [HttpPost("leads/{id:guid}/outreach/preview")]
+    public async Task<IActionResult> PreviewOutreach(
+        Guid id, [FromBody] OutreachPreviewRequest body)
+    {
+        var lead = await Db.DemandLeads.FindAsync(id);
+        if (lead is null) return NotFound(Error("Lead not found."));
+
+        var requestedIds = (body.SupplierIds ?? []).Distinct().ToList();
+        if (requestedIds.Count == 0)
+            return BadRequest(Error("supplierIds must contain at least one supplier."));
+
+        var suppliers = await Db.Suppliers
+            .Where(s => requestedIds.Contains(s.Id))
+            .ToDictionaryAsync(s => s.Id);
+        var contactedSupplierIds = (await Db.ProviderOutreaches
+                .Where(o => o.DemandLeadId == id && requestedIds.Contains(o.SupplierId))
+                .Select(o => o.SupplierId)
+                .Distinct()
+                .ToListAsync())
+            .ToHashSet();
+
+        var recipients = new List<OutreachPreviewItemDto>(requestedIds.Count);
+        foreach (var supplierId in requestedIds)
+        {
+            if (!suppliers.TryGetValue(supplierId, out var supplier))
+            {
+                recipients.Add(new(
+                    supplierId, null, null, null, null, null, "not_found"));
+                continue;
+            }
+
+            var message = ProviderOutreachComposer.Compose(lead, supplier);
+            var email = string.IsNullOrWhiteSpace(supplier.ContactEmail)
+                ? null
+                : supplier.ContactEmail.Trim();
+            var skipReason = email is null
+                ? "no_email"
+                : contactedSupplierIds.Contains(supplierId)
+                    ? "already_contacted"
+                    : null;
+
+            recipients.Add(new(
+                supplier.Id,
+                supplier.Name,
+                email,
+                message.Language,
+                message.Subject,
+                message.TextBody,
+                skipReason));
+        }
+
+        return Ok(new OutreachPreviewResponse(recipients));
+    }
+
     /// <summary>
     /// Availability-request batch: one email per supplier that has a
     /// ContactEmail (the rest are reported back as skipped). The email carries
@@ -222,75 +280,109 @@ public class AdminOffersController(
             .Where(s => requestedIds.Contains(s.Id))
             .ToDictionaryAsync(s => s.Id);
 
-        var route   = string.IsNullOrWhiteSpace(lead.ToCity) ? lead.City : $"{lead.City} → {lead.ToCity}";
-        var date    = lead.NeedDate?.ToString("yyyy-MM-dd") ?? "—";
-        var details = string.IsNullOrWhiteSpace(lead.Details) ? "—" : lead.Details;
-
         var sent    = new List<object>();
         var skipped = new List<object>();
         var emails  = new List<(string To, string Subject, string Body)>();
+        IDbContextTransaction? transaction = null;
 
-        foreach (var supplierId in requestedIds)
+        try
         {
-            if (!suppliers.TryGetValue(supplierId, out var supplier))
+            if (Db.Database.IsRelational())
+                transaction = await Db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+
+            var contactedSupplierIds = (await Db.ProviderOutreaches
+                    .Where(o => o.DemandLeadId == id && requestedIds.Contains(o.SupplierId))
+                    .Select(o => o.SupplierId)
+                    .Distinct()
+                    .ToListAsync())
+                .ToHashSet();
+
+            foreach (var supplierId in requestedIds)
             {
-                skipped.Add(new { supplierId, supplierName = (string?)null, reason = "not_found" });
-                continue;
+                if (!suppliers.TryGetValue(supplierId, out var supplier))
+                {
+                    skipped.Add(new { supplierId, supplierName = (string?)null, reason = "not_found" });
+                    continue;
+                }
+                if (string.IsNullOrWhiteSpace(supplier.ContactEmail))
+                {
+                    skipped.Add(new { supplierId, supplierName = (string?)supplier.Name, reason = "no_email" });
+                    continue;
+                }
+                if (!body.Resend && contactedSupplierIds.Contains(supplierId))
+                {
+                    skipped.Add(new { supplierId, supplierName = (string?)supplier.Name, reason = "already_contacted" });
+                    continue;
+                }
+
+                var to = supplier.ContactEmail.Trim();
+                var message = ProviderOutreachComposer.Compose(lead, supplier);
+                emails.Add((to, message.Subject, message.TextBody));
+
+                var row = new ProviderOutreach
+                {
+                    Id           = Guid.NewGuid(),
+                    DemandLeadId = lead.Id,
+                    SupplierId   = supplier.Id,
+                    SentTo       = to,
+                    SentAt       = DateTime.UtcNow,
+                    Status       = ProviderOutreachStatus.Sent,
+                };
+                Db.ProviderOutreaches.Add(row);
+                sent.Add(MapOutreach(row, supplier.Name));
             }
-            if (string.IsNullOrWhiteSpace(supplier.ContactEmail))
-            {
-                skipped.Add(new { supplierId, supplierName = (string?)supplier.Name, reason = "no_email" });
-                continue;
-            }
 
-            // Providers get their own language (by country), not the customer's.
-            var lang = supplier.Country?.ToUpperInvariant() switch
-            {
-                "LV" => "lv",
-                "LT" => "lt",
-                "EE" => "et",
-                _    => "en",
-            };
-            var t        = EmailTranslations.For(lang);
-            var category = t.CategoryLabel(lead.Category);
-            var emailBody =
-                $"{t.OutreachGreeting}\n\n" +
-                $"{t.OutreachBody(category, route, details, date)}\n\n" +
-                $"{t.OutreachAsk}\n\n" +
-                $"{t.OutreachSignature}";
+            // First outreach is the first admin touch: New → Contacted (stamps
+            // ContactedAt). Leads further down the funnel keep their status.
+            if (emails.Count > 0 && lead.Status == DemandLeadStatus.New)
+                DemandLeadLifecycle.MoveTo(lead, DemandLeadStatus.Contacted);
 
-            emails.Add((supplier.ContactEmail.Trim(), t.OutreachSubject(category, route), emailBody));
+            Audit("lead.outreach_sent", User.GetUserId().ToString(), lead.Id.ToString(),
+                  $"Sent: {sent.Count}, skipped: {skipped.Count}");
 
-            var row = new ProviderOutreach
-            {
-                Id           = Guid.NewGuid(),
-                DemandLeadId = lead.Id,
-                SupplierId   = supplier.Id,
-                SentTo       = supplier.ContactEmail.Trim(),
-                SentAt       = DateTime.UtcNow,
-                Status       = ProviderOutreachStatus.Sent,
-            };
-            Db.ProviderOutreaches.Add(row);
-            sent.Add(MapOutreach(row, supplier.Name));
+            // Save and commit BEFORE enqueueing: Hangfire commits jobs on its own
+            // connection, so failed persistence must never double-email providers.
+            await Db.SaveChangesAsync();
+            if (transaction is not null)
+                await transaction.CommitAsync();
         }
+        catch (Exception ex) when (IsSerializationFailure(ex))
+        {
+            if (transaction is not null)
+            {
+                try { await transaction.RollbackAsync(); }
+                catch { /* A failed commit may already have closed the transaction. */ }
+            }
 
-        // First outreach is the first admin touch: New → Contacted (stamps
-        // ContactedAt). Leads further down the funnel keep their status.
-        if (emails.Count > 0 && lead.Status == DemandLeadStatus.New)
-            DemandLeadLifecycle.MoveTo(lead, DemandLeadStatus.Contacted);
-
-        Audit("lead.outreach_sent", User.GetUserId().ToString(), lead.Id.ToString(),
-              $"Sent: {sent.Count}, skipped: {skipped.Count}");
-
-        // Save BEFORE enqueueing: Hangfire commits jobs on its own connection,
-        // so a failed save must not leave providers emailed with no
-        // ProviderOutreach rows (history lost, a retry would double-email).
-        await Db.SaveChangesAsync();
+            return Conflict(new
+            {
+                error = "Provider outreach changed concurrently.",
+                message = "Retry the request.",
+                statusCode = StatusCodes.Status409Conflict,
+                retryable = true,
+            });
+        }
+        finally
+        {
+            if (transaction is not null)
+                await transaction.DisposeAsync();
+        }
 
         foreach (var (to, subject, emailBody) in emails)
             emailQueue.EnqueueEmail(to, subject, emailBody, htmlBody: null, replyTo: OpsReplyTo);
 
         return Ok(new { sent, skipped });
+    }
+
+    private static bool IsSerializationFailure(Exception exception)
+    {
+        for (var current = exception; current is not null; current = current.InnerException)
+        {
+            if (current is PostgresException { SqlState: PostgresErrorCodes.SerializationFailure })
+                return true;
+        }
+
+        return false;
     }
 
     [HttpGet("leads/{id:guid}/outreach")]

@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Ruumly.Backend.Controllers;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
+using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
@@ -437,6 +438,87 @@ public class OfferLoopTests
     }
 
     // ─── Provider outreach ────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task PreviewOutreach_IsSideEffectFree_AndMatchesDeliveredMessageByteForByte()
+    {
+        var db       = TestDbContext.Create();
+        var queue    = new CapturingEmailQueue();
+        var lead     = MakeLead(db);
+        var supplier = MakeSupplier(db, "HasEmail OÜ", "provider@x.ee");
+        var admin    = MakeAdmin(db, queue);
+
+        var previewResult = await admin.PreviewOutreach(
+            lead.Id, new OutreachPreviewRequest([supplier.Id]));
+        var preview = previewResult.Should().BeOfType<OkObjectResult>().Subject.Value
+            .Should().BeOfType<OutreachPreviewResponse>().Subject.Recipients
+            .Should().ContainSingle().Subject;
+
+        db.ProviderOutreaches.Should().BeEmpty();
+        queue.Emails.Should().BeEmpty();
+
+        await admin.SendOutreach(lead.Id, new OutreachRequest([supplier.Id]));
+        var delivered = queue.Emails.Should().ContainSingle().Subject;
+        preview.Subject.Should().Be(delivered.Subject);
+        preview.TextBody.Should().Be(delivered.TextBody);
+    }
+
+    [Fact]
+    public async Task PreviewOutreach_ReportsEverySkipReason_AndKeepsTextForExplicitResend()
+    {
+        var db        = TestDbContext.Create();
+        var queue     = new CapturingEmailQueue();
+        var lead      = MakeLead(db);
+        var contacted = MakeSupplier(db, "Contacted OÜ", "contacted@x.ee");
+        var noEmail   = MakeSupplier(db, "NoEmail OÜ");
+        var missingId = Guid.NewGuid();
+        var admin     = MakeAdmin(db, queue);
+
+        await admin.SendOutreach(lead.Id, new OutreachRequest([contacted.Id]));
+
+        var result = await admin.PreviewOutreach(
+            lead.Id, new OutreachPreviewRequest([contacted.Id, noEmail.Id, missingId]));
+        var recipients = result.Should().BeOfType<OkObjectResult>().Subject.Value
+            .Should().BeOfType<OutreachPreviewResponse>().Subject.Recipients;
+
+        recipients.Should().HaveCount(3);
+        var contactedPreview = recipients.Single(r => r.SupplierId == contacted.Id);
+        contactedPreview.SkipReason.Should().Be("already_contacted");
+        contactedPreview.Subject.Should().NotBeNullOrEmpty();
+        contactedPreview.TextBody.Should().NotBeNullOrEmpty(
+            "an explicit resend confirmation must display the exact message");
+        recipients.Single(r => r.SupplierId == noEmail.Id).SkipReason.Should().Be("no_email");
+        var missing = recipients.Single(r => r.SupplierId == missingId);
+        missing.SkipReason.Should().Be("not_found");
+        missing.Subject.Should().BeNull();
+        missing.TextBody.Should().BeNull();
+        db.ProviderOutreaches.Should().ContainSingle();
+        queue.Emails.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task SendOutreach_DuplicateSkipsUnlessResendIsExplicit()
+    {
+        var db       = TestDbContext.Create();
+        var queue    = new CapturingEmailQueue();
+        var lead     = MakeLead(db);
+        var supplier = MakeSupplier(db, "HasEmail OÜ", "provider@x.ee");
+        var admin    = MakeAdmin(db, queue);
+
+        await admin.SendOutreach(lead.Id, new OutreachRequest([supplier.Id]));
+        var duplicate = await admin.SendOutreach(lead.Id, new OutreachRequest([supplier.Id]));
+        var duplicateBody = duplicate.Should().BeOfType<OkObjectResult>().Subject.Value!;
+        var skipped = ((System.Collections.IEnumerable)Prop(duplicateBody, "skipped")!)
+            .Cast<object>().Should().ContainSingle().Subject;
+        Prop(skipped, "reason").Should().Be("already_contacted");
+        db.ProviderOutreaches.Should().ContainSingle();
+        queue.Emails.Should().ContainSingle();
+
+        await admin.SendOutreach(
+            lead.Id, new OutreachRequest([supplier.Id], Resend: true));
+        db.ProviderOutreaches.Should().HaveCount(2);
+        queue.Emails.Should().HaveCount(2);
+    }
 
     [Fact]
     public async Task SendOutreach_SkipsEmaillessSuppliers_MovesLeadToContacted_AndHidesCustomerIdentity()

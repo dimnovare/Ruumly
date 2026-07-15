@@ -34,8 +34,11 @@ public record UpdateOfferRequest(
     List<OfferOptionInput>? Options = null
 );
 
+/// <summary>POST /api/admin/leads/{id}/outreach/preview — inspect an outreach batch.</summary>
+public record OutreachPreviewRequest(List<Guid> SupplierIds);
+
 /// <summary>POST /api/admin/leads/{id}/outreach — availability-request batch.</summary>
-public record OutreachRequest(List<Guid> SupplierIds);
+public record OutreachRequest(List<Guid> SupplierIds, bool Resend = false);
 
 /// <summary>PATCH /api/admin/outreach/{id} — manual status/note update.</summary>
 public record UpdateOutreachRequest(string? Status = null, string? Note = null);
