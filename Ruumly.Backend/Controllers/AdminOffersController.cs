@@ -308,6 +308,37 @@ public class AdminOffersController(
         return Ok(MapOffer(offer));
     }
 
+    [HttpPost("offers/{id:guid}/confirm-booking")]
+    public async Task<IActionResult> ConfirmBooking(Guid id)
+    {
+        await using var transaction = Db.Database.IsRelational()
+            ? await Db.Database.BeginTransactionAsync()
+            : null;
+
+        var offer = await LoadOfferForConfirmation(id);
+        if (offer is null) return NotFound(Error("Offer not found."));
+        if (offer.Status != OfferStatus.Chosen || offer.ChosenOptionId is null)
+            return Conflict(Error("The customer has not requested an option."));
+        if (offer.Options.All(option => option.Id != offer.ChosenOptionId.Value))
+            return Conflict(Error("The requested option no longer exists."));
+
+        var lead = offer.DemandLead;
+        if (lead is null)
+            return Conflict(Error("The offer's lead no longer exists."));
+
+        if (lead.Status != DemandLeadStatus.Converted)
+        {
+            DemandLeadLifecycle.MoveTo(lead, DemandLeadStatus.Converted);
+            Audit("offer.booking_confirmed", User.GetUserId().ToString(), offer.Id.ToString(),
+                  $"Lead: {lead.Id}, option: {offer.ChosenOptionId}");
+            await Db.SaveChangesAsync();
+        }
+
+        if (transaction is not null)
+            await transaction.CommitAsync();
+        return Ok(MapOffer(offer));
+    }
+
     // ─── Provider outreach ────────────────────────────────────────────────────
 
     [HttpPost("leads/{id:guid}/outreach/preview")]
@@ -539,6 +570,34 @@ public class AdminOffersController(
     }
 
     // ─── Mapping / helpers ────────────────────────────────────────────────────
+
+    private async Task<Offer?> LoadOfferForConfirmation(Guid id)
+    {
+        if (!Db.Database.IsRelational())
+        {
+            return await Db.Offers
+                .Include(o => o.Options).ThenInclude(option => option.Supplier)
+                .Include(o => o.DemandLead)
+                .FirstOrDefaultAsync(o => o.Id == id);
+        }
+
+        var offer = await Db.Offers
+            .FromSqlInterpolated(
+                $"""SELECT * FROM "Offers" WHERE "Id" = {id} FOR UPDATE""")
+            .SingleOrDefaultAsync();
+        if (offer is null)
+            return null;
+
+        var lead = await Db.DemandLeads
+            .FromSqlInterpolated(
+                $"""SELECT * FROM "DemandLeads" WHERE "Id" = {offer.DemandLeadId} FOR UPDATE""")
+            .SingleOrDefaultAsync();
+        offer.DemandLead = lead;
+        await Db.Entry(offer).Collection(o => o.Options).Query()
+            .Include(option => option.Supplier)
+            .LoadAsync();
+        return offer;
+    }
 
     private static object MapOffer(Offer o) => new
     {

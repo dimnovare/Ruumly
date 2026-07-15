@@ -89,6 +89,7 @@ public class OfferLoopTests
 
     private static async Task<Offer> MakeSentOffer(RuumlyDbContext db, DemandLead lead, int optionCount = 2)
     {
+        DemandLeadLifecycle.MoveTo(lead, DemandLeadStatus.Quoted);
         var offer = new Offer
         {
             Id = Guid.NewGuid(), DemandLeadId = lead.Id, Token = OfferToken.Generate(),
@@ -465,32 +466,72 @@ public class OfferLoopTests
     }
 
     [Fact]
-    public async Task ChooseOption_AdvancesLeadToConverted_AndQuoteToBookingCountsIt()
+    public async Task ChooseOption_LeavesLeadQuotedUntilAdminConfirms()
     {
         var db    = TestDbContext.Create();
-        var lead  = MakeLead(db);                 // Source="concierge", Status New
+        var lead  = MakeLead(db);
         var offer = await MakeSentOffer(db, lead);
         var pub   = MakePublic(db, new CapturingEmailQueue());
 
         (await pub.ChooseOption(offer.Token, new ChooseOptionRequest(offer.Options[0].Id)))
             .Should().BeOfType<OkObjectResult>();
 
-        var storedLead = db.DemandLeads.Single();
-        storedLead.Status.Should().Be(DemandLeadStatus.Converted,
-            "choosing an option IS booking for the concierge business — the quote→booking north-star must count it");
-        storedLead.ContactedAt.Should().NotBeNull("Converted is genuine contact — first touch is stamped");
+        db.DemandLeads.Single().Status.Should().Be(DemandLeadStatus.Quoted,
+            "a customer choice is only a pending preference until provider approval");
+        var metricsBody = (await MakeAdminLeads(db).GetLeadMetrics())
+            .Should().BeOfType<OkObjectResult>().Subject.Value!;
+        Prop(metricsBody, "bookingRate30d").Should().Be(0d);
+    }
 
-        // Idempotent: re-choosing the same option keeps it Converted (no regression,
-        // no double advance).
-        (await pub.ChooseOption(offer.Token, new ChooseOptionRequest(offer.Options[0].Id)))
+    [Fact]
+    public async Task ConfirmBooking_RequiresChosenOffer_ConvertsOnce_AndCreatesNoCommerceRecords()
+    {
+        var db    = TestDbContext.Create();
+        var lead  = MakeLead(db);
+        var offer = await MakeSentOffer(db, lead);
+        var admin = MakeAdmin(db, new CapturingEmailQueue());
+
+        (await admin.ConfirmBooking(offer.Id))
+            .Should().BeOfType<ConflictObjectResult>();
+
+        await MakePublic(db, new CapturingEmailQueue())
+            .ChooseOption(offer.Token, new ChooseOptionRequest(offer.Options[0].Id));
+
+        (await admin.ConfirmBooking(offer.Id))
             .Should().BeOfType<OkObjectResult>();
         db.DemandLeads.Single().Status.Should().Be(DemandLeadStatus.Converted);
+        db.AuditLogs.Should().ContainSingle(a => a.Action == "offer.booking_confirmed");
+        db.Bookings.Should().BeEmpty();
+        db.Orders.Should().BeEmpty();
 
-        // The metric now sees a booking: bookingRate30d = 1 Converted / 1 quoted-or-beyond.
+        (await admin.ConfirmBooking(offer.Id))
+            .Should().BeOfType<OkObjectResult>();
+        db.AuditLogs.Should().ContainSingle(a => a.Action == "offer.booking_confirmed");
+        db.Bookings.Should().BeEmpty();
+        db.Orders.Should().BeEmpty();
+
         var metricsBody = (await MakeAdminLeads(db).GetLeadMetrics())
             .Should().BeOfType<OkObjectResult>().Subject.Value!;
         Prop(metricsBody, "bookingRate30d").Should().Be(1d,
-            "a chosen offer converts the lead, so quote→booking conversion counts it");
+            "only provider-approved confirmation converts the quoted lead");
+    }
+
+    [Fact]
+    public async Task ManualLeadPatch_CannotBypassConfirmationOrMutateOtherFields()
+    {
+        var db = TestDbContext.Create();
+        var lead = MakeLead(db);
+
+        var result = await MakeAdminLeads(db).UpdateLead(
+            lead.Id,
+            new UpdateLeadRequest(Status: "converted", AdminNotes: "changed", Email: "changed@x.ee"));
+
+        result.Should().BeOfType<ConflictObjectResult>();
+        var stored = db.DemandLeads.Single();
+        stored.Status.Should().Be(DemandLeadStatus.New);
+        stored.Email.Should().Be("cust@x.ee");
+        stored.AdminNotes.Should().BeNull();
+        db.AuditLogs.Should().BeEmpty();
     }
 
     private static AdminLeadsController MakeAdminLeads(RuumlyDbContext db) =>

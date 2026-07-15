@@ -62,7 +62,11 @@ public class OffersController(
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> ChooseOption(string token, [FromBody] ChooseOptionRequest req)
     {
-        var offer = await FindLiveOffer(token);
+        await using var transaction = db.Database.IsRelational()
+            ? await db.Database.BeginTransactionAsync()
+            : null;
+
+        var offer = await FindLiveOfferForChoose(token);
         if (offer is null) return NotFound(new { error = "Offer not found." });
 
         var option = offer.Options.FirstOrDefault(o => o.Id == req.OptionId);
@@ -70,25 +74,22 @@ public class OffersController(
 
         if (offer.Status == OfferStatus.Chosen)
         {
-            return offer.ChosenOptionId == option.Id
+            IActionResult result = offer.ChosenOptionId == option.Id
                 ? Ok(new { ok = true, chosenOptionId = option.Id, chosenAt = offer.ChosenAt })
                 : Conflict(new { error = "An option has already been chosen for this offer." });
+            if (transaction is not null)
+                await transaction.CommitAsync();
+            return result;
         }
 
         offer.Status         = OfferStatus.Chosen;
         offer.ChosenAt       = DateTime.UtcNow;
         offer.ChosenOptionId = option.Id;
 
-        // For the concierge business "chosen" == "booked": advance the demand
-        // lead to Converted so the quote→booking north-star counts it (it used to
-        // under-count — the offer was Chosen but the lead never moved). Idempotent
-        // because a re-choose short-circuits above on Status == Chosen, so this
-        // runs exactly once. Never demote an already-converted lead.
         var lead = offer.DemandLead;
-        if (lead is not null && lead.Status != DemandLeadStatus.Converted)
-            DemandLeadLifecycle.MoveTo(lead, DemandLeadStatus.Converted);
-
         await db.SaveChangesAsync();
+        if (transaction is not null)
+            await transaction.CommitAsync();
 
         // offer_chosen_admin_notification — internal ops inbox, Estonian only
         // (composed inline like the other admin-facing ops emails).
@@ -125,5 +126,26 @@ public class OffersController(
                 .FirstOrDefaultAsync(o => o.Token == token
                     && o.Status != OfferStatus.Draft
                     && o.Status != OfferStatus.Expired);
+
+    private async Task<Offer?> FindLiveOfferForChoose(string token)
+    {
+        if (!db.Database.IsRelational())
+            return await FindLiveOffer(token);
+        if (string.IsNullOrWhiteSpace(token))
+            return null;
+
+        var offer = await db.Offers
+            .FromSqlInterpolated(
+                $"""SELECT * FROM "Offers" WHERE "Token" = {token} FOR UPDATE""")
+            .SingleOrDefaultAsync();
+        if (offer is null || offer.Status is OfferStatus.Draft or OfferStatus.Expired)
+            return null;
+
+        await db.Entry(offer).Collection(o => o.Options).Query()
+            .Include(option => option.Supplier)
+            .LoadAsync();
+        await db.Entry(offer).Reference(o => o.DemandLead).LoadAsync();
+        return offer;
+    }
 
 }

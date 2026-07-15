@@ -119,6 +119,14 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
         var lead = await Db.DemandLeads.FindAsync(id);
         if (lead is null) return NotFound(Error("Lead not found."));
 
+        if (!string.IsNullOrWhiteSpace(body.Status)
+            && Enum.TryParse<DemandLeadStatus>(body.Status, ignoreCase: true, out var requestedStatus)
+            && Enum.IsDefined(requestedStatus)
+            && requestedStatus == DemandLeadStatus.Converted)
+        {
+            return Conflict(Error("Confirm the customer's chosen offer instead."));
+        }
+
         // ── Request-field corrections (partial: null/omitted = unchanged) ─────
         // The admin can fix what the customer submitted. Everything is validated
         // BEFORE any mutation so a single bad field can't leave a half-applied

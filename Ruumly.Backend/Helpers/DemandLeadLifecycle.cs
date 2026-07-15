@@ -6,7 +6,7 @@ namespace Ruumly.Backend.Helpers;
 /// <summary>
 /// The one place that moves a <see cref="DemandLead"/> between statuses.
 /// Used by the admin CRM (manual status changes) and the offer loop
-/// (send offer → Quoted, send outreach → Contacted, choose → Converted).
+/// (send offer → Quoted, send outreach → Contacted, admin confirmation → Converted).
 /// </summary>
 public static class DemandLeadLifecycle
 {
