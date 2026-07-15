@@ -108,7 +108,10 @@ public class OfferLoopTests
     }
 
     private static object? Prop(object o, string name) =>
-        o.GetType().GetProperty(name)?.GetValue(o);
+        o.GetType().GetProperties()
+            .FirstOrDefault(property =>
+                string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+            ?.GetValue(o);
 
     // ─── Token format + uniqueness ────────────────────────────────────────────
 
@@ -141,6 +144,91 @@ public class OfferLoopTests
         var offer = db.Offers.Single();
         offer.Token.Should().MatchRegex("^[A-Za-z0-9_-]{43}$");
         offer.Options.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task CreateOffer_ReusesNewestExistingDraft_WithoutMergingRequestOptions()
+    {
+        var db    = TestDbContext.Create();
+        var lead  = MakeLead(db);
+        var admin = MakeAdmin(db, new CapturingEmailQueue());
+
+        var first = await admin.CreateOffer(lead.Id, new CreateOfferRequest(
+            CustomerNote: "Keep this",
+            Options: [new OfferOptionInput("Original")]));
+        var second = await admin.CreateOffer(lead.Id, new CreateOfferRequest(
+            CustomerNote: "Ignore this",
+            Options: [new OfferOptionInput("Do not merge")]));
+
+        Prop(first.Should().BeOfType<OkObjectResult>().Subject.Value!, "id")
+            .Should().Be(Prop(second.Should().BeOfType<OkObjectResult>().Subject.Value!, "id"));
+        var offer = db.Offers.Should().ContainSingle().Subject;
+        offer.CustomerNote.Should().Be("Keep this");
+        offer.Options.Should().ContainSingle().Which.Title.Should().Be("Original");
+    }
+
+    [Fact]
+    public async Task DeleteOffer_DeletesDraftAndOptions_ButRejectsSent()
+    {
+        var db    = TestDbContext.Create();
+        var lead  = MakeLead(db);
+        var admin = MakeAdmin(db, new CapturingEmailQueue());
+
+        var created = await admin.CreateOffer(lead.Id, new CreateOfferRequest(
+            Options: [new OfferOptionInput("Option")]));
+        var id = (Guid)Prop(created.Should().BeOfType<OkObjectResult>().Subject.Value!, "id")!;
+
+        (await admin.DeleteOffer(id)).Should().BeOfType<NoContentResult>();
+        db.Offers.Should().BeEmpty();
+        db.OfferOptions.Should().BeEmpty();
+
+        var sent = await MakeSentOffer(db, lead);
+        (await admin.DeleteOffer(sent.Id)).Should().BeOfType<ConflictObjectResult>();
+        db.Offers.Should().ContainSingle(o => o.Id == sent.Id);
+    }
+
+    [Fact]
+    public async Task DeliveryPreview_IsSideEffectFree_AndMatchesSendEmailAndPublicProjection()
+    {
+        var db       = TestDbContext.Create();
+        var queue    = new CapturingEmailQueue();
+        var lead     = MakeLead(db);
+        var supplier = MakeSupplier(db, "Preview Provider", "private@provider.ee");
+        var admin    = MakeAdmin(db, queue);
+        var created  = await admin.CreateOffer(lead.Id, new CreateOfferRequest(
+            CustomerNote: "Call first",
+            Options:
+            [
+                new OfferOptionInput(
+                    "Option", SupplierId: supplier.Id, PriceAmount: 89m, Notes: "Available now"),
+            ]));
+        var id = (Guid)Prop(created.Should().BeOfType<OkObjectResult>().Subject.Value!, "id")!;
+
+        var preview = (await admin.GetDeliveryPreview(id))
+            .Should().BeOfType<OkObjectResult>().Subject.Value
+            .Should().BeOfType<OfferDeliveryPreviewDto>().Subject;
+
+        db.Offers.Single().ViewedAt.Should().BeNull();
+        db.Offers.Single().Status.Should().Be(OfferStatus.Draft);
+        queue.Emails.Should().BeEmpty();
+
+        await admin.SendOffer(id);
+        var email = queue.Emails.Should().ContainSingle().Subject;
+        preview.Email.Subject.Should().Be(email.Subject);
+        preview.Email.TextBody.Should().Be(email.TextBody);
+
+        var publicDto = (await MakePublic(db, new CapturingEmailQueue())
+                .GetOffer(db.Offers.Single().Token))
+            .Should().BeOfType<OkObjectResult>().Subject.Value
+            .Should().BeOfType<PublicOfferDto>().Subject;
+        preview.Page.Lead.Should().BeEquivalentTo(publicDto.Lead);
+        preview.Page.Options.Should().BeEquivalentTo(publicDto.Options, options => options.WithStrictOrdering());
+        preview.Page.CustomerNote.Should().Be(publicDto.CustomerNote);
+
+        var pageJson = JsonSerializer.Serialize(preview.Page);
+        pageJson.Should().NotContain(db.Offers.Single().Token);
+        pageJson.Should().NotContain(lead.Email).And.NotContain(lead.Name!).And.NotContain(lead.Phone!);
+        pageJson.Should().NotContain("private@provider.ee").And.NotContain("ops@ruumly.eu");
     }
 
     // ─── Send ─────────────────────────────────────────────────────────────────

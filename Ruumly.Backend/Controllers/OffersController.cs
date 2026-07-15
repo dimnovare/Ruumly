@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
-using Ruumly.Backend.Constants;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.Helpers;
@@ -46,7 +45,7 @@ public class OffersController(
             await db.SaveChangesAsync();
         }
 
-        return Ok(MapPublic(offer));
+        return Ok(OfferDeliveryComposer.ToPublic(offer));
     }
 
     /// <summary>
@@ -127,41 +126,4 @@ public class OffersController(
                     && o.Status != OfferStatus.Draft
                     && o.Status != OfferStatus.Expired);
 
-    /// <summary>
-    /// Sanitized DTO: no token echo, no admin metadata (CreatedBy, AdminNotes),
-    /// no supplier contact details, and no customer PII beyond the request
-    /// facts the customer submitted themselves (it's their page).
-    /// </summary>
-    private static object MapPublic(Offer offer)
-    {
-        var lead = offer.DemandLead;
-        return new
-        {
-            status         = offer.Status.ToString().ToLower(),
-            language       = offer.Language,
-            customerNote   = offer.CustomerNote,
-            sentAt         = offer.SentAt,
-            chosenOptionId = offer.ChosenOptionId,
-            lead = lead is null ? null : new
-            {
-                category = ServiceCategories.SlugFor(lead.Category),
-                city     = lead.City,
-                toCity   = lead.ToCity,
-                needDate = lead.NeedDate,
-                details  = lead.Details,
-            },
-            options = offer.Options
-                .OrderBy(o => o.SortOrder).ThenBy(o => o.Id)
-                .Select(o => new
-                {
-                    id           = o.Id,
-                    title        = o.Title,
-                    priceAmount  = o.PriceAmount,
-                    priceUnit    = o.PriceUnit,
-                    notes        = o.Notes,
-                    supplierName = o.Supplier?.Name,
-                })
-                .ToList(),
-        };
-    }
 }

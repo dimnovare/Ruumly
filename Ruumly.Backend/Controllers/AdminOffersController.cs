@@ -1,7 +1,5 @@
 using System.Data;
-using System.Globalization;
 using System.Security.Claims;
-using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -40,8 +38,54 @@ public class AdminOffersController(
     [HttpPost("leads/{id:guid}/offers")]
     public async Task<IActionResult> CreateOffer(Guid id, [FromBody] CreateOfferRequest body)
     {
-        var lead = await Db.DemandLeads.FindAsync(id);
-        if (lead is null) return NotFound(Error("Lead not found."));
+        if (!Db.Database.IsRelational())
+        {
+            var inMemoryLead = await Db.DemandLeads.FindAsync(id);
+            return inMemoryLead is null
+                ? NotFound(Error("Lead not found."))
+                : await CreateOrReuseOffer(inMemoryLead, body);
+        }
+
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            await using var transaction =
+                await Db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+            try
+            {
+                // One lead can have at most one active draft. Locking the lead
+                // makes concurrent retries queue behind the creating transaction.
+                var lead = await Db.DemandLeads
+                    .FromSqlInterpolated(
+                        $"""SELECT * FROM "DemandLeads" WHERE "Id" = {id} FOR UPDATE""")
+                    .SingleOrDefaultAsync();
+                if (lead is null) return NotFound(Error("Lead not found."));
+
+                var result = await CreateOrReuseOffer(lead, body);
+                await transaction.CommitAsync();
+                return result;
+            }
+            catch (Exception ex) when (IsSerializationFailure(ex) && attempt < 2)
+            {
+                try { await transaction.RollbackAsync(); }
+                catch { /* The failed statement may already have aborted the transaction. */ }
+                Db.ChangeTracker.Clear();
+            }
+        }
+
+        throw new InvalidOperationException("Serializable offer creation retry limit exhausted.");
+    }
+
+    private async Task<IActionResult> CreateOrReuseOffer(
+        DemandLead lead, CreateOfferRequest body)
+    {
+        var existingDraft = await Db.Offers
+            .Include(o => o.Options).ThenInclude(option => option.Supplier)
+            .Where(o => o.DemandLeadId == lead.Id && o.Status == OfferStatus.Draft)
+            .OrderByDescending(o => o.CreatedAt)
+            .ThenByDescending(o => o.Id)
+            .FirstOrDefaultAsync();
+        if (existingDraft is not null)
+            return Ok(MapOffer(existingDraft));
 
         var offer = new Offer
         {
@@ -97,6 +141,51 @@ public class AdminOffersController(
         if (offer is null) return NotFound(Error("Offer not found."));
 
         return Ok(MapOffer(offer));
+    }
+
+    [HttpDelete("offers/{id:guid}")]
+    public async Task<IActionResult> DeleteOffer(Guid id)
+    {
+        if (!Db.Database.IsRelational())
+        {
+            var inMemoryOffer = await Db.Offers
+                .Include(o => o.Options)
+                .FirstOrDefaultAsync(o => o.Id == id);
+            if (inMemoryOffer is null) return NotFound(Error("Offer not found."));
+            if (inMemoryOffer.Status != OfferStatus.Draft)
+                return Conflict(Error("Only draft offers can be deleted."));
+
+            Db.Offers.Remove(inMemoryOffer);
+            Audit("offer.deleted", User.GetUserId().ToString(), id.ToString(),
+                  $"Lead: {inMemoryOffer.DemandLeadId}");
+            await Db.SaveChangesAsync();
+            return NoContent();
+        }
+
+        await using var transaction = await Db.Database.BeginTransactionAsync();
+        var offer = await Db.Offers
+            .AsNoTracking()
+            .FirstOrDefaultAsync(o => o.Id == id);
+        if (offer is null) return NotFound(Error("Offer not found."));
+        if (offer.Status != OfferStatus.Draft)
+            return Conflict(Error("Only draft offers can be deleted."));
+
+        var deleted = await Db.Offers
+            .Where(o => o.Id == id && o.Status == OfferStatus.Draft)
+            .ExecuteDeleteAsync();
+        if (deleted == 0)
+        {
+            await transaction.RollbackAsync();
+            return await Db.Offers.AnyAsync(o => o.Id == id)
+                ? Conflict(Error("Only draft offers can be deleted."))
+                : NotFound(Error("Offer not found."));
+        }
+
+        Audit("offer.deleted", User.GetUserId().ToString(), id.ToString(),
+              $"Lead: {offer.DemandLeadId}");
+        await Db.SaveChangesAsync();
+        await transaction.CommitAsync();
+        return NoContent();
     }
 
     [HttpPatch("offers/{id:guid}")]
@@ -158,13 +247,28 @@ public class AdminOffersController(
     /// /offer/{token} link), marks it Sent and auto-moves the lead to Quoted —
     /// an offer in the customer's inbox IS the quote.
     /// </summary>
+    [HttpGet("offers/{id:guid}/delivery-preview")]
+    public async Task<IActionResult> GetDeliveryPreview(Guid id)
+    {
+        var offer = await LoadOfferForDelivery(id);
+        if (offer is null) return NotFound(Error("Offer not found."));
+        if (string.IsNullOrWhiteSpace(offer.DemandLead?.Email))
+            return BadRequest(Error("The lead has no email address."));
+        if (offer.Options.Count == 0)
+            return BadRequest(Error("Add at least one option before previewing."));
+
+        var link = FrontendUrl.Localized(config["AppUrl"], offer.Language, $"offer/{offer.Token}");
+        var email = OfferDeliveryComposer.ComposeEmail(offer, link);
+        return Ok(new OfferDeliveryPreviewDto(
+            new OfferDeliveryRecipientDto(offer.DemandLead.Name, offer.DemandLead.Email.Trim()),
+            new OfferDeliveryEmailDto(email.Subject, email.TextBody),
+            OfferDeliveryComposer.ToPublic(offer)));
+    }
+
     [HttpPost("offers/{id:guid}/send")]
     public async Task<IActionResult> SendOffer(Guid id)
     {
-        var offer = await Db.Offers
-            .Include(o => o.Options).ThenInclude(op => op.Supplier)
-            .Include(o => o.DemandLead)
-            .FirstOrDefaultAsync(o => o.Id == id);
+        var offer = await LoadOfferForDelivery(id);
         if (offer is null) return NotFound(Error("Offer not found."));
         if (offer.Status is OfferStatus.Chosen or OfferStatus.Expired)
             return Conflict(Error("This offer is closed — create a new one instead."));
@@ -193,12 +297,12 @@ public class AdminOffersController(
         // holding a live /offer/{token} link to a still-Draft offer.
         await Db.SaveChangesAsync();
 
-        var t    = EmailTranslations.For(offer.Language);
         var link = FrontendUrl.Localized(config["AppUrl"], offer.Language, $"offer/{offer.Token}");
+        var email = OfferDeliveryComposer.ComposeEmail(offer, link);
         // Reply-To ops inbox — the email explicitly invites the customer to
         // reply with questions, and replies must not vanish into noreply@.
         emailQueue.EnqueueEmail(
-            lead.Email.Trim(), t.OfferSubject, BuildOfferEmailBody(t, offer, link),
+            lead.Email.Trim(), email.Subject, email.TextBody,
             htmlBody: null, replyTo: OpsReplyTo);
 
         return Ok(MapOffer(offer));
@@ -508,45 +612,6 @@ public class AdminOffersController(
         return (options, null);
     }
 
-    private static string BuildOfferEmailBody(EmailTranslations.EmailStrings t, Offer offer, string link)
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine(t.OfferGreeting);
-        sb.AppendLine();
-        sb.AppendLine(t.OfferIntro);
-        sb.AppendLine();
-
-        var i = 1;
-        foreach (var op in offer.Options.OrderBy(o => o.SortOrder).ThenBy(o => o.Id))
-        {
-            sb.AppendLine($"{i}. {op.Title}{FormatPrice(op)}");
-            if (!string.IsNullOrWhiteSpace(op.Notes))
-                sb.AppendLine($"   {op.Notes}");
-            i++;
-        }
-
-        if (!string.IsNullOrWhiteSpace(offer.CustomerNote))
-        {
-            sb.AppendLine();
-            sb.AppendLine($"{t.OfferNoteLabel} {offer.CustomerNote}");
-        }
-
-        sb.AppendLine();
-        sb.AppendLine(t.OfferCta);
-        sb.AppendLine(link);
-        sb.AppendLine();
-        sb.AppendLine(t.OfferQuestions);
-        sb.AppendLine();
-        sb.Append(t.OfferSignature);
-        return sb.ToString();
-    }
-
-    private static string FormatPrice(OfferOption op) =>
-        op.PriceAmount is { } amount
-            ? $" — {amount.ToString("0.##", CultureInfo.InvariantCulture)} €" +
-              (string.IsNullOrWhiteSpace(op.PriceUnit) ? "" : $" / {op.PriceUnit}")
-            : "";
-
     private static string? NormalizeLanguage(string? lang)
     {
         var l = lang?.Trim().ToLowerInvariant();
@@ -575,4 +640,10 @@ public class AdminOffersController(
         if (ids.Count == 0) return;
         await Db.Suppliers.Where(s => ids.Contains(s.Id)).LoadAsync();
     }
+
+    private Task<Offer?> LoadOfferForDelivery(Guid id) =>
+        Db.Offers
+            .Include(o => o.Options).ThenInclude(option => option.Supplier)
+            .Include(o => o.DemandLead)
+            .FirstOrDefaultAsync(o => o.Id == id);
 }
