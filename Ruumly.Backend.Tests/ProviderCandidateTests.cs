@@ -29,6 +29,25 @@ public class ProviderCandidateTests
     }
 
     [Fact]
+    public async Task FreshLead_WithNoOutreach_MarksNoProviderAlreadyContacted()
+    {
+        // Regression: the contacted map holds non-nullable DateTime, so a missing key
+        // resolved via GetValueOrDefault returned DateTime.MinValue (not null) and every
+        // provider on a fresh lead was wrongly flagged alreadyContacted=true — which would
+        // make Stage-1 skip all providers by default. Caught by the production canary.
+        var (db, lead, _) = await CandidateFixture.CreateTartuAsync();
+        var controller = MakeAdminLeads(db);
+
+        var result = await controller.GetProviderCandidates(
+            lead.Id, q: null, scope: "nearby", category: "lead", radiusKm: 25, limit: 50);
+
+        var items = ReadItems(result.Should().BeOfType<OkObjectResult>().Subject.Value!);
+        items.Should().NotBeEmpty();
+        items.Select(x => Read<bool>(x, "alreadyContacted")).Should().OnlyContain(v => v == false);
+        items.Select(x => Read<DateTime?>(x, "lastOutreachAt")).Should().OnlyContain(v => v == null);
+    }
+
+    [Fact]
     public async Task Search_AllEstonia_FindsNameCityAddressEmailAndPhone()
     {
         var (db, lead, _) = await CandidateFixture.CreateTartuAsync();

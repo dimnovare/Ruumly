@@ -79,7 +79,11 @@ public static class ProviderCandidateFinder
             .Select(s => BuildCandidate(
                 s,
                 supplierLocations.GetValueOrDefault(s.Id, []),
-                contacted.GetValueOrDefault(s.Id),
+                // The contacted map holds non-nullable DateTime, so GetValueOrDefault
+                // returns DateTime.MinValue (NOT null) for a never-contacted supplier —
+                // which BuildCandidate would then read as alreadyContacted=true for every
+                // provider on a fresh lead. Only pass a real timestamp when a row exists.
+                contacted.TryGetValue(s.Id, out var lastOutreach) ? lastOutreach : (DateTime?)null,
                 lead,
                 search,
                 anchor))
