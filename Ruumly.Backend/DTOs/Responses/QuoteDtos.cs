@@ -14,13 +14,18 @@ public sealed record PublicQuoteLeadDto(
 public sealed record PublicQuoteExistingDto(
     decimal? Amount, string? Unit, string? Availability, string? Note);
 
-/// <summary>GET /api/quote/{token} — the public quote page payload.</summary>
+/// <summary>
+/// GET /api/quote/{token} — the public quote page payload. <c>Closed</c> means
+/// the underlying request has ended (booked elsewhere, dismissed or unmatched):
+/// the page should show a closed state, and a submit would be rejected 409.
+/// </summary>
 public sealed record PublicQuoteDto(
     PublicQuoteProviderDto Provider,
     PublicQuoteLeadDto Lead,
     string Currency,
     bool AlreadySubmitted,
-    PublicQuoteExistingDto? Existing);
+    PublicQuoteExistingDto? Existing,
+    bool Closed);
 
 /// <summary>POST /api/quote/{token} — thank-you echo of the stored quote.</summary>
 public sealed record QuoteSubmittedDto(

@@ -32,14 +32,28 @@ public class QuoteController(
     RuumlyDbContext db,
     IBackgroundEmailQueue emailQueue) : ControllerBase
 {
+    /// <summary>Upper bound for a submitted price — keeps numeric(18,4) from overflowing into a 500.</summary>
+    private const decimal MaxPriceAmount = 1_000_000m;
+
+    /// <summary>Lead states that take no further quotes (the request is closed).</summary>
+    private static readonly DemandLeadStatus[] TerminalLeadStatuses =
+    [
+        DemandLeadStatus.Converted,
+        DemandLeadStatus.Dismissed,
+        DemandLeadStatus.Unmatched,
+    ];
+
     /// <summary>
     /// The provider's view of what they are quoting. No customer PII — only the
     /// structured ask (category, city/route, date, details) and the provider's
     /// own already-submitted quote for prefill. 404 for unknown tokens.
     /// </summary>
+    // Read-only and sends no email — the generous public read policy, the same
+    // one the public offer page uses. Rendering the form must never spend a
+    // permit that the provider's submit (or a customer's request) needs.
     [HttpGet("{token}")]
     [AllowAnonymous]
-    [EnableRateLimiting("public-email")]
+    [EnableRateLimiting("search")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetQuote(string token)
@@ -78,7 +92,10 @@ public class QuoteController(
                 lead.City, lead.ToCity, lead.NeedDate, lead.Details),
             "EUR",
             alreadySubmitted,
-            existing));
+            existing,
+            // Lets the page render the closed state up front instead of only
+            // discovering it when the submit 409s.
+            Closed: TerminalLeadStatuses.Contains(lead.Status)));
     }
 
     /// <summary>
@@ -90,10 +107,11 @@ public class QuoteController(
     /// </summary>
     [HttpPost("{token}")]
     [AllowAnonymous]
-    [EnableRateLimiting("public-email")]
+    [EnableRateLimiting("provider-quote")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> SubmitQuote(string token, [FromBody] SubmitQuoteRequest req)
     {
         if (string.IsNullOrWhiteSpace(token))
@@ -104,6 +122,11 @@ public class QuoteController(
             return BadRequest(new { error = "A quote is required." });
         if (req.PriceAmount < 0)
             return BadRequest(new { error = "Price cannot be negative." });
+        // Bounded so an absurd figure is a clean 400 rather than an overflow of
+        // the numeric(18,4) column surfacing as an unhandled 500 on a public
+        // endpoint. No real storage/moving quote approaches this.
+        if (req.PriceAmount > MaxPriceAmount)
+            return BadRequest(new { error = "Price is too large." });
         static bool HasAngle(string? s) => s is not null && (s.Contains('<') || s.Contains('>'));
         if (HasAngle(req.PriceUnit) || HasAngle(req.Availability) || HasAngle(req.Note))
             return BadRequest(new { error = "Text fields contain invalid characters." });
@@ -173,17 +196,30 @@ public class QuoteController(
         if (lead is null)
             return (NotFound(new { error = "Quote not found." }), null);
 
+        // A closed request takes no new quotes: seeding a fresh Draft onto a
+        // Converted/Dismissed/Unmatched lead would resurrect dead work in the
+        // ops queue. Distinct signal so the page can say "already closed".
+        if (TerminalLeadStatuses.Contains(lead.Status))
+        {
+            return (Conflict(new
+            {
+                error  = "This request is already closed.",
+                reason = "lead_closed",
+            }), null);
+        }
+
         var amount = req.PriceAmount;
         var unit = Clamp(req.PriceUnit, 40);
         var availability = Clamp(req.Availability, 200);
         var note = Clamp(req.Note, 2000);
 
-        // 1. Record the answer on the outreach row.
+        // 1. Record the answer on the outreach row. A blank note leaves any
+        //    previously submitted note intact — never destroys text on a re-submit.
         outreach.Status             = ProviderOutreachStatus.Replied;
         outreach.QuotedAmount       = amount;
         outreach.QuotedUnit         = unit;
         outreach.QuotedAvailability = availability;
-        outreach.QuotedNote         = note;
+        if (note is not null) outreach.QuotedNote = note;
         outreach.QuotedAt           = DateTime.UtcNow;
 
         var supplierName = await db.Suppliers
@@ -208,37 +244,54 @@ public class QuoteController(
                 Status       = OfferStatus.Draft,
                 Language     = lead.Language is "et" or "en" or "ru" or "lv" or "lt" ? lead.Language : "et",
                 CreatedAt    = DateTime.UtcNow,
-                // Seeded by the provider, not an admin — flagged so the workspace
-                // can badge the option "from provider quote".
+                // Authorship only (no admin is behind this draft); the per-option
+                // "from provider quote" badge comes from CreatedFromOutreachId.
                 CreatedBy    = "provider-quote",
             };
             db.Offers.Add(offer);
         }
 
-        // 3. Add-or-update the option keyed by SupplierId (re-submit updates, never duplicates).
+        // 3. Add-or-update THIS outreach's own option (re-submit updates it, never
+        //    duplicates). Keyed on CreatedFromOutreachId rather than SupplierId so
+        //    the quote can never overwrite an admin-authored option for the same
+        //    supplier — if one exists, this adds a separate option beside it.
         var title = Clamp($"{supplierName} — {lead.City}", 200)!;
-        var existingOption = offer.Options.FirstOrDefault(o => o.SupplierId == outreach.SupplierId);
+        var existingOption = offer.Options.FirstOrDefault(o => o.CreatedFromOutreachId == outreach.Id);
         if (existingOption is null)
         {
-            offer.Options.Add(new OfferOption
+            var option = new OfferOption
             {
-                Id          = Guid.NewGuid(),
-                OfferId     = offer.Id,
-                SupplierId  = outreach.SupplierId,
-                Title       = title,
-                PriceAmount = amount,
-                PriceUnit   = unit,
-                Notes       = note,
-                SortOrder   = offer.Options.Count,   // appended
-            });
+                Id                    = Guid.NewGuid(),
+                OfferId               = offer.Id,
+                SupplierId            = outreach.SupplierId,
+                CreatedFromOutreachId = outreach.Id,
+                Title                 = title,
+                PriceAmount           = amount,
+                PriceUnit             = unit,
+                Notes                 = note,
+                SortOrder             = offer.Options.Count,   // appended
+            };
+            // Add through the DbSet, NOT offer.Options: the option carries a
+            // pre-generated Guid, so when the parent is already tracked (an
+            // existing draft) nav-fixup discovery would mark it Modified — "key
+            // set ⇒ existing" — and SaveChanges would UPDATE a nonexistent row,
+            // throwing and rolling back the provider's whole quote. Relationship
+            // fixup still populates offer.Options via OfferId. Same trap and same
+            // remedy as AdminOffersController's replace-set.
+            db.OfferOptions.Add(option);
         }
         else
         {
             existingOption.Title       = title;
             existingOption.PriceAmount = amount;
             existingOption.PriceUnit   = unit;
-            existingOption.Notes       = note;
+            // A blank note must not wipe the note submitted earlier.
+            if (note is not null) existingOption.Notes = note;
         }
+
+        // The option set changed — a stale admin PATCH must now 409 rather than
+        // silently replace-set this option away.
+        offer.Version++;
 
         await db.SaveChangesAsync();
 

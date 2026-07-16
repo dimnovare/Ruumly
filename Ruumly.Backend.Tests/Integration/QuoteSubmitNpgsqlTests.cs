@@ -123,6 +123,91 @@ public class QuoteSubmitNpgsqlTests(PostgresIntegrationFixture pg)
         }
     }
 
+    /// <summary>
+    /// The branch that actually broke: attaching an option to an offer that is
+    /// ALREADY tracked (a pre-existing draft, or the draft the first provider's
+    /// quote just created). Adding via the nav collection tracked the option as
+    /// Modified, so SaveChanges UPDATEd a nonexistent row and the throw rolled
+    /// the whole serializable transaction back — destroying the provider's quote.
+    /// Covers both an admin-pre-built draft and a second provider on one lead.
+    /// </summary>
+    [Fact]
+    public async Task SubmitQuote_OnNpgsql_IntoPreExistingDraft_AndFromASecondProvider_LosesNoQuote()
+    {
+        Assert.True(pg.Available, Unavailable);
+
+        var leadId  = Guid.NewGuid();
+        var offerId = Guid.NewGuid();
+        var firstId = Guid.NewGuid();
+        var secondId = Guid.NewGuid();
+        var firstToken  = OfferToken.Generate();
+        var secondToken = OfferToken.Generate();
+
+        await using (var seed = pg.NewContext())
+        {
+            seed.DemandLeads.Add(new DemandLead
+            {
+                Id = leadId, Email = "customer@x.ee", City = "Tallinn",
+                Category = DemandLeadCategory.Moving, Language = "en", Source = "concierge",
+                Status = DemandLeadStatus.Contacted, ContactedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
+            });
+            foreach (var (id, token) in new[] { (firstId, firstToken), (secondId, secondToken) })
+            {
+                seed.Suppliers.Add(new Supplier
+                {
+                    Id = id, Name = $"Provider {id:N}"[..20], RegistryCode = Guid.NewGuid().ToString("N"),
+                    ContactName = "P", ContactEmail = $"p-{Guid.NewGuid():N}@x.ee",
+                    ContactPhone = "1", IsActive = true,
+                });
+                seed.ProviderOutreaches.Add(new ProviderOutreach
+                {
+                    Id = Guid.NewGuid(), DemandLeadId = leadId, SupplierId = id,
+                    SentTo = "p@x.ee", SentAt = DateTime.UtcNow,
+                    Status = ProviderOutreachStatus.Sent, QuoteToken = token,
+                });
+            }
+            // The admin pre-built the draft (the Stage-2 flow) — so the FIRST
+            // quote already has to attach to a tracked, existing offer.
+            seed.Offers.Add(new Offer
+            {
+                Id = offerId, DemandLeadId = leadId, Token = OfferToken.Generate(),
+                Status = OfferStatus.Draft, Language = "en", CreatedAt = DateTime.UtcNow,
+                CreatedBy = "ops@ruumly.eu",
+                Options = { new OfferOption
+                {
+                    Id = Guid.NewGuid(), OfferId = offerId, Title = "Admin's own option",
+                    PriceAmount = 500m, SortOrder = 0,
+                } },
+            });
+            await seed.SaveChangesAsync();
+        }
+
+        foreach (var (token, amount) in new[] { (firstToken, 250m), (secondToken, 300m) })
+        {
+            await using var db = pg.NewContext();
+            (await MakePublic(db, new CapturingEmailQueue())
+                    .SubmitQuote(token, new SubmitQuoteRequest(amount, "onetime")))
+                .Should().BeOfType<OkObjectResult>($"the quote for {amount} must not be lost");
+        }
+
+        await using (var verify = pg.NewContext())
+        {
+            (await verify.ProviderOutreaches.CountAsync(o =>
+                    o.DemandLeadId == leadId && o.Status == ProviderOutreachStatus.Replied))
+                .Should().Be(2, "both providers' quotes survived");
+
+            (await verify.Offers.CountAsync(o => o.DemandLeadId == leadId))
+                .Should().Be(1, "the pre-existing draft is reused, never duplicated");
+            var offer = await verify.Offers.Include(o => o.Options).SingleAsync(o => o.Id == offerId);
+            offer.Options.Should().HaveCount(3, "the admin's option plus one per provider, to compare");
+            offer.Options.Where(o => o.CreatedFromOutreachId != null)
+                .Select(o => o.PriceAmount).Should().BeEquivalentTo([250m, 300m]);
+            offer.Options.Single(o => o.CreatedFromOutreachId == null)
+                .Title.Should().Be("Admin's own option");
+        }
+    }
+
     [Fact]
     public async Task SubmitQuote_OnNpgsql_UnknownToken_404()
     {

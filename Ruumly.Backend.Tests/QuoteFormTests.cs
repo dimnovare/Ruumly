@@ -317,6 +317,221 @@ public class QuoteFormTests
             "a free-form option has no supplier to attribute a quote to");
     }
 
+    // ─── Seeding into an EXISTING draft (the branch every other test skips) ───
+
+    [Fact]
+    public async Task SubmitQuote_IntoPreExistingAdminDraft_SeedsOption_WithoutLosingTheQuote()
+    {
+        var db       = TestDbContext.Create();
+        var lead     = MakeLead(db);
+        var supplier = MakeSupplier(db, "Big Movers OÜ", "big@movers.ee");
+        var token    = await SendOutreachAndGetToken(db, lead, supplier);
+        var admin    = MakeAdmin(db, new CapturingEmailQueue());
+
+        // The admin pre-builds the draft (the Stage-2 flow the spec supports), so
+        // the quote must attach to an ALREADY-TRACKED offer rather than create one.
+        (await admin.CreateOffer(lead.Id, new CreateOfferRequest(
+            Options: [new OfferOptionInput("Admin's own option", PriceAmount: 500m)])))
+            .Should().BeOfType<OkObjectResult>();
+
+        (await MakePublic(db, new CapturingEmailQueue())
+                .SubmitQuote(token, new SubmitQuoteRequest(250m, "onetime", "next week", "2 movers")))
+            .Should().BeOfType<OkObjectResult>();
+
+        // The quote survived (this is what a rollback would destroy).
+        var row = db.ProviderOutreaches.Single();
+        row.Status.Should().Be(ProviderOutreachStatus.Replied);
+        row.QuotedAmount.Should().Be(250m);
+
+        db.Offers.Should().ContainSingle("the pre-existing draft is reused, never duplicated");
+        var options = db.OfferOptions.Where(o => o.OfferId == db.Offers.Single().Id).ToList();
+        options.Should().HaveCount(2, "the seeded option joins the admin's own");
+        options.Should().ContainSingle(o => o.SupplierId == supplier.Id)
+            .Which.PriceAmount.Should().Be(250m);
+    }
+
+    [Fact]
+    public async Task SubmitQuote_TwoProvidersOnOneLead_BothSeedOptions_ForCompare()
+    {
+        var db    = TestDbContext.Create();
+        var lead  = MakeLead(db);
+        var first = MakeSupplier(db, "First OÜ", "first@x.ee");
+        var second = MakeSupplier(db, "Second OÜ", "second@x.ee");
+
+        await MakeAdmin(db, new CapturingEmailQueue())
+            .SendOutreach(lead.Id, new OutreachRequest([first.Id, second.Id]));
+        var firstToken  = db.ProviderOutreaches.Single(o => o.SupplierId == first.Id).QuoteToken!;
+        var secondToken = db.ProviderOutreaches.Single(o => o.SupplierId == second.Id).QuoteToken!;
+        var pub = MakePublic(db, new CapturingEmailQueue());
+
+        // The first quote creates the draft; the SECOND must attach to it — the
+        // whole point of the feature is comparing providers side by side.
+        (await pub.SubmitQuote(firstToken, new SubmitQuoteRequest(250m, "onetime")))
+            .Should().BeOfType<OkObjectResult>();
+        (await pub.SubmitQuote(secondToken, new SubmitQuoteRequest(300m, "onetime")))
+            .Should().BeOfType<OkObjectResult>();
+
+        db.ProviderOutreaches.Should().AllSatisfy(o =>
+            o.Status.Should().Be(ProviderOutreachStatus.Replied));
+        db.Offers.Should().ContainSingle();
+        var options = db.OfferOptions.Where(o => o.OfferId == db.Offers.Single().Id).ToList();
+        options.Should().HaveCount(2, "each provider gets its own option to compare");
+        options.Select(o => o.PriceAmount).Should().BeEquivalentTo([250m, 300m]);
+    }
+
+    // ─── Provider quotes never destroy admin-authored work ────────────────────
+
+    [Fact]
+    public async Task SubmitQuote_NeverOverwritesAdminAuthoredOptionForTheSameSupplier()
+    {
+        var db       = TestDbContext.Create();
+        var lead     = MakeLead(db);
+        var supplier = MakeSupplier(db, "Big Movers OÜ", "big@movers.ee");
+        var token    = await SendOutreachAndGetToken(db, lead, supplier);
+        var admin    = MakeAdmin(db, new CapturingEmailQueue());
+
+        // The admin hand-authors an option for THIS SAME supplier (a price they
+        // negotiated by phone, tied to a specific depot).
+        (await admin.CreateOffer(lead.Id, new CreateOfferRequest(Options:
+        [
+            new OfferOptionInput("Negotiated price — Lasnamäe depot", SupplierId: supplier.Id,
+                PriceAmount: 500m, PriceUnit: "onetime", Notes: "Call Jaan first"),
+        ]))).Should().BeOfType<OkObjectResult>();
+
+        (await MakePublic(db, new CapturingEmailQueue())
+                .SubmitQuote(token, new SubmitQuoteRequest(250m, "onetime")))
+            .Should().BeOfType<OkObjectResult>();
+
+        var options = db.OfferOptions.Where(o => o.OfferId == db.Offers.Single().Id).ToList();
+        options.Should().HaveCount(2, "the quote adds its own option beside the admin's, never over it");
+
+        var adminOption = options.Single(o => o.CreatedFromOutreachId == null);
+        adminOption.Title.Should().Be("Negotiated price — Lasnamäe depot", "the admin's title survives");
+        adminOption.PriceAmount.Should().Be(500m);
+        adminOption.Notes.Should().Be("Call Jaan first", "a provider quote must not blank the admin's notes");
+
+        options.Single(o => o.CreatedFromOutreachId != null).PriceAmount.Should().Be(250m);
+
+        // The badge distinguishes them even though both point at the same supplier.
+        var offer  = ReadList(await admin.GetLeadOffers(lead.Id)).Should().ContainSingle().Subject;
+        var mapped = ((System.Collections.IEnumerable)Prop(offer, "options")!).Cast<object>().ToList();
+        mapped.Where(o => (bool)Prop(o, "fromProviderQuote")!).Should().ContainSingle(
+            "only the quote-seeded option is from a provider quote — the admin's is not");
+    }
+
+    [Fact]
+    public async Task SubmitQuote_BlankNoteOnResubmit_KeepsThePreviousNote()
+    {
+        var db       = TestDbContext.Create();
+        var lead     = MakeLead(db);
+        var supplier = MakeSupplier(db, "Big Movers OÜ", "big@movers.ee");
+        var token    = await SendOutreachAndGetToken(db, lead, supplier);
+        var pub      = MakePublic(db, new CapturingEmailQueue());
+
+        await pub.SubmitQuote(token, new SubmitQuoteRequest(250m, "onetime", "next week", "2 movers"));
+        (await pub.SubmitQuote(token, new SubmitQuoteRequest(199m, "onetime", "this week", Note: null)))
+            .Should().BeOfType<OkObjectResult>();
+
+        db.ProviderOutreaches.Single().QuotedNote.Should().Be("2 movers",
+            "an omitted note leaves the previously submitted one intact");
+        var option = db.OfferOptions.Single();
+        option.Notes.Should().Be("2 movers");
+        option.PriceAmount.Should().Be(199m, "the price itself still updates");
+    }
+
+    // ─── Public-input hardening ───────────────────────────────────────────────
+
+    [Fact]
+    public async Task SubmitQuote_AbsurdPrice_IsA400_NotAColumnOverflow500()
+    {
+        var db       = TestDbContext.Create();
+        var lead     = MakeLead(db);
+        var supplier = MakeSupplier(db, "Big Movers OÜ", "big@movers.ee");
+        var token    = await SendOutreachAndGetToken(db, lead, supplier);
+
+        (await MakePublic(db, new CapturingEmailQueue())
+                .SubmitQuote(token, new SubmitQuoteRequest(9_999_999_999m)))
+            .Should().BeOfType<BadRequestObjectResult>();
+
+        db.Offers.Should().BeEmpty();
+        db.ProviderOutreaches.Single().QuotedAt.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task SubmitQuote_OnClosedLead_409_LeadClosed_SeedsNothing_AndGetSaysClosed()
+    {
+        foreach (var terminal in new[]
+        {
+            DemandLeadStatus.Converted, DemandLeadStatus.Dismissed, DemandLeadStatus.Unmatched,
+        })
+        {
+            var db       = TestDbContext.Create();
+            var lead     = MakeLead(db);
+            var supplier = MakeSupplier(db, "Big Movers OÜ", "big@movers.ee");
+            var token    = await SendOutreachAndGetToken(db, lead, supplier);
+            var pub      = MakePublic(db, new CapturingEmailQueue());
+
+            lead.Status = terminal;
+            await db.SaveChangesAsync();
+
+            var conflict = (await pub.SubmitQuote(token, new SubmitQuoteRequest(250m)))
+                .Should().BeOfType<ConflictObjectResult>($"{terminal} is a closed request").Subject;
+            Prop(conflict.Value!, "reason").Should().Be("lead_closed");
+
+            db.Offers.Should().BeEmpty("a closed request must never spawn a fresh draft");
+            db.ProviderOutreaches.Single().QuotedAt.Should().BeNull();
+            db.ProviderOutreaches.Single().Status.Should().Be(ProviderOutreachStatus.Sent);
+
+            // The page can render the closed state without a failed submit first.
+            var dto = (await pub.GetQuote(token))
+                .Should().BeOfType<OkObjectResult>().Subject.Value
+                .Should().BeOfType<PublicQuoteDto>().Subject;
+            dto.Closed.Should().BeTrue();
+        }
+    }
+
+    // ─── Lost-update guard on the admin's replace-set PATCH ───────────────────
+
+    [Fact]
+    public async Task UpdateOffer_StaleVersion_409_AndDoesNotDeleteTheProviderSeededOption()
+    {
+        var db       = TestDbContext.Create();
+        var lead     = MakeLead(db);
+        var supplier = MakeSupplier(db, "Big Movers OÜ", "big@movers.ee");
+        var token    = await SendOutreachAndGetToken(db, lead, supplier);
+        var admin    = MakeAdmin(db, new CapturingEmailQueue());
+
+        // The admin opens the draft — and notes the version they read.
+        var created = await admin.CreateOffer(lead.Id, new CreateOfferRequest(
+            Options: [new OfferOptionInput("Admin option", PriceAmount: 500m)]));
+        var body         = created.Should().BeOfType<OkObjectResult>().Subject.Value!;
+        var offerId      = (Guid)Prop(body, "id")!;
+        var staleVersion = (int)Prop(body, "version")!;
+
+        // A provider quote lands BEFORE the admin gets around to saving.
+        (await MakePublic(db, new CapturingEmailQueue())
+                .SubmitQuote(token, new SubmitQuoteRequest(250m, "onetime")))
+            .Should().BeOfType<OkObjectResult>();
+        db.OfferOptions.Count(o => o.OfferId == offerId).Should().Be(2);
+
+        // Their save carries the pre-quote option set — it must be refused, not applied.
+        (await admin.UpdateOffer(offerId, new UpdateOfferRequest(
+                Options: [new OfferOptionInput("Admin option", PriceAmount: 500m)],
+                Version: staleVersion)))
+            .Should().BeOfType<ConflictObjectResult>();
+        db.OfferOptions.Count(o => o.OfferId == offerId).Should().Be(2,
+            "the stale replace-set was rejected — the provider's quote survives");
+
+        // After reloading, the same edit applies with the current version.
+        var fresh = ReadList(await admin.GetLeadOffers(lead.Id)).Should().ContainSingle().Subject;
+        (await admin.UpdateOffer(offerId, new UpdateOfferRequest(
+                Options: [new OfferOptionInput("Admin option", PriceAmount: 500m)],
+                Version: (int)Prop(fresh, "version")!)))
+            .Should().BeOfType<OkObjectResult>();
+        db.OfferOptions.Count(o => o.OfferId == offerId).Should().Be(1,
+            "a deliberate replace-set from a fresh read still applies");
+    }
+
     [Fact]
     public async Task SubmitQuote_RejectsNegativeAmountAndAngleBrackets_WithoutMutating()
     {
