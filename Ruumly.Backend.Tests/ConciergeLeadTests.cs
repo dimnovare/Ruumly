@@ -42,7 +42,8 @@ public class ConciergeLeadTests
 
     private static SupportController MakeSupport(RuumlyDbContext db, IBackgroundEmailQueue queue) =>
         new(db, queue, new NoOpNotifications(),
-            new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build())
+            new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<SupportController>.Instance)
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },
         };

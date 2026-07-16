@@ -19,7 +19,8 @@ public class SupportController(
     RuumlyDbContext db,
     IBackgroundEmailQueue emailQueue,
     INotificationService notificationService,
-    IConfiguration config) : ControllerBase
+    IConfiguration config,
+    ILogger<SupportController> logger) : ControllerBase
 {
     /// <summary>
     /// Public contact form. Emails the team the visitor's message.
@@ -220,29 +221,58 @@ public class SupportController(
         db.DemandLeads.Add(lead);
         await db.SaveChangesAsync();
 
-        // Enrich the instant ops alert (the concierge "phone alert"): how many
-        // providers we could reach right now, and a one-click deep link into the
-        // lead's workspace. Nearby scope = same 25 km radius the admin outreach
-        // step defaults to, so the count matches what they'll actually see.
-        var matches = await ProviderCandidateFinder.SearchAsync(
-            db, lead,
-            new ProviderCandidateSearch(
-                Query: null, AllEstonia: false, AllCategories: false, RadiusKm: 25, Limit: 50));
+        // The lead is persisted — from here NOTHING may fail the customer's
+        // request. Enrich the instant ops alert (the concierge "phone alert")
+        // with a one-click deep link into the lead's workspace and how many
+        // providers we could reach right now. Nearby scope = the same 25 km the
+        // admin outreach step defaults to, so the count matches what they'll see.
+
+        // The count is decorative: a failure here must never cost us the alert
+        // (a saved-but-unannounced lead is the exact silent-lead failure this
+        // feature exists to prevent), let alone 500 a real customer.
+        int? nearbyCount = null;
+        try
+        {
+            var matches = await ProviderCandidateFinder.SearchAsync(
+                db, lead,
+                new ProviderCandidateSearch(
+                    Query: null, AllEstonia: false, AllCategories: false, RadiusKm: 25, Limit: 50));
+            nearbyCount = matches.Total;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex,
+                "Provider match count failed for concierge lead {LeadId}; alerting without it.", lead.Id);
+        }
+
         var appUrl    = string.IsNullOrWhiteSpace(config["AppUrl"]) ? "https://ruumly.eu" : config["AppUrl"];
         var adminLink = FrontendUrl.Localized(appUrl, "et", $"admin?tab=leads&lead={lead.Id}");
+        var matchLine = nearbyCount is { } count
+            ? $"Matches: {count} providers within 25 km\n"
+            : "";
 
-        emailQueue.EnqueueEmail(
-            to:       await OpsInbox.ResolveAsync(db),
-            subject:  $"New concierge request — {lead.City}",
-            textBody: $"From: {lead.Name} <{lead.Email}> {lead.Phone}\n" +
-                      $"Categories: {(validCategories.Count > 0 ? string.Join(", ", validCategories) : "any")}\n" +
-                      $"City: {lead.City}{(lead.ToCity is not null ? $" → {lead.ToCity}" : "")}\n" +
-                      $"Date: {(lead.NeedDate?.ToString("yyyy-MM-dd") ?? "-")}\n" +
-                      $"Language: {lead.Language}\n" +
-                      $"Matches: {matches.Total} providers within 25 km\n\n" +
-                      $"{lead.Details}\n\n" +
-                      $"Open the workspace: {adminLink}\n" +
-                      $"Work it from the admin CRM → Leads.");
+        try
+        {
+            emailQueue.EnqueueEmail(
+                to:       await OpsInbox.ResolveAsync(db),
+                subject:  $"New concierge request — {lead.City}",
+                textBody: $"From: {lead.Name} <{lead.Email}> {lead.Phone}\n" +
+                          $"Categories: {(validCategories.Count > 0 ? string.Join(", ", validCategories) : "any")}\n" +
+                          $"City: {lead.City}{(lead.ToCity is not null ? $" → {lead.ToCity}" : "")}\n" +
+                          $"Date: {(lead.NeedDate?.ToString("yyyy-MM-dd") ?? "-")}\n" +
+                          $"Language: {lead.Language}\n" +
+                          matchLine + "\n" +
+                          $"{lead.Details}\n\n" +
+                          $"Open the workspace: {adminLink}\n" +
+                          $"Work it from the admin CRM → Leads.");
+        }
+        catch (Exception ex)
+        {
+            // The lead IS saved; 500-ing the customer would lose them too and
+            // still not deliver the alert. Log loudly and accept the request.
+            logger.LogError(ex,
+                "Ops alert enqueue failed for concierge lead {LeadId} — lead saved but UNANNOUNCED.", lead.Id);
+        }
 
         return Ok(new { ok = true });
     }

@@ -255,6 +255,21 @@ builder.Services.AddRateLimiter(options =>
             QueueLimit  = 0,
         }));
 
+    // Provider quote submits (POST /api/quote/{token}). NOT "public-email": that
+    // bucket is keyed by (policy, IP) and shared with /leads/request and the
+    // contact form, so a provider quoting could exhaust the permits a CUSTOMER
+    // needs to file a request from the same IP — and vice versa. At 5/10min a
+    // provider office behind one NAT'd IP (or Estonian mobile CGNAT) locks its
+    // own staff out after two submits. Own bucket, generous but abuse-bounded.
+    // The read-only GET uses "search" — it sends no email.
+    options.AddPolicy("provider-quote", ctx =>
+        RateLimitPartition.GetFixedWindowLimiter(IpKey(ctx), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 30,
+            Window      = TimeSpan.FromMinutes(10),
+            QueueLimit  = 0,
+        }));
+
     options.AddPolicy("upload", ctx =>
         RateLimitPartition.GetFixedWindowLimiter(IpKey(ctx), _ => new FixedWindowRateLimiterOptions
         {
