@@ -65,6 +65,36 @@ public class ProviderCandidateTests
         ReadItems(body).Select(x => Read<string>(x, "city")).First().Should().Be("Tartu");
     }
 
+    [Fact]
+    public async Task NearbyWithAnchor_KeepsExactCitySupplierWithoutCoordinates()
+    {
+        var (db, lead, noCoordId, coordExactCityIds) =
+            await CandidateFixture.CreateTartuWithNoCoordExactCityAsync();
+
+        var result = await MakeAdminLeads(db).GetProviderCandidates(
+            lead.Id, null, "nearby", "lead", 25, 50);
+
+        var body = result.Should().BeOfType<OkObjectResult>().Subject.Value!;
+        // Anchor is derivable from the coordinated exact-city suppliers.
+        Read<object?>(body, "anchor").Should().NotBeNull();
+
+        var items = ReadItems(body);
+        var noCoord = items.SingleOrDefault(x => Read<Guid>(x, "supplierId") == noCoordId);
+        noCoord.Should().NotBeNull(
+            "an exact-city supplier without coordinates must not be dropped from the nearby view");
+        Read<bool>(noCoord!, "isExactCity").Should().BeTrue();
+        Read<double?>(noCoord!, "distanceKm").Should().BeNull();
+
+        // Coordinated exact-city suppliers still sort ahead of the no-coordinate one.
+        var ids = items.Select(x => Read<Guid>(x, "supplierId")).ToList();
+        ids.Should().Contain(coordExactCityIds);
+        var noCoordIndex = ids.IndexOf(noCoordId);
+        foreach (var coordId in coordExactCityIds)
+        {
+            ids.IndexOf(coordId).Should().BeLessThan(noCoordIndex);
+        }
+    }
+
     private static AdminLeadsController MakeAdminLeads(RuumlyDbContext db) =>
         new(db)
         {
@@ -134,6 +164,27 @@ public class ProviderCandidateTests
             await db.SaveChangesAsync();
 
             return (db, lead);
+        }
+
+        public static async Task<(RuumlyDbContext Db, DemandLead Lead, Guid NoCoordId, IReadOnlyList<Guid> CoordExactCityIds)> CreateTartuWithNoCoordExactCityAsync()
+        {
+            var db = TestDbContext.Create();
+            var lead = new DemandLead
+            {
+                Id = Guid.NewGuid(), Email = "customer@example.ee", City = "Tartu",
+                Category = DemandLeadCategory.Warehouse, Language = "et",
+            };
+
+            // Coordinated exact-city suppliers geocode the Tartu anchor.
+            var tartu06 = AddSupplier(db, "Panicom Storage", "Tartu", 0.6, "Puiestee 1", "sales@panicom.ee", "+372 555 0001", 3, 2.1333333333);
+            var tartu15 = AddSupplier(db, "Emajõe Storage", "Tartu", 1.5, "Vabaduse 3", "info@emajoe.ee", "+372 555 0003");
+            // Exact-city (Tartu) supplier with no valid coordinates (0,0): DistanceKm stays null.
+            var tartuNoCoord = AddSupplier(db, "Kesklinn Ladu", "Tartu", 0, "Rüütli 8", "info@kesklinn.ee", "+372 555 0008", missingCoordinates: true);
+
+            db.DemandLeads.Add(lead);
+            await db.SaveChangesAsync();
+
+            return (db, lead, tartuNoCoord.Id, [tartu06.Id, tartu15.Id]);
         }
 
         private static Supplier AddSupplier(

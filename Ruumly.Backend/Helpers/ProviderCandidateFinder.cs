@@ -89,7 +89,7 @@ public static class ProviderCandidateFinder
         if (!search.AllEstonia)
         {
             candidates = anchor is not null
-                ? candidates.Where(c => c.Item.DistanceKm is { } distance && distance <= search.RadiusKm).ToList()
+                ? candidates.Where(c => c.Item.IsExactCity || (c.Item.DistanceKm is { } distance && distance <= search.RadiusKm)).ToList()
                 : candidates.Where(c => c.Item.IsExactCity || !string.IsNullOrWhiteSpace(search.Query)).ToList();
         }
 
