@@ -84,6 +84,19 @@ backable by facts from Phase 0.
       PayoutEntry; document a manual wire-transfer fallback. Payments are built — this is
       credentials + testing, not building. (Marketplace booking is the demoted ops layer, not
       the front door, but when a booking occurs the money must move.)
+  - **PREREQUISITE (found 2026-07-16, moot until Montonio is live — do NOT ship online payment
+    before fixing):** `BookingPage.tsx:126` resolves the partner via `useSuppliers`, which is
+    gated `enabled: isAuthenticated && (role === admin|provider)` — so for a CUSTOMER the query
+    never fires, `supplier` is undefined, and the page silently falls back to
+    `paymentMethod:"bank_transfer"` ("arrange payment with the partner"). Harmless today
+    (online payment is off), but a marketplace partner's customer will never see online
+    payment. The fix is NOT just repointing the flags: `directPaymentEnabled` /
+    `ruumlyPaymentEnabled` already exist on the public listing DTO, but **`billingModel`
+    (`marketplace|rebate`) is Supplier-only and decides whether the customer should pay online
+    at all** — switching the flags without it would show online payment to *rebate* partners'
+    customers, i.e. taking money through the wrong commercial model. REQUIRED: expose
+    `billingModel` on the public listing DTO (`GET /listings`, `/listings/{id}`), then
+    BookingPage drops `useSuppliers` entirely.
 
 Acceptance: at least one supplier paying for a Ruumly-delivered customer; ops-layer payments live.
 
