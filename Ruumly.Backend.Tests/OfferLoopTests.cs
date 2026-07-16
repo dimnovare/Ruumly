@@ -569,7 +569,7 @@ public class OfferLoopTests
     // ─── Provider outreach ────────────────────────────────────────────────────
 
     [Fact]
-    public async Task PreviewOutreach_IsSideEffectFree_AndMatchesDeliveredMessageByteForByte()
+    public async Task PreviewOutreach_IsSideEffectFree_AndMatchesDeliveredMessageExceptPerRowQuoteToken()
     {
         var db       = TestDbContext.Create();
         var queue    = new CapturingEmailQueue();
@@ -583,13 +583,25 @@ public class OfferLoopTests
             .Should().BeOfType<OutreachPreviewResponse>().Subject.Recipients
             .Should().ContainSingle().Subject;
 
-        db.ProviderOutreaches.Should().BeEmpty();
+        db.ProviderOutreaches.Should().BeEmpty("previewing mints no row and persists no token");
         queue.Emails.Should().BeEmpty();
 
         await admin.SendOutreach(lead.Id, new OutreachRequest([supplier.Id]));
         var delivered = queue.Emails.Should().ContainSingle().Subject;
+
+        // Both carry the "Submit your price" quote link; the delivered email's link
+        // uses the persisted per-row token, the preview's a throwaway sample token.
+        // (The supplier defaults to Estonia, so the link is localized to /et/.)
+        preview.TextBody.Should().Contain("https://ruumly.eu/et/quote/");
+        delivered.TextBody.Should().Contain(
+            "https://ruumly.eu/et/quote/" + db.ProviderOutreaches.Single().QuoteToken,
+            "the delivered link uses the token stored on the outreach row");
+
+        static string StripToken(string body) =>
+            Regex.Replace(body, "quote/[A-Za-z0-9_-]+", "quote/TOKEN");
         preview.Subject.Should().Be(delivered.Subject);
-        preview.TextBody.Should().Be(delivered.TextBody);
+        StripToken(preview.TextBody!).Should().Be(StripToken(delivered.TextBody),
+            "the message is identical apart from the per-recipient token");
     }
 
     [Fact]

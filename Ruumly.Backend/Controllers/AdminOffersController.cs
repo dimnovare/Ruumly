@@ -372,7 +372,11 @@ public class AdminOffersController(
                 continue;
             }
 
-            var message = ProviderOutreachComposer.Compose(lead, supplier);
+            // Preview shows the exact message the provider will receive, including
+            // a sample "Submit your price" link. The real per-row token is minted
+            // only at send time, so this preview token is ephemeral (never stored).
+            var message = ProviderOutreachComposer.Compose(
+                lead, supplier, config["AppUrl"], OfferToken.Generate());
             var email = string.IsNullOrWhiteSpace(supplier.ContactEmail)
                 ? null
                 : supplier.ContactEmail.Trim();
@@ -451,7 +455,12 @@ public class AdminOffersController(
                 }
 
                 var to = supplier.ContactEmail.Trim();
-                var message = ProviderOutreachComposer.Compose(lead, supplier);
+                // Per-recipient quote token: the provider opens /{lang}/quote/{token}
+                // and submits a price without an account. Minted here so the link in
+                // the email and the stored row always carry the same token.
+                var quoteToken = OfferToken.Generate();
+                var message = ProviderOutreachComposer.Compose(
+                    lead, supplier, config["AppUrl"], quoteToken);
                 emails.Add((to, message.Subject, message.TextBody));
 
                 var row = new ProviderOutreach
@@ -462,6 +471,7 @@ public class AdminOffersController(
                     SentTo       = to,
                     SentAt       = DateTime.UtcNow,
                     Status       = ProviderOutreachStatus.Sent,
+                    QuoteToken   = quoteToken,
                 };
                 Db.ProviderOutreaches.Add(row);
                 sent.Add(MapOutreach(row, supplier.Name));
