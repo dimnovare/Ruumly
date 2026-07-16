@@ -70,7 +70,8 @@ public class MovingQuoteLeadTests
 
     private static SupportController MakeSupport(
         RuumlyDbContext db, IBackgroundEmailQueue queue, INotificationService notif) =>
-        new(db, queue, notif)
+        new(db, queue, notif,
+            new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build())
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },
         };

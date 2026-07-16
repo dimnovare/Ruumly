@@ -41,7 +41,8 @@ public class ConciergeLeadTests
     }
 
     private static SupportController MakeSupport(RuumlyDbContext db, IBackgroundEmailQueue queue) =>
-        new(db, queue, new NoOpNotifications())
+        new(db, queue, new NoOpNotifications(),
+            new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build())
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },
         };
@@ -142,6 +143,40 @@ public class ConciergeLeadTests
             new ConciergeRequest(Email: "c@x.ee", City: "Tallinn", Language: "xx"));
 
         db.DemandLeads.Single().Language.Should().Be("et");
+    }
+
+    // A1 — enriched instant ops alert: a one-click workspace deep link + how many
+    // providers we could reach right now (nearby, 25 km).
+    [Fact]
+    public async Task RequestConcierge_OpsAlert_IncludesWorkspaceDeepLink_AndNearbyProviderCount()
+    {
+        var db    = TestDbContext.Create();
+        var queue = new CapturingEmailQueue();
+
+        // One active same-city provider that can serve the lead's category.
+        var supplier = new Supplier
+        {
+            Id = Guid.NewGuid(), Name = "Tallinn Movers", ContactName = "C",
+            ContactEmail = "m@x.ee", ContactPhone = "1", IsActive = true,
+        };
+        db.Suppliers.Add(supplier);
+        db.Listings.Add(new Listing
+        {
+            Id = Guid.NewGuid(), SupplierId = supplier.Id, Type = ListingType.Moving,
+            Title = "Moving in Tallinn", City = "Tallinn", IsActive = true,
+            PriceFrom = 50m, PriceUnit = "onetime", UpdatedAt = DateTime.UtcNow,
+        });
+        await db.SaveChangesAsync();
+
+        await MakeSupport(db, queue).RequestConcierge(new ConciergeRequest(
+            Email: "cust@x.ee", City: "Tallinn", Categories: ["moving"]));
+
+        var email  = queue.Emails.Should().ContainSingle().Subject;
+        var leadId = db.DemandLeads.Single().Id;
+        email.TextBody.Should().Contain("1 providers within 25 km",
+            "the alert tells ops how many providers are reachable right now");
+        email.TextBody.Should().Contain($"admin?tab=leads&lead={leadId}",
+            "the alert deep-links into the lead's workspace");
     }
 
     // ─── Admin lifecycle: first-touch stamp ───────────────────────────────────

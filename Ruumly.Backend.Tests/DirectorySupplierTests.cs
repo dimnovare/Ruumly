@@ -82,7 +82,8 @@ public class DirectorySupplierTests
         };
 
     private static SupportController MakeSupport(RuumlyDbContext db) =>
-        new(db, new CapturingEmailQueue(), new NoOpNotifications())
+        new(db, new CapturingEmailQueue(), new NoOpNotifications(),
+            new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build())
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },
         };

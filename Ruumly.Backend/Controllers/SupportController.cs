@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Ruumly.Backend.Constants;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Requests;
@@ -17,7 +18,8 @@ namespace Ruumly.Backend.Controllers;
 public class SupportController(
     RuumlyDbContext db,
     IBackgroundEmailQueue emailQueue,
-    INotificationService notificationService) : ControllerBase
+    INotificationService notificationService,
+    IConfiguration config) : ControllerBase
 {
     /// <summary>
     /// Public contact form. Emails the team the visitor's message.
@@ -218,6 +220,17 @@ public class SupportController(
         db.DemandLeads.Add(lead);
         await db.SaveChangesAsync();
 
+        // Enrich the instant ops alert (the concierge "phone alert"): how many
+        // providers we could reach right now, and a one-click deep link into the
+        // lead's workspace. Nearby scope = same 25 km radius the admin outreach
+        // step defaults to, so the count matches what they'll actually see.
+        var matches = await ProviderCandidateFinder.SearchAsync(
+            db, lead,
+            new ProviderCandidateSearch(
+                Query: null, AllEstonia: false, AllCategories: false, RadiusKm: 25, Limit: 50));
+        var appUrl    = string.IsNullOrWhiteSpace(config["AppUrl"]) ? "https://ruumly.eu" : config["AppUrl"];
+        var adminLink = FrontendUrl.Localized(appUrl, "et", $"admin?tab=leads&lead={lead.Id}");
+
         emailQueue.EnqueueEmail(
             to:       await OpsInbox.ResolveAsync(db),
             subject:  $"New concierge request — {lead.City}",
@@ -225,8 +238,10 @@ public class SupportController(
                       $"Categories: {(validCategories.Count > 0 ? string.Join(", ", validCategories) : "any")}\n" +
                       $"City: {lead.City}{(lead.ToCity is not null ? $" → {lead.ToCity}" : "")}\n" +
                       $"Date: {(lead.NeedDate?.ToString("yyyy-MM-dd") ?? "-")}\n" +
-                      $"Language: {lead.Language}\n\n" +
+                      $"Language: {lead.Language}\n" +
+                      $"Matches: {matches.Total} providers within 25 km\n\n" +
                       $"{lead.Details}\n\n" +
+                      $"Open the workspace: {adminLink}\n" +
                       $"Work it from the admin CRM → Leads.");
 
         return Ok(new { ok = true });
