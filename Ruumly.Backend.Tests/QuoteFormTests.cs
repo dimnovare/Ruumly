@@ -95,6 +95,14 @@ public class QuoteFormTests
         return db.ProviderOutreaches.Single(o => o.SupplierId == supplier.Id).QuoteToken!;
     }
 
+    /// <summary>Exact-case property read — the admin DTO field names ARE the contract.</summary>
+    private static object? Prop(object o, string name) =>
+        o.GetType().GetProperty(name)!.GetValue(o);
+
+    private static List<object> ReadList(IActionResult result) =>
+        ((System.Collections.IEnumerable)result.Should().BeOfType<OkObjectResult>().Subject.Value!)
+            .Cast<object>().ToList();
+
     // ─── Token minted on send ─────────────────────────────────────────────────
 
     [Fact]
@@ -233,6 +241,80 @@ public class QuoteFormTests
         afterOptions[0].PriceAmount.Should().Be(199m);
         db.ProviderOutreaches.Should().ContainSingle("re-submit never mints a second outreach row");
         db.ProviderOutreaches.Single().QuotedAmount.Should().Be(199m);
+    }
+
+    // ─── Admin DTO surface (what the workspace renders) ───────────────────────
+
+    [Fact]
+    public async Task GetLeadOutreach_ExposesQuoteFields_NullBeforeSubmit_PopulatedAfter()
+    {
+        var db       = TestDbContext.Create();
+        var lead     = MakeLead(db);
+        var supplier = MakeSupplier(db, "Big Movers OÜ", "big@movers.ee");
+        var token    = await SendOutreachAndGetToken(db, lead, supplier);
+        var admin    = MakeAdmin(db, new CapturingEmailQueue());
+
+        // Before the provider answers, every quote field is null (same shape a
+        // legacy token-less row returns).
+        var before = ReadList(await admin.GetLeadOutreach(lead.Id)).Should().ContainSingle().Subject;
+        Prop(before, "status").Should().Be("sent");
+        Prop(before, "quotedAmount").Should().BeNull();
+        Prop(before, "quotedUnit").Should().BeNull();
+        Prop(before, "quotedAvailability").Should().BeNull();
+        Prop(before, "quotedNote").Should().BeNull();
+        Prop(before, "quotedAt").Should().BeNull();
+
+        await MakePublic(db, new CapturingEmailQueue())
+            .SubmitQuote(token, new SubmitQuoteRequest(250m, "kuu", "next week", "2 movers"));
+
+        // After: the history row can render "Quoted 250 kuu".
+        var after = ReadList(await admin.GetLeadOutreach(lead.Id)).Should().ContainSingle().Subject;
+        Prop(after, "status").Should().Be("replied");
+        Prop(after, "quotedAmount").Should().Be(250m);
+        Prop(after, "quotedUnit").Should().Be("kuu", "the provider's localized unit is stored verbatim");
+        Prop(after, "quotedAvailability").Should().Be("next week");
+        Prop(after, "quotedNote").Should().Be("2 movers");
+        Prop(after, "quotedAt").Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task GetLeadOffers_FlagsAutoSeededOptionFromProviderQuote_ButNotManualOnes()
+    {
+        var db      = TestDbContext.Create();
+        var lead    = MakeLead(db);
+        var quoting = MakeSupplier(db, "Quoting OÜ", "q@x.ee");
+        var manual  = MakeSupplier(db, "Manual OÜ", "m@x.ee");
+        var admin   = MakeAdmin(db, new CapturingEmailQueue());
+
+        var token = await SendOutreachAndGetToken(db, lead, quoting);
+        await MakePublic(db, new CapturingEmailQueue())
+            .SubmitQuote(token, new SubmitQuoteRequest(250m, "onetime"));
+
+        // Alongside the auto-seeded option the admin adds two of their own: one
+        // for a provider that never quoted, one free-form with no supplier.
+        var offerId = db.Offers.Single().Id;
+        db.OfferOptions.Add(new OfferOption
+        {
+            Id = Guid.NewGuid(), OfferId = offerId, SupplierId = manual.Id,
+            Title = "Manual OÜ — Tallinn", PriceAmount = 300m, SortOrder = 1,
+        });
+        db.OfferOptions.Add(new OfferOption
+        {
+            Id = Guid.NewGuid(), OfferId = offerId,
+            Title = "Free-form option", PriceAmount = 400m, SortOrder = 2,
+        });
+        await db.SaveChangesAsync();
+
+        var offer   = ReadList(await admin.GetLeadOffers(lead.Id)).Should().ContainSingle().Subject;
+        var options = ((System.Collections.IEnumerable)Prop(offer, "options")!).Cast<object>().ToList();
+
+        options.Should().HaveCount(3);
+        Prop(options[0], "fromProviderQuote").Should().Be(true,
+            "this option's provider answered the outreach with a price");
+        Prop(options[1], "fromProviderQuote").Should().Be(false,
+            "this provider was never quoted — the admin added the option by hand");
+        Prop(options[2], "fromProviderQuote").Should().Be(false,
+            "a free-form option has no supplier to attribute a quote to");
     }
 
     [Fact]

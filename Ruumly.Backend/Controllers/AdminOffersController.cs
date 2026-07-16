@@ -85,7 +85,7 @@ public class AdminOffersController(
             .ThenByDescending(o => o.Id)
             .FirstOrDefaultAsync();
         if (existingDraft is not null)
-            return Ok(MapOffer(existingDraft));
+            return Ok(MapOffer(existingDraft, await QuotedSupplierIds(lead.Id)));
 
         var offer = new Offer
         {
@@ -114,7 +114,7 @@ public class AdminOffersController(
         await Db.SaveChangesAsync();
 
         await FixUpOptionSuppliers(offer);
-        return Ok(MapOffer(offer));
+        return Ok(MapOffer(offer, await QuotedSupplierIds(lead.Id)));
     }
 
     [HttpGet("leads/{id:guid}/offers")]
@@ -129,7 +129,10 @@ public class AdminOffersController(
             .OrderByDescending(o => o.CreatedAt)
             .ToListAsync();
 
-        return Ok(offers.Select(MapOffer).ToList());
+        // Every offer here belongs to the same lead — resolve the quoted
+        // suppliers once for the whole list.
+        var quoted = await QuotedSupplierIds(id);
+        return Ok(offers.Select(o => MapOffer(o, quoted)).ToList());
     }
 
     [HttpGet("offers/{id:guid}")]
@@ -140,7 +143,7 @@ public class AdminOffersController(
             .FirstOrDefaultAsync(o => o.Id == id);
         if (offer is null) return NotFound(Error("Offer not found."));
 
-        return Ok(MapOffer(offer));
+        return Ok(MapOffer(offer, await QuotedSupplierIds(offer.DemandLeadId)));
     }
 
     [HttpDelete("offers/{id:guid}")]
@@ -239,7 +242,7 @@ public class AdminOffersController(
         await Db.SaveChangesAsync();
 
         await FixUpOptionSuppliers(offer);
-        return Ok(MapOffer(offer));
+        return Ok(MapOffer(offer, await QuotedSupplierIds(offer.DemandLeadId)));
     }
 
     /// <summary>
@@ -305,7 +308,7 @@ public class AdminOffersController(
             lead.Email.Trim(), email.Subject, email.TextBody,
             htmlBody: null, replyTo: OpsReplyTo);
 
-        return Ok(MapOffer(offer));
+        return Ok(MapOffer(offer, await QuotedSupplierIds(offer.DemandLeadId)));
     }
 
     [HttpPost("offers/{id:guid}/confirm-booking")]
@@ -336,7 +339,9 @@ public class AdminOffersController(
 
         if (transaction is not null)
             await transaction.CommitAsync();
-        return Ok(MapOffer(offer));
+        // Read AFTER commit — the marker is derived data, never part of the
+        // confirmation's atomic unit.
+        return Ok(MapOffer(offer, await QuotedSupplierIds(offer.DemandLeadId)));
     }
 
     // ─── Provider outreach ────────────────────────────────────────────────────
@@ -609,7 +614,20 @@ public class AdminOffersController(
         return offer;
     }
 
-    private static object MapOffer(Offer o) => new
+    /// <summary>
+    /// Supplier ids that answered THIS lead's outreach with a price. Loaded once
+    /// per offer mapping and passed into <see cref="MapOffer"/> so the
+    /// per-option fromProviderQuote marker costs no extra query (never N+1).
+    /// </summary>
+    private async Task<HashSet<Guid>> QuotedSupplierIds(Guid demandLeadId) =>
+        (await Db.ProviderOutreaches
+            .Where(o => o.DemandLeadId == demandLeadId && o.QuotedAt != null)
+            .Select(o => o.SupplierId)
+            .Distinct()
+            .ToListAsync())
+        .ToHashSet();
+
+    private static object MapOffer(Offer o, HashSet<Guid> quotedSupplierIds) => new
     {
         id             = o.Id,
         demandLeadId   = o.DemandLeadId,
@@ -636,6 +654,9 @@ public class AdminOffersController(
                 priceUnit          = op.PriceUnit,
                 notes              = op.Notes,
                 sortOrder          = op.SortOrder,
+                // Computed, not stored: this option's provider answered the lead's
+                // outreach with a price. Drives the "from provider quote" badge.
+                fromProviderQuote  = op.SupplierId is { } sid && quotedSupplierIds.Contains(sid),
             })
             .ToList(),
     };
@@ -650,6 +671,14 @@ public class AdminOffersController(
         sentAt       = o.SentAt,
         status       = o.Status.ToString().ToLower(),
         note         = o.Note,
+        // The provider's answer from the tokenized quote page — all null until
+        // they submit one (and on legacy rows sent before quote links existed).
+        // Drives the "Quoted {amount} {unit}" outreach-history row.
+        quotedAmount       = o.QuotedAmount,
+        quotedUnit         = o.QuotedUnit,
+        quotedAvailability = o.QuotedAvailability,
+        quotedNote         = o.QuotedNote,
+        quotedAt           = o.QuotedAt,
     };
 
     private static (List<OfferOption>? Options, string? Error) BuildOptions(
