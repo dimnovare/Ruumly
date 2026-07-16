@@ -51,7 +51,14 @@ The tooling shipped today. The job now is **operating it** and **trusting the nu
       review → outreach to matched providers → compile 2–3 options → send the offer → track
       viewed/chosen. Target the median-first-response metric.
 - [x] Metrics scoped to the concierge funnel (Source="concierge"), match rate computed,
-      choose→converted wired, contact/response no longer polluted by Dismissed/Unmatched.
+      contact/response no longer polluted by Dismissed/Unmatched.
+- [x] **Guided lead-operations workspace** (2026-07-15 design, `docs/CONCIERGE-OPS.md`):
+      geographic provider discovery (25 km nearby ranked by real distance + All-Estonia
+      search), exact outreach review before send + explicit resend, one deletable offer
+      draft, exact delivery preview that never fakes a Viewed receipt, and the corrected
+      booking semantics — a customer selection is a **pending preference** (lead stays
+      Quoted); only admin **Confirm with provider and mark booked** converts. No payment/
+      Booking/Order/contract is created on selection.
 - [ ] **First 10 real qualified requests worked end-to-end**, at least a few reaching an
       offer sent and one chosen — the proof the loop converts.
 - [ ] **Seed demand**: point the directory-launch social posts + the SEO city hubs (now

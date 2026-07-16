@@ -10,23 +10,59 @@
   relevant local offers, usually within 24h. Free, no obligation.
 - **Supplier:** we don't sell placement. We bring people who are looking *right now*.
 
+## The exact state flow (v2 guided workspace — 2026-07)
+```text
+New       -> outreach sent          -> Contacted
+Contacted -> offer sent             -> Quoted / Offer Sent
+Quoted    -> customer opens link    -> Quoted / Offer Viewed
+Quoted    -> customer requests opt. -> Quoted / Offer Chosen   (a PREFERENCE, not a booking)
+Quoted    -> admin confirms provider-> Converted               (the only booked outcome)
+```
+A customer selecting an option is a **pending preference** — the lead stays **Quoted** and
+Ruumly is alerted. It becomes **Converted (=Booked)** only when *you* click **Confirm with
+provider and mark booked**, after the provider confirms availability. `Converted` is no
+longer clickable in the status pipeline; only booking-confirmation sets it.
+
 ## Daily cadence (~30 min, morning + evening check)
 1. Open **Admin → Leads** (`/admin?tab=leads`). New requests arrive with status **New**
-   (also emailed to info@ / admin@).
-2. For each New lead (target: first touch **same day**):
-   - Open the row → read the need (categories, city, route, date, details).
-   - Click **Find partners** → suggested active suppliers (category + same-city first).
-   - Call/email 2–3 suppliers. Script: *"Tere! Ruumlyst. Meil on klient, kes otsib
-     [ladu/kolimist/haagist] [linnas] [kuupäeval]. Kas saate pakkumise teha? Saadan
-     kontakti/detailid."*
-   - Set status → **Contacted** (this stamps the response-time clock).
-3. When a supplier quotes: forward the 2–3 options to the customer (email/phone),
-   set status → **Quoted**, note the prices in the notes field.
-4. Outcome: **Booked** (customer confirmed), **Lost** (chose elsewhere / went quiet after
-   2 follow-ups), or **Unmatched** (no supplier available — this is *demand signal*:
+   (also emailed to the ops inbox). Expand the lead → the guided **3-stage workspace**.
+
+2. **Stage 1 — Find & contact providers** (first touch target: **same day**):
+   - Provider search shows **unique suppliers** (not listing rows). Default scope is
+     **Nearby (25 km)** ranked by real distance from the lead's city — so nearby
+     municipalities (e.g. Vahi / Tõrvandi / Reola for a Tartu lead) appear, not just exact
+     city-string matches. Switch to **All Estonia** (with optional **All services**) to
+     search the whole active directory by name / location / city / address / email / phone.
+   - Select the providers to contact → **Review message to N providers**: this shows every
+     recipient and the **exact** localized subject + body the backend will send. Confirm to
+     send. Already-contacted providers are **skipped by default**; use the explicit
+     **resend** action on an outreach-history row to contact one again.
+   - Sending outreach moves the lead → **Contacted** (stamps the response-time clock).
+     Providers without email stay visible with call/copy actions.
+
+3. **Stage 2 — Build customer options**: outreach history shows Sent / Replied / Declined /
+   No answer with notes. Replied providers get **Add to offer**; you can also add any
+   provider or a **free-form** option (quote came via another channel). There is **one
+   active Draft** at a time — creating again returns the same draft, never a hidden
+   duplicate. Edit option title / provider / price / unit / notes / order. **Delete draft**
+   (confirmation required) is available only for a Draft; Sent/Viewed/Chosen/Expired offers
+   are immutable history.
+
+4. **Stage 3 — Review & send**: **Review delivery** opens an admin-only preview — the
+   **exact** email (recipient, subject, body) and the **Customer page** (same component the
+   customer sees). Previewing **never** marks the offer Viewed. The final confirm lists the
+   exact effects (email sent, link goes live, lead → Quoted, opening records Viewed,
+   requesting an option alerts Ruumly, **no payment/booking**). Send moves the lead →
+   **Quoted, Offer Sent**.
+
+5. **Outcome**: when the customer requests an option the workspace shows **Customer
+   requested** + the chosen option (lead stays **Quoted**). After the provider confirms
+   availability, click **Confirm with provider and mark booked** → **Converted**. Other
+   ends: **Dismissed (=Lost)** or **Unmatched** (no provider available — *demand signal*,
    note what was missing).
-5. Follow-ups: no customer reply in 48h → one nudge. No supplier reply in 24h → next
-   supplier on the list.
+
+6. Follow-ups: no customer reply in 48h → one nudge. No provider reply in 24h → next
+   provider on the list.
 
 ## Weekly review (metrics row on the Leads tab)
 | Metric | Meaning | Early target |
@@ -60,8 +96,25 @@ Pitch order: (1) here is a real customer/lead volume, (2) enquiries are free rig
 ## Mechanics reference
 - Public funnel: `/{lang}/request` → `POST /api/leads/request` (rate-limited 5/10min/IP).
 - Statuses: New → Contacted → Quoted → Converted(=Booked) | Dismissed(=Lost) | Unmatched.
-  First move off New stamps `ContactedAt` (drives the median-response metric).
+  First **genuine** contact stamps `ContactedAt` (drives the median-response metric);
+  Dismissed/Unmatched do not stamp it. **Converted is set only by booking-confirmation**,
+  not by the customer's selection and not from the clickable pipeline.
 - Hero flip: PlatformSettings `conciergeFirst` ("true"/"false") — admin → Settings.
   Old marketplace hero returns instantly when "false". `conciergeCities` = operating-area
   hint shown in the funnel.
-- Metrics API: `GET /api/admin/leads/metrics`; matches: `GET /api/admin/leads/{id}/matches`.
+- Workspace endpoints (v2, backward-compatible — no migration):
+  - Providers: `GET /api/admin/leads/{id}/provider-candidates?q=&scope=nearby|all&category=lead|any&radiusKm=25&limit=50`
+    (unique suppliers, Haversine distance from the lead's city anchor, exact-city first;
+    `category=any` requires `scope=all`). Legacy `GET …/matches` still works.
+  - Outreach: `POST …/leads/{id}/outreach/preview {supplierIds[]}` (side-effect-free, exact
+    subject/body); `POST …/leads/{id}/outreach {supplierIds[], resend}` (skips
+    `already_contacted` unless `resend=true`); `PATCH …/outreach/{id} {status, note}`.
+  - Offers: `POST …/leads/{id}/offers` (returns the existing newest Draft or creates one);
+    `PATCH …/offers/{id}` (replace-set options); `DELETE …/offers/{id}` (Draft only → 204,
+    else 409); `GET …/offers/{id}/delivery-preview` (exact email + customer page, never
+    marks Viewed); `POST …/offers/{id}/send`; `POST …/offers/{id}/confirm-booking`
+    (Chosen offer → Converted, idempotent, creates NO Booking/Order/payment/contract).
+  - Public: `POST /api/offers/{token}/choose` sets Offer=Chosen + alerts ops but leaves the
+    lead **Quoted** (a preference, not a booking).
+- Metrics API: `GET /api/admin/leads/metrics` (concierge-scoped north-stars incl.
+  `matchRate30d`); leads list filters: `source|category|city|needsResponse`.
