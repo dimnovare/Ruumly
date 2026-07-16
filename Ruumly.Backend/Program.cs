@@ -340,29 +340,9 @@ builder.Services.AddRateLimiter(options =>
 
 // ─── CORS ───
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()!;
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("Frontend", policy =>
-        policy.SetIsOriginAllowed(origin =>
-        {
-            if (allowedOrigins.Contains(origin)) return true;
-
-            if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri)) return false;
-            if (!uri.Host.EndsWith(".vercel.app")) return false;
-
-            // Only allow exact Ruumly Vercel project slugs.
-            // Preview URLs follow the pattern: {projectName}-{hash}-{teamSlug}.vercel.app
-            // Using a broad prefix like "ruumly-" would let any attacker register
-            // "ruumly-evil.vercel.app" and make credentialed cross-origin requests.
-            var host = uri.Host;
-            return host.StartsWith("estonia-space-hub-") ||
-                   host == "estonia-space-hub.vercel.app";
-            // Add future project slugs explicitly — never use a short prefix alone.
-        })
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials());
-});
+// Policy body lives in Helpers/CorsPolicySetup so the origin allow-list and the
+// exposed headers (Retry-After) are unit-testable.
+builder.Services.AddCors(options => CorsPolicySetup.AddFrontendPolicy(options, allowedOrigins));
 
 // ─── FluentValidation ───
 builder.Services.AddFluentValidationAutoValidation();
@@ -559,7 +539,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseForwardedHeaders();   // must be before UseRouting, UseAuthentication, UseRateLimiter
-app.UseCors("Frontend");
+app.UseCors(CorsPolicySetup.PolicyName);
 app.UseResponseCaching();
 app.UseSentryTracing();
 app.UseAuthentication();
