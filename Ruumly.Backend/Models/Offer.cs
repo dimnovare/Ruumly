@@ -39,5 +39,14 @@ public class Offer
     /// <summary>Admin email (falls back to user id when the claim is absent).</summary>
     [MaxLength(200)] public string? CreatedBy { get; set; }
 
+    /// <summary>
+    /// Optimistic-concurrency counter, bumped on every mutation of the offer or
+    /// its option set (admin edit, send, provider-quote seeding). PATCH options
+    /// are replace-set, so an admin saving a set built before a provider quote
+    /// arrived would silently delete the seeded option; echoing this value back
+    /// lets that stale write be rejected with 409 instead.
+    /// </summary>
+    public int Version { get; set; }
+
     public List<OfferOption> Options { get; set; } = [];
 }

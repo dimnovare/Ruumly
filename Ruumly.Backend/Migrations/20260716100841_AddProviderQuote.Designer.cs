@@ -14,7 +14,7 @@ using Ruumly.Backend.Data;
 namespace Ruumly.Backend.Migrations
 {
     [DbContext(typeof(RuumlyDbContext))]
-    [Migration("20260716082615_AddProviderQuote")]
+    [Migration("20260716100841_AddProviderQuote")]
     partial class AddProviderQuote
     {
         /// <inheritdoc />
@@ -904,6 +904,9 @@ namespace Ruumly.Backend.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("ViewedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -921,6 +924,9 @@ namespace Ruumly.Backend.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CreatedFromOutreachId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Notes")
@@ -952,6 +958,8 @@ namespace Ruumly.Backend.Migrations
                         .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedFromOutreachId");
 
                     b.HasIndex("OfferId");
 

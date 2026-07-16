@@ -24,4 +24,16 @@ public class OfferOption
     [MaxLength(40)]   public string? PriceUnit { get; set; }
     [MaxLength(2000)] public string? Notes { get; set; }
     public int SortOrder { get; set; }
+
+    /// <summary>
+    /// The <see cref="ProviderOutreach"/> whose tokenized quote seeded this
+    /// option; null for admin-authored options. Plain column (no FK) — the
+    /// option must outlive its outreach row, mirroring Offer.ChosenOptionId.
+    ///
+    /// It is both the "from provider quote" marker AND the key the quote's
+    /// add-or-update matches on: a re-submit only ever touches the option IT
+    /// created, so a provider can never overwrite (or silently re-title) an
+    /// admin-authored option for the same supplier.
+    /// </summary>
+    public Guid? CreatedFromOutreachId { get; set; }
 }

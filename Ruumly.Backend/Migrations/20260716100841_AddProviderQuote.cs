@@ -51,11 +51,29 @@ namespace Ruumly.Backend.Migrations
                 maxLength: 40,
                 nullable: true);
 
+            migrationBuilder.AddColumn<int>(
+                name: "Version",
+                table: "Offers",
+                type: "integer",
+                nullable: false,
+                defaultValue: 0);
+
+            migrationBuilder.AddColumn<Guid>(
+                name: "CreatedFromOutreachId",
+                table: "OfferOptions",
+                type: "uuid",
+                nullable: true);
+
             migrationBuilder.CreateIndex(
                 name: "IX_ProviderOutreaches_QuoteToken",
                 table: "ProviderOutreaches",
                 column: "QuoteToken",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OfferOptions_CreatedFromOutreachId",
+                table: "OfferOptions",
+                column: "CreatedFromOutreachId");
         }
 
         /// <inheritdoc />
@@ -64,6 +82,10 @@ namespace Ruumly.Backend.Migrations
             migrationBuilder.DropIndex(
                 name: "IX_ProviderOutreaches_QuoteToken",
                 table: "ProviderOutreaches");
+
+            migrationBuilder.DropIndex(
+                name: "IX_OfferOptions_CreatedFromOutreachId",
+                table: "OfferOptions");
 
             migrationBuilder.DropColumn(
                 name: "QuoteToken",
@@ -88,6 +110,14 @@ namespace Ruumly.Backend.Migrations
             migrationBuilder.DropColumn(
                 name: "QuotedUnit",
                 table: "ProviderOutreaches");
+
+            migrationBuilder.DropColumn(
+                name: "Version",
+                table: "Offers");
+
+            migrationBuilder.DropColumn(
+                name: "CreatedFromOutreachId",
+                table: "OfferOptions");
         }
     }
 }

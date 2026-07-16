@@ -429,6 +429,9 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
         model.Entity<OfferOption>(e =>
         {
             e.HasIndex(o => o.OfferId);
+            // Plain column, no FK (the option outlives its outreach row) — indexed
+            // because it keys the provider quote's add-or-update lookup.
+            e.HasIndex(o => o.CreatedFromOutreachId);
             e.HasOne(o => o.Offer)
                 .WithMany(x => x.Options)
                 .HasForeignKey(o => o.OfferId)
