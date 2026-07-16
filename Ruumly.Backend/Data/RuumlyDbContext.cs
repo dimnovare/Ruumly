@@ -449,6 +449,10 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
         {
             e.HasIndex(o => o.DemandLeadId);
             e.HasIndex(o => o.SupplierId);
+            // The public quote page resolves a row by its token. Unique; nullable
+            // (legacy rows have no token) — Postgres treats NULLs as distinct, so
+            // many token-less rows coexist under a unique index.
+            e.HasIndex(o => o.QuoteToken).IsUnique();
             e.Property(o => o.Status).HasConversion<string>();
             e.HasOne(o => o.DemandLead)
                 .WithMany()
