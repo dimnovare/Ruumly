@@ -45,3 +45,14 @@ public record UpdateOutreachRequest(string? Status = null, string? Note = null);
 
 /// <summary>POST /api/offers/{token}/choose — the customer picks an option.</summary>
 public record ChooseOptionRequest(Guid OptionId);
+
+/// <summary>
+/// POST /api/quote/{token} — a provider submits their price for the outreach
+/// lead. PriceAmount is required (≥ 0); the optional strings are trimmed,
+/// clamped and reject angle brackets before storage.
+/// </summary>
+public record SubmitQuoteRequest(
+    decimal PriceAmount,
+    string? PriceUnit = null,
+    string? Availability = null,
+    string? Note = null);
