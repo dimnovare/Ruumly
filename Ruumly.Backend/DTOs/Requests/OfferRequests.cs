@@ -26,12 +26,18 @@ public record CreateOfferRequest(
 /// <summary>
 /// PATCH /api/admin/offers/{id}. Null field = leave unchanged; a non-null
 /// Options list REPLACES the whole option set (replace-set semantics, [] clears).
+///
+/// <paramref name="Version"/> is the optimistic-concurrency guard: echo back the
+/// version read with the offer and a stale write 409s instead of silently
+/// deleting an option seeded since (e.g. by a provider quote). Omitting it skips
+/// the check — so clients that don't send it keep the old clobbering behaviour.
 /// </summary>
 public record UpdateOfferRequest(
     string? CustomerNote = null,
     string? Language = null,
     string? Status = null,
-    List<OfferOptionInput>? Options = null
+    List<OfferOptionInput>? Options = null,
+    int? Version = null
 );
 
 /// <summary>POST /api/admin/leads/{id}/outreach/preview — inspect an outreach batch.</summary>

@@ -85,7 +85,7 @@ public class AdminOffersController(
             .ThenByDescending(o => o.Id)
             .FirstOrDefaultAsync();
         if (existingDraft is not null)
-            return Ok(MapOffer(existingDraft, await QuotedSupplierIds(lead.Id)));
+            return Ok(MapOffer(existingDraft));
 
         var offer = new Offer
         {
@@ -114,7 +114,7 @@ public class AdminOffersController(
         await Db.SaveChangesAsync();
 
         await FixUpOptionSuppliers(offer);
-        return Ok(MapOffer(offer, await QuotedSupplierIds(lead.Id)));
+        return Ok(MapOffer(offer));
     }
 
     [HttpGet("leads/{id:guid}/offers")]
@@ -129,10 +129,7 @@ public class AdminOffersController(
             .OrderByDescending(o => o.CreatedAt)
             .ToListAsync();
 
-        // Every offer here belongs to the same lead — resolve the quoted
-        // suppliers once for the whole list.
-        var quoted = await QuotedSupplierIds(id);
-        return Ok(offers.Select(o => MapOffer(o, quoted)).ToList());
+        return Ok(offers.Select(MapOffer).ToList());
     }
 
     [HttpGet("offers/{id:guid}")]
@@ -143,7 +140,7 @@ public class AdminOffersController(
             .FirstOrDefaultAsync(o => o.Id == id);
         if (offer is null) return NotFound(Error("Offer not found."));
 
-        return Ok(MapOffer(offer, await QuotedSupplierIds(offer.DemandLeadId)));
+        return Ok(MapOffer(offer));
     }
 
     [HttpDelete("offers/{id:guid}")]
@@ -201,6 +198,21 @@ public class AdminOffersController(
         if (offer.Status == OfferStatus.Chosen)
             return Conflict(Error("The customer already chose an option — this offer can no longer be edited."));
 
+        // Optimistic concurrency. Options are replace-set, so a payload built
+        // before a provider quote seeded an option would silently delete it on
+        // save. When the client echoes the version it read, a stale write is
+        // rejected instead of clobbering (the workspace reloads on 409).
+        if (body.Version is { } expectedVersion && expectedVersion != offer.Version)
+        {
+            return Conflict(new
+            {
+                error      = "This offer changed since you loaded it — reload and reapply your edit.",
+                message    = "A provider quote or another admin updated the offer.",
+                statusCode = StatusCodes.Status409Conflict,
+                retryable  = true,
+            });
+        }
+
         if (body.CustomerNote is not null)
             offer.CustomerNote = Clamp(body.CustomerNote, 2000);
 
@@ -237,12 +249,15 @@ public class AdminOffersController(
             Db.OfferOptions.AddRange(options!);
         }
 
+        // Any accepted edit invalidates versions held by other readers.
+        offer.Version++;
+
         Audit("offer.updated", User.GetUserId().ToString(), offer.Id.ToString(),
               $"Status: {offer.Status}, options: {offer.Options.Count}");
         await Db.SaveChangesAsync();
 
         await FixUpOptionSuppliers(offer);
-        return Ok(MapOffer(offer, await QuotedSupplierIds(offer.DemandLeadId)));
+        return Ok(MapOffer(offer));
     }
 
     /// <summary>
@@ -286,6 +301,7 @@ public class AdminOffersController(
         if (offer.Status == OfferStatus.Draft)
             offer.Status = OfferStatus.Sent;
         offer.SentAt = DateTime.UtcNow;
+        offer.Version++;
 
         // Shared lead lifecycle: → Quoted, first-touch ContactedAt stamped once.
         // Never demote an already-converted lead.
@@ -308,7 +324,7 @@ public class AdminOffersController(
             lead.Email.Trim(), email.Subject, email.TextBody,
             htmlBody: null, replyTo: OpsReplyTo);
 
-        return Ok(MapOffer(offer, await QuotedSupplierIds(offer.DemandLeadId)));
+        return Ok(MapOffer(offer));
     }
 
     [HttpPost("offers/{id:guid}/confirm-booking")]
@@ -339,9 +355,7 @@ public class AdminOffersController(
 
         if (transaction is not null)
             await transaction.CommitAsync();
-        // Read AFTER commit — the marker is derived data, never part of the
-        // confirmation's atomic unit.
-        return Ok(MapOffer(offer, await QuotedSupplierIds(offer.DemandLeadId)));
+        return Ok(MapOffer(offer));
     }
 
     // ─── Provider outreach ────────────────────────────────────────────────────
@@ -614,20 +628,7 @@ public class AdminOffersController(
         return offer;
     }
 
-    /// <summary>
-    /// Supplier ids that answered THIS lead's outreach with a price. Loaded once
-    /// per offer mapping and passed into <see cref="MapOffer"/> so the
-    /// per-option fromProviderQuote marker costs no extra query (never N+1).
-    /// </summary>
-    private async Task<HashSet<Guid>> QuotedSupplierIds(Guid demandLeadId) =>
-        (await Db.ProviderOutreaches
-            .Where(o => o.DemandLeadId == demandLeadId && o.QuotedAt != null)
-            .Select(o => o.SupplierId)
-            .Distinct()
-            .ToListAsync())
-        .ToHashSet();
-
-    private static object MapOffer(Offer o, HashSet<Guid> quotedSupplierIds) => new
+    private static object MapOffer(Offer o) => new
     {
         id             = o.Id,
         demandLeadId   = o.DemandLeadId,
@@ -641,6 +642,9 @@ public class AdminOffersController(
         chosenAt       = o.ChosenAt,
         chosenOptionId = o.ChosenOptionId,
         createdBy      = o.CreatedBy,
+        // Echo back on PATCH to make the replace-set write conditional (409 on a
+        // stale read) instead of silently clobbering a newly seeded option.
+        version        = o.Version,
         options        = o.Options
             .OrderBy(op => op.SortOrder).ThenBy(op => op.Id)
             .Select(op => new
@@ -654,9 +658,11 @@ public class AdminOffersController(
                 priceUnit          = op.PriceUnit,
                 notes              = op.Notes,
                 sortOrder          = op.SortOrder,
-                // Computed, not stored: this option's provider answered the lead's
-                // outreach with a price. Drives the "from provider quote" badge.
-                fromProviderQuote  = op.SupplierId is { } sid && quotedSupplierIds.Contains(sid),
+                // Stored provenance, not inferred: true only for options this
+                // outreach's quote actually created. (Deriving it from "supplier
+                // has quoted" false-positived on admin-authored options for a
+                // supplier who also quoted separately.)
+                fromProviderQuote  = op.CreatedFromOutreachId != null,
             })
             .ToList(),
     };
