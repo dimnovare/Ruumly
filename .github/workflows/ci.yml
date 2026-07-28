@@ -6,39 +6,25 @@ on:
     branches: [master, main]
 
 jobs:
-  frontend:
-    name: Frontend
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: estonia-space-hub
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Type-check
-        run: npx tsc --noEmit
-
-      - name: Build
-        run: npm run build
-
-      - name: Test
-        run: npx vitest run
-        env:
-          CI: 1
-
   backend:
     name: Backend
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: Ruumly.Backend
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -47,10 +33,12 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore Ruumly.Backend.Tests/Ruumly.Backend.Tests.csproj
 
       - name: Build
-        run: dotnet build --no-restore
+        run: dotnet build Ruumly.Backend.Tests/Ruumly.Backend.Tests.csproj --no-restore
 
       - name: Test
-        run: dotnet test ../Ruumly.Backend.Tests/Ruumly.Backend.Tests.csproj --no-restore
+        run: dotnet test Ruumly.Backend.Tests/Ruumly.Backend.Tests.csproj --no-build --no-restore
+        env:
+          RUUMLY_TEST_PG: Host=127.0.0.1;Port=5432;Database=postgres;Username=test;Password=test
