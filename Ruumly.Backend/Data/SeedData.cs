@@ -2501,7 +2501,7 @@ public static class SeedData
             ["blog.showInFooter"]     = ("true",  "Show Blog link in footer (requires blog.enabled=true)"),
             // ── Bank-transfer payment (admin enables in prod when ready) ────
             ["bankTransfer.enabled"]     = ("false",                  "Allow customers to pay by bank transfer to the platform account"),
-            ["bankTransfer.accountName"] = ("Valguse Kodu OÜ",        "Platform bank-transfer recipient name"),
+            ["bankTransfer.accountName"] = ("Diip Solutions OÜ",        "Platform bank-transfer recipient name"),
             ["bankTransfer.iban"]        = ("EE112200221070782014",   "Platform bank-transfer IBAN"),
             ["bankTransfer.bic"]         = ("HABAEE2X",               "Platform bank-transfer BIC/SWIFT"),
             ["bankTransfer.bankName"]    = ("Swedbank",               "Platform bank-transfer bank name"),
