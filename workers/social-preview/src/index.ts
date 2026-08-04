@@ -70,40 +70,107 @@ const OG_LOCALE: Record<Lang, string> = {
   lt: "lt_LT",
 };
 
-// ── City page copy per language ───────────────────────────────────────────────
+// ── Service copy per language ─────────────────────────────────────────────────
+//
+// Ruumly is a concierge for the whole "I'm moving" event, not a storage site.
+// Every service the directory covers gets its own noun so a city hub's <title>
+// matches what people actually search — Search Console shows the demand is
+// per-service and per-city ("kaubiku rent tartu", "kolimisteenus rakveres",
+// "laoruumide rent tartu"), and a page titled "Ruumly — Laopinnad Eestis"
+// answers none of them.
 
-const CITY_TITLE: Record<Lang, (city: string) => string> = {
-  et: (c) => `${c} ladustamine`,
-  en: (c) => `Storage in ${c}`,
-  ru: (c) => `Хранение в ${c}`,
-  lv: (c) => `Glabāšana ${c}`,
-  lt: (c) => `Sandėliavimas ${c}`,
+/** Route section → service. `warehouse` is the listing detail route for storage. */
+type Service = "storage" | "moving" | "trailer" | "vanrental" | "cleaning" | "packing" | "insurance";
+
+const SERVICE_NOUN: Record<Lang, Record<Service, string>> = {
+  et: {
+    storage:   "Laopinna ja miniladu rent",
+    moving:    "Kolimisteenus",
+    trailer:   "Haagise rent",
+    vanrental: "Kaubiku rent",
+    cleaning:  "Koristusteenus",
+    packing:   "Pakkimine ja pakkematerjal",
+    insurance: "Kolimiskindlustus",
+  },
+  en: {
+    storage:   "Self storage",
+    moving:    "Moving services",
+    trailer:   "Trailer rental",
+    vanrental: "Van rental",
+    cleaning:  "Cleaning services",
+    packing:   "Packing and boxes",
+    insurance: "Moving insurance",
+  },
+  ru: {
+    storage:   "Аренда склада",
+    moving:    "Услуги переезда",
+    trailer:   "Аренда прицепа",
+    vanrental: "Аренда фургона",
+    cleaning:  "Уборка",
+    packing:   "Упаковка и коробки",
+    insurance: "Страхование переезда",
+  },
+  lv: {
+    storage:   "Noliktavas noma",
+    moving:    "Pārvākšanās pakalpojumi",
+    trailer:   "Piekabju noma",
+    vanrental: "Furgonu noma",
+    cleaning:  "Uzkopšanas pakalpojumi",
+    packing:   "Iepakošana un kastes",
+    insurance: "Pārvākšanās apdrošināšana",
+  },
+  lt: {
+    storage:   "Sandėlio nuoma",
+    moving:    "Perkraustymo paslaugos",
+    trailer:   "Priekabų nuoma",
+    vanrental: "Mikroautobusų nuoma",
+    cleaning:  "Valymo paslaugos",
+    packing:   "Pakavimas ir dėžės",
+    insurance: "Perkraustymo draudimas",
+  },
 };
 
-const CITY_DESC: Record<Lang, (city: string) => string> = {
-  et: (c) => `Leia ja broneeri laopinda ${c} piirkonnas Ruumly kaudu. Kontrollitud partnerid.`,
-  en: (c) => `Find and book self-storage and warehouse space in ${c} on Ruumly. Verified partners.`,
-  ru: (c) => `Найдите и забронируйте склад в ${c} на Ruumly. Проверенные партнёры.`,
-  lv: (c) => `Atrodi un rezervē noliktavas telpu ${c} ar Ruumly. Pārbaudīti partneri.`,
-  lt: (c) => `Raskite ir užsisakykite sandėliavimo vietą ${c} su Ruumly. Patikrinti partneriai.`,
+/** "{noun} {city}" — deliberately nominative; Estonian/Latvian case endings on a
+ *  city name are irregular and a wrong inflection reads worse than none. */
+const HUB_TITLE: Record<Lang, (noun: string, city: string) => string> = {
+  et: (n, c) => `${n} ${c}`,
+  en: (n, c) => `${n} in ${c}`,
+  ru: (n, c) => `${n}: ${c}`,
+  lv: (n, c) => `${n} ${c}`,
+  lt: (n, c) => `${n} ${c}`,
+};
+
+const HUB_DESC: Record<Lang, (noun: string, city: string) => string> = {
+  et: (n, c) => `${n} ${c} piirkonnas — võrdle kontrollitud pakkujaid Ruumlys. Või saada üks päring ja saa 2–3 pakkumist, tavaliselt 24 tunni jooksul.`,
+  en: (n, c) => `${n} in ${c} — compare verified providers on Ruumly, or send one request and get 2–3 offers, usually within 24 hours.`,
+  ru: (n, c) => `${n} — ${c}. Сравните проверенных поставщиков на Ruumly или отправьте один запрос и получите 2–3 предложения обычно за 24 часа.`,
+  lv: (n, c) => `${n} ${c} — salīdzini pārbaudītus pakalpojumu sniedzējus Ruumly. Vai sūti vienu pieprasījumu un saņem 2–3 piedāvājumus 24 stundās.`,
+  lt: (n, c) => `${n} ${c} — palyginkite patikrintus tiekėjus Ruumly. Arba atsiųskite vieną užklausą ir gaukite 2–3 pasiūlymus per 24 val.`,
 };
 
 // ── Homepage copy per language ─────────────────────────────────────────────────
+//
+// Geography honesty (see estonia-space-hub/CLAUDE.md): the directory covers all
+// of Estonia and the concierge runs Tallinn/Harjumaa first. It previously
+// claimed "across the Baltics" / "visā Latvijā" / "visoje Lietuvoje" — coverage
+// the business does not have.
 
+// No em dash here: withSiteName() appends " — Ruumly", and two of them in one
+// title reads badly in a search result.
 const HOME_TITLE: Record<Lang, string> = {
-  et: "Ruumly — Rendi laopinda Eestis",
-  en: "Ruumly — Rent storage across the Baltics",
-  ru: "Ruumly — Аренда склада в Прибалтике",
-  lv: "Ruumly — Noliktavas noma Latvijā",
-  lt: "Ruumly — Sandėlio nuoma Lietuvoje",
+  et: "Kolimisabi Eestis: üks päring, 2–3 pakkumist",
+  en: "Moving in Estonia: one request, 2–3 offers",
+  ru: "Переезд в Эстонии: один запрос, 2–3 предложения",
+  lv: "Pārvākšanās Igaunijā: viens pieprasījums, 2–3 piedāvājumi",
+  lt: "Perkraustymas Estijoje: viena užklausa, 2–3 pasiūlymai",
 };
 
 const HOME_DESC: Record<Lang, string> = {
-  et: "Leia ja broneeri laopinda üle Eesti. Kiire kinnitus, kontrollitud partnerid.",
-  en: "Find and book storage space across the Baltics. Instant confirmation, verified partners.",
-  ru: "Найдите и забронируйте склад по всей Прибалтике. Проверенные партнёры.",
-  lv: "Atrodi un rezervē noliktavas telpu visā Latvijā. Pārbaudīti partneri.",
-  lt: "Raskite ir užsisakykite sandėliavimo vietą visoje Lietuvoje. Patikrinti partneriai.",
+  et: "Kolimine, laopind, haagis, kaubik, koristus, pakkimine ja kindlustus — kõik ühest kohast. Saada üks päring, toome 2–3 pakkumist, tavaliselt 24 tunniga.",
+  en: "Movers, storage, trailers, vans, cleaning, packing and insurance across Estonia. Send one request and get 2–3 offers, usually within 24 hours.",
+  ru: "Переезд, склад, прицепы, фургоны, уборка, упаковка и страхование по всей Эстонии. Один запрос — 2–3 предложения, обычно за 24 часа.",
+  lv: "Pārvākšanās, noliktavas, piekabes, furgoni, uzkopšana, iepakošana un apdrošināšana Igaunijā. Viens pieprasījums — 2–3 piedāvājumi 24 stundās.",
+  lt: "Perkraustymas, sandėliai, priekabos, mikroautobusai, valymas, pakavimas ir draudimas Estijoje. Viena užklausa — 2–3 pasiūlymai per 24 val.",
 };
 
 function parseLang(segment: string | undefined): Lang {
@@ -142,6 +209,10 @@ function truncate(s: string, max = 160): string {
 // ── OG data & HTML template ───────────────────────────────────────────────────
 
 interface OgData {
+  /** false when the route fell through to the generic fallback — the visitor
+   *  head-rewrite skips those so an unrecognised page keeps the origin's own
+   *  tags instead of being relabelled with the homepage title. */
+  specific?: boolean;
   title: string;
   description: string;
   image: string;
@@ -154,9 +225,9 @@ const DEFAULT_IMAGE = "https://ruumly.eu/ruumly-og.png?v=3";
 // Bump to invalidate cached OG HTML at the edge (caches.default persists across
 // deploys, so changing og:image/title/desc otherwise won't reach crawlers until
 // the entry's TTL expires).
-const OG_CACHE_VERSION = "3";
-const DEFAULT_TITLE = "Ruumly — Rent storage across the Baltics";
-const DEFAULT_DESC  = "Find and book secure self-storage and warehouse space. Instant confirmation, verified partners.";
+const OG_CACHE_VERSION = "4";
+const DEFAULT_TITLE = HOME_TITLE.en;
+const DEFAULT_DESC  = HOME_DESC.en;
 
 function withSiteName(title: string): string {
   return title.includes(SITE_NAME) ? title : `${title} — ${SITE_NAME}`;
@@ -254,6 +325,51 @@ function unwrapArray<T>(res: unknown): T[] {
   return [];
 }
 
+/** Listing detail routes carry a GUID; the same section with a city slug is a hub. */
+function isUuid(s: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+}
+
+/**
+ * City slugs in URLs are ASCII-folded ("parnu", "johvi", "kohtla-jarve"), so
+ * capitalising the slug produces "Parnu" — visibly wrong to an Estonian reader
+ * in a page title. Ask the API which cities exist and match on the folded form
+ * to recover the real spelling.
+ */
+function foldCity(city: string): string {
+  return city
+    .toLowerCase()
+    .replace(/[õöô]/g, "o").replace(/[äàáâ]/g, "a").replace(/[üùúû]/g, "u")
+    .replace(/[šś]/g, "s").replace(/[žź]/g, "z").replace(/[čć]/g, "c")
+    .replace(/[ēėę]/g, "e").replace(/[īį]/g, "i").replace(/[ā]/g, "a")
+    .replace(/[ķ]/g, "k").replace(/[ļ]/g, "l").replace(/[ņ]/g, "n").replace(/[ū]/g, "u")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+async function resolveCityName(slug: string, section: string, api: string): Promise<string> {
+  // The storage hub lives at /storage/{city} but its ListingType is `warehouse`.
+  const type   = section === "storage" ? "warehouse" : section;
+  const cities = await apiFetch<{ city: string }[]>(
+    `${api}/api/locations/cities?type=${encodeURIComponent(type)}`,
+  );
+  const match = Array.isArray(cities)
+    ? cities.find((c) => c?.city && foldCity(c.city) === slug)
+    : undefined;
+  return match?.city ?? capitalize(slug);
+}
+
+/** Route section → the service its city hub represents. */
+const HUB_SECTIONS: Record<string, Service> = {
+  storage:   "storage",
+  moving:    "moving",
+  trailer:   "trailer",
+  vanrental: "vanrental",
+  cleaning:  "cleaning",
+  packing:   "packing",
+  insurance: "insurance",
+};
+
 async function resolveOgData(
   url: URL,
   env: Env,
@@ -265,22 +381,23 @@ async function resolveOgData(
   const param   = segments[2] ?? "";
   const api     = env.API_BASE_URL;
 
-  // ── City / storage ──────────────────────────────────────────────────────────
-  if (section === "storage" && param) {
-    const cityParam = capitalize(param); // "tallinn" → "Tallinn"
-    const data = await apiFetch<unknown>(`${api}/api/locations?city=${encodeURIComponent(cityParam)}&limit=1`);
-    const locs = unwrapArray<ApiLocation>(data);
+  // ── Service × city hubs (all seven services, not just storage) ──────────────
+  // `moving`/`trailer` double as listing-detail routes; a GUID param means the
+  // detail page, anything else is the city hub.
+  const hubService = HUB_SECTIONS[section];
+  if (hubService && param && !isUuid(param)) {
+    const city = await resolveCityName(param, section, api);
+    const noun = SERVICE_NOUN[lang][hubService];
 
-    if (locs.length > 0) {
-      const city  = locs[0].city ?? capitalize(param);
-      const image = firstImage(locs[0].images);
-      return {
-        lang,
-        title:       CITY_TITLE[lang](city),
-        description: CITY_DESC[lang](city),
-        image,
-      };
-    }
+    // Emit the hub head even when the city has no supply yet: the page still
+    // renders (with nearest-city fallbacks), and a correct title beats the
+    // default storage one either way.
+    return {
+      lang,
+      title:       HUB_TITLE[lang](noun, city),
+      description: HUB_DESC[lang](noun, city),
+      image:       DEFAULT_IMAGE,
+    };
   }
 
   // ── Partner page ────────────────────────────────────────────────────────────
@@ -310,7 +427,10 @@ async function resolveOgData(
       const enabled =
         section === "moving" ? settings?.showMovingService : settings?.showTrailerService;
       if (settings && enabled === false) {
-        return { lang, title: DEFAULT_TITLE, description: DEFAULT_DESC, image: DEFAULT_IMAGE };
+        return {
+          lang, specific: false,
+          title: HOME_TITLE[lang], description: HOME_DESC[lang], image: DEFAULT_IMAGE,
+        };
       }
     }
 
@@ -348,7 +468,13 @@ async function resolveOgData(
   }
 
   // ── Generic fallback ────────────────────────────────────────────────────────
-  return { lang, title: DEFAULT_TITLE, description: DEFAULT_DESC, image: DEFAULT_IMAGE };
+  // Language-correct rather than always English, but flagged non-specific: a
+  // route we don't model (about, faq, search, provider …) must not be given the
+  // homepage's title.
+  return {
+    lang, specific: false,
+    title: HOME_TITLE[lang], description: HOME_DESC[lang], image: DEFAULT_IMAGE,
+  };
 }
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
@@ -409,6 +535,77 @@ function renderDevDebugPage(url: URL): string {
 </html>`;
 }
 
+// ── Head injection into the real origin HTML ──────────────────────────────────
+//
+// The SPA sets its head client-side (@unhead/react), so the HTML Vercel serves
+// carries the SAME default title and description on every route. Google renders
+// JS and still ranks the pages, but the SNIPPET it shows is frequently the stale
+// default: /et/partner/alexela-haagiserent sat at position 6.98 with 582
+// impressions and ZERO clicks, because a user searching "alexela haagise rent"
+// was shown "Ruumly — Laopinnad Eestis / Leia ja rendi laopind Eestis".
+//
+// So instead of answering crawlers with a synthetic page, pass the real origin
+// response through HTMLRewriter and correct only the head tags. Same content for
+// everyone (this is not cloaking), the SPA overwrites them on hydration for real
+// visitors, and no route loses its rendered body or internal links.
+
+/** Replace an element's text content wholesale. */
+class SetText {
+  private written = false;
+  constructor(private readonly value: string) {}
+  text(chunk: Text) {
+    // The original text arrives in chunks; emit ours once, drop the rest.
+    if (!this.written) {
+      chunk.replace(this.value);
+      this.written = true;
+    } else {
+      chunk.remove();
+    }
+  }
+}
+
+/** Replace one attribute on a matched element. */
+class SetAttr {
+  constructor(private readonly name: string, private readonly value: string) {}
+  element(el: Element) {
+    el.setAttribute(this.name, this.value);
+  }
+}
+
+/** Append tags that may be missing from the shell (canonical, robots). */
+class AppendToHead {
+  constructor(private readonly html: string) {}
+  element(el: Element) {
+    el.append(this.html, { html: true });
+  }
+}
+
+function rewriteHead(response: Response, og: OgData): Response {
+  const title = withSiteName(og.title);
+  return new HTMLRewriter()
+    .on("title", new SetText(title))
+    .on('meta[name="description"]',        new SetAttr("content", og.description))
+    .on('meta[property="og:title"]',       new SetAttr("content", title))
+    .on('meta[property="og:description"]', new SetAttr("content", og.description))
+    .on('meta[property="og:image"]',       new SetAttr("content", og.image))
+    .on('meta[property="og:url"]',         new SetAttr("content", og.canonicalUrl))
+    .on('meta[name="twitter:title"]',       new SetAttr("content", title))
+    .on('meta[name="twitter:description"]', new SetAttr("content", og.description))
+    .on('meta[name="twitter:image"]',       new SetAttr("content", og.image))
+    // The Vite shell has no canonical of its own — the SPA injects one at
+    // runtime, which is exactly what Google may never see.
+    .on("head", new AppendToHead(
+      `<link rel="canonical" href="${escAttr(og.canonicalUrl)}">`,
+    ))
+    .transform(response);
+}
+
+/** Only HTML documents get rewritten — never assets, API calls or redirects. */
+function isHtmlDocument(response: Response): boolean {
+  const type = response.headers.get("Content-Type") ?? "";
+  return response.ok && type.toLowerCase().includes("text/html");
+}
+
 // ── Worker entry point ────────────────────────────────────────────────────────
 
 export default {
@@ -424,9 +621,35 @@ export default {
       });
     }
 
-    // ── Non-crawlers in PRODUCTION: pass straight to Vercel origin ──────────
+    // ── Everyone else (real visitors, Googlebot, Bingbot) in PRODUCTION ──────
+    // Serve the REAL origin page, with only its head tags corrected. Assets and
+    // non-GET requests pass through untouched.
     if (!isCrawler(userAgent)) {
-      return fetch(request);
+      if (request.method !== "GET" || isStaticAsset(url.pathname)) {
+        return fetch(request);
+      }
+
+      // Resolve metadata and fetch origin concurrently — the API subrequest is
+      // edge-cached for an hour, so this costs one round trip on a cold key and
+      // nothing afterwards.
+      const [originResponse, ogBase] = await Promise.all([
+        fetch(request),
+        resolveOgData(url, env).catch(() => null),
+      ]);
+
+      if (!ogBase || ogBase.specific === false || !isHtmlDocument(originResponse)) {
+        return originResponse;
+      }
+
+      // The canonical deliberately drops the query string: /search?type=…&city=…
+      // and /request?category=…&city=… are filtered views of a page that already
+      // exists on its own URL, and Google has crawled ~300 of those parameter
+      // permutations. Pointing them at the clean path consolidates the signal
+      // instead of splitting it.
+      return rewriteHead(originResponse, {
+        ...ogBase,
+        canonicalUrl: `${env.SITE_URL}${url.pathname}`,
+      });
     }
 
     // ── Crawlers requesting a static asset (og:image, icons, manifest, …): ──
