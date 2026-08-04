@@ -64,14 +64,16 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
             return Ok(Array.Empty<object>());
         }
 
+        // Coordinates come along so the client can rank "nearest city with
+        // supply" when the one a visitor asked for has none — a dead end is the
+        // worst answer we can give someone who searched for their own town.
         var fromLocations = await locationQuery
-            .Select(l => new { l.City, Country = l.Supplier!.Country })
-            .Distinct()
+            .Select(l => new { l.City, Country = l.Supplier!.Country, l.Lat, l.Lng })
             .ToListAsync();
 
         // Marketplace listings can sit on a city the directory doesn't cover.
         // Directory-only slugs have no ListingType, so that pool contributes nothing.
-        var fromListings = new List<(string City, string Country)>();
+        var fromListings = new List<(string City, string Country, double Lat, double Lng)>();
         if (!hasType || isVertical)
         {
             var listingQuery = db.Listings
@@ -79,20 +81,31 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
             if (isVertical) listingQuery = listingQuery.Where(l => l.Type == listingType);
 
             fromListings = (await listingQuery
-                    .Select(l => new { l.City, Country = l.Supplier!.Country })
-                    .Distinct()
+                    .Select(l => new { l.City, Country = l.Supplier!.Country, l.Lat, l.Lng })
                     .ToListAsync())
-                .Select(c => (c.City, c.Country))
+                .Select(c => (c.City, c.Country, c.Lat, c.Lng))
                 .ToList();
         }
 
         var cities = fromLocations
-            .Select(c => (c.City, c.Country))
+            .Select(c => (c.City, c.Country, c.Lat, c.Lng))
             .Concat(fromListings)
             .Where(c => !string.IsNullOrWhiteSpace(c.City))
             // Case-insensitive dedupe so "Tartu"/"tartu" don't both reach the dropdown.
             .GroupBy(c => (c.City.Trim().ToLowerInvariant(), c.Country))
-            .Select(g => new { City = g.First().City.Trim(), Country = g.Key.Country })
+            .Select(g =>
+            {
+                // Average the geocoded points in the city; 0/0 means "not geocoded"
+                // and must not drag the centre into the Gulf of Guinea.
+                var located = g.Where(x => x.Lat != 0 || x.Lng != 0).ToList();
+                return new
+                {
+                    City    = g.First().City.Trim(),
+                    Country = g.Key.Country,
+                    Lat     = located.Count > 0 ? located.Average(x => x.Lat) : (double?)null,
+                    Lng     = located.Count > 0 ? located.Average(x => x.Lng) : (double?)null,
+                };
+            })
             .OrderBy(c => c.Country)
             .ThenBy(c => c.City, StringComparer.OrdinalIgnoreCase)
             .ToList();
