@@ -22,18 +22,80 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
     // ── GET /api/locations/cities ─────────────────────────────────────────────
     [HttpGet("cities")]
     [AllowAnonymous]
-    public async Task<IActionResult> GetCities()
+    public async Task<IActionResult> GetCities([FromQuery] string? type = null)
     {
-        // Pull distinct cities from active Listings (joined to active Suppliers for Country).
-        // Was previously querying SupplierLocations which is sparsely populated
-        // (only multi-listing groups) — gave a near-empty dropdown.
-        var cities = await db.Listings
-            .Where(l => l.IsActive && l.Supplier != null && l.Supplier.IsActive)
-            .Select(l => new { City = l.City, Country = l.Supplier!.Country })
+        // Cities the public search can actually filter on. Supply lives in TWO
+        // pools: directory profiles (SupplierLocations — the imported Estonian
+        // providers, zero listings) and marketplace inventory (Listings). This
+        // used to query Listings alone, which returns an EMPTY dropdown in
+        // production where the directory IS the supply. Union both.
+        var slug    = type?.Trim().ToLowerInvariant();
+        var hasType = !string.IsNullOrWhiteSpace(slug);
+        ListingType? listingType = hasType && Enum.TryParse<ListingType>(slug, true, out var parsed)
+            ? parsed
+            : null;
+        var isVertical = listingType is not null;
+        var token      = $"\"{slug}\"";
+
+        // Directory + inventory locations, same public visibility rules as GET /locations.
+        var locationQuery = db.SupplierLocations
+            .Where(l => l.IsActive && !l.IsSynthetic
+                     && l.Supplier != null && l.Supplier.IsActive);
+
+        if (isVertical)
+        {
+            locationQuery = locationQuery.Where(l =>
+                l.Listings.Any(u => u.Type == listingType && u.IsActive)
+                || (l.Supplier!.IsDirectoryListing
+                    && l.Supplier.ServiceTypesJson != null
+                    && l.Supplier.ServiceTypesJson.Contains(token)));
+        }
+        else if (hasType && Constants.ServiceCategories.BySlug.ContainsKey(slug!))
+        {
+            // Directory-only categories (cleaning, packing, vanrental, insurance).
+            locationQuery = locationQuery.Where(l =>
+                l.Supplier!.IsDirectoryListing
+                && l.Supplier.ServiceTypesJson != null
+                && l.Supplier.ServiceTypesJson.Contains(token));
+        }
+        else if (hasType)
+        {
+            // Unknown slug — no supply can match it.
+            return Ok(Array.Empty<object>());
+        }
+
+        var fromLocations = await locationQuery
+            .Select(l => new { l.City, Country = l.Supplier!.Country })
             .Distinct()
-            .OrderBy(c => c.Country)
-            .ThenBy(c => c.City)
             .ToListAsync();
+
+        // Marketplace listings can sit on a city the directory doesn't cover.
+        // Directory-only slugs have no ListingType, so that pool contributes nothing.
+        var fromListings = new List<(string City, string Country)>();
+        if (!hasType || isVertical)
+        {
+            var listingQuery = db.Listings
+                .Where(l => l.IsActive && l.Supplier != null && l.Supplier.IsActive);
+            if (isVertical) listingQuery = listingQuery.Where(l => l.Type == listingType);
+
+            fromListings = (await listingQuery
+                    .Select(l => new { l.City, Country = l.Supplier!.Country })
+                    .Distinct()
+                    .ToListAsync())
+                .Select(c => (c.City, c.Country))
+                .ToList();
+        }
+
+        var cities = fromLocations
+            .Select(c => (c.City, c.Country))
+            .Concat(fromListings)
+            .Where(c => !string.IsNullOrWhiteSpace(c.City))
+            // Case-insensitive dedupe so "Tartu"/"tartu" don't both reach the dropdown.
+            .GroupBy(c => (c.City.Trim().ToLowerInvariant(), c.Country))
+            .Select(g => new { City = g.First().City.Trim(), Country = g.Key.Country })
+            .OrderBy(c => c.Country)
+            .ThenBy(c => c.City, StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
         return Ok(cities);
     }
