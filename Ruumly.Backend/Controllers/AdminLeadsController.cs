@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Constants;
@@ -244,6 +245,80 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
             status     = lead.Status.ToString().ToLower(),
             lead.AdminNotes,
         });
+    }
+
+    /// <summary>
+    /// HARD-deletes a demand lead: the row is gone, permanently, along with
+    /// everything that references it (provider outreach rows, offers and their
+    /// options), all inside one transaction.
+    ///
+    /// This exists for ONE reason: removing test/canary/spam rows so the ops
+    /// metrics stay honest. Dismissed leads still count in
+    /// <see cref="GetLeadMetrics"/> — requestsThisWeek, requests30d and every
+    /// rate denominator — so a handful of smoke-test rows silently inflates the
+    /// north-star numbers the founder reports.
+    ///
+    /// It is NOT the way to close a real request that went nowhere. For that,
+    /// PATCH the status to Dismissed/Unmatched: a real lost lead is data — it
+    /// belongs in the denominator, and erasing it would flatter the conversion
+    /// rates instead of measuring them.
+    /// </summary>
+    /// <response code="204">Lead and its dependent rows were deleted.</response>
+    /// <response code="404">No lead with that id.</response>
+    [HttpDelete("leads/{id:guid}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> DeleteLead(Guid id)
+    {
+        var lead = await Db.DemandLeads.FindAsync(id);
+        if (lead is null) return NotFound(Error("Lead not found."));
+
+        // Snapshot the identifying facts BEFORE the row disappears — the audit
+        // trail is the only thing that outlives a hard delete.
+        var city      = lead.City;
+        var category  = lead.Category.ToString().ToLowerInvariant();
+        var source    = lead.Source ?? "none";
+        var status    = lead.Status;
+        var createdAt = lead.CreatedAt;
+        var name      = string.IsNullOrWhiteSpace(lead.Name) ? "(no name)" : lead.Name;
+
+        await using var tx = await Db.Database.BeginTransactionAsync();
+        try
+        {
+            // Leaf → root. Offer and ProviderOutreach both FK the lead (and
+            // OfferOption FKs the offer); the mapping cascades, but deleting the
+            // dependents explicitly keeps the behaviour identical on Npgsql and
+            // the InMemory provider instead of leaning on DB-side cascade rules.
+            var offers = await Db.Offers.Where(o => o.DemandLeadId == id).ToListAsync();
+            if (offers.Count > 0)
+            {
+                var offerIds = offers.Select(o => o.Id).ToList();
+                var options  = await Db.OfferOptions
+                    .Where(o => offerIds.Contains(o.OfferId)).ToListAsync();
+                Db.OfferOptions.RemoveRange(options);
+                Db.Offers.RemoveRange(offers);
+            }
+
+            var outreaches = await Db.ProviderOutreaches
+                .Where(o => o.DemandLeadId == id).ToListAsync();
+            Db.ProviderOutreaches.RemoveRange(outreaches);
+
+            Db.DemandLeads.Remove(lead);
+
+            Audit("lead.deleted", User.GetUserId().ToString(), id.ToString(),
+                  $"Hard-deleted lead \"{name}\" — city: {city}, category: {category}, " +
+                  $"source: {source}, status: {status}, created: {createdAt:yyyy-MM-dd}. " +
+                  $"Removed {outreaches.Count} outreach row(s) and {offers.Count} offer(s).");
+
+            await Db.SaveChangesAsync();
+            await tx.CommitAsync();
+        }
+        catch
+        {
+            await tx.RollbackAsync();
+            throw;
+        }
+
+        return NoContent();
     }
 
     [HttpGet("leads/{id:guid}/provider-candidates")]

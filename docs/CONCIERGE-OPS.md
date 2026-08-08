@@ -128,3 +128,10 @@ Pitch order: (1) here is a real customer/lead volume, (2) enquiries are free rig
     lead **Quoted** (a preference, not a booking).
 - Metrics API: `GET /api/admin/leads/metrics` (concierge-scoped north-stars incl.
   `matchRate30d`); leads list filters: `source|category|city|needsResponse`.
+- **Hard delete (test rows only):** `DELETE /api/admin/leads/{id}` (Admin role, 204/404)
+  removes the lead plus its outreach rows, offers and offer options in one transaction,
+  and audits `lead.deleted` with the city/category so the trail outlives the row. Use it
+  ONLY for canary/smoke-test/spam rows: dismissed leads still count in `requestsThisWeek`,
+  `requests30d` and every rate denominator, so fake rows quietly inflate the north-stars.
+  A real request that went nowhere gets `status = Dismissed/Unmatched` instead — a lost
+  lead is data, and deleting it would flatter the conversion rates rather than measure them.
