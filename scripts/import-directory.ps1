@@ -38,6 +38,22 @@ $headers = @{ Authorization = "Bearer $Token"; 'Content-Type' = 'application/jso
 $grand = [ordered]@{ created = 0; skipped = 0; errors = 0 }
 $allErrors = @()
 
+# Suppliers.RegistryCode has a UNIQUE index, but a chain legitimately shares one
+# code across every branch: NOLIKTAVA1 has 13 Riga locations on 44103124767,
+# Boxrent and Daiktams.lt the same. Sent as-is, the first branch imports and every
+# sibling dies with "database error - supplier not saved" - which reads like a bad
+# row rather than a chain. Keep the code on the first branch, null it on the rest;
+# the branches are still distinct suppliers by slug, address and coordinates.
+$seenRegistryCodes = [System.Collections.Generic.HashSet[string]]::new()
+$deduped = 0
+function Resolve-RegistryCode($row) {
+    $code = $row.registryCode
+    if ([string]::IsNullOrWhiteSpace($code)) { return $null }
+    if ($seenRegistryCodes.Add([string]$code)) { return $code }
+    $script:deduped++
+    return $null
+}
+
 foreach ($country in $Countries) {
     $file = Join-Path $DataDir "import-$country.json"
     if (-not (Test-Path $file)) { Write-Warning "missing $file - skipping $country"; continue }
@@ -51,6 +67,8 @@ foreach ($country in $Countries) {
         $label = "$country rows $($i + 1)-$($end + 1)"
 
         if (-not $PSCmdlet.ShouldProcess($label, 'POST /admin/suppliers/bulk')) { continue }
+
+        foreach ($row in $batch) { $row.registryCode = Resolve-RegistryCode $row }
 
         # -Depth 5 matters: the default of 2 silently flattens serviceTypes into
         # type names instead of an array, and the API then rejects every row.
@@ -78,6 +96,9 @@ foreach ($country in $Countries) {
 
 Write-Host "`n=== TOTAL ===" -ForegroundColor Cyan
 Write-Host "created $($grand.created), skipped $($grand.skipped), errors $($grand.errors)"
+if ($deduped) {
+    Write-Host "$deduped registry code(s) nulled as chain-branch duplicates (expected - see comment at top)" -ForegroundColor DarkGray
+}
 
 if ($allErrors) {
     Write-Host "`nErrors by reason:" -ForegroundColor Yellow
