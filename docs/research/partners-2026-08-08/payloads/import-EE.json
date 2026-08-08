@@ -1,0 +1,1474 @@
+[
+  {
+    "name": "Hekkari Veod OÜ",
+    "slug": "hekkari-veod-elva",
+    "city": "Elva",
+    "lat": 58.2234,
+    "lng": 26.4058,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Käo tee 1, Elva",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": "hekkariveod1@hot.ee",
+    "contactPhone": "+372 5530794",
+    "tagline": "Veoteenus Elva linnas",
+    "descriptionEt": "Hekkari Veod OÜ on Elva linna aadressiga veofirma. Koos Jürgeni Kaubaveoga on see üks kahest Elvas baseeruvast veo- ja kolimisteenuse pakkujast.",
+    "descriptionEn": "Hekkari Veod OÜ is a haulage firm with an Elva town address. Together with Jürgeni Kaubavedu it is one of only two haulage and moving providers based in Elva.",
+    "registryCode": "11203143"
+  },
+  {
+    "name": "Jürgeni Kaubavedu OÜ",
+    "slug": "jurgeni-kaubavedu-elva",
+    "city": "Elva",
+    "lat": 58.2155,
+    "lng": 26.4072,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Metsa 6, Elva",
+    "country": "EE",
+    "websiteUrl": "https://kaubavedu.ee/",
+    "contactEmail": "info@kaubavedu.ee",
+    "contactPhone": "+372 5056425",
+    "tagline": "Kolimine ja kaubavedu Elvast üle Lõuna-Eesti",
+    "descriptionEt": "Jürgeni Kaubavedu OÜ tegutseb Elvas ja teenindab Tartu, Tallinna ning kogu Lõuna-Eesti suunda. Ettevõte pakub korteri- ja kontorikolimist, mööbli vedu ja äravedu ning kaubavedu kauplustesse. Kasutusel on tõsteluugiga kinnised kaubikud ja haagised, teenindatakse ka õhtuti ja nädalavahetustel.",
+    "descriptionEn": "Jürgeni Kaubavedu OÜ is based in Elva and serves the Tartu, Tallinn and wider South Estonia routes. The company handles home and office moves, furniture transport and disposal, and distribution deliveries to shops. It runs enclosed vans with tail lifts plus trailers, and works evenings and weekends.",
+    "registryCode": "10192704"
+  },
+  {
+    "name": "Ilves Motors OÜ",
+    "slug": "ilves-motors-haapsalu",
+    "city": "Haapsalu",
+    "lat": 58.9272,
+    "lng": 23.5451,
+    "serviceTypes": [
+      "trailer",
+      "vanrental"
+    ],
+    "address": "Lihula mnt 23, Haapsalu",
+    "country": "EE",
+    "websiteUrl": "https://ilvesmotors.ee/haagis/",
+    "contactEmail": "info@ilvesmotors.ee",
+    "contactPhone": "+372 56845527",
+    "tagline": "Kinnise kaubahaagise ja kaubiku rent Haapsalus",
+    "descriptionEt": "Ilves Motors OÜ on Haapsalu autoteenindus, mis rendib välja kinnist kaubahaagist mõõtudega 3,0 x 1,5 m ja kandevõimega 496 kg. Lisaks saab rentida sõiduautosid ja Mercedes-Benz Vito kaubikut, mis sobib kolimiseks.",
+    "descriptionEn": "Ilves Motors OÜ is a Haapsalu garage that rents out a covered cargo trailer measuring 3.0 x 1.5 m with a 496 kg payload. Cars and a Mercedes-Benz Vito van suited to moving are also available for hire.",
+    "registryCode": "14764273"
+  },
+  {
+    "name": "Katmar Puhastus OÜ",
+    "slug": "katmar-puhastus-haapsalu",
+    "city": "Haapsalu",
+    "lat": 58.9379,
+    "lng": 23.5349,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Mulla 14, Haapsalu",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": null,
+    "contactPhone": "+372 56475712",
+    "tagline": "Väike koristusteenuse pakkuja Haapsalus",
+    "descriptionEt": "Katmar Puhastus OÜ on väike Haapsalu koristusettevõte. Sobib kodude ja korterite koristamiseks kolimise järel.",
+    "descriptionEn": "Katmar Puhastus OÜ is a small cleaning business in Haapsalu. A fit for cleaning homes and flats after a move.",
+    "registryCode": null
+  },
+  {
+    "name": "Laverna Puhastustööd",
+    "slug": "laverna-haapsalu",
+    "city": "Haapsalu",
+    "lat": 58.9361,
+    "lng": 23.5426,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Lihula mnt 11, Haapsalu",
+    "country": "EE",
+    "websiteUrl": "https://laverna.ee/",
+    "contactEmail": "info@laverna.ee",
+    "contactPhone": "+372 5250450",
+    "tagline": "Kodu- ja kontorikoristus Haapsalus alates 1992",
+    "descriptionEt": "Laverna Puhastustööd on 1992. aastast tegutsev puhastusettevõte, millel on Haapsalus Lihula maanteel kontor. Pakutakse kodu- ja kontorikoristust, ehitusjärgset koristust ning akende pesu, mis sobib kolimise järel või enne üleandmist.",
+    "descriptionEn": "Laverna Puhastustööd has been cleaning since 1992 and keeps an office on Lihula mnt in Haapsalu. They provide home and office cleaning, post-construction cleaning and window washing, handy after a move or before handing over keys.",
+    "registryCode": null
+  },
+  {
+    "name": "Meiker M OÜ",
+    "slug": "meiker-puhastus-haapsalu",
+    "city": "Haapsalu",
+    "lat": 58.9396,
+    "lng": 23.58,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Tallinna mnt 78, Uuemõisa, Haapsalu",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": "info@meiker.ee",
+    "contactPhone": "+372 4737357",
+    "tagline": "Puhastusteenus Haapsalus Uuemõisas",
+    "descriptionEt": "Meiker M OÜ pakub puhastusteenust Haapsalu linna koosseisu kuuluvas Uuemõisas. Sobib kolimisjärgseks või väljakolimiskoristuseks Läänemaal.",
+    "descriptionEn": "Meiker M OÜ provides cleaning services in Uuemõisa, part of Haapsalu town. Suitable for post-move or move-out cleaning in Lääne county.",
+    "registryCode": "10544439"
+  },
+  {
+    "name": "Miil OÜ – Miniladu Haapsalu",
+    "slug": "miil-miniladu-haapsalu",
+    "city": "Haapsalu",
+    "lat": 58.9413,
+    "lng": 23.576,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Kooli tee 3, Uuemõisa, Haapsalu",
+    "country": "EE",
+    "websiteUrl": "https://www.miil.ee/toode/miniladu-haapsalu/",
+    "contactEmail": "info@miil.ee",
+    "contactPhone": "+372 5182618",
+    "tagline": "2025. aastal avatud miniladu Haapsalus Uuemõisas",
+    "descriptionEt": "Miil OÜ miniladu Uuemõisas Haapsalu külje all avati 2025. aastal. Boksid on kuivad, lisaventilatsiooniga ja lukukaitsmega ning sobivad nii mööbli, sõiduki kui hooajakauba hoiustamiseks. Asukoht on mugav kogu Läänemaa elanikele.",
+    "descriptionEn": "Miil OÜ opened this mini storage facility in Uuemõisa just outside Haapsalu in 2025. The units are dry, have added ventilation and lock protection, and suit furniture, vehicles and seasonal goods. The location is convenient for the whole of Lääne county.",
+    "registryCode": null
+  },
+  {
+    "name": "Ramirent Haapsalu",
+    "slug": "ramirent-haapsalu",
+    "city": "Haapsalu",
+    "lat": 58.9397,
+    "lng": 23.5834,
+    "serviceTypes": [
+      "trailer"
+    ],
+    "address": "Ehitajate tee 2a, Uuemõisa, Haapsalu",
+    "country": "EE",
+    "websiteUrl": "https://www.ramirent.ee/esindused/haapsalu/",
+    "contactEmail": "haapsalu@ramirent.ee",
+    "contactPhone": "+372 53080017",
+    "tagline": "Haagiste ja treilerite rent Haapsalu esinduses",
+    "descriptionEt": "Ramirent Baltic AS-i Haapsalu rendipunkt aadressil Ehitajate tee 2a, Uuemõisa, Haapsalu annab välja treilereid ja haagiseid, transpordikärusid ning tõsteseadmeid. Kolimisel saab siit rentida haagise mööbli ja kodutehnika vedamiseks. Esindus on avatud tööpäeviti ja laupäeva hommikul.",
+    "descriptionEn": "The Ramirent Baltic AS depot in Haapsalu, at Ehitajate tee 2a, Uuemõisa, Haapsalu, rents out trailers and transport carts as well as lifting equipment. When moving house you can hire a trailer here to shift furniture and appliances. The branch is open on weekdays and Saturday mornings.",
+    "registryCode": null
+  },
+  {
+    "name": "Real West OÜ",
+    "slug": "real-west-haapsalu",
+    "city": "Haapsalu",
+    "lat": 58.9401,
+    "lng": 23.5514,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Metsa 56, Haapsalu",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": "realwestou@gmail.com",
+    "contactPhone": "+372 55548058",
+    "tagline": "Kolimine, äravedu ja keldrite tühjendus Haapsalus",
+    "descriptionEt": "Real West OÜ pakub Haapsalus kolimisteenust, vana mööbli ja prahi äravedu ning keldrite ja pööningute tühjendamist. Enne pöördumist tasub ettevõtte tegevuse jätkumine üle kontrollida.",
+    "descriptionEn": "Real West OÜ offers moving services in Haapsalu along with junk removal and clearing out cellars and attics. It is worth confirming the company is still trading before approaching them.",
+    "registryCode": "14794908"
+  },
+  {
+    "name": "Saaron OÜ",
+    "slug": "saaron-haapsalu",
+    "city": "Haapsalu",
+    "lat": 58.9283,
+    "lng": 23.5216,
+    "serviceTypes": [
+      "moving",
+      "cleaning"
+    ],
+    "address": "Jõhvika tn 5, Paralepa, Haapsalu",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": "toomas.vallimae@mail.ee",
+    "contactPhone": "+372 5064428",
+    "tagline": "Kolimisteenus ja hoonete koristus Haapsalus",
+    "descriptionEt": "Saaron OÜ on Haapsalu Paralepa väikeettevõte, mille äriregistris registreeritud tegevusalade hulka kuulub otsesõnu kolimisteenus, samuti mööbli remont ja hoonete koristus. Üks kahest Läänemaa päris kolimisteenuse pakkujast.",
+    "descriptionEn": "Saaron OÜ is a small firm in Paralepa, Haapsalu, whose registered activities explicitly include moving services, along with furniture repair and building cleaning. One of only two genuine movers based in Lääne county.",
+    "registryCode": "14053081"
+  },
+  {
+    "name": "Espak Jõgeva",
+    "slug": "espak-jogeva",
+    "city": "Jõgeva",
+    "lat": 58.7409,
+    "lng": 26.3705,
+    "serviceTypes": [
+      "trailer"
+    ],
+    "address": "Tallinna mnt 2a, Jõgeva",
+    "country": "EE",
+    "websiteUrl": "https://espak.ee/kauplused/jogeva/teenused/",
+    "contactEmail": "ukukeskus@valmeco.ee",
+    "contactPhone": "+372 7760303",
+    "tagline": "Järelhaagise rent Jõgeval Uku keskuses",
+    "descriptionEt": "Espaki Jõgeva kauplus Uku keskuses rendib kahes mõõdus järelhaagiseid, hinnastatuna 3, 6 ja 24 tunni kaupa. Haagis sobib mööbli ja kastide vedamiseks kolimisel Jõgeval ja Jõgevamaal.",
+    "descriptionEn": "The Espak store in the Uku centre in Jõgeva rents trailers in two sizes, priced by 3, 6 and 24 hour blocks. The trailer suits moving furniture and boxes around Jõgeva and its county.",
+    "registryCode": null
+  },
+  {
+    "name": "Pakendikeskus Jõhvi",
+    "slug": "pakendikeskus-johvi",
+    "city": "Jõhvi",
+    "lat": 59.3627,
+    "lng": 27.4513,
+    "serviceTypes": [
+      "packing"
+    ],
+    "address": "Narva mnt 141A, Jõhvi",
+    "country": "EE",
+    "websiteUrl": "https://www.pakendikeskus.ee/",
+    "contactEmail": "johvi@pakendikeskus.ee",
+    "contactPhone": "+372 3250333",
+    "tagline": "Kolimiskastid ja pakkematerjalid Jõhvis",
+    "descriptionEt": "Pakendikeskus AS-i Jõhvi esindus Narva maanteel müüb kolimiskaste, kilet, mullikilet ja teipi. See on ainus suure pakendikaupmehe esindus, mis asub Ida-Virumaal kolimiseks vajalike materjalide jaoks.",
+    "descriptionEn": "The Jõhvi branch of Pakendikeskus AS on Narva mnt sells moving boxes, wrap, bubble film and tape. It is the only branch of Estonia's main packaging retailer inside Ida-Viru county for move supplies.",
+    "registryCode": "10102167"
+  },
+  {
+    "name": "Pereezd.ee (Cadline OÜ)",
+    "slug": "pereezd-johvi",
+    "city": "Jõhvi",
+    "lat": 59.3585,
+    "lng": 27.4074,
+    "serviceTypes": [
+      "moving",
+      "packing"
+    ],
+    "address": "Sompa 1, Jõhvi",
+    "country": "EE",
+    "websiteUrl": "https://pereezd.ee/",
+    "contactEmail": "info@pereezd.ee",
+    "contactPhone": "+372 56270320",
+    "tagline": "Kolimisteenus Jõhvis ja Ida-Virumaal, 10 aastat kogemust",
+    "descriptionEt": "Cadline OÜ ehk Pereezd.ee on Jõhvis Sompa tänaval tegutsev kolimisfirma, mille autopark ulatub 15 m³ kaubikust 35 m³ furgoonini ja 7-tonnise kraanaga veokini. Pakutakse korteri- ja kontorikolimist, mööbli monteerimist, raskete esemete vedu ning pakkematerjale. Teenindatakse ka Balti riike ja Skandinaaviat.",
+    "descriptionEn": "Cadline OÜ, trading as Pereezd.ee, is a moving company on Sompa street in Jõhvi with a fleet ranging from a 15 m³ van to a 35 m³ box truck and a lorry with a 7-tonne crane. They handle home and office moves, furniture assembly, heavy item transport and packing materials, and also serve the Baltics and Scandinavia.",
+    "registryCode": "12573942"
+  },
+  {
+    "name": "Ramirent Jõhvi",
+    "slug": "ramirent-johvi",
+    "city": "Jõhvi",
+    "lat": 59.3519,
+    "lng": 27.4108,
+    "serviceTypes": [
+      "trailer"
+    ],
+    "address": "Tartu mnt 21c, Jõhvi",
+    "country": "EE",
+    "websiteUrl": "https://www.ramirent.ee/esindused/johvi/",
+    "contactEmail": "johvi@ramirent.ee",
+    "contactPhone": "+372 53080012",
+    "tagline": "Haagiste ja treilerite rent Jõhvi esinduses",
+    "descriptionEt": "Ramirent Baltic AS-i Jõhvi rendipunkt aadressil Tartu mnt 21c, Jõhvi annab välja treilereid ja haagiseid, transpordikärusid ning tõsteseadmeid. Kolimisel saab siit rentida haagise mööbli ja kodutehnika vedamiseks. Esindus on avatud tööpäeviti ja laupäeva hommikul.",
+    "descriptionEn": "The Ramirent Baltic AS depot in Jõhvi, at Tartu mnt 21c, Jõhvi, rents out trailers and transport carts as well as lifting equipment. When moving house you can hire a trailer here to shift furniture and appliances. The branch is open on weekdays and Saturday mornings.",
+    "registryCode": null
+  },
+  {
+    "name": "Keila Haldus OÜ",
+    "slug": "keila-haldus",
+    "city": "Keila",
+    "lat": 59.3072,
+    "lng": 24.4146,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Jaama tn 3, Keila",
+    "country": "EE",
+    "websiteUrl": "https://keilahaldus.ee/",
+    "contactEmail": "info@keilahaldus.ee",
+    "contactPhone": "+372 53442444",
+    "tagline": "Puhastusteenus ja kinnisvarahaldus Keilas",
+    "descriptionEt": "Keila Haldus OÜ on Keila kinnisvarahalduse ettevõte, mis pakub ka puhastusteenust: trepikodade ja üldalade märg- ja kuivkoristust, akende pesu ning territooriumi hooldust. Sobib korteriühistutele ja kolimisjärgseks korrastuseks.",
+    "descriptionEn": "Keila Haldus OÜ is a Keila property management firm that also sells cleaning services: wet and dry cleaning of stairwells and common areas, window washing and grounds upkeep. A fit for housing associations and post-move tidying.",
+    "registryCode": "14058351"
+  },
+  {
+    "name": "Konteinerladu Keila (Blackline OÜ)",
+    "slug": "konteinerladu-keila",
+    "city": "Keila",
+    "lat": 59.3187,
+    "lng": 24.4021,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Paldiski mnt 35, Keila",
+    "country": "EE",
+    "websiteUrl": "https://konteinerladu.ee/",
+    "contactEmail": "info@konteinerladu.ee",
+    "contactPhone": "+372 53999919",
+    "tagline": "Laokonteinerid Keilas Paldiski maanteel",
+    "descriptionEt": "Konteinerladu.ee (Blackline OÜ) laoplats Keilas Paldiski mnt 35 pakub ventileeritud ja lukustatavaid laokonteinereid era- ja ärikliendile. Ligipääs on 24/7 ning kogu Eesti võrgustik käib ühe lepingu ja ühe arvega.",
+    "descriptionEn": "The Konteinerladu.ee (Blackline OÜ) yard at Paldiski mnt 35 in Keila offers ventilated, lockable storage containers to private and business customers. Access is 24/7, and the nationwide network runs on a single contract and a single invoice.",
+    "registryCode": "12549033"
+  },
+  {
+    "name": "Ramirent Keila",
+    "slug": "ramirent-keila",
+    "city": "Keila",
+    "lat": 59.3128,
+    "lng": 24.4323,
+    "serviceTypes": [
+      "trailer"
+    ],
+    "address": "Uus-Paldiski tee 3, Keila",
+    "country": "EE",
+    "websiteUrl": "https://www.ramirent.ee/esindused/keila/",
+    "contactEmail": "keila@ramirent.ee",
+    "contactPhone": "+372 53080004",
+    "tagline": "Haagiste ja treilerite rent Keila esinduses",
+    "descriptionEt": "Ramirent Baltic AS-i Keila rendipunkt aadressil Uus-Paldiski tee 3, Keila annab välja treilereid ja haagiseid, transpordikärusid ning tõsteseadmeid. Kolimisel saab siit rentida haagise mööbli ja kodutehnika vedamiseks. Esindus on avatud tööpäeviti ja laupäeva hommikul.",
+    "descriptionEn": "The Ramirent Baltic AS depot in Keila, at Uus-Paldiski tee 3, Keila, rents out trailers and transport carts as well as lifting equipment. When moving house you can hire a trailer here to shift furniture and appliances. The branch is open on weekdays and Saturday mornings.",
+    "registryCode": null
+  },
+  {
+    "name": "Sunco OÜ",
+    "slug": "sunco-keila",
+    "city": "Keila",
+    "lat": 59.3099,
+    "lng": 24.421,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Põllu 3, Keila",
+    "country": "EE",
+    "websiteUrl": "https://sunco.ee/",
+    "contactEmail": "info@sunco.ee",
+    "contactPhone": "+372 6780919",
+    "tagline": "Kolimisjärgne koristus ja aknapesu Keilas",
+    "descriptionEt": "Sunco OÜ on Keilas tegutsev puhastusettevõte, mis teeb hooldus- ja suurpuhastust, kolimisjärgset ja ehitusjärgset koristust ning akna- ja vaibapesu. Ettevõttel on Keilas oma pesula, kuhu saab vaibad ja tekstiilid viia.",
+    "descriptionEn": "Sunco OÜ is a cleaning company based in Keila handling maintenance and deep cleaning, move-out and post-construction cleaning, plus window and carpet washing. They run their own laundry in Keila for carpets and textiles.",
+    "registryCode": "14014033"
+  },
+  {
+    "name": "Ahtme Tehnika OÜ",
+    "slug": "ahtme-tehnika-kohtla-jarve",
+    "city": "Kohtla-Järve",
+    "lat": 59.328,
+    "lng": 27.4267,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Õpetajate tn 9, Kohtla-Järve",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": "puksiirabi.johvi@gmail.com",
+    "contactPhone": "+372 5207391",
+    "tagline": "Veoteenus ja puksiirabi Kohtla-Järvel",
+    "descriptionEt": "Ahtme Tehnika OÜ pakub Kohtla-Järvel veoteenust ja puksiirabi. Väikeettevõte, mis sobib üksikute suuremate esemete teisaldamiseks kolimisel.",
+    "descriptionEn": "Ahtme Tehnika OÜ provides haulage and towing assistance in Kohtla-Järve. A small operator, a fit for shifting individual bulky items during a move.",
+    "registryCode": "12334195"
+  },
+  {
+    "name": "Perevoz OÜ",
+    "slug": "perevoz-kohtla-jarve",
+    "city": "Kohtla-Järve",
+    "lat": 59.3316,
+    "lng": 27.4138,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Ahtme mnt 33-28, Kohtla-Järve",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": "far777t@gmail.com",
+    "contactPhone": "+372 53810303",
+    "tagline": "Kolimisteenus Kohtla-Järvel Ahtmes",
+    "descriptionEt": "Perevoz OÜ on Kohtla-Järve Ahtme linnaosas registreeritud ettevõte, mis on kataloogides kirjas kolimisteenuse pakkujana. Ettevõte on aktiivne ja käibemaksukohustuslane.",
+    "descriptionEn": "Perevoz OÜ is registered in the Ahtme district of Kohtla-Järve and listed in directories as a moving-services provider. The company is active and VAT registered.",
+    "registryCode": "14877557"
+  },
+  {
+    "name": "Sipelgas Veod OÜ",
+    "slug": "sipelgas-veod-kohtla-jarve",
+    "city": "Kohtla-Järve",
+    "lat": 59.3182,
+    "lng": 27.428,
+    "serviceTypes": [
+      "moving",
+      "warehouse"
+    ],
+    "address": "Ahtme põik 19a, Kohtla-Järve",
+    "country": "EE",
+    "websiteUrl": "https://sipelgasveod.ee/",
+    "contactEmail": "info@sipelgasveod.ee",
+    "contactPhone": "+372 55599648",
+    "tagline": "Kolimine, veoteenus ja laopind Ida-Virumaal",
+    "descriptionEt": "Sipelgas Veod OÜ tegutseb Kohtla-Järvel Ahtmes ja teenindab kogu Ida-Virumaad. Pakutakse korteri- ja kontorikolimist, veoteenust, tõstetöölisi, prahiveo- ja lammutustöid ning laoteenust ja konteinerite renti. Lisaks tehakse mööbli kokkupanekut ning uste ja akende paigaldust.",
+    "descriptionEn": "Sipelgas Veod OÜ operates from Ahtme in Kohtla-Järve and serves the whole of Ida-Viru county. They offer home and office moves, haulage, hired loaders, waste removal and demolition, plus storage services and container hire. They also assemble furniture and fit doors and windows.",
+    "registryCode": "16613756"
+  },
+  {
+    "name": "ASS-Transport OÜ",
+    "slug": "ass-transport-kardla",
+    "city": "Kärdla",
+    "lat": 58.9887,
+    "lng": 22.7524,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Käina mnt 21, Kärdla",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": null,
+    "contactPhone": "+372 5023094",
+    "tagline": "Veoteenus Kärdlas Käina maanteel",
+    "descriptionEt": "ASS-Transport OÜ on Kärdla aadressiga veo- ja kojuveoettevõte, mis on äriregistris olnud pikka aega. Sobib Hiiumaa-sisesteks vedudeks kolimisel.",
+    "descriptionEn": "ASS-Transport OÜ is a transport and delivery company with a Kärdla address and a long history on the business register. A fit for moves within Hiiumaa.",
+    "registryCode": "10435934"
+  },
+  {
+    "name": "Hiiu Autotrans OÜ",
+    "slug": "hiiu-autotrans-kardla",
+    "city": "Kärdla",
+    "lat": 58.9911,
+    "lng": 22.7295,
+    "serviceTypes": [
+      "warehouse",
+      "moving"
+    ],
+    "address": "Sõnajala 11A, Kärdla",
+    "country": "EE",
+    "websiteUrl": "https://www.hiiuauto.ee/",
+    "contactEmail": "info@hiiuauto.ee",
+    "contactPhone": "+372 5033525",
+    "tagline": "Kaupade ladustamine ja vedu Kärdlas",
+    "descriptionEt": "Hiiu Autotrans OÜ on Kärdlas tegutsev veoettevõte, mis pakub lisaks siseriiklikule kaubaveole ka kaupade ladustamist Kärdlas. See on ainus Hiiumaal leitud ladustamisvõimalus, mis sobib kolimise ajaks asjade hoiustamiseks.",
+    "descriptionEn": "Hiiu Autotrans OÜ is a haulage company in Kärdla that offers goods storage in Kärdla alongside domestic freight and parcel delivery. It is the only storage option found on Hiiumaa that could hold belongings during a move.",
+    "registryCode": "10366083"
+  },
+  {
+    "name": "SR Simveod OÜ",
+    "slug": "sr-simveod-kardla",
+    "city": "Kärdla",
+    "lat": 59.0001,
+    "lng": 22.749,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Rootsi 10, Kärdla",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": null,
+    "contactPhone": "+372 5137056",
+    "tagline": "Veo- ja kojuveoteenus Kärdlas",
+    "descriptionEt": "SR Simveod OÜ on Kärdla linna aadressiga veo- ja kojuveoettevõte. Üks vähestest Hiiumaal baseeruvatest vedajatest, kes saab kolimisel abiks olla.",
+    "descriptionEn": "SR Simveod OÜ is a transport and delivery company with an address in Kärdla. One of the few hauliers actually based on Hiiumaa who could help with a move.",
+    "registryCode": "10748142"
+  },
+  {
+    "name": "Takso Autorent Hiiumaa",
+    "slug": "carrent-hiiumaa-kardla",
+    "city": "Kärdla",
+    "lat": 58.9992,
+    "lng": 22.7286,
+    "serviceTypes": [
+      "vanrental"
+    ],
+    "address": "Kaare 10, Kärdla",
+    "country": "EE",
+    "websiteUrl": "https://www.carrent-hiiumaa.ee/",
+    "contactEmail": "jaanusjesmin@hot.ee",
+    "contactPhone": "+372 5112225",
+    "tagline": "Autorent ja takso Kärdlas, tasuta kohaletoomine",
+    "descriptionEt": "Kärdla takso- ja autorendiettevõte, mis rendib sõidukeid 50 euro eest ööpäevas koos täiskaskoga ning toob auto tasuta Kärdla linna või lennujaama. Ainus Hiiumaal leitud sõidukirendi pakkuja; kolimiseks sobiva kaubiku olemasolu tuleb üle küsida.",
+    "descriptionEn": "A Kärdla taxi and car rental business hiring vehicles at EUR 50 per 24 hours fully insured, with free delivery within Kärdla and to the airport. The only vehicle-rental provider found on Hiiumaa; van availability should be confirmed by phone.",
+    "registryCode": "11145799"
+  },
+  {
+    "name": "Albion Motors OÜ",
+    "slug": "albion-motors-narva",
+    "city": "Narva",
+    "lat": 59.3737,
+    "lng": 28.1536,
+    "serviceTypes": [
+      "vanrental"
+    ],
+    "address": "Kerese 40g, Narva",
+    "country": "EE",
+    "websiteUrl": "https://www.albionmotors.ee/",
+    "contactEmail": "info@albionmotors.ee",
+    "contactPhone": "+372 3569333",
+    "tagline": "Autorent ja kaubavedu Narvas Kerese tänaval",
+    "descriptionEt": "Albion Motors OÜ on Narva autoettevõte, mille juures tegutseb autorent ja kaubaveoteenus. Ainus Narvas kinnitust leidnud sõidukirendi pakkuja, kust saab kolimiseks auto rentida.",
+    "descriptionEn": "Albion Motors OÜ is a Narva vehicle business that also runs car rental and a cargo transport service. The only confirmed vehicle-rental provider in Narva where a vehicle can be hired for a move.",
+    "registryCode": "10160868"
+  },
+  {
+    "name": "Envio OÜ",
+    "slug": "envio-narva",
+    "city": "Narva",
+    "lat": 59.3666,
+    "lng": 28.1788,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "26. Juuli tn 13-28, Narva",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": "vedu.envio@gmail.com",
+    "contactPhone": "+372 5511418",
+    "tagline": "Veoteenus ja kolimine Narvas",
+    "descriptionEt": "Envio OÜ on Narva veoettevõte, mis on kataloogides kirjas kolimisteenuse pakkujana ja millel on ligi 17 töötajat. Ettevõtte maksuvõlgade tõttu tasub koostöö enne alustamist üle kontrollida.",
+    "descriptionEn": "Envio OÜ is a Narva haulage company listed in directories under moving services, with around 17 employees. Given the company's tax arrears, its standing is worth checking before working with them.",
+    "registryCode": "14989026"
+  },
+  {
+    "name": "Kesk Log & Eksped",
+    "slug": "kesk-log-eksped-narva",
+    "city": "Narva",
+    "lat": 59.3771,
+    "lng": 28.155,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Rahu 4a, Narva",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": null,
+    "contactPhone": "+372 5032118",
+    "tagline": "Kaubavedu ja ladustamine Narva terminalis",
+    "descriptionEt": "Kesk Log & Eksped on alates 2000. aastast Narvas tegutsev veo- ja ekspedeerimisettevõte, mis pakub oma Narva terminalis ka kaupade ladustamist. Üks vähestest Narvas kinnitust leidnud ladustamisvõimalustest.",
+    "descriptionEn": "Kesk Log & Eksped has operated in Narva since 2000 as a freight and forwarding company, and also offers goods storage at its Narva terminal. One of the few confirmed storage options in Narva.",
+    "registryCode": null
+  },
+  {
+    "name": "Move Home Narva",
+    "slug": "move-home-narva",
+    "city": "Narva",
+    "lat": 59.374,
+    "lng": 28.1966,
+    "serviceTypes": [
+      "moving",
+      "packing"
+    ],
+    "address": "Puškini 10, Narva",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": null,
+    "contactPhone": "+372 55558999",
+    "tagline": "Kolimine ja pakkimisabi Narvas",
+    "descriptionEt": "Move Home on Narva logistika- ja kolimisettevõte, mis pakub lisaks veole ka pakkimisabi ning kindlustab tellimused. Asub Narva kesklinnas Puškini tänaval.",
+    "descriptionEn": "Move Home is a Narva logistics and relocation firm that offers packing help alongside transport and insures its orders. It sits on Puškini street in central Narva.",
+    "registryCode": null
+  },
+  {
+    "name": "NTK Balt OÜ",
+    "slug": "ntk-balt-narva",
+    "city": "Narva",
+    "lat": 59.3713,
+    "lng": 28.1969,
+    "serviceTypes": [
+      "warehouse",
+      "moving"
+    ],
+    "address": "Aleksander Puškini 5, Narva",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": null,
+    "contactPhone": "+372 3573210",
+    "tagline": "Laopind ja veoteenus Narvas alates 1998",
+    "descriptionEt": "NTK Balt OÜ on alates 1998. aastast Narvas tegutsev veoettevõte, millel on oma laopind ja mis pakub ladustamisteenust. Ettevõte on kirjas ka Ida-Viru laonduse kataloogis.",
+    "descriptionEn": "NTK Balt OÜ has run freight operations in Narva since 1998 and maintains its own warehouse space with storage services. The company also appears in the Ida-Viru warehousing directory.",
+    "registryCode": null
+  },
+  {
+    "name": "Puhtaks OÜ",
+    "slug": "puhtaks-narva",
+    "city": "Narva",
+    "lat": 59.3776,
+    "lng": 28.1873,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Tallinna mnt 8, Narva",
+    "country": "EE",
+    "websiteUrl": "https://puhtaks.ee/",
+    "contactEmail": "info@puhtaks.ee",
+    "contactPhone": "+372 53531333",
+    "tagline": "Korterite ja kontorite koristus Narvas",
+    "descriptionEt": "Puhtaks OÜ on Narva koristusettevõte, mis teeb korterite ja kontorite koristust, akende pesu ning ehitus- ja remondijärgset suurpuhastust. Sobib hästi kolimisjärgseks või väljakolimiskoristuseks.",
+    "descriptionEn": "Puhtaks OÜ is a Narva cleaning company handling flats and offices, window washing and deep cleans after building or renovation work. A good fit for move-in or move-out cleaning.",
+    "registryCode": "17043166"
+  },
+  {
+    "name": "Ramirent Narva",
+    "slug": "ramirent-narva",
+    "city": "Narva",
+    "lat": 59.3788,
+    "lng": 28.1552,
+    "serviceTypes": [
+      "trailer"
+    ],
+    "address": "Rahu 3d, Narva",
+    "country": "EE",
+    "websiteUrl": "https://www.ramirent.ee/esindused/narva/",
+    "contactEmail": "narva@ramirent.ee",
+    "contactPhone": "+372 53080011",
+    "tagline": "Haagiste ja treilerite rent Narva esinduses",
+    "descriptionEt": "Ramirent Baltic AS-i Narva rendipunkt aadressil Rahu 3d, Narva annab välja treilereid ja haagiseid, transpordikärusid ning tõsteseadmeid. Kolimisel saab siit rentida haagise mööbli ja kodutehnika vedamiseks. Esindus on avatud tööpäeviti ja laupäeva hommikul.",
+    "descriptionEn": "The Ramirent Baltic AS depot in Narva, at Rahu 3d, Narva, rents out trailers and transport carts as well as lifting equipment. When moving house you can hire a trailer here to shift furniture and appliances. The branch is open on weekdays and Saturday mornings.",
+    "registryCode": null
+  },
+  {
+    "name": "Veotakso Narva",
+    "slug": "veotakso-narva",
+    "city": "Narva",
+    "lat": 59.3684,
+    "lng": 28.169,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "4. Paemurru 20, Narva",
+    "country": "EE",
+    "websiteUrl": "https://www.veotakso.com/et",
+    "contactEmail": "info@veotakso.com",
+    "contactPhone": "+372 56303030",
+    "tagline": "Kolimine ja veoteenus Narvas koos tõstetöölistega",
+    "descriptionEt": "Veotakso on Narva kolimis- ja veoteenuse pakkuja, kellel on oma meeskond ja tõstetöölised ning kaubikud kandevõimega kuni 1,5 tonni. Lisaks kolimisele veetakse ära vana mööbel ja kodutehnika.",
+    "descriptionEn": "Veotakso is a Narva moving and haulage provider with its own crew and loaders and vans rated up to 1.5 tonnes. Besides moving they also haul away old furniture and appliances.",
+    "registryCode": null
+  },
+  {
+    "name": "Espak Paide",
+    "slug": "espak-paide",
+    "city": "Paide",
+    "lat": 58.8906,
+    "lng": 25.5382,
+    "serviceTypes": [
+      "trailer"
+    ],
+    "address": "Prääma tee 20, Paide",
+    "country": "EE",
+    "websiteUrl": "https://espak.ee/kauplused/paide/teenused/",
+    "contactEmail": "paide@espak.ee",
+    "contactPhone": "+372 3870070",
+    "tagline": "Järelhaagise rent Paides, tunni- ja päevahind",
+    "descriptionEt": "Espaki Paide kauplus rendib kahte 1500 x 3000 mm järelhaagist, lahtist ja kattega, hinnaga 10 eurot tunnist kuni 25 eurot ööpäevas. Haagis sobib mööbli ja kodutehnika vedamiseks kolimisel. Kauplus pakub ka kauba kohaletoimetamist.",
+    "descriptionEn": "The Espak store in Paide rents two 1500 x 3000 mm trailers, one open and one tarped, from EUR 10 an hour to EUR 25 a day. The trailer suits moving furniture and appliances. The store also delivers goods by van or truck.",
+    "registryCode": null
+  },
+  {
+    "name": "Ramirent Paide",
+    "slug": "ramirent-paide",
+    "city": "Paide",
+    "lat": 58.8889,
+    "lng": 25.542,
+    "serviceTypes": [
+      "trailer"
+    ],
+    "address": "Prääma tee 11c, Paide",
+    "country": "EE",
+    "websiteUrl": "https://www.ramirent.ee/esindused/paide/",
+    "contactEmail": "paide@ramirent.ee",
+    "contactPhone": "+372 53080006",
+    "tagline": "Haagiste ja treilerite rent Paide esinduses",
+    "descriptionEt": "Ramirent Baltic AS-i Paide rendipunkt aadressil Prääma tee 11c, Paide annab välja treilereid ja haagiseid, transpordikärusid ning tõsteseadmeid. Kolimisel saab siit rentida haagise mööbli ja kodutehnika vedamiseks. Esindus on avatud tööpäeviti ja laupäeva hommikul.",
+    "descriptionEn": "The Ramirent Baltic AS depot in Paide, at Prääma tee 11c, Paide, rents out trailers and transport carts as well as lifting equipment. When moving house you can hire a trailer here to shift furniture and appliances. The branch is open on weekdays and Saturday mornings.",
+    "registryCode": null
+  },
+  {
+    "name": "Transporter OÜ",
+    "slug": "transporter-paide",
+    "city": "Paide",
+    "lat": 58.8849,
+    "lng": 25.5576,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Jaama tn 13, Paide",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": "alvin.sirden@gmail.com",
+    "contactPhone": "+372 5140960",
+    "tagline": "Veoteenus Paide linnas",
+    "descriptionEt": "Transporter OÜ on Paide linna aadressiga veoettevõte. Kas ettevõte võtab ette ka kodukolimisi, tuleb telefonivestluses üle täpsustada.",
+    "descriptionEn": "Transporter OÜ is a haulage company with a Paide town address. Whether they take on household moves should be clarified in a qualifying phone call.",
+    "registryCode": "12238669"
+  },
+  {
+    "name": "Espak Põltsamaa",
+    "slug": "espak-poltsamaa",
+    "city": "Põltsamaa",
+    "lat": 58.6575,
+    "lng": 25.955,
+    "serviceTypes": [
+      "trailer"
+    ],
+    "address": "Õnne 1, Mõhküla, Põltsamaa",
+    "country": "EE",
+    "websiteUrl": "https://espak.ee/kauplused/poltsamaa/teenused/",
+    "contactEmail": "poltsamaa@espak.ee",
+    "contactPhone": "+372 3870071",
+    "tagline": "Kolme mõõdus haagiste rent Põltsamaal",
+    "descriptionEt": "Espaki Põltsamaa kauplus Mõhkülas linna serval rendib kolmes mõõdus järelhaagiseid. See on ainus leitud kolimist toetav renditeenus Põltsamaal.",
+    "descriptionEn": "The Espak store in Mõhküla on the edge of Põltsamaa rents trailers in three sizes. It is the only move-supporting rental service found in Põltsamaa.",
+    "registryCode": null
+  },
+  {
+    "name": "Raivara OÜ",
+    "slug": "raivara-polva",
+    "city": "Põlva",
+    "lat": 57.9836,
+    "lng": 27.0692,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Lõhmuse, Himma küla, Põlva vald",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": null,
+    "contactPhone": "+372 58321494",
+    "tagline": "Kolimis- ja veoteenus Põlva lähistel",
+    "descriptionEt": "Raivara OÜ on Põlva valla Himma külas registreeritud ettevõte, mis on kataloogides kirjas kolimisteenuse pakkujana. See on lähim kolimisteenuse pakkuja Põlva linnale.",
+    "descriptionEn": "Raivara OÜ is registered in Himma village in Põlva parish and is listed in directories as a moving-services provider. It is the closest mover to Põlva town.",
+    "registryCode": "14635883"
+  },
+  {
+    "name": "Konteinerladu Rakvere (Blackline OÜ)",
+    "slug": "konteinerladu-rakvere",
+    "city": "Rakvere",
+    "lat": 59.3427,
+    "lng": 26.3792,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Võidu 101, Rakvere",
+    "country": "EE",
+    "websiteUrl": "https://konteinerladu.ee/",
+    "contactEmail": "info@konteinerladu.ee",
+    "contactPhone": "+372 53999919",
+    "tagline": "Laokonteinerid Rakveres Võidu tänaval, ligipääs 24/7",
+    "descriptionEt": "Konteinerladu.ee (Blackline OÜ) rendib Rakveres Võidu 101 aadressil uusi ventileeritud laokonteinereid alates 75 eurost kuus. Territoorium on piiratud, videovalvega ja avatud ööpäev läbi. Soovi korral saab boksi lisada riiulid.",
+    "descriptionEn": "Konteinerladu.ee (Blackline OÜ) rents new ventilated storage containers at Võidu 101 in Rakvere from EUR 75 a month. The site is fenced, video-monitored and accessible around the clock, and shelving can be added to any unit.",
+    "registryCode": "12549033"
+  },
+  {
+    "name": "Miil OÜ – Miniladu Rakvere",
+    "slug": "miil-miniladu-rakvere",
+    "city": "Rakvere",
+    "lat": 59.3604,
+    "lng": 26.3696,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Arkna tee 6, Rakvere",
+    "country": "EE",
+    "websiteUrl": "https://www.miil.ee/toode/miniladu-rakvere/",
+    "contactEmail": "info@miil.ee",
+    "contactPhone": "+372 6012957",
+    "tagline": "6-meetrised laokonteinerid Rakveres Arkna teel",
+    "descriptionEt": "Miil OÜ miniladu Rakveres pakub 6-meetriseid laokonteinereid, mille kasulik pind on umbes 14 m². Boksidel on kergelt avatav uks, lisaventilatsioon ja lukukaitse. Hind algab 90 eurost kuus ning pikema rendiperioodi korral on soodsam.",
+    "descriptionEn": "Miil OÜ's mini storage in Rakvere offers 6-metre storage containers with roughly 14 m² of usable space. Units have an easy-opening door, added ventilation and lock protection. Pricing starts at EUR 90 per month, with discounts for longer terms.",
+    "registryCode": null
+  },
+  {
+    "name": "Normkoristus OÜ",
+    "slug": "normkoristus-rakvere",
+    "city": "Rakvere",
+    "lat": 59.3307,
+    "lng": 26.3607,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Nurme tn 8, Rakvere",
+    "country": "EE",
+    "websiteUrl": "https://normkoristus.ee/",
+    "contactEmail": "irina@normkoristus.ee",
+    "contactPhone": "+372 53910536",
+    "tagline": "Trepikodade ja kontorite koristus Rakveres",
+    "descriptionEt": "Normkoristus OÜ on Rakvere koristusettevõte, mille äriregistri tegevusalaks on hoonete üldpuhastus. Koristatakse korterelamute trepikodasid ja kontoreid ning tehakse ühekordseid koristusi kolimise järel.",
+    "descriptionEn": "Normkoristus OÜ is a Rakvere cleaning company whose registered activity is general building cleaning. They clean apartment stairwells and offices and take on one-off cleans after a move.",
+    "registryCode": "14842429"
+  },
+  {
+    "name": "Ramirent Rakvere",
+    "slug": "ramirent-rakvere",
+    "city": "Rakvere",
+    "lat": 59.3486,
+    "lng": 26.3381,
+    "serviceTypes": [
+      "trailer"
+    ],
+    "address": "Ringtee 4, Taaravainu küla, Rakvere vald",
+    "country": "EE",
+    "websiteUrl": "https://www.ramirent.ee/esindused/rakvere/",
+    "contactEmail": "rakvere@ramirent.ee",
+    "contactPhone": "+372 53080013",
+    "tagline": "Haagiste ja treilerite rent Rakvere esinduses",
+    "descriptionEt": "Ramirent Baltic AS-i Rakvere rendipunkt aadressil Ringtee 4, Taaravainu küla, Rakvere vald annab välja treilereid ja haagiseid, transpordikärusid ning tõsteseadmeid. Kolimisel saab siit rentida haagise mööbli ja kodutehnika vedamiseks. Esindus on avatud tööpäeviti ja laupäeva hommikul.",
+    "descriptionEn": "The Ramirent Baltic AS depot in Rakvere, at Ringtee 4, Taaravainu küla, Rakvere vald, rents out trailers and transport carts as well as lifting equipment. When moving house you can hire a trailer here to shift furniture and appliances. The branch is open on weekdays and Saturday mornings.",
+    "registryCode": null
+  },
+  {
+    "name": "Veoteenused24 (Oun Grupp OÜ)",
+    "slug": "veoteenused24-rakvere",
+    "city": "Rakvere",
+    "lat": 59.3479,
+    "lng": 26.3544,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Pikk tn 24-6, Rakvere",
+    "country": "EE",
+    "websiteUrl": "https://veoteenused24.ee/",
+    "contactEmail": "oungrupp@gmail.com",
+    "contactPhone": "+372 53954463",
+    "tagline": "Rakvere oma kolimis- ja veoteenus, üle 10 aasta kogemust",
+    "descriptionEt": "Oun Grupp OÜ on Rakveres tegutsev kolimis- ja veofirma, mis on turul olnud üle kümne aasta. Teenuste hulka kuuluvad korteri- ja kontorikolimine, mööbli vedu ning kokku- ja lahtimonteerimine, raskete esemete nagu seifide ja klaverite teisaldamine. Lisaks veetakse ära vana mööbel ja kodutehnika.",
+    "descriptionEn": "Oun Grupp OÜ is a Rakvere-based moving and haulage company with more than ten years in the trade. Services cover home and office moves, furniture transport with assembly and disassembly, and handling of heavy items such as safes and pianos. They also haul away old furniture and appliances.",
+    "registryCode": "12856597"
+  },
+  {
+    "name": "Aivil Transport OÜ",
+    "slug": "aivil-transport-rapla",
+    "city": "Rapla",
+    "lat": 58.9918,
+    "lng": 24.8209,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Salu 11, Rapla",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": "aiviltransport@gmail.com",
+    "contactPhone": "+372 53400174",
+    "tagline": "Veo- ja kojuveoteenus Rapla linnas",
+    "descriptionEt": "Aivil Transport OÜ on Rapla linna aadressiga veo- ja kojuveoettevõte. Sobib mööbli ja kodutehnika vedamiseks Raplas ja Raplamaal.",
+    "descriptionEn": "Aivil Transport OÜ is a transport and delivery company with an address in Rapla town. Suitable for shifting furniture and appliances in Rapla and the surrounding county.",
+    "registryCode": "11015542"
+  },
+  {
+    "name": "Haagiseabi Rapla",
+    "slug": "haagiseabi-rapla",
+    "city": "Rapla",
+    "lat": 58.9902,
+    "lng": 24.8353,
+    "serviceTypes": [
+      "trailer"
+    ],
+    "address": "Viljandi mnt 126, Rapla",
+    "country": "EE",
+    "websiteUrl": "https://www.haagiseabi.ee/",
+    "contactEmail": "info@haagiseabi.ee",
+    "contactPhone": "+372 5161671",
+    "tagline": "Haagiste müük ja rent Rapla Konsumi sisehoovis",
+    "descriptionEt": "Haagiseabi rendipunkt asub Raplas E-Ehituskeskuse ja Konsumi sisehoovis Viljandi maanteel. Rendile antakse järelhaagiseid, mis sobivad kolimisel mööbli ja kodutehnika vedamiseks.",
+    "descriptionEn": "The Haagiseabi rental point sits in the courtyard of the E-Ehituskeskus and Konsum on Viljandi mnt in Rapla. They rent out trailers suited to moving furniture and appliances.",
+    "registryCode": null
+  },
+  {
+    "name": "Hepa haagiserent Rapla",
+    "slug": "hepa-haagiserent-rapla",
+    "city": "Rapla",
+    "lat": 58.9907,
+    "lng": 24.8339,
+    "serviceTypes": [
+      "trailer"
+    ],
+    "address": "Viljandi mnt 124, Rapla",
+    "country": "EE",
+    "websiteUrl": "https://hepa.ee/haagiserent/",
+    "contactEmail": null,
+    "contactPhone": "+372 4800800",
+    "tagline": "Lahtiste ja kinniste haagiste rent Rapla tanklas",
+    "descriptionEt": "Hepa on Raplas peakorterit omav tanklakett, mis rendib oma Rapla tanklates lahtiseid ja kattega järelhaagiseid. Mugav variant kolimiseks, kuna haagise saab kätte tankla lahtiolekuaegadel.",
+    "descriptionEn": "Hepa is a regional fuel-station chain headquartered in Rapla that rents open and covered trailers at its Rapla stations. A convenient option for a move, since the trailer can be picked up during station opening hours.",
+    "registryCode": null
+  },
+  {
+    "name": "Hoonegrupp OÜ",
+    "slug": "hoonegrupp-rapla",
+    "city": "Rapla",
+    "lat": 58.9971,
+    "lng": 24.7991,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Koidu tn 25/3, Rapla",
+    "country": "EE",
+    "websiteUrl": "https://hoonegrupp.ee/",
+    "contactEmail": "info@hoonegrupp.ee",
+    "contactPhone": "+372 5247857",
+    "tagline": "Vaipade, pehme mööbli ja põrandate süvapuhastus Raplas",
+    "descriptionEt": "Hoonegrupp OÜ on Rapla puhastusettevõte, mis teeb vaipade ja pehme mööbli süvapuhastust ning parketi, PVC- ja kivipõrandate masinpesu ja vahatamist. Pakutakse ka pesuteenust ja käsitsi autopesu, mis sobib hästi kolimisjärgseks korrastamiseks.",
+    "descriptionEn": "Hoonegrupp OÜ is a Rapla cleaning firm doing deep cleaning of carpets and upholstery plus machine washing and waxing of parquet, PVC and stone floors. They also offer laundry and hand car washing, useful when settling into a new home.",
+    "registryCode": "10343646"
+  },
+  {
+    "name": "M&A Service haagiserent (Seersant M & A OÜ)",
+    "slug": "ma-service-haagiserent-rapla",
+    "city": "Rapla",
+    "lat": 58.9947,
+    "lng": 24.7959,
+    "serviceTypes": [
+      "trailer"
+    ],
+    "address": "Kastani 6, Rapla",
+    "country": "EE",
+    "websiteUrl": "https://maservice.ee/",
+    "contactEmail": "servicerapla@gmail.com",
+    "contactPhone": "+372 58877330",
+    "tagline": "Respo haagiste rent Raplas Kastani tänaval",
+    "descriptionEt": "Seersant M & A OÜ on Rapla haagisekeskus ja Respo ametlik esindaja, mis rendib järelhaagiseid Kastani 6 aadressil. Lisaks pakutakse autorenti. Haagised sobivad kolimisel mööbli ja kodutehnika vedamiseks.",
+    "descriptionEn": "Seersant M & A OÜ is a Rapla trailer centre and official Respo dealer, renting trailers from Kastani 6. Car rental is also available. The trailers suit moving furniture and appliances.",
+    "registryCode": "10391450"
+  },
+  {
+    "name": "Tebolar OÜ",
+    "slug": "tebolar-rapla",
+    "city": "Rapla",
+    "lat": 59.0011,
+    "lng": 24.7891,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Vahtra 8, Rapla",
+    "country": "EE",
+    "websiteUrl": "https://www.tebolar.ee/",
+    "contactEmail": "info@tebolar.ee",
+    "contactPhone": "+372 56600280",
+    "tagline": "Kraanaauto tõste- ja veoteenus Raplas",
+    "descriptionEt": "Tebolar OÜ on Rapla töökoda, mis pakub kraanaauto tõste- ja veoteenust, kalluriveod ja puksiirabi. Sobib eriti raskete või kohmakate esemete teisaldamiseks kolimisel.",
+    "descriptionEn": "Tebolar OÜ is a Rapla workshop offering crane-truck lifting and haulage, tipper transport and towing. Especially useful for shifting heavy or awkward items during a move.",
+    "registryCode": "11340242"
+  },
+  {
+    "name": "Osaühing Žur",
+    "slug": "zur-sillamae",
+    "city": "Sillamäe",
+    "lat": 59.3895,
+    "lng": 27.8018,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Tallinna mnt 19, Sillamäe",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": "juri.arbat@gmail.com",
+    "contactPhone": "+372 5500050",
+    "tagline": "Kolimis- ja veoteenus Sillamäel",
+    "descriptionEt": "Osaühing Žur on Sillamäel Tallinna maanteel tegutsev veoettevõte ja ainus Sillamäe aadressiga kolimisteenuse pakkuja Ida-Viru kataloogis. Ettevõte on aktiivne ja käibemaksukohustuslane.",
+    "descriptionEn": "Osaühing Žur is a haulage company on Tallinna mnt in Sillamäe and the only moving-services provider with a Sillamäe address in the Ida-Viru directory. The company is active and VAT registered.",
+    "registryCode": "10186477"
+  },
+  {
+    "name": "Espak Türi",
+    "slug": "espak-turi",
+    "city": "Türi",
+    "lat": 58.812,
+    "lng": 25.4015,
+    "serviceTypes": [
+      "trailer"
+    ],
+    "address": "Kaare 35c, Türi",
+    "country": "EE",
+    "websiteUrl": "https://espak.ee/kauplused/turi/teenused/",
+    "contactEmail": "tyri@espak.ee",
+    "contactPhone": "+372 3878511",
+    "tagline": "Haagise rent Türil, 10 eurost tunnis",
+    "descriptionEt": "Espaki Türi kauplus rendib kahes mõõdus järelhaagiseid, 1500 x 3000 mm kattega ja 1390 x 2750 mm lahtist, hinnaga 10 eurot tunnist kuni 25 eurot ööpäevas. Üle 1000 euro ostu korral on Järvamaal kohaletoimetamine tasuta.",
+    "descriptionEn": "The Espak store in Türi rents trailers in two sizes, a 1500 x 3000 mm tarped unit and a 1390 x 2750 mm open one, from EUR 10 an hour to EUR 25 a day. Delivery within Järva county is free on purchases over EUR 1000.",
+    "registryCode": null
+  },
+  {
+    "name": "Esvo Transport OÜ",
+    "slug": "esvo-transport-turi",
+    "city": "Türi",
+    "lat": 58.8117,
+    "lng": 25.4364,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Kungla 16, Türi",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": "esvo@esvo.ee",
+    "contactPhone": "+372 58046048",
+    "tagline": "Pikaajaline veoteenuse pakkuja Türil",
+    "descriptionEt": "Esvo Transport OÜ on Türi linnas tegutsev veo- ja logistikaettevõte, mis on äriregistris olnud alates 1990ndatest. Teenuse täpne ulatus tuleb enne suunamist üle küsida.",
+    "descriptionEn": "Esvo Transport OÜ is a transport and logistics company in Türi that has been on the business register since the 1990s. The exact scope of service should be checked before routing work to them.",
+    "registryCode": "10169177"
+  },
+  {
+    "name": "Järva Rehvid OÜ",
+    "slug": "jarva-rehvid-turi",
+    "city": "Türi",
+    "lat": 58.8021,
+    "lng": 25.4307,
+    "serviceTypes": [
+      "vanrental"
+    ],
+    "address": "Viljandi tn 13, Türi",
+    "country": "EE",
+    "websiteUrl": "https://www.jarvarehvid.ee/",
+    "contactEmail": "info@jarvarehvid.ee",
+    "contactPhone": "+372 53090746",
+    "tagline": "Autorent 24h Türi rehvikeskuses",
+    "descriptionEt": "Järva Rehvid OÜ on Türi rehvikeskus, mis pakub ka ööpäevaringset autorenti. Kolimiseks sobiva kaubiku olemasolu tuleb enne broneerimist telefoni teel täpsustada.",
+    "descriptionEn": "Järva Rehvid OÜ is a tyre centre in Türi that also runs a 24-hour vehicle rental service. Whether a van suitable for moving is in the fleet should be confirmed by phone before booking.",
+    "registryCode": "14909027"
+  },
+  {
+    "name": "Järvapuit haagiserent (Sunside Group OÜ)",
+    "slug": "jarvapuit-haagiserent-turi",
+    "city": "Türi",
+    "lat": 58.7581,
+    "lng": 25.5659,
+    "serviceTypes": [
+      "trailer"
+    ],
+    "address": "Oisu, Türi vald",
+    "country": "EE",
+    "websiteUrl": "https://jarvapuit.ee/",
+    "contactEmail": "info@jarvapuit.ee",
+    "contactPhone": "+372 58803395",
+    "tagline": "Haagise rent Oisus Türi vallas",
+    "descriptionEt": "Järvapuit rendib Oisus Türi vallas 3,5 x 1,5 m haagist rendilepingu alusel. Haagis sobib mööbli, kodumasinate ja ehitusmaterjali vedamiseks Järvamaal.",
+    "descriptionEn": "Järvapuit rents out a 3.5 x 1.5 m trailer in Oisu, Türi parish, on a rental contract. The trailer suits moving furniture, appliances and building materials around Järva county.",
+    "registryCode": null
+  },
+  {
+    "name": "Majahaldus24 (Horeksal Grupp OÜ)",
+    "slug": "majahaldus24-turi",
+    "city": "Türi",
+    "lat": 58.8119,
+    "lng": 25.4343,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Vanemuise tn 3, Türi",
+    "country": "EE",
+    "websiteUrl": "https://majahaldus24.ee/",
+    "contactEmail": "info@majahaldus24.ee",
+    "contactPhone": "+372 5510116",
+    "tagline": "Sisepuhastus ja majahooldus Türil",
+    "descriptionEt": "Horeksal Grupp OÜ ehk Majahaldus24 on Türi kinnisvarahoolduse ettevõte, mis pakub sisepuhastust ja territooriumi hooldust. Ainus Türi aadressiga koristusteenuse pakkuja.",
+    "descriptionEn": "Horeksal Grupp OÜ, trading as Majahaldus24, is a Türi property-maintenance firm offering interior cleaning and grounds upkeep. The only cleaning provider with a Türi address.",
+    "registryCode": "12117121"
+  },
+  {
+    "name": "Müügiekspert OÜ",
+    "slug": "muugiekspert-valga",
+    "city": "Valga",
+    "lat": 57.7679,
+    "lng": 26.0656,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Võnnu 31A, Valga",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": "info@ekspert.ee",
+    "contactPhone": "+372 7663070",
+    "tagline": "Veoteenus Valga linnas",
+    "descriptionEt": "Müügiekspert OÜ on Valga linnas tegutsev veoteenuse pakkuja. Sobib mööbli ja kodutehnika vedamiseks Valga piirkonnas.",
+    "descriptionEn": "Müügiekspert OÜ is a haulage provider operating in Valga town. Suitable for moving furniture and appliances around the Valga area.",
+    "registryCode": "10697152"
+  },
+  {
+    "name": "Toha OÜ",
+    "slug": "toha-valga",
+    "city": "Valga",
+    "lat": 57.7797,
+    "lng": 26.0384,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Tähe tn 11-21, Valga",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": "avtransport.info@gmail.com",
+    "contactPhone": "+372 56970175",
+    "tagline": "Kolimis- ja veoteenus Valga linnas",
+    "descriptionEt": "Toha OÜ on ainus Valga linna aadressiga ettevõte kolimisteenuste kataloogis. Pakub veo- ja kolimisteenust Valgas ja Valgamaal.",
+    "descriptionEn": "Toha OÜ is the only company with a Valga town address in the moving-services directory. It offers haulage and moving services in Valga and Valga county.",
+    "registryCode": "16246683"
+  },
+  {
+    "name": "Trebank OÜ",
+    "slug": "trebank-valga",
+    "city": "Valga",
+    "lat": 57.7713,
+    "lng": 26.0713,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Heina 8, Valga",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": null,
+    "contactPhone": "+372 58911937",
+    "tagline": "Koristus- ja puhastusteenus Valgas",
+    "descriptionEt": "Trebank OÜ on ainus Valga linna aadressiga puhastusteenuse pakkuja ettevõtete kataloogis. Sobib kolimisjärgseks koristuseks Valgas.",
+    "descriptionEn": "Trebank OÜ is the only cleaning provider with a Valga town address in the business directories. A fit for post-move cleaning in Valga.",
+    "registryCode": null
+  },
+  {
+    "name": "Aikerauto OÜ",
+    "slug": "aikerauto-viljandi",
+    "city": "Viljandi",
+    "lat": 58.3647,
+    "lng": 25.5967,
+    "serviceTypes": [
+      "vanrental"
+    ],
+    "address": "Tallinna 6-6, Viljandi",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": "akauto.akauto@gmail.com",
+    "contactPhone": "+372 53449339",
+    "tagline": "Autorent Viljandi linnas",
+    "descriptionEt": "Aikerauto OÜ pakub Viljandi linnas autorenditeenust. Kolimiseks sobiva kaubiku olemasolu tasub enne broneerimist telefoni teel üle küsida.",
+    "descriptionEn": "Aikerauto OÜ provides vehicle rental in Viljandi town. Whether a van suitable for moving is available is worth confirming by phone before booking.",
+    "registryCode": "12668447"
+  },
+  {
+    "name": "Ants Viljandi OÜ (Ansvil)",
+    "slug": "ansvil-viljandi",
+    "city": "Viljandi",
+    "lat": 58.3645,
+    "lng": 25.5878,
+    "serviceTypes": [
+      "trailer",
+      "vanrental"
+    ],
+    "address": null,
+    "country": "EE",
+    "websiteUrl": "https://ansvil.ee/",
+    "contactEmail": "kristi@ansvil.ee",
+    "contactPhone": "+372 4345630",
+    "tagline": "Haagiste ja autode rent Viljandis alates 1991",
+    "descriptionEt": "Ants Viljandi OÜ on 1991. aastast tegutsev Viljandi ettevõte, mis rendib haagiseid ja autosid. Rendipargis on lahtised, kinnised ja paadihaagised kandevõimega 500-1178 kg, mis sobivad hästi kolimiseks. Lisaks pakutakse autorenti ja veoteenust.",
+    "descriptionEn": "Ants Viljandi OÜ has operated in Viljandi since 1991, renting out trailers and vehicles. The fleet includes open, enclosed and boat trailers rated 500-1178 kg, well suited to moving house. They also offer car rental and haulage.",
+    "registryCode": null
+  },
+  {
+    "name": "Blackline OÜ – Konteinerladu Viljandi",
+    "slug": "blackline-konteinerladu-viljandi",
+    "city": "Viljandi",
+    "lat": 58.36,
+    "lng": 25.5768,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Vaksali 36, Viljandi",
+    "country": "EE",
+    "websiteUrl": "https://www.blackline.ee/viljandi-miniladu/",
+    "contactEmail": "info@blackline.ee",
+    "contactPhone": "+372 53999919",
+    "tagline": "Konteinerladu Viljandis, autoga ukseni",
+    "descriptionEt": "Blackline OÜ konteinerladu Viljandis Vaksali tänaval pakub ventileeritud ja lukustatavaid laokonteinereid nii era- kui ärikliendile. Suletud ja videovalvega territoorium on avatud 24/7 ning autoga saab sõita otse boksi ukseni. Sobib mööbli, sõiduki, tööriistade ja hooajakauba hoiustamiseks.",
+    "descriptionEn": "Blackline OÜ operates a container storage yard on Vaksali street in Viljandi, renting ventilated, lockable storage containers to households and businesses. The fenced, video-monitored site is open 24/7 and you can drive right up to your unit. Suitable for furniture, vehicles, tools and seasonal goods.",
+    "registryCode": "12549033"
+  },
+  {
+    "name": "BVT Projekt OÜ – Koidu 13 miniladu",
+    "slug": "bvt-projekt-miniladu-viljandi",
+    "city": "Viljandi",
+    "lat": 58.367,
+    "lng": 25.6036,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Koidu 13, Viljandi",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": null,
+    "contactPhone": null,
+    "tagline": "Laoboksid Viljandi kesklinnas Koidu tänaval",
+    "descriptionEt": "Koidu 13 hoovis Viljandi kesklinnas tegutseb laobokside rendipind, mille omanikettevõte on äriregistri järgi BVT Projekt OÜ. Boksid on siseruumides, lukustatavad, videovalve all ja kaldteega, suurused umbes 4-10 m². Kontaktandmed vajavad enne pöördumist üle kontrollimist.",
+    "descriptionEn": "A storage-box rental site operates in the courtyard at Koidu 13 in central Viljandi; the business register lists BVT Projekt OÜ at that address. The units are indoors, lockable, video-monitored and ramp-accessible, roughly 4-10 m². The contact details need to be re-checked before approaching them.",
+    "registryCode": "14209956"
+  },
+  {
+    "name": "Marki Transport OÜ",
+    "slug": "marki-transport-viljandi",
+    "city": "Viljandi",
+    "lat": 58.3607,
+    "lng": 25.5926,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Talli 6-1, Viljandi",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": "info@markitransport.ee",
+    "contactPhone": "+372 5096128",
+    "tagline": "Veoteenus ja mööblivedu Viljandi linnas",
+    "descriptionEt": "Marki Transport OÜ on Viljandi linnas tegutsev veoteenuse ettevõte. Sobib mööbli ja kodutehnika vedamiseks kolimisel Viljandis ja maakonnas.",
+    "descriptionEn": "Marki Transport OÜ is a haulage company based in Viljandi town. Suitable for shifting furniture and appliances during a move in Viljandi and the surrounding county.",
+    "registryCode": "11230973"
+  },
+  {
+    "name": "Pinnad-Puhtaks OÜ",
+    "slug": "pinnad-puhtaks-viljandi",
+    "city": "Viljandi",
+    "lat": 58.4148,
+    "lng": 25.4813,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Vilja tee 1, Savikoti küla, Viljandi vald",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": null,
+    "contactPhone": "+372 55544413",
+    "tagline": "Puhastus- ja koristusteenus Viljandimaal",
+    "descriptionEt": "Pinnad-Puhtaks OÜ pakub puhastus- ja koristusteenust Viljandi vallas ja linnas. Sobib kolimisjärgseks või väljakolimiskoristuseks.",
+    "descriptionEn": "Pinnad-Puhtaks OÜ provides cleaning services in Viljandi parish and town. A fit for post-move or move-out cleaning.",
+    "registryCode": null
+  },
+  {
+    "name": "Pointrent OÜ",
+    "slug": "pointrent-viljandi",
+    "city": "Viljandi",
+    "lat": 58.3666,
+    "lng": 25.6167,
+    "serviceTypes": [
+      "vanrental"
+    ],
+    "address": "Uus tn 43a, Viljandi",
+    "country": "EE",
+    "websiteUrl": "https://www.pointrent.ee/",
+    "contactEmail": "rent@pointrent.ee",
+    "contactPhone": "+372 58330398",
+    "tagline": "Kaubiku ja väikebussi rent Viljandis",
+    "descriptionEt": "Pointrent OÜ rendib Viljandis kaubikuid, sõiduautosid ja väikebusse alates ühest päevast kuni 60 kuuni. Kaubaveoks sobivad Toyota Proace ja Hilux N1-kategooria autod, mis on kolimisel hea valik.",
+    "descriptionEn": "Pointrent OÜ rents vans, cars and minibuses in Viljandi from a single day up to 60 months. Its Toyota Proace and Hilux N1-category vehicles are a good fit for moving loads.",
+    "registryCode": "14625270"
+  },
+  {
+    "name": "Raja & Raja OÜ",
+    "slug": "raja-raja-viljandi",
+    "city": "Viljandi",
+    "lat": 58.3662,
+    "lng": 25.5823,
+    "serviceTypes": [
+      "moving",
+      "packing"
+    ],
+    "address": "Vahe tn 39, Viljandi",
+    "country": "EE",
+    "websiteUrl": "https://www.raja.ee/",
+    "contactEmail": "vello@raja.ee",
+    "contactPhone": "+372 53472596",
+    "tagline": "Kolimis- ja transporditeenus Viljandis",
+    "descriptionEt": "Raja & Raja OÜ on Viljandi kolimis- ja veofirma, mille registreeritud tegevusalaks on kolimisteenus. Pakutakse korteri- ja kontorikolimist, mööbli vedu ning abi asjade pakkimisel. Ettevõte teenindab Viljandit ja ümbruskonda.",
+    "descriptionEn": "Raja & Raja OÜ is a Viljandi moving and haulage firm whose registered activity code is moving services. They handle home and office relocations, furniture transport and help with packing. The company serves Viljandi and the surrounding area.",
+    "registryCode": "12063170"
+  },
+  {
+    "name": "Ramirent Viljandi",
+    "slug": "ramirent-viljandi",
+    "city": "Viljandi",
+    "lat": 58.3508,
+    "lng": 25.5763,
+    "serviceTypes": [
+      "trailer"
+    ],
+    "address": "Puidu 17a, Viljandi",
+    "country": "EE",
+    "websiteUrl": "https://www.ramirent.ee/esindused/viljandi/",
+    "contactEmail": "viljandi@ramirent.ee",
+    "contactPhone": "+372 53080008",
+    "tagline": "Haagiste ja treilerite rent Viljandi esinduses",
+    "descriptionEt": "Ramirent Baltic AS-i Viljandi rendipunkt aadressil Puidu 17a, Viljandi annab välja treilereid ja haagiseid, transpordikärusid ning tõsteseadmeid. Kolimisel saab siit rentida haagise mööbli ja kodutehnika vedamiseks. Esindus on avatud tööpäeviti ja laupäeva hommikul.",
+    "descriptionEn": "The Ramirent Baltic AS depot in Viljandi, at Puidu 17a, Viljandi, rents out trailers and transport carts as well as lifting equipment. When moving house you can hire a trailer here to shift furniture and appliances. The branch is open on weekdays and Saturday mornings.",
+    "registryCode": null
+  },
+  {
+    "name": "RK Trans OÜ",
+    "slug": "rk-trans-viljandi",
+    "city": "Viljandi",
+    "lat": 58.3607,
+    "lng": 25.5696,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Piiri 2B, Viljandi",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": "rk.trans@mail.ee",
+    "contactPhone": "+372 5050642",
+    "tagline": "Veoteenus Viljandis, pikaajaline tegutseja",
+    "descriptionEt": "RK Trans OÜ on Viljandi linnas registreeritud veofirma, mis on äriregistris olnud alates 1990ndatest. Pakub kauba- ja mööblivedu Viljandi piirkonnas.",
+    "descriptionEn": "RK Trans OÜ is a haulage firm registered in Viljandi town and on the business register since the 1990s. It offers goods and furniture transport around the Viljandi area.",
+    "registryCode": "10187560"
+  },
+  {
+    "name": "Vistekel OÜ",
+    "slug": "vistekel-viljandi",
+    "city": "Viljandi",
+    "lat": 58.3698,
+    "lng": 25.5803,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Väike-Kaare 32-5, Viljandi",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": "vistekel@vistekel.ee",
+    "contactPhone": "+372 53445466",
+    "tagline": "Väike kolimis- ja veoteenuse pakkuja Viljandis",
+    "descriptionEt": "Vistekel OÜ on Viljandi linnas registreeritud väikeettevõte, mis on kataloogides kirjas kolimisteenuse pakkujana. Sobib väiksemateks korterikolimisteks ja mööblivedudeks Viljandi piirkonnas.",
+    "descriptionEn": "Vistekel OÜ is a small company registered in Viljandi town and listed in directories as a moving-services provider. A fit for smaller flat moves and furniture transport around Viljandi.",
+    "registryCode": "12199604"
+  },
+  {
+    "name": "KolimisExpress OÜ",
+    "slug": "kolimisexpress-voru",
+    "city": "Võru",
+    "lat": 57.7511,
+    "lng": 27.2545,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Karatsimäe, Külaoru küla, Võru vald",
+    "country": "EE",
+    "websiteUrl": "https://kolimisexpress.ee/",
+    "contactEmail": "kolimisexpress@gmail.com",
+    "contactPhone": "+372 56381451",
+    "tagline": "Soodne kolimisteenus Võrus ja Lõuna-Eestis",
+    "descriptionEt": "KolimisExpress OÜ on Võrumaal tegutsev pereettevõte, mis pakub korteri- ja kontorikolimist ning mööbli kokku- ja lahtimonteerimist. Lisaks tehakse ehitus- ja remonditöid ning veetakse ehitusmaterjale. Põhiline teeninduspiirkond on Võru ja Lõuna-Eesti.",
+    "descriptionEn": "KolimisExpress OÜ is a family business in Võru county offering home and office moves plus furniture assembly and disassembly. They also take on construction and renovation work and transport building materials. Their main service area is Võru and South Estonia.",
+    "registryCode": "14298925"
+  },
+  {
+    "name": "Merva OÜ",
+    "slug": "merva-voru",
+    "city": "Võru",
+    "lat": 57.8404,
+    "lng": 27.0007,
+    "serviceTypes": [
+      "vanrental"
+    ],
+    "address": "Paju 20-40, Võru",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": "erki@dotbox.ee",
+    "contactPhone": "+372 56577689",
+    "tagline": "Autorent Võrus",
+    "descriptionEt": "Merva OÜ on Võru linna aadressiga autorendiettevõte. Sobiva kaubiku olemasolu tuleb enne kolimist telefoni teel kinnitada.",
+    "descriptionEn": "Merva OÜ is a vehicle rental business with a Võru town address. Availability of a suitable van should be confirmed by phone before a move.",
+    "registryCode": "12958872"
+  },
+  {
+    "name": "Motorsport OÜ",
+    "slug": "motorsport-voru",
+    "city": "Võru",
+    "lat": 57.8464,
+    "lng": 27.0132,
+    "serviceTypes": [
+      "vanrental"
+    ],
+    "address": "Vilja 18B-18, Võru",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": "teder@teder.eu",
+    "contactPhone": "+372 7422299",
+    "tagline": "Autorent Võru kesklinna lähedal",
+    "descriptionEt": "Motorsport OÜ pakub Võru linnas autorenti. Kolimiseks sobiva suurema auto saadavus tuleb eelnevalt üle täpsustada.",
+    "descriptionEn": "Motorsport OÜ offers vehicle rental in Võru town. The availability of a larger vehicle suitable for moving should be checked in advance.",
+    "registryCode": "11538760"
+  },
+  {
+    "name": "Raiester OÜ",
+    "slug": "raiester-voru",
+    "city": "Võru",
+    "lat": 57.8388,
+    "lng": 27.0161,
+    "serviceTypes": [
+      "vanrental"
+    ],
+    "address": "Koreli 31, Võru",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": null,
+    "contactPhone": "+372 58048434",
+    "tagline": "Autorent Võru linnas",
+    "descriptionEt": "Raiester OÜ on Võru linna aadressiga autorendipakkuja. Rendipargi koosseis tuleb enne kolimist telefoni teel üle küsida.",
+    "descriptionEn": "Raiester OÜ is a vehicle rental provider with a Võru town address. The make-up of the fleet should be checked by phone before a move.",
+    "registryCode": null
+  },
+  {
+    "name": "Ramirent Võru",
+    "slug": "ramirent-voru",
+    "city": "Võru",
+    "lat": 57.8407,
+    "lng": 27.0258,
+    "serviceTypes": [
+      "trailer"
+    ],
+    "address": "Pikk 4a, Võru",
+    "country": "EE",
+    "websiteUrl": "https://www.ramirent.ee/esindused/voru/",
+    "contactEmail": "voru@ramirent.ee",
+    "contactPhone": "+372 53080007",
+    "tagline": "Haagiste ja treilerite rent Võru esinduses",
+    "descriptionEt": "Ramirent Baltic AS-i Võru rendipunkt aadressil Pikk 4a, Võru annab välja treilereid ja haagiseid, transpordikärusid ning tõsteseadmeid. Kolimisel saab siit rentida haagise mööbli ja kodutehnika vedamiseks. Esindus on avatud tööpäeviti ja laupäeva hommikul.",
+    "descriptionEn": "The Ramirent Baltic AS depot in Võru, at Pikk 4a, Võru, rents out trailers and transport carts as well as lifting equipment. When moving house you can hire a trailer here to shift furniture and appliances. The branch is open on weekdays and Saturday mornings.",
+    "registryCode": null
+  },
+  {
+    "name": "River Rent OÜ",
+    "slug": "river-rent-voru",
+    "city": "Võru",
+    "lat": 57.8382,
+    "lng": 27.0108,
+    "serviceTypes": [
+      "vanrental"
+    ],
+    "address": "Olevi 30-7, Võru",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": "rivera@hot.ee",
+    "contactPhone": "+372 5162761",
+    "tagline": "Autorent Võru linnas",
+    "descriptionEt": "River Rent OÜ pakub Võru linnas autorenditeenust. Kolimiseks sobiva kaubiku olemasolu tasub enne broneerimist üle küsida.",
+    "descriptionEn": "River Rent OÜ offers vehicle rental in Võru town. Whether a van suitable for moving is available is worth confirming before booking.",
+    "registryCode": "11406410"
+  },
+  {
+    "name": "Smart Fleet OÜ",
+    "slug": "smart-fleet-voru",
+    "city": "Võru",
+    "lat": 57.844,
+    "lng": 27.0131,
+    "serviceTypes": [
+      "vanrental"
+    ],
+    "address": "Tiigi tn 6, Võru",
+    "country": "EE",
+    "websiteUrl": "https://smartfleet.ee/",
+    "contactEmail": "info@smartfleet.ee",
+    "contactPhone": "+372 58860088",
+    "tagline": "Kaubiku ja väikebussi rent Võrus, kohaletoomisega",
+    "descriptionEt": "Smart Fleet OÜ on Võru linnas registreeritud rendifirma, mis rendib kaubikuid ja 7-8 kohalisi väikebusse. Auto tuuakse kokkuleppel kliendile kohale ja viiakse tagasi.",
+    "descriptionEn": "Smart Fleet OÜ is a rental company registered in Võru town, hiring out vans and 7-8 seat minibuses. By arrangement the vehicle is delivered to the customer and collected afterwards.",
+    "registryCode": "12749364"
+  },
+  {
+    "name": "Veosiil OÜ",
+    "slug": "veosiil-voru",
+    "city": "Võru",
+    "lat": 57.8467,
+    "lng": 27.0126,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Vilja 18a-36, Võru",
+    "country": "EE",
+    "websiteUrl": null,
+    "contactEmail": null,
+    "contactPhone": "+372 56732058",
+    "tagline": "Kolimis- ja veoteenus Võru linnas",
+    "descriptionEt": "Veosiil OÜ on üks kahest Võru maakonna aadressiga kolimisteenuse pakkujast ettevõtete kataloogides. Ettevõte on registreeritud Võru linna ja teenindab kohalikku piirkonda.",
+    "descriptionEn": "Veosiil OÜ is one of only two moving-service providers with a genuine Võru county address in the business directories. The company is registered in Võru town and serves the local area.",
+    "registryCode": "11408098"
+  }
+]

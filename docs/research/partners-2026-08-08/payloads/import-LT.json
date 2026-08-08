@@ -1,0 +1,1631 @@
+[
+  {
+    "name": "UAB \"Geros Priekabos\"",
+    "slug": "geros-priekabos-kaunas-europos",
+    "city": "Kaunas",
+    "lat": 54.8751,
+    "lng": 23.8925,
+    "serviceTypes": [
+      "trailer"
+    ],
+    "address": "Europos pr. 99, Kaunas",
+    "country": "LT",
+    "websiteUrl": "https://priekabunuoma.lt",
+    "contactEmail": null,
+    "contactPhone": "+370 68539222",
+    "tagline": "Automobilinių priekabų, tralų ir traliukų nuoma Kaune, nuomos punktas Europos pr. 99.",
+    "descriptionEt": "Kaunases tegutsev haagiste ja autotreilerite rendifirma, millel on kaks väljastuspunkti linnas. Rendivalikus on nii lahtised kui ka kaetud haagised alates ühest tunnist kuni terve päevani. Sobib kolimiseks ja suuremate esemete veoks.",
+    "descriptionEn": "A Kaunas-based trailer rental company operating two pick-up points in the city. The fleet covers open and covered car trailers plus small tow trailers, rented by the hour, for three hours or for a full day. A practical option for self-service moves and bulky item transport.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB \"Geros Priekabos\" (Dainava)",
+    "slug": "geros-priekabos-kaunas-draugystes",
+    "city": "Kaunas",
+    "lat": 54.9088,
+    "lng": 24.0004,
+    "serviceTypes": [
+      "trailer"
+    ],
+    "address": "Draugystės g. 17d, Kaunas",
+    "country": "LT",
+    "websiteUrl": "https://priekabunuoma.lt",
+    "contactEmail": null,
+    "contactPhone": "+370 67200914",
+    "tagline": "Priekabų nuomos punktas Kauno Dainavos mikrorajone, Draugystės g. 17d.",
+    "descriptionEt": "Sama Kaunase haagiserendi teine väljastuspunkt Dainava linnaosas. Saadaval on 3- ja 4-meetrised haagised ning kaetud haagised tunni-, kolme tunni või päevatariifiga.",
+    "descriptionEn": "The second pick-up point of this Kaunas trailer rental operator, located in the Dainava district. Three- and four-metre trailers and covered trailers are available on hourly, three-hour or daily rates.",
+    "registryCode": null
+  },
+  {
+    "name": "MB TOLEMA",
+    "slug": "mb-tolema-klaipedos-r",
+    "city": "Klaipėdos r.",
+    "lat": 55.5877,
+    "lng": 21.4991,
+    "serviceTypes": [
+      "trailer"
+    ],
+    "address": "Pasienio g. 15, Aisėnų k., Klaipėdos r.",
+    "country": "LT",
+    "websiteUrl": "https://priekabunuomaklaipedoje.lt",
+    "contactEmail": "mbtolema@gmail.com",
+    "contactPhone": "+370 63377862",
+    "tagline": "B kategorijos priekabų, tentinių priekabų ir tralų nuoma Klaipėdos rajone, aptarnauja Klaipėdą.",
+    "descriptionEt": "Väikefirma, mis rendib B-kategooria haagiseid, tenthaagiseid ja autotreilereid Klaipeda piirkonnas. Väljastuspunkt asub Aisenai külas Klaipeda vallas, mitte linnas endas. Hinnad algavad 16 eurost ööpäeva eest.",
+    "descriptionEn": "A small operator renting category B trailers, tarpaulin trailers and car transporters in the Klaipėda area. The pick-up point is in Aisėnai village in Klaipėda district rather than in the city itself. Rates start from 16 EUR per day.",
+    "registryCode": "306271036"
+  },
+  {
+    "name": "Box Inn",
+    "slug": "box-inn-kaunas",
+    "city": "Kaunas",
+    "lat": 54.9288,
+    "lng": 23.9165,
+    "serviceTypes": [
+      "warehouse",
+      "packing",
+      "moving"
+    ],
+    "address": "Jonavos g. 262, Kaunas",
+    "country": "LT",
+    "websiteUrl": "https://boxinn.lt",
+    "contactEmail": "viskastilps@boxinn.lt",
+    "contactPhone": "+370 66222262",
+    "tagline": "Savitarnos sandėliukų ir saugyklų nuoma Kaune, Jonavos g. 262. Nuo 17 Eur/mėn.",
+    "descriptionEt": "Kaunase iseteenindusladude keskus Eiguliai linnaosas, kus saab rentida hoiuboksi nii eraisikutel kui ettevõtetel. Pakutakse ka pakkematerjale, laadimisabi ja äriklientidele suuremaid laopindu. Hinnad algavad 17 eurost kuus ühe kuupmeetri eest.",
+    "descriptionEn": "A self-storage centre in the Eiguliai district of Kaunas renting individual units to both households and businesses. Packing supplies, loading assistance and larger business warehouse space are also offered. Pricing starts at 17 EUR per month for one cubic metre.",
+    "registryCode": null
+  },
+  {
+    "name": "MB \"Kraustymėlis.lt\"",
+    "slug": "kraustymelis-vilnius",
+    "city": "Vilnius",
+    "lat": 54.6453,
+    "lng": 25.1993,
+    "serviceTypes": [
+      "moving",
+      "warehouse"
+    ],
+    "address": "Savanorių pr. 219, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://www.kraustymelis.lt",
+    "contactEmail": "info@kraustymelis.lt",
+    "contactPhone": "+370 64815925",
+    "tagline": "Perkraustymo paslaugos Vilniuje: baldų, pianinų ir seifų pervežimas, krovėjai, daiktų saugojimas.",
+    "descriptionEt": "Vilniuse kolimisfirma, mille ladu asub Savanoriu puiesteel Vilkpede piirkonnas. Teenuste hulka kuuluvad korteri- ja kontorikolimine, klaverite ja seifide vedu, laadijate teenus ning esemete hoiustamine. Tegeleb ka vana mööbli äraveoga.",
+    "descriptionEn": "A Vilnius moving company with its warehouse on Savanorių prospektas in the Vilkpėdė area. Services include home and office moves, piano and safe transport, loader crews and item storage. They also handle disposal of old furniture.",
+    "registryCode": "303117378"
+  },
+  {
+    "name": "UAB Parnasas",
+    "slug": "parnasas-vilnius",
+    "city": "Vilnius",
+    "lat": 54.6447,
+    "lng": 25.2684,
+    "serviceTypes": [
+      "moving",
+      "warehouse"
+    ],
+    "address": "Metalo g. 2, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://www.parnasas.lt",
+    "contactEmail": "perkraustymas@parnasas.lt",
+    "contactPhone": "+370 68618188",
+    "tagline": "Vietiniai ir tarptautiniai perkraustymai, dalinių krovinių pervežimas ir sandėliavimas Vilniuje.",
+    "descriptionEt": "Vilniuse Kirtimai piirkonnas tegutsev logistikaettevõte, mis pakub nii kohalikku kui rahvusvahelist kolimisteenust. Lisaks veetakse osakoormaid Leedu, Läti ja Eesti vahel ning pakutakse laoteenust. Kolimisel on eraldi kontaktliin ja e-post.",
+    "descriptionEn": "A logistics company based in the Kirtimai area of Vilnius offering both local and international relocation. It also runs groupage freight between Lithuania, Latvia and Estonia and provides warehousing. Relocation enquiries have their own dedicated phone line and mailbox.",
+    "registryCode": "303402103"
+  },
+  {
+    "name": "Kraustina",
+    "slug": "kraustina-vilnius",
+    "city": "Vilnius",
+    "lat": 54.7397,
+    "lng": 25.2188,
+    "serviceTypes": [
+      "moving",
+      "packing"
+    ],
+    "address": "Eitminų g. 18, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://kraustina.lt",
+    "contactEmail": "info@kraustina.lt",
+    "contactPhone": "+370 67020242",
+    "tagline": "Perkraustymo paslaugos Vilniuje, pakavimo medžiagų nuoma ir pardavimas, krovėjų paslaugos.",
+    "descriptionEt": "Vilniuse Pasilaiciai piirkonnas registreeritud kolimisfirma, mis pakub lisaks veole ka pakkematerjalide müüki ja renti ning pakkimis- ja lahtipakkimisteenust. Koostatakse eelnevalt kolimistööde eelarve. Tegeleb ka tolliesindusega.",
+    "descriptionEn": "A moving company registered in the Pašilaičiai area of Vilnius that sells and rents packing materials and offers packing and unpacking as a service alongside transport. Written moving estimates are prepared in advance. The company also handles customs representation.",
+    "registryCode": "125719976"
+  },
+  {
+    "name": "Švaros Meistrai",
+    "slug": "svaros-meistrai-vilnius",
+    "city": "Vilnius",
+    "lat": 54.7107,
+    "lng": 25.2905,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Verkių g. 32C, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://svarosmeistrai.lt",
+    "contactEmail": "svarosmeistrai@gmail.com",
+    "contactPhone": "+370 60595055",
+    "tagline": "Valymo paslaugos Vilniuje – patalpų, baldų ir kilimų valymas, tvarkymas po remonto.",
+    "descriptionEt": "Vilniuse koristusfirma, mis tegutseb Zirmunai piirkonnas Verkiu tänaval. Pakutakse ruumide, mööbli ja vaipade puhastust ning koristust pärast remonti. Sobib partneriks kolimisjärgseks suurpuhastuseks.",
+    "descriptionEn": "A Vilnius cleaning company based on Verkių street in the Žirmūnai district. It covers premises, upholstery and carpet cleaning as well as post-renovation clean-ups. A suitable partner for end-of-move deep cleaning.",
+    "registryCode": "126069620"
+  },
+  {
+    "name": "Valymas Kaune",
+    "slug": "valymas-kaune",
+    "city": "Kaunas",
+    "lat": 54.9054,
+    "lng": 23.9491,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Radvilėnų pl. 17, Kaunas",
+    "country": "LT",
+    "websiteUrl": "https://valymaskaune.lt",
+    "contactEmail": "info@valymaskaune.lt",
+    "contactPhone": "+370 63000988",
+    "tagline": "Patalpų valymas ir teritorijų priežiūra Kaune, Radvilėnų pl. 17.",
+    "descriptionEt": "Kaunase koristusettevõte Griciupise piirkonnas, mis pakub nii ruumide koristust kui territooriumide hooldust. Teenindatakse era- ja ärikliente Kaunases ja lähiümbruses.",
+    "descriptionEn": "A Kaunas cleaning company in the Gričiupis district providing both interior premises cleaning and outdoor territory maintenance. It serves private and business customers in Kaunas and the surrounding area.",
+    "registryCode": "302671595"
+  },
+  {
+    "name": "UAB „Auksinė burė\"",
+    "slug": "auksine-bure-klaipeda",
+    "city": "Klaipėda",
+    "lat": 55.7208,
+    "lng": 21.118,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Sportininkų g. 12-8, Klaipėda",
+    "country": "LT",
+    "websiteUrl": "https://www.auksinebure.lt",
+    "contactEmail": "info@auksinebure.lt",
+    "contactPhone": "+370 68559352",
+    "tagline": "Valymo paslaugos Klaipėdoje: valymas po statybų, langų valymas, individualių namų priežiūra.",
+    "descriptionEt": "Klaipeda koristusfirma, mis teenindab kortermaju, ärikliente ja eramaju. Eraldi pakutakse ehitusjärgset koristust, akende pesu ka kõrgustes ning prügiveo korraldamist. Kasulik partner remondi- või kolimisjärgseks koristuseks.",
+    "descriptionEn": "A Klaipėda cleaning company serving apartment buildings, commercial clients and private houses. Post-construction cleaning, window cleaning including at height, and waste removal are offered separately. A useful partner for cleaning after a renovation or a move.",
+    "registryCode": "302706943"
+  },
+  {
+    "name": "UAB Vitaresta",
+    "slug": "vitaresta-kaunas",
+    "city": "Kaunas",
+    "lat": 54.9329,
+    "lng": 23.9159,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Jonavos g. 45C, Kaunas",
+    "country": "LT",
+    "websiteUrl": "https://www.vitaresta.lt",
+    "contactEmail": "info@vitaresta.lt",
+    "contactPhone": "+370 69962747",
+    "tagline": "Profesionalios valymo paslaugos Kaune: valymas po statybų, generalinis valymas, kilimų ir baldų valymas.",
+    "descriptionEt": "Kaunase professionaalne koristusettevõte, mis teenindab kontoreid, kaubanduskeskusi ning lao- ja tootmishooneid. Pakutakse ka ühekordset suurpuhastust, ehitusjärgset koristust ning vaipade, diivanite ja madratsite puhastust.",
+    "descriptionEn": "A professional cleaning contractor in Kaunas serving offices, shopping centres and logistics or production facilities. One-off deep cleans, post-construction cleaning and carpet, sofa and mattress cleaning are also available.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB \"Švaros Garantas\"",
+    "slug": "svaros-garantas-vilnius",
+    "city": "Vilnius",
+    "lat": 54.699,
+    "lng": 25.2161,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Mėnulio g. 11, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://svarosgarantas.lt",
+    "contactEmail": "info@svarosgarantas.lt",
+    "contactPhone": "+370 5 2051055",
+    "tagline": "Valymo paslaugos visoje Lietuvoje: patalpų valymas po remonto, buto valymas po nuomininkų, langų valymas.",
+    "descriptionEt": "Vilniuse Karoliniskese kontoriga koristusfirma, mis teenindab Vilniust, Kaunast, Klaipedat, Siauliaid, Panevezyst ja Alytust. Eraldi teenusena pakutakse koristust pärast remonti või ehitust ja korteri koristust pärast üürnikke. See teeb neist sobiva kolimispartneri.",
+    "descriptionEn": "A cleaning company with its office in the Karoliniškės district of Vilnius, serving Vilnius, Kaunas, Klaipėda, Šiauliai, Panevėžys and Alytus. Cleaning after renovation or construction and end-of-tenancy flat cleaning are offered as distinct services. That makes them a natural fit for move-out jobs.",
+    "registryCode": "300715438"
+  },
+  {
+    "name": "Ecoservice",
+    "slug": "ecoservice-vilnius",
+    "city": "Vilnius",
+    "lat": 54.665,
+    "lng": 25.3059,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Dunojaus g. 29, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://ecoservice.lt",
+    "contactEmail": "sutvarkysim@ecoservice.lt",
+    "contactPhone": "+370 800 53533",
+    "tagline": "Patalpų valymas, laiptinių valymas ir statybinių atliekų išvežimas Vilniuje.",
+    "descriptionEt": "Vilniuse Rasos piirkonnas asuv ettevõte, mis ühendab koristusteenuse ja jäätmekäitluse. Pakutakse trepikodade koristust, territooriumide hooldust, desinfitseerimist ning ehitus- ja haljastusjäätmete äravedu konteineritega. Ehitusprahi vedu maksab umbes 218-450 eurot.",
+    "descriptionEn": "A Vilnius company in the Rasos district combining cleaning with waste handling. It offers stairwell cleaning, territory maintenance, disinfection and removal of construction and garden waste in containers or bulk bags. Construction waste removal is priced around 218-450 EUR.",
+    "registryCode": null
+  },
+  {
+    "name": "Box Storage",
+    "slug": "box-storage-vilnius",
+    "city": "Vilnius",
+    "lat": 54.716,
+    "lng": 25.2289,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Laisvės g. 62, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://boxstorage.lt",
+    "contactEmail": null,
+    "contactPhone": "+370 62277775",
+    "tagline": "Savitarnos sandėliukų nuoma nuo 1 iki 10 m², prieinama 24/7 su išmaniuoju raktu.",
+    "descriptionEt": "Box Storage pakub Vilniuses (Laisvės g. 62) iseteeninduslikke hoiuruume alates 1 m² kuni 10 m². Ligipääs on tagatud ööpäevaringselt nutika võtmesüsteemi kaudu. Ettevõte kirjeldab end kui Balti riikide suurimat iseteeninduslike laoruumide ettevõtet.",
+    "descriptionEn": "Box Storage offers self-storage units from 1 to 10 m² at Laisvės g. 62 in Vilnius, with 24/7 access via a smart key system. The company describes itself as the largest self-storage operator in the Baltic states.",
+    "registryCode": "306473600"
+  },
+  {
+    "name": "UAB \"Gužas\" (Stork)",
+    "slug": "guzas-stork-vilnius",
+    "city": "Vilnius",
+    "lat": 54.737,
+    "lng": 25.2299,
+    "serviceTypes": [
+      "moving",
+      "warehouse",
+      "packing"
+    ],
+    "address": "Ukmergės g. 298C-42, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://stork.lt",
+    "contactEmail": "info@stork.lt",
+    "contactPhone": "+370 68605204",
+    "tagline": "Perkraustymas, sandėliavimo paslaugos, pakavimo ir išpakavimo darbai, krovėjai Vilniuje.",
+    "descriptionEt": "Vilniuse Fabijoniskese piirkonnas tegutsev kolimis- ja logistikafirma. Lisaks kolimisele pakutakse laoteenust, pakkimist ja lahtipakkimist, mööbli kokkupanekut ning klaverite ja seifide vedu. Tegeletakse ka tolliformaalsuste ja näituste logistikaga.",
+    "descriptionEn": "A moving and logistics company based in the Fabijoniškės district of Vilnius. Alongside relocation it offers warehousing, packing and unpacking, furniture assembly and disassembly, and piano and safe transport. Customs brokerage and exhibition logistics are also handled.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB „Pelikanų transportas\"",
+    "slug": "pelikanu-transportas-vilnius",
+    "city": "Vilnius",
+    "lat": 54.7322,
+    "lng": 25.2372,
+    "serviceTypes": [
+      "moving",
+      "warehouse",
+      "packing"
+    ],
+    "address": "Ukmergės g. 283b, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://pelikanai.lt",
+    "contactEmail": "uzsakymai@pelikanai.lt",
+    "contactPhone": "+370 62224044",
+    "tagline": "Perkraustymo paslaugos Vilniuje: įmonių kraustymas, meno kūrinių pakavimas, sandėliavimas.",
+    "descriptionEt": "Vilniuse kolimisettevõte Fabijoniskese piirkonnas, mis teeb nii era- kui ärikolimisi ja rahvusvahelisi vedusid. Eraldi pakutakse kunstiteoste pakkimist, mittestandardseid kolimisi ja hoiustamist. Müüakse ja renditakse ka pakkematerjale.",
+    "descriptionEn": "A Vilnius moving company in the Fabijoniškės area handling household, corporate and international moves. Art packing, non-standard moves and storage are offered as separate services. The company also sells and rents packing materials.",
+    "registryCode": "304952406"
+  },
+  {
+    "name": "UAB \"Transporto krovos projektai\"",
+    "slug": "transporto-krovos-projektai-vilnius",
+    "city": "Vilnius",
+    "lat": 54.7226,
+    "lng": 25.2191,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Justiniškių g. 82-36, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://tkprojektai.lt",
+    "contactEmail": null,
+    "contactPhone": "+370 60082720",
+    "tagline": "Butų, namų, biurų, archyvų ir sandėlių perkraustymas, nestandartinių krovinių krovos darbai.",
+    "descriptionEt": "Vilniuse Pasilaiciai piirkonnas registreeritud kolimisfirma, mis teenindab nii eraisikuid kui juriidilisi isikuid. Kolitakse kortereid, maju, kontoreid, poode, ladusid ja arhiive. Eraldi tegeletakse tavapärasest erineva, erikäsitlust vajava kaubaga.",
+    "descriptionEn": "A moving company registered in the Pašilaičiai district of Vilnius serving both private and corporate clients. It relocates flats, houses, offices, shops, warehouses and archives. The firm also specialises in non-standard loads needing particular care.",
+    "registryCode": null
+  },
+  {
+    "name": "Bobino komanda, UAB",
+    "slug": "bobino-komanda-kaunas",
+    "city": "Kaunas",
+    "lat": 54.873,
+    "lng": 23.882,
+    "serviceTypes": [
+      "moving",
+      "warehouse",
+      "packing"
+    ],
+    "address": "Europos pr. 122, Kaunas",
+    "country": "LT",
+    "websiteUrl": "https://bobino.lt",
+    "contactEmail": "uzsakymai@bobino.lt",
+    "contactPhone": "+370 63500070",
+    "tagline": "Perkraustymas, pakavimo paslauga, daiktų sandėlis ir 3PL logistika Kaune.",
+    "descriptionEt": "Kaunase Aleksotase piirkonnas tegutsev kolimis- ja logistikaettevõte. Pakutakse kolimist, pakkimisteenust, esemete hoiustamist ja 3PL-logistikat ning ka dokumentide hävitamist ja vana mööbli äravedu. Saadaval on ka nn kaks meest ja kaubik teenus.",
+    "descriptionEn": "A moving and logistics company in the Aleksotas district of Kaunas. It offers relocation, a packing service, item storage and 3PL logistics, plus document destruction and old furniture disposal. A two-men-and-a-van option is also available.",
+    "registryCode": null
+  },
+  {
+    "name": "City Storage (Pašilaičiai)",
+    "slug": "city-storage-vilnius-pasilaiciai",
+    "city": "Vilnius",
+    "lat": 54.7424,
+    "lng": 25.2213,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Ukmergės g. 328, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://www.citystorage.lt",
+    "contactEmail": "nuoma@citystorage.lt",
+    "contactPhone": "+370 62044424",
+    "tagline": "Sandėliukų nuoma Vilniuje, Pašilaičiuose – lankstus terminas, nuo 9,99 Eur / 4 savaitės.",
+    "descriptionEt": "Iseteenindusladude keskus Vilniuse Pasilaiciai linnaosas Ukmerges tänaval. Boksi saab rentida paindliku tähtajaga nii kodustele asjadele kui ettevõtte varule. Hinnad algavad 9,99 eurost nelja nädala eest.",
+    "descriptionEn": "A self-storage site in the Pašilaičiai district of Vilnius on Ukmergės street. Units can be rented on flexible terms for household belongings or business stock. Pricing starts at 9.99 EUR per four weeks.",
+    "registryCode": null
+  },
+  {
+    "name": "City Storage (Justiniškės)",
+    "slug": "city-storage-vilnius-justiniskes",
+    "city": "Vilnius",
+    "lat": 54.7075,
+    "lng": 25.2072,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Mozūriškių g. 21, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://www.citystorage.lt",
+    "contactEmail": "nuoma@citystorage.lt",
+    "contactPhone": "+370 62044424",
+    "tagline": "Antras City Storage sandėliukų nuomos punktas Vilniuje, Mozūriškių g. 21.",
+    "descriptionEt": "City Storage teine iseteenindusladu Vilniuses, Mozuriskiu tänaval linna lääneosas. Pakutakse sama paindlikku renditingimust ja erineva suurusega bokse. Sobib nii kolimise ajaks kui pikemaks hoiustamiseks.",
+    "descriptionEn": "The second City Storage self-storage location in Vilnius, on Mozūriškių street in the west of the city. It offers the same flexible rental terms and a range of unit sizes. Suitable both for short gaps during a move and for longer-term storage.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB Sandėliukų centras",
+    "slug": "sandeliuku-centras-vilnius",
+    "city": "Vilnius",
+    "lat": 54.6534,
+    "lng": 25.229,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Naujoji Riovonių g. 25, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://sandeliukucentras.lt",
+    "contactEmail": "info@sandeliukucentras.lt",
+    "contactPhone": "+370 64015848",
+    "tagline": "Sandėliukų centras Vilniuje – temperatūros ir drėgmės kontrolė, patogus privažiavimas.",
+    "descriptionEt": "Vilniuse Vilkpede piirkonnas asuv iseteenindusladude keskus. Hoiuruumides on kontrollitud temperatuur ja niiskus, mis sobib ka tundlikuma vara hoiustamiseks. Teenindatakse era- ja ärikliente.",
+    "descriptionEn": "A self-storage centre in the Vilkpėdė area of Vilnius. The units have controlled temperature and humidity, which suits more sensitive belongings. It serves both private and business customers.",
+    "registryCode": "303521513"
+  },
+  {
+    "name": "UAB \"Vilniaus tranzitas\"",
+    "slug": "vilniaus-tranzitas-vilnius",
+    "city": "Vilnius",
+    "lat": 54.6402,
+    "lng": 25.2727,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "J. Dobkevičiaus g. 7, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://www.vtranzitas.lt",
+    "contactEmail": "logistika@vtranzitas.lt",
+    "contactPhone": "+370 5 2306672",
+    "tagline": "Sandėliavimo, muitinės sandėlio ir distribucijos paslaugos Vilniuje, Naujininkuose.",
+    "descriptionEt": "Vilniuse Naujininkai piirkonnas tegutsev logistikaettevõte, mis pakub laoteenust, tolliladu ja ajutist ladustamist. Lisaks tegeletakse tollivahenduse ja kauba jaotusveoga. Sobib pigem ärikliendile kui eraisiku kolimiseks.",
+    "descriptionEn": "A logistics operator in the Naujininkai district of Vilnius offering warehousing, bonded and temporary storage. It also provides customs brokerage and local distribution. Better suited to business customers than to household moves.",
+    "registryCode": "222618510"
+  },
+  {
+    "name": "UAB „Transekspedicija Invest\"",
+    "slug": "transekspedicija-invest-vilniaus-r",
+    "city": "Vilniaus r.",
+    "lat": 54.8051,
+    "lng": 25.1636,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Galinės g. 1, Galinė, Vilniaus r.",
+    "country": "LT",
+    "websiteUrl": "https://transekspedicija.lt",
+    "contactEmail": "invest@transekspedicija.lt",
+    "contactPhone": "+370 5 2300100",
+    "tagline": "Sandėlių nuoma Galinėje prie Vilniaus: A–L korpusai, temperatūros ir drėgmės valdymas.",
+    "descriptionEt": "Suur laokompleks Galine külas Vilniuse vallas, linnast umbes 15 km kaugusel. Renditakse eri suurusega laopindu korpustes A kuni L, temperatuuri ja niiskuse reguleerimise võimalusega. Ladu töötab seitse päeva nädalas.",
+    "descriptionEn": "A large warehouse complex in Galinė village in Vilnius district, about 15 km from the city. Units of varying size are let across buildings A to L, with temperature and humidity control available. The site operates seven days a week.",
+    "registryCode": "120053837"
+  },
+  {
+    "name": "UAB \"AMVISTA\"",
+    "slug": "amvista-vilnius",
+    "city": "Vilnius",
+    "lat": 54.7195,
+    "lng": 25.2273,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Justiniškių g. 16, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://amvista.lt",
+    "contactEmail": "valymas@amvista.lt",
+    "contactPhone": "+370 64672084",
+    "tagline": "Valymo paslaugos Vilniuje: valymas po statybų ir remonto, kilimų ir minkštų baldų valymas.",
+    "descriptionEt": "Vilniuse Justiniskese piirkonnas tegutsev koristusettevõte, mis teenindab kontoreid ja tootmisruume. Eraldi teenusena pakutakse ehitus- ja remondijärgset koristust ning vaipade ja pehme mööbli süvapuhastust. Ettevõttel on tsiviilvastutuskindlustus.",
+    "descriptionEn": "A cleaning contractor in the Justiniškės district of Vilnius serving offices and industrial premises. Post-construction and post-renovation cleaning plus deep cleaning of carpets and upholstery are offered as distinct services. The company carries civil liability insurance.",
+    "registryCode": "302472675"
+  },
+  {
+    "name": "Aukseba, MB",
+    "slug": "aukseba-siauliai",
+    "city": "Šiauliai",
+    "lat": 55.935,
+    "lng": 23.3151,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Aušros al. 48, Šiauliai",
+    "country": "LT",
+    "websiteUrl": "https://aukseba.lt",
+    "contactEmail": "info@aukseba.lt",
+    "contactPhone": "+370 65890436",
+    "tagline": "Valymo paslaugos Šiauliuose: grindų generalinis valymas, langų ir stiklinių fasadų valymas.",
+    "descriptionEt": "Siauliais tegutsev koristusfirma, mis pakub põrandate suurpuhastust, vahatamist ja immutamist. Lisaks tehakse akende ja klaasfassaadide pesu, sealhulgas kõrgustes, ning ventilatsioonisüsteemide puhastust. Talvel eemaldatakse katustelt lund ja jääpurikaid.",
+    "descriptionEn": "A cleaning company based in Šiauliai offering deep floor cleaning, waxing and impregnation. It also washes windows and glass facades including at height, and cleans ventilation ducts. In winter it clears snow and icicles from roofs.",
+    "registryCode": null
+  },
+  {
+    "name": "Akvija, UAB",
+    "slug": "akvija-panevezys",
+    "city": "Panevėžys",
+    "lat": 55.7443,
+    "lng": 24.3554,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Stoties g. 42, Panevėžys",
+    "country": "LT",
+    "websiteUrl": "https://akvija.lt",
+    "contactEmail": "akvija@akvija.lt",
+    "contactPhone": "+370 60295211",
+    "tagline": "Valymo paslaugos verslui ir pramonei Panevėžyje, valymas po statybų, pastatų priežiūra.",
+    "descriptionEt": "Panevezyse vanalinnas asuv koristusettevõte, mis teenindab peamiselt ärikliente ja tööstust. Pakutakse ehitusjärgset koristust, kontorite ja kaubanduskeskuste koristust ning hoonete haldust. Tegutsetakse ka tervishoiuasutustes.",
+    "descriptionEn": "A cleaning company in the old town of Panevėžys working mainly with business and industrial clients. Services include post-construction cleaning, office and shopping centre cleaning, and building maintenance. It also serves healthcare facilities.",
+    "registryCode": null
+  },
+  {
+    "name": "Corpus A, UAB",
+    "slug": "corpus-a-vilnius",
+    "city": "Vilnius",
+    "lat": 54.735,
+    "lng": 25.2205,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Gabijos g. 30, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://corpusa.lt",
+    "contactEmail": "info@corpusA.lt",
+    "contactPhone": "+370 70033390",
+    "tagline": "Valymo paslaugos ir pastatų ūkio valdymas Vilniuje ir visoje Lietuvoje.",
+    "descriptionEt": "Suurem koristus- ja kinnisvarahalduse ettevõte, mille kontor on Vilniuse Pasilaiciai piirkonnas. Teenindatakse tootmishooneid, haiglaid, koole, hotelle ja korterelamuid. Pakutakse nii koristust kui hoonete tervikhaldust.",
+    "descriptionEn": "A larger cleaning and facility management company with its office in the Pašilaičiai district of Vilnius. It serves manufacturing plants, healthcare and educational institutions, hotels and residential buildings. The offer covers both cleaning and full building management.",
+    "registryCode": null
+  },
+  {
+    "name": "Clean Solutions, UAB",
+    "slug": "clean-solutions-vilnius",
+    "city": "Vilnius",
+    "lat": 54.7227,
+    "lng": 25.2343,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Laisvės pr. 77B, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://cleansolutions.lt",
+    "contactEmail": "info@cleansolutions.lt",
+    "contactPhone": "+370 5 2107777",
+    "tagline": "Patalpų ir teritorijų valymas, specialūs valymo darbai, kilimėlių nuoma penkiuose miestuose.",
+    "descriptionEt": "Koristusettevõte, mis teenindab Vilniust, Kaunast, Klaipedat, Siauliaid ja Panevezyst ühelt telefoninumbrilt. Pakutakse ruumide ja territooriumide koristust, eritöid ning põrandamattide renti. Kontor asub Vilniuse Pasilaiciai piirkonnas.",
+    "descriptionEn": "A cleaning company covering Vilnius, Kaunas, Klaipėda, Šiauliai and Panevėžys through a single contact number. It provides premises and grounds cleaning, specialist cleaning work and floor mat rental. The office is in the Pašilaičiai district of Vilnius.",
+    "registryCode": null
+  },
+  {
+    "name": "EKO PLANETA, UAB",
+    "slug": "eko-planeta-klaipeda",
+    "city": "Klaipėda",
+    "lat": 55.6861,
+    "lng": 21.1818,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Debreceno g. 10-51, Klaipėda",
+    "country": "LT",
+    "websiteUrl": "http://ekoplaneta.lt",
+    "contactEmail": "info@ekoplaneta.eu",
+    "contactPhone": "+370 64111147",
+    "tagline": "Valymo paslaugos Klaipėdoje, Gedminų mikrorajone.",
+    "descriptionEt": "Klaipeda Gedminai piirkonnas tegutsev koristusteenuse pakkuja. Ettevõtte veebileht töötab ainult http-protokolli kaudu ja kontaktandmed on napid, telefoninumber pärineb ettevõtete kataloogist.",
+    "descriptionEn": "A cleaning services provider operating in the Gedminai district of Klaipėda. The company website only responds over plain HTTP and its published contact details are sparse; the phone number comes from a business directory rather than the site itself.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB Daiktams.lt",
+    "slug": "daiktams-lt-vilnius-vilkpede",
+    "city": "Vilnius",
+    "lat": 54.6475,
+    "lng": 25.2139,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Savanorių pr. 180, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://daiktams.lt",
+    "contactEmail": "saugok@daiktams.lt",
+    "contactPhone": "+370 61011106",
+    "tagline": "Sandėliukų nuoma, specializuojasi kailinių, drabužių, padangų ir palečių saugojime.",
+    "descriptionEt": "Daiktams.lt Vilniuse asukoht Savanorių pr. 180 pakub sandėliukude renti, sh spetsialiseerunud karusnaha- ja rõivahoiule, rehvide ning kaubaaluste hoiustamisele. Ettevõttel on veel üks asukoht Vilniuses ning filiaalid Kaunases ja Alytuses.",
+    "descriptionEn": "Daiktams.lt's Savanorių pr. 180 location in Vilnius offers storage unit rental, including specialized storage for furs and clothing, tires, and pallets. The company has a second Vilnius location plus branches in Kaunas and Alytus.",
+    "registryCode": "303083043"
+  },
+  {
+    "name": "UAB Daiktams.lt",
+    "slug": "daiktams-lt-vilnius-fabijoniskes",
+    "city": "Vilnius",
+    "lat": 54.735,
+    "lng": 25.2327,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Ukmergės g. 292, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://daiktams.lt",
+    "contactEmail": "saugok@daiktams.lt",
+    "contactPhone": "+370 61011106",
+    "tagline": "Antrasis Daiktams.lt sandėliukų padalinys Vilniuje, Ukmergės gatvėje.",
+    "descriptionEt": "Daiktams.lt teine Vilniuse asukoht paikneb aadressil Ukmergės g. 292. Ettevõte pakub sandėliukude renti eraisikutele ja ettevõtetele, sh eritingimusi karusnaha- ja rõivahoiuks. Kontsern tegutseb ka Kaunases ja Alytuses.",
+    "descriptionEn": "Daiktams.lt's second Vilnius location is at Ukmergės g. 292. The company rents storage units to individuals and businesses, including special conditions for fur and clothing storage. The group also operates in Kaunas and Alytus.",
+    "registryCode": "303083043"
+  },
+  {
+    "name": "UAB Transekspedicija",
+    "slug": "transekspedicija-vilnius",
+    "city": "Vilnius",
+    "lat": 54.8048,
+    "lng": 25.1592,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Galinės g. 1, Galinės k., Avižienių sen., Vilniaus r.",
+    "country": "LT",
+    "websiteUrl": "https://transekspedicija.lt",
+    "contactEmail": "info@transekspedicija.lt",
+    "contactPhone": "+370 5 2300100",
+    "tagline": "Didelė krovinių vežimo įmonė, per „Transekspedicija Invest“ nuomoja biuro ir sandėlio patalpas.",
+    "descriptionEt": "Transekspedicija on suur 1990. aastal asutatud veo- ja logistikaettevõte Vilniuse lähistel Galinės külas. Kinnisvaraüksus Transekspedicija Invest rendib välja büroo- ja laopindu. Ettevõttel on üle 300 veoki ja ligi 380 töötajat.",
+    "descriptionEn": "Transekspedicija is a large freight and logistics company founded in 1990, based in Galinės village near Vilnius. Its real-estate arm, Transekspedicija Invest, leases office and warehouse space. The company operates over 300 trucks and employs around 380 people.",
+    "registryCode": "302453803"
+  },
+  {
+    "name": "UAB Bumova",
+    "slug": "bumova-vilnius",
+    "city": "Vilnius",
+    "lat": 54.6295,
+    "lng": 25.2696,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Dariaus ir Girėno g. 189, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://www.bumova.lt",
+    "contactEmail": "info@bumova.lt",
+    "contactPhone": "+370 67586695",
+    "tagline": "Sandėlių, autoservisų patalpų ir sandėliavimo aikštelių nuoma bei nekilnojamojo turto valdymas.",
+    "descriptionEt": "Bumova rendib Vilniuses (Dariaus ir Girėno g. 189) välja laopindu, autoremonditöökodade ja teenindusruume ning laoplatse rasketehnika parkimiseks. Ettevõte tegeleb ka kinnisvara haldamise ja konsultatsiooniga.",
+    "descriptionEn": "Bumova rents warehouse space, auto repair and service premises, and storage yards for heavy equipment parking at Dariaus ir Girėno g. 189 in Vilnius. The company also provides real estate management and consulting.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB Vilniaus Sigma",
+    "slug": "vilniaus-sigma-vilnius",
+    "city": "Vilnius",
+    "lat": 54.711,
+    "lng": 25.2868,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Kalvarijų g. 125B, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://www.sigma.lt",
+    "contactEmail": null,
+    "contactPhone": "+370 5 2725215",
+    "tagline": "Apie 98 000 m² gamybinių, sandėliavimo, biuro ir prekybos patalpų nuoma buvusioje pramoninėje teritorijoje.",
+    "descriptionEt": "Vilniaus Sigma rendib Kalvarijų g. 125B ligikaudu 98 000 m² tootmis-, lao-, büroo- ja kaubanduspinda umbes 20 hoones, ajaloolisel tööstusalal 2 km kesklinnast. Lisaks pakutakse parkimist ja postkastide renti.",
+    "descriptionEn": "Vilniaus Sigma leases around 98,000 m² of production, storage, office, and retail space across roughly 20 buildings on a historic industrial site 2 km from the city centre, at Kalvarijų g. 125B. Parking and mailbox rental are also available.",
+    "registryCode": null
+  },
+  {
+    "name": "Space24",
+    "slug": "space24-vilnius",
+    "city": "Vilnius",
+    "lat": 54.7013,
+    "lng": 25.2854,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Rinktinės g. 48B, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://www.space24.lt",
+    "contactEmail": "pardavimai@space24.lt",
+    "contactPhone": "+370 60010009",
+    "tagline": "Klimato kontrolės sandėliukai nuo 1 iki 60 m² su liftu ir 24/7 apsauga.",
+    "descriptionEt": "Space24 pakub Vilniuses (Rinktinės g. 48B) kliimakontrolliga hoiuboikse suurusega 1 kuni 60 m², liftiga ligipääsu ja 24/7 turvavalvet. Kontor on avatud iga päev, sh nädalavahetustel lühendatud tundidel.",
+    "descriptionEn": "Space24 offers climate-controlled storage units from 1 to 60 m² at Rinktinės g. 48B in Vilnius, with elevator access and 24/7 security monitoring. The office is open daily, including shorter weekend hours.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB Kirtimų logistikos centras",
+    "slug": "kirtimu-logistikos-centras-vilnius",
+    "city": "Vilnius",
+    "lat": 54.6263,
+    "lng": 25.1481,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Kirtimų g. 47, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://www.kirtimu47.lt",
+    "contactEmail": "info@kirtimu47.lt",
+    "contactPhone": "+370 5 2649190",
+    "tagline": "Šildomų ir nešildomų sandėlių, gamybinių bei biuro patalpų nuoma Kirtimuose.",
+    "descriptionEt": "Kirtimų logistikakeskus rendib Kirtimų g. 47 aadressil köetavaid ja köetamata laopindu, tootmis- ning kontoriruume. Kompleks asub Vilniuse tööstuspiirkonnas lennujaama lähedal.",
+    "descriptionEn": "Kirtimų logistikos centras leases heated and unheated warehouse space, production facilities, and offices at Kirtimų g. 47. The complex is located in Vilnius's Kirtimai industrial area near the airport.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB Boxrent",
+    "slug": "boxrent-vilnius-naujamiestis",
+    "city": "Vilnius",
+    "lat": 54.6693,
+    "lng": 25.2568,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Naugarduko g. 95, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://boxrent.lt",
+    "contactEmail": "info@boxrent.lt",
+    "contactPhone": "+370 63254444",
+    "tagline": "Konteinerinių sandėliukų nuoma Naujamiestyje, nuo 4,24 €/sav.",
+    "descriptionEt": "Boxrenti Naujamiesčio sandėliukude asukoht paikneb aadressil Naugarduko g. 95. Tegu on ühega seitsmest Boxrenti asukohast Vilniuses, kus renditakse konteinertüüpi hoiuboikse.",
+    "descriptionEn": "Boxrent's Naujamiestis storage location is at Naugarduko g. 95. It is one of seven Boxrent locations in Vilnius renting container-style storage units.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB Boxrent",
+    "slug": "boxrent-vilnius-pilaite",
+    "city": "Vilnius",
+    "lat": 54.715,
+    "lng": 25.1628,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Lūjos g. 1, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://boxrent.lt",
+    "contactEmail": "info@boxrent.lt",
+    "contactPhone": "+370 63254444",
+    "tagline": "Boxrent sandėliukų nuoma Pilaitėje, konteinerinės saugyklos nuo 4,24 €/sav.",
+    "descriptionEt": "Boxrenti Pilaitė sandėliukude asukoht asub aadressil Lūjos g. 1. See on üks seitsmest Boxrenti asukohast Vilniuses, kus pakutakse konteinerhoiuboikse.",
+    "descriptionEn": "Boxrent's Pilaitė storage facility is located at Lūjos g. 1. It is one of seven Boxrent locations in Vilnius offering container storage units.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB Boxrent",
+    "slug": "boxrent-vilnius-baltupiai",
+    "city": "Vilnius",
+    "lat": 54.7379,
+    "lng": 25.2715,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Ateities g. 10, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://boxrent.lt",
+    "contactEmail": "info@boxrent.lt",
+    "contactPhone": "+370 63254444",
+    "tagline": "Boxrent sandėliukų nuoma Baltupiuose, nuo 4,24 €/sav.",
+    "descriptionEt": "Boxrenti Baltupiai asukoht paikneb aadressil Ateities g. 10. Tegemist on ühega seitsmest Vilniuse Boxrenti sandėliukude asukohast.",
+    "descriptionEn": "Boxrent's Baltupiai location is at Ateities g. 10, one of seven Boxrent self-storage sites across Vilnius.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB Boxrent",
+    "slug": "boxrent-vilnius-lazdynai",
+    "city": "Vilnius",
+    "lat": 54.6706,
+    "lng": 25.2242,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Oslo g. 1, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://boxrent.lt",
+    "contactEmail": "info@boxrent.lt",
+    "contactPhone": "+370 63254444",
+    "tagline": "Boxrent sandėliukų nuoma Lazdynuose, Oslo gatvėje.",
+    "descriptionEt": "Boxrenti Lazdynai asukoht asub aadressil Oslo g. 1. See on üks seitsmest Boxrenti sandėliukude asukohast Vilniuses.",
+    "descriptionEn": "Boxrent's Lazdynai location is at Oslo g. 1, one of seven Boxrent storage sites in Vilnius.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB Boxrent",
+    "slug": "boxrent-vilnius-avizieniai",
+    "city": "Vilnius",
+    "lat": 54.7605,
+    "lng": 25.1947,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Parko g. 24, Avižieniai, Vilniaus r.",
+    "country": "LT",
+    "websiteUrl": "https://boxrent.lt",
+    "contactEmail": "info@boxrent.lt",
+    "contactPhone": "+370 63254444",
+    "tagline": "Boxrent sandėliukų nuoma Avižieniuose, prie pat Vilniaus.",
+    "descriptionEt": "Boxrenti Avižėniai asukoht paikneb Vilniuse lähedal aadressil Parko g. 24. See on üks seitsmest Boxrenti sandėliukude asukohast Vilniuse piirkonnas.",
+    "descriptionEn": "Boxrent's Avižieniai location is just outside Vilnius at Parko g. 24, one of seven Boxrent storage sites serving the Vilnius area.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB Boxrent",
+    "slug": "boxrent-vilnius-naujininkai-1",
+    "city": "Vilnius",
+    "lat": 54.6351,
+    "lng": 25.2603,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Metalo g. 17, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://boxrent.lt",
+    "contactEmail": "info@boxrent.lt",
+    "contactPhone": "+370 63254444",
+    "tagline": "Boxrent sandėliukų nuoma Naujininkuose, Metalo gatvėje.",
+    "descriptionEt": "Boxrenti esimene Naujininkų asukoht asub aadressil Metalo g. 17. Ettevõttel on Naujininkuose koguni kaks sandėliukude asukohta.",
+    "descriptionEn": "Boxrent's first Naujininkai location is at Metalo g. 17. The company operates two separate storage sites in the Naujininkai district.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB Boxrent",
+    "slug": "boxrent-vilnius-naujininkai-2",
+    "city": "Vilnius",
+    "lat": 54.6318,
+    "lng": 25.2599,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Meistrų g. 9, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://boxrent.lt",
+    "contactEmail": "info@boxrent.lt",
+    "contactPhone": "+370 63254444",
+    "tagline": "Antrasis Boxrent sandėliukų padalinys Naujininkuose, Meistrų gatvėje.",
+    "descriptionEt": "Boxrenti teine Naujininkų asukoht paikneb aadressil Meistrų g. 9, vaid lühikese vahemaa kaugusel esimesest Naujininkų asukohast.",
+    "descriptionEn": "Boxrent's second Naujininkai location is at Meistrų g. 9, a short distance from its first Naujininkai site.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB Logistus 3PL",
+    "slug": "logistus-3pl-vilnius",
+    "city": "Vilnius",
+    "lat": 54.6225,
+    "lng": 25.1068,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Kirtimų g. 41, Vilnius",
+    "country": "LT",
+    "websiteUrl": null,
+    "contactEmail": null,
+    "contactPhone": "+370 5 2602855",
+    "tagline": "Trečiosios šalies logistikos (3PL) sandėliavimo paslaugos Kirtimuose.",
+    "descriptionEt": "Logistus 3PL pakub kolmanda osapoole logistika- ehk 3PL-laoteenuseid aadressil Kirtimų g. 41, Vilnius. Ettevõttes töötab ligikaudu 32 inimest.",
+    "descriptionEn": "Logistus 3PL provides third-party logistics (3PL) warehousing services at Kirtimų g. 41 in Vilnius. The company employs approximately 32 people.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB Vilniaus Sigmos sandėlių centras",
+    "slug": "vilniaus-sigmos-sandeliu-centras-vilnius",
+    "city": "Vilnius",
+    "lat": 54.629,
+    "lng": 25.256,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Motorų g. 14, Vilnius",
+    "country": "LT",
+    "websiteUrl": null,
+    "contactEmail": null,
+    "contactPhone": "+370 5 2133327",
+    "tagline": "Sandėliavimo paslaugas teikianti įmonė, registruota nuo 1995 metų.",
+    "descriptionEt": "Vilniaus Sigmos sandėlių centras tegutseb laoteenuste valdkonnas aadressil Motorų g. 14, Vilnius. Ettevõte on registreeritud 1995. aastal ja töötab tööpäeviti kell 8-17.",
+    "descriptionEn": "Vilniaus Sigmos sandėlių centras operates in the warehousing services sector at Motorų g. 14, Vilnius. The company was registered in 1995 and operates Monday-Friday 8:00-17:00.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB Arseka",
+    "slug": "arseka-vilnius",
+    "city": "Vilnius",
+    "lat": 54.6187,
+    "lng": 25.1558,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Kirtimų g. 57A, Vilnius",
+    "country": "LT",
+    "websiteUrl": null,
+    "contactEmail": null,
+    "contactPhone": "+370 5 2690971",
+    "tagline": "Krovinių vežimas geležinkeliu bei muitinės sandėlio ir tarpininkavimo paslaugos.",
+    "descriptionEt": "Arseka pakub raudteeveo, tollilao ja tollimaakleri teenuseid aadressil Kirtimų g. 57A, Vilnius. Ettevõte tegutseb alates 1992. aastast ja on registreeritud sandėliavimo paslaugų kategoorias.",
+    "descriptionEn": "Arseka provides rail freight transport, customs warehouse, and customs brokerage services at Kirtimų g. 57A in Vilnius. The company has operated since 1992 and is registered under the warehousing services category.",
+    "registryCode": null
+  },
+  {
+    "name": "Sandėliukų nuoma",
+    "slug": "sandeliuku-nuoma-vilnius-zirmunai",
+    "city": "Vilnius",
+    "lat": 54.7159,
+    "lng": 25.2888,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Kareivių g. 2G, Vilnius",
+    "country": "LT",
+    "websiteUrl": null,
+    "contactEmail": null,
+    "contactPhone": null,
+    "tagline": "Sandėliukų, garažų ir požeminio parkingo nuoma Žirmūnuose.",
+    "descriptionEt": "See ettevõte pakub Žirmūnu linnaosas aadressil Kareivių g. 2G hoiuboikse, garaaže ning maa-aluse parkla ja parkimisplatside renti. Ettevõtte enda veebileht blokeeris otsingumootoritel juurdepääsu, mistõttu info pärineb otsingutulemustest.",
+    "descriptionEn": "This business offers storage units, garages, and underground/surface parking rental in the Žirmūnai district at Kareivių g. 2G. The company's own website blocked automated access, so this information comes from search results.",
+    "registryCode": null
+  },
+  {
+    "name": "Sandėliukų nuoma",
+    "slug": "sandeliuku-nuoma-vilnius-perkunkiemis",
+    "city": "Vilnius",
+    "lat": 54.7394,
+    "lng": 25.2182,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Eitminų g. 20, Vilnius",
+    "country": "LT",
+    "websiteUrl": null,
+    "contactEmail": null,
+    "contactPhone": null,
+    "tagline": "Antrasis šios sandėliukų nuomos įmonės padalinys, Perkūnkiemio rajone.",
+    "descriptionEt": "Ettevõtte teine Vilniuse asukoht paikneb Perkūnkiemi mikrorajoonis aadressil Eitminų g. 20. Info pärineb otsingutulemustest ja kinnitub postiindeksi kattuvusega (12145), kuna ettevõtte veebileht blokeeris otsese juurdepääsu.",
+    "descriptionEn": "This company's second Vilnius location is in the Perkūnkiemis microdistrict at Eitminų g. 20. Information comes from search results and is corroborated by a matching postal code (12145), as the company's website blocked direct access.",
+    "registryCode": null
+  },
+  {
+    "name": "Palik",
+    "slug": "palik-vilnius",
+    "city": "Vilnius",
+    "lat": 54.7383,
+    "lng": 25.2167,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Girulių g. 10, Vilnius",
+    "country": "LT",
+    "websiteUrl": null,
+    "contactEmail": null,
+    "contactPhone": null,
+    "tagline": "Daiktų saugojimo paslauga su atsiėmimu ir pristatymu.",
+    "descriptionEt": "Palik pakub Vilniuses (Girulių g. 10) esemete hoiustamise teenust koos äraveo ja tagastamisega. Ettevõtte veebileht blokeeris otsingumootoritel otsese juurdepääsu, mistõttu info pärineb otsingutulemustest.",
+    "descriptionEn": "Palik offers an item storage service with pickup and delivery in Vilnius (Girulių g. 10). The company's website blocked direct automated access, so this information comes from search results.",
+    "registryCode": null
+  },
+  {
+    "name": "KraunamVežam.lt",
+    "slug": "kraunamvezam-vilnius",
+    "city": "Vilnius",
+    "lat": 54.7366,
+    "lng": 25.2538,
+    "serviceTypes": [
+      "moving",
+      "packing",
+      "vanrental"
+    ],
+    "address": "Ateities g. 25B, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://kraunamvezam.lt",
+    "contactEmail": "info@kraunamvezam.lt",
+    "contactPhone": "+370 67831170",
+    "tagline": "Perkraustymo ir krovinių pervežimo paslaugos Vilniuje su baldų surinkimu ir pianinų pervežimu.",
+    "descriptionEt": "KraunamVežam.lt pakub Vilniuses kolimis- ja veoteenuseid eraisikutele ja ettevõtetele, sealhulgas mööbli kokkupanekut ja pianode transporti. Ettevõte on tegutsenud üle 10 aasta ja teostanud üle 250 kolimise.",
+    "descriptionEn": "KraunamVežam.lt provides moving and cargo transport services in Vilnius for households and businesses, including furniture assembly and piano transport. The company has over 10 years of experience and has completed 250+ moves.",
+    "registryCode": null
+  },
+  {
+    "name": "Kraustymo Guru",
+    "slug": "kraustymo-guru-vilnius",
+    "city": "Vilnius",
+    "lat": 54.7178,
+    "lng": 25.2344,
+    "serviceTypes": [
+      "moving",
+      "packing"
+    ],
+    "address": "Laisvės pr. 61, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://kraustymoguru.lt",
+    "contactEmail": "info@kraustymoguru.lt",
+    "contactPhone": "+370 65566635",
+    "tagline": "Ilgų atstumų ir tarptautinių perkraustymų specialistai Vilniuje, siūlantys ir pakavimo paslaugas.",
+    "descriptionEt": "Kraustymo Guru on Vilniuses tegutsev kolimisfirma, mis pakub elu- ja ärikliendi kolimisteenust, rahvusvahelisi kolimisi ning eraldi pakendamisteenust. Ettevõttel on üle 200 hinnangu keskmisega 9,1/10.",
+    "descriptionEn": "Kraustymo Guru is a Vilnius-based moving company offering residential and corporate relocations, international moves, and a dedicated packing service. The company has over 200 customer reviews averaging 9.1/10.",
+    "registryCode": null
+  },
+  {
+    "name": "Mes Jau Čia",
+    "slug": "mes-jau-cia-vilnius",
+    "city": "Vilnius",
+    "lat": 54.7157,
+    "lng": 25.2782,
+    "serviceTypes": [
+      "moving",
+      "packing"
+    ],
+    "address": "Ozo g. 12A, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://mesjaucia.lt",
+    "contactEmail": "info@mesjaucia.lt",
+    "contactPhone": "+370 63510000",
+    "tagline": "Butų, namų ir biurų perkraustymas Vilniuje su pilnu pakavimo ir išpakavimo paslaugų spektru.",
+    "descriptionEt": "Mes Jau Čia korraldab korterite, majade ja kontorite kolimist Vilniuses alates 2013. aastast, pakkudes ka professionaalset pakendamis- ja lahtipakkimisteenust ning klaverite vedu. Ettevõte on teostanud üle 9500 kolimise.",
+    "descriptionEn": "Mes Jau Čia handles apartment, house and office moves in Vilnius since 2013, including professional packing and unpacking as well as piano transport. The company reports 9,500+ completed relocations.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB Viacargus",
+    "slug": "uab-viacargus-vilnius",
+    "city": "Vilnius",
+    "lat": 54.7303,
+    "lng": 25.2461,
+    "serviceTypes": [
+      "moving",
+      "packing",
+      "warehouse"
+    ],
+    "address": "Fabijoniškių g. 99-310, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://www.viacargus.lt",
+    "contactEmail": "info@viacargus.lt",
+    "contactPhone": "+370 60327076",
+    "tagline": "Krovinių gabenimas, perkraustymas ir sandėliavimas Vilniuje, tarptautiniai persikraustymai per Movers.lt.",
+    "descriptionEt": "UAB Viacargus pakub Vilniusest lähtudes kaubaveo- ja kolimisteenuseid maismaal, merel ja õhus ning ladustamist. Ettevõtte kaubamärk Movers.lt korraldab professionaalse pakendamisega kodu- ja kontorikolimisi, sealhulgas diplomaatilisi saadetisi.",
+    "descriptionEn": "UAB Viacargus offers freight forwarding, moving and warehousing from Vilnius by road, sea and air. Its Movers.lt brand handles household and office relocations with professional packing, including diplomatic shipments.",
+    "registryCode": "304227895"
+  },
+  {
+    "name": "Movesta",
+    "slug": "movesta-vilnius",
+    "city": "Vilnius",
+    "lat": 54.6779,
+    "lng": 25.3173,
+    "serviceTypes": [
+      "moving",
+      "packing"
+    ],
+    "address": "Manufaktūrų g. 20-186, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://www.movesta.lt",
+    "contactEmail": "info@movesta.lt",
+    "contactPhone": "+370 60696970",
+    "tagline": "Butų, namų ir biurų perkraustymas Vilniuje su pakavimo ir išpakavimo paslauga.",
+    "descriptionEt": "Movesta pakub Vilniuses korterite, majade ja kontorite kolimisteenust, sealhulgas asjade pakendamist ja lahtipakkimist, klaverite vedu ning jäätmete äravedu. Teenindatakse nii era- kui äriklientide kolimisi Vilniuses ja üle Leedu.",
+    "descriptionEn": "Movesta provides apartment, house and office moving services in Vilnius, including item packing and unpacking, piano transport and waste removal. It serves both private and business relocations in Vilnius and across Lithuania.",
+    "registryCode": null
+  },
+  {
+    "name": "Move Pro",
+    "slug": "move-pro-vilnius",
+    "city": "Vilnius",
+    "lat": 54.7083,
+    "lng": 25.2996,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "V. Nagevičiaus g. 3, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://www.movepro.lt",
+    "contactEmail": "transport@movepro.lt",
+    "contactPhone": "+370 63063380",
+    "tagline": "Krovinių pervežimas ir perkraustymo paslaugos Vilniuje, įskaitant griovimo bei šiukšlių išvežimo darbus.",
+    "descriptionEt": "Move Pro pakub Vilniuses kaubaveo- ja kolimisteenust, samuti lammutus- ja jäätmeveotöid. Meeskond rõhutab kogenud töötajaid, häid hindu ja kiiret teenindust.",
+    "descriptionEn": "Move Pro offers cargo transport and moving services in Vilnius, along with demolition and waste-removal work. The team emphasizes experienced staff, competitive pricing and fast turnaround.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB Ampartas",
+    "slug": "uab-ampartas-vilnius",
+    "city": "Vilnius",
+    "lat": 54.6499,
+    "lng": 25.1216,
+    "serviceTypes": [
+      "moving",
+      "packing",
+      "cleaning"
+    ],
+    "address": "Lentvario g. 33, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://www.ampartas.lt",
+    "contactEmail": "uzsakymai@ampartas.lt",
+    "contactPhone": "+370 60887053",
+    "tagline": "Perkraustymo, pakavimo ir valymo paslaugos Vilniuje gyventojams ir įmonėms.",
+    "descriptionEt": "UAB Ampartas pakub Vilniuses kolimisteenust eraisikutele ja ettevõtetele, sealhulgas pakendamist, mööbli ja tehnika vedu ning koristusteenust (k.a keemiliste objektide puhastus). Ettevõte veab ka seife ja mittestandardseid kaupu.",
+    "descriptionEn": "UAB Ampartas offers moving services in Vilnius for individuals and businesses, including packing, furniture and appliance transport, and cleaning services (including chemical-facility cleaning). The company also transports safes and non-standard cargo.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB Kraustva",
+    "slug": "uab-kraustva-vilnius",
+    "city": "Vilnius",
+    "lat": 54.6902,
+    "lng": 25.4221,
+    "serviceTypes": [
+      "moving",
+      "packing"
+    ],
+    "address": "Gerovės g. 25-15, Vilnius",
+    "country": "LT",
+    "websiteUrl": null,
+    "contactEmail": null,
+    "contactPhone": "+370 60097130",
+    "tagline": "Perkraustymo ir krovinių pervežimo paslaugos Vilniuje (duomenys iš verslo katalogo).",
+    "descriptionEt": "UAB Kraustva on Vilniuses registreeritud kolimisteenuse pakkuja, kes on kantud Leedu ettevõtete kataloogi visalietuva.lt. Ettevõtte veebileht (krovimas.lt) ei ole enam kättesaadav, mistõttu kontaktandmed pärinevad ainult katalogist.",
+    "descriptionEn": "UAB Kraustva is a Vilnius-registered moving company listed in the Lithuanian business directory visalietuva.lt. Its own website (krovimas.lt) is no longer reachable, so the contact details here come only from the directory listing.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB Maniteka",
+    "slug": "uab-maniteka-vilnius",
+    "city": "Vilnius",
+    "lat": 54.7013,
+    "lng": 25.2223,
+    "serviceTypes": [
+      "moving",
+      "packing"
+    ],
+    "address": "Laisvės pr. 60, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://kraustukai.lt",
+    "contactEmail": "info@kraustukai.lt",
+    "contactPhone": "+370 65360669",
+    "tagline": "Perkraustymo paslaugos Vilniuje visą parą, įskaitant pakavimą ir pianinų pervežimą.",
+    "descriptionEt": "UAB Maniteka tegutseb kaubamärgi Kraustukai.lt all ja pakub Vilniuses ööpäevaringset kolimisteenust juba üle 10 aasta. Teenuste hulka kuuluvad asjade pakendamine, mööbli ja klaverite vedu ning tsiviilvastutuskindlustus veetava kauba jaoks.",
+    "descriptionEn": "UAB Maniteka trades as Kraustukai.lt and has offered 24/7 moving services in Vilnius for over 10 years. Services include item packing, furniture and piano transport, and civil liability insurance covering the transported goods.",
+    "registryCode": null
+  },
+  {
+    "name": "MB ELP Baltics",
+    "slug": "elp-baltics-vilnius",
+    "city": "Vilnius",
+    "lat": 54.7754,
+    "lng": 25.4077,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Šaltoniškių g. 31-306, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://www.elpbaltics.lt",
+    "contactEmail": "info@elpbaltics.lt",
+    "contactPhone": "+370 68488925",
+    "tagline": "Specializuoti biuro, pianinų ir meno kūrinių perkraustymai Vilniuje bei Baltijos šalyse.",
+    "descriptionEt": "ELP Baltics on Vilniuses tegutsev kolimisfirma, mis on spetsialiseerunud keerukatele kolimistele: kontorid, klaverid, kunstiteosed, seifid, IT- ja laboriseadmed. Ettevõte tegutseb alates 2016. aastast Leedus, Lätis ja Eestis ning kasutab spetsiaalset tõsteseadmestikku esemete trepikodades vedamiseks.",
+    "descriptionEn": "ELP Baltics is a Vilnius-based moving company specializing in complex relocations: offices, pianos, artwork, safes, IT and laboratory equipment. Operating since 2016 across Lithuania, Latvia and Estonia, it uses specialized lifting equipment to move items up stairwells without damage.",
+    "registryCode": "306986407"
+  },
+  {
+    "name": "UAB Apapra Baltic",
+    "slug": "uab-apapra-baltic-vilnius",
+    "city": "Vilnius",
+    "lat": 54.6168,
+    "lng": 25.157,
+    "serviceTypes": [
+      "moving",
+      "packing",
+      "warehouse"
+    ],
+    "address": "Kirtimų g. 59, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://www.apapra.com",
+    "contactEmail": "info@apapra.com",
+    "contactPhone": "+370 60223945",
+    "tagline": "Biurų ir gyvenamųjų patalpų perkraustymas Vilniuje su pakavimu ir sandėliavimu.",
+    "descriptionEt": "UAB Apapra Baltic pakub Vilniuses kontorite ja eluruumide kolimisteenust, sealhulgas pakendamist, mööbli kokku- ja lahtimonteerimist ning lühi- ja pikaajalist ladustamist. Ettevõte veab ka seife, servereid, klavereid ja tööstusseadmeid.",
+    "descriptionEn": "UAB Apapra Baltic offers office and residential moving services in Vilnius, including packing, furniture assembly/disassembly, and short- and long-term storage. The company also transports safes, servers, pianos and industrial equipment.",
+    "registryCode": "302578415"
+  },
+  {
+    "name": "UAB Bulautra",
+    "slug": "uab-bulautra-vilnius",
+    "city": "Vilnius",
+    "lat": 54.6375,
+    "lng": 25.2683,
+    "serviceTypes": [
+      "moving",
+      "warehouse"
+    ],
+    "address": "Geologų g. 6, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://nuvezam.lt",
+    "contactEmail": "info@nuvezam.lt",
+    "contactPhone": "+370 61118999",
+    "tagline": "Baldų salonų aptarnavimas, krovinių pervežimas ir perkraustymas su 2500 m² sandėliu Vilniuje.",
+    "descriptionEt": "UAB Bulautra (Nuvezam.lt) pakub Vilniuses kolimis- ja veoteenust, sealhulgas mööblisalongide teenindamist ning 3PL laoteenust 2500 m² suurusel laopinnal. Ettevõttel on 9 sõidukit ja 6 meeskonda, mis teenindavad kogu Leedut.",
+    "descriptionEn": "UAB Bulautra (Nuvezam.lt) provides moving and transport services in Vilnius, including furniture-store servicing and 3PL warehousing on 2,500 m² of space. The company runs 9 vehicles and 6 crews serving all of Lithuania.",
+    "registryCode": null
+  },
+  {
+    "name": "MB Uraganas Atila",
+    "slug": "mb-uraganas-atila-vilnius",
+    "city": "Vilnius",
+    "lat": 54.7145,
+    "lng": 25.2977,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Verkių g. 31B, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://www.atila.lt",
+    "contactEmail": "atila@atila.lt",
+    "contactPhone": "+370 64399994",
+    "tagline": "Kranų-manipuliatorių nuoma ir perkraustymo paslaugos Vilniuje, įskaitant negabaritinius krovinius.",
+    "descriptionEt": "Atila.lt (MB Uraganas Atila) pakub Vilniuses kraana-manipulaatori renti, kolimis- ja mööbliveoteenust ning suuremõõtmeliste kaupade (nt metallgaraažid) transporti. Ettevõttel on ligi 10 aasta kogemus ja kuni 200 000 euro suurune veosekindlustus.",
+    "descriptionEn": "Atila.lt (MB Uraganas Atila) offers crane/manipulator rental, moving and furniture transport, and oversized cargo transport (e.g. metal garages) in Vilnius. The company has close to 10 years of experience and cargo insurance up to €200,000.",
+    "registryCode": null
+  },
+  {
+    "name": "Eirena",
+    "slug": "eirena-vilnius",
+    "city": "Vilnius",
+    "lat": 54.6861,
+    "lng": 25.4191,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Parko g. 18, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://transportopaslaugos.com",
+    "contactEmail": null,
+    "contactPhone": "+370 61670742",
+    "tagline": "Perkraustymo, krovėjų ir baldų pervežimo paslaugos Vilniuje mikroautobusu.",
+    "descriptionEt": "Eirena pakub Vilniuses kolimis- ja veoteenust mikrobussiga (kuni 1,5 t / 15 m³), sealhulgas mööbli kokkupanekut-lahtivõtmist ja vanade mööbliesemete äravedu. Teenindatakse nii kodu- kui kontorikolimisi Leedus ja Euroopas.",
+    "descriptionEn": "Eirena provides moving and cargo transport in Vilnius using a cargo van (up to 1.5t / 15m³), including furniture assembly/disassembly and old-furniture removal. It serves both household and office moves within Lithuania and Europe.",
+    "registryCode": null
+  },
+  {
+    "name": "Jaukraunam",
+    "slug": "jaukraunam-vilnius",
+    "city": "Vilnius",
+    "lat": 54.7162,
+    "lng": 25.2799,
+    "serviceTypes": [
+      "moving",
+      "packing",
+      "warehouse"
+    ],
+    "address": "Ozo g. 1, Vilnius",
+    "country": "LT",
+    "websiteUrl": "https://www.jaukraunam.lt",
+    "contactEmail": "info@jaukraunam.lt",
+    "contactPhone": "+370 67484773",
+    "tagline": "Butų, namų ir biurų perkraustymas Vilniuje su pakavimu ir sandėliavimo galimybe.",
+    "descriptionEt": "Jaukraunam pakub Vilniuses korterite, majade ja kontorite kolimisteenust, sealhulgas asjade pakendamist-lahtipakkimist, mööbli kokkupanekut ning ladustamist. Ettevõte veab ka klavereid, seife ja kunstiteoseid ning pakub kraanarenti.",
+    "descriptionEn": "Jaukraunam offers apartment, house and office moving services in Vilnius, including item packing/unpacking, furniture assembly and storage. The company also transports pianos, safes and artwork, and offers crane rental.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB Boxrent",
+    "slug": "boxrent-kaunas",
+    "city": "Kaunas",
+    "lat": 54.9361,
+    "lng": 23.9483,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Briedžių takas 2, Kaunas",
+    "country": "LT",
+    "websiteUrl": "https://boxrent.lt/lt/locations/kaunas",
+    "contactEmail": null,
+    "contactPhone": "+370 63254444",
+    "tagline": "Konteineriniai savitarnos sandėliukai Eiguliuose su 24/7 prieiga ir vaizdo stebėjimu.",
+    "descriptionEt": "Boxrent pakub Kaunase Eigulių rajoonis konteinertüüpi iseteenindusladusid suurustes XXS-XXL. Ligipääs on tagatud ööpäevaringselt, territooriumi jälgivad videokaamerad ja klientidel on tasuta parkimine oma boksi juures.",
+    "descriptionEn": "Boxrent operates self-service container storage units in the Eiguliai district of Kaunas, with sizes from XXS to XXL. The facility offers 24/7 access, video surveillance, and free customer parking directly at the unit.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB Verslo vystymo centras (Sandeliukai.com)",
+    "slug": "sandeliukai-com-kaunas",
+    "city": "Kaunas",
+    "lat": 54.8951,
+    "lng": 24.0097,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Chemijos g. 15, Kaunas",
+    "country": "LT",
+    "websiteUrl": "https://www.sandeliukai.com",
+    "contactEmail": "info@sandeliukai.com",
+    "contactPhone": "+370 66659269",
+    "tagline": "Individualūs sandėliukai nuo 2 iki 10 m² su vaizdo stebėjimu ir lankstaus grafiko prieiga.",
+    "descriptionEt": "Sandeliukai.com pakub Kaunase Petrašiūnų rajoonis 2-10 m² suuruseid valvega ladustamisboxe. Ruumid on kliimakontrolliga ja jälgitavad ööpäevaringselt, lepingu saab sõlmida veebis.",
+    "descriptionEn": "Sandeliukai.com rents monitored storage units of 2-10 m² in the Petrašiūnai area of Kaunas. The climate-controlled units have 24/7 camera surveillance and rental agreements can be signed online.",
+    "registryCode": "304166848"
+  },
+  {
+    "name": "Kelionių tiltas (Priekabų nuoma Kaunas)",
+    "slug": "kelioniu-tiltas-kaunas",
+    "city": "Kaunas",
+    "lat": 54.9073,
+    "lng": 23.8736,
+    "serviceTypes": [
+      "warehouse",
+      "trailer"
+    ],
+    "address": "Raudondvario pl. 172B, Kaunas",
+    "country": "LT",
+    "websiteUrl": "https://www.priekabunuomakaunas.lt",
+    "contactEmail": "info@kelioniutiltas.lt",
+    "contactPhone": "+370 65222244",
+    "tagline": "Priekabų nuoma ir saugomi sandėliukai (2x2, 3x2, 4x2 m) saugomoje automobilių aikštelėje.",
+    "descriptionEt": "Ettevõte pakub Kaunase Vilijampolė piirkonnas haagiste renti (kaubahaagised, tendiga ja kaanega variandid, hobuseveohaagised) ning valvatud parklas asuvaid ladustamisboxe suurustes 2x2, 3x2 ja 4x2 m koos valve ja videovalvega.",
+    "descriptionEn": "This company offers trailer rental (cargo trailers, canvas-covered and horse trailers) and secured storage units (2x2, 3x2, 4x2 m) at a guarded parking lot in the Vilijampolė area of Kaunas, with alarm and 24/7 video surveillance.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB Litkrausta",
+    "slug": "litkrausta-kaunas",
+    "city": "Kaunas",
+    "lat": 54.902,
+    "lng": 23.9984,
+    "serviceTypes": [
+      "moving",
+      "warehouse",
+      "packing"
+    ],
+    "address": "Chemijos g. 23, Kaunas",
+    "country": "LT",
+    "websiteUrl": "https://litkrausta.lt/perkraustymo-paslaugos-kaune/",
+    "contactEmail": "info@litkrausta.lt",
+    "contactPhone": "+370 62079466",
+    "tagline": "Perkraustymo, pakavimo ir trumpalaikio sandėliavimo paslaugos visoje Lietuvoje.",
+    "descriptionEt": "UAB Litkrausta pakub Kaunase Petrašiūnų piirkonnast korterite ja majade kolimisteenust, sh mööbli lahtivõtmist, pakkimist ja lühiajalist ladustamist. Tunnihinnad algavad olenevalt töötajate arvust ja sõiduki suurusest.",
+    "descriptionEn": "UAB Litkrausta, based in the Petrašiūnai area of Kaunas, offers residential and business moving services including furniture disassembly, packing, and short-term storage. Hourly rates vary by crew size and vehicle.",
+    "registryCode": "304760854"
+  },
+  {
+    "name": "UAB Vagon",
+    "slug": "vagon-logistics-kaunas",
+    "city": "Kaunas",
+    "lat": 54.9201,
+    "lng": 24.0665,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Palemono g. 82, Kaunas",
+    "country": "LT",
+    "websiteUrl": "https://vagon.lt/sandeliavimas/",
+    "contactEmail": "info@vagon.lt",
+    "contactPhone": "+370 65692355",
+    "tagline": "Sandėliavimo paslaugos verslui: paletės, konteineriai, ADR krovinių sandėliavimas Petrašiūnuose.",
+    "descriptionEt": "Vagon pakub Kaunase Petrašiūnų tööstuspiirkonnas laopindu ettevõtetele - kaubaaluste, konteinerite, suurkottide ja rullide ladustamist, sh ohtlike kaupade (ADR) hoiustamist ning kauba pakkimist ja sorteerimist.",
+    "descriptionEn": "Vagon operates warehouse space for businesses in the Petrašiūnai industrial area of Kaunas, storing palletized goods, containers, big-bags and rolls, including ADR-compliant storage for hazardous cargo, plus packaging and sorting services.",
+    "registryCode": null
+  },
+  {
+    "name": "AB Atrama NT",
+    "slug": "atrama-nt-kaunas",
+    "city": "Kaunas",
+    "lat": 54.9127,
+    "lng": 23.8456,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Raudondvario pl. 162, Kaunas",
+    "country": "LT",
+    "websiteUrl": "https://atramant.lt",
+    "contactEmail": "info@atramaNT.lt",
+    "contactPhone": "+370 69833393",
+    "tagline": "Virš 15 000 m² sandėliavimo, gamybinių ir biuro patalpų nuoma Vilijampolėje.",
+    "descriptionEt": "AB Atrama NT haldab Kaunase Vilijampolė linnaosas üle 15 000 m² lao-, tootmis- ja kontoripindu, pakkudes sektsioone alates 115 m², ööpäevaringset ligipääsu ja territooriumi videovalvet.",
+    "descriptionEn": "AB Atrama NT manages over 15,000 m² of warehouse, manufacturing and office space in the Vilijampolė district of Kaunas, with units from 115 m², 24/7 access and a guarded, camera-monitored site.",
+    "registryCode": "303395662"
+  },
+  {
+    "name": "UAB Daiktams.lt",
+    "slug": "daiktams-lt-kaunas",
+    "city": "Kaunas",
+    "lat": 54.9342,
+    "lng": 23.9487,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Islandijos pl. 217, Kaunas",
+    "country": "LT",
+    "websiteUrl": "https://daiktams.lt/sandeliuku-nuoma/",
+    "contactEmail": "kaune@daiktams.lt",
+    "contactPhone": "+370 61011106",
+    "tagline": "Klimato kontrolės sandėliukai nuo 1 m³ iki 20 m², įskaitant palečių ir kailinių saugojimą.",
+    "descriptionEt": "Daiktams.lt pakub Kaunase Eigulių piirkonnas kliimakontrolliga ladustamisboxe suurustes alates 1 m³ kuni 20 m², sh kaubaaluste ladustamist ja karusnahkade hoiustamist. Hinnad algavad 1 m³ eest 15,50 eurot kuus.",
+    "descriptionEn": "Daiktams.lt offers climate-controlled self-storage units in the Eiguliai area of Kaunas, ranging from 1 m³ to 20 m², including pallet storage and fur coat storage. Prices start from €15.50/month for 1 m³.",
+    "registryCode": "303083043"
+  },
+  {
+    "name": "UAB Eestate",
+    "slug": "eestate-kaunas",
+    "city": "Kaunas",
+    "lat": 54.9069,
+    "lng": 23.9801,
+    "serviceTypes": [
+      "warehouse"
+    ],
+    "address": "Pramonės pr. 15A, Kaunas",
+    "country": "LT",
+    "websiteUrl": null,
+    "contactEmail": null,
+    "contactPhone": "+370 67712271",
+    "tagline": "Biurų, komercinių patalpų ir sandėlių nuoma Gričiupio pramoniniame rajone.",
+    "descriptionEt": "Eestate pakub Kaunase Gričiupio piirkonnas büroo-, äri- ja laopindade renti. Ettevõte on kantud äriregistrisse VisaLietuva.lt sandėliavimo teenuste rubriigis.",
+    "descriptionEn": "Eestate rents out office, commercial and warehouse space in the Gričiupis area of Kaunas. The company is listed in the VisaLietuva.lt business directory under warehousing and property rental services.",
+    "registryCode": null
+  },
+  {
+    "name": "MB Asaura",
+    "slug": "asaura-akademija-kauno-r",
+    "city": "Kaunas",
+    "lat": 54.8944,
+    "lng": 23.8056,
+    "serviceTypes": [
+      "moving",
+      "vanrental",
+      "packing"
+    ],
+    "address": "Lingių g. 3B, Akademija, Kauno r.",
+    "country": "LT",
+    "websiteUrl": "https://asaura.lt",
+    "contactEmail": "info@asaura.lt",
+    "contactPhone": "+370 69764499",
+    "tagline": "Baldų pervežimas ir mikroautobuso nuoma su vairuotoju Kauno rajone ir visoje Lietuvoje.",
+    "descriptionEt": "MB Asaura, mis paikneb Akademijas Kauno rajoonis, pakub mööbli ja kodutehnika kolimist, kaubaveoteenust ning mikrobussi renti koos juhiga. Ettevõte töötab ööpäevaringselt ja hinnad arvutatakse veebikalkulaatoriga.",
+    "descriptionEn": "MB Asaura, based in Akademija in Kaunas district, offers furniture and household moving, cargo transport, and microbus rental with a driver. The company operates 24/7 with pricing calculated through an online tool.",
+    "registryCode": "306689345"
+  },
+  {
+    "name": "Kraustymo partneriai",
+    "slug": "kraustymo-partneriai-kaunas",
+    "city": "Kaunas",
+    "lat": 54.9195,
+    "lng": 23.9792,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Pramonės pr. 69, Kaunas",
+    "country": "LT",
+    "websiteUrl": "https://persikraustyk.lt",
+    "contactEmail": "kraustymopartneriai@gmail.com",
+    "contactPhone": "+370 63937897",
+    "tagline": "Butų, namų ir biurų perkraustymas, seifų ir pianinų pervežimas Dainavos rajone.",
+    "descriptionEt": "Kraustymo partneriai pakuvad Kaunase Dainava piirkonnast korterite, majade ja kontorite kolimisteenust, sh klaverite ja seifide transporti ning vana mööbli äravedu. Teenindavad Kaunast, Kauno rajooni ja kokkuleppel kogu Leedut.",
+    "descriptionEn": "Kraustymo partneriai, operating from the Dainava area of Kaunas, provide apartment, house and office moving services including piano and safe transport, plus old furniture removal. They serve Kaunas, Kaunas district, and by arrangement the rest of Lithuania.",
+    "registryCode": null
+  },
+  {
+    "name": "Ausvyta",
+    "slug": "ausvyta-kaunas",
+    "city": "Kaunas",
+    "lat": 54.8731,
+    "lng": 23.9459,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Pušyno g. 28, Kaunas",
+    "country": "LT",
+    "websiteUrl": "https://siuksliuisvezimaskaune.lt",
+    "contactEmail": "audrius.slk@gmail.com",
+    "contactPhone": "+370 60204104",
+    "tagline": "Perkraustymo, sandėlių bei garažų iškraustymo ir statybinių atliekų išvežimo paslaugos Šančiuose.",
+    "descriptionEt": "Ausvyta osutab Kaunase Šančiai piirkonnast kolimisteenust ning ladude ja garaažide tühjendamist, samuti ehitusprahi ja jäätmete äravedu. Ettevõte tegutseb kogu Kaunase linnas ja rajoonis, sh Garliava ja Domeikava suunal.",
+    "descriptionEn": "Ausvyta, based in the Šančiai area of Kaunas, provides moving services along with warehouse and garage clearance, plus construction waste and general junk removal. The company covers all of Kaunas city and district, including the Garliava and Domeikava areas.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB Movingcare",
+    "slug": "movingcare-kaunas",
+    "city": "Kaunas",
+    "lat": 54.9066,
+    "lng": 23.9215,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Širvintų g. 3, Kaunas",
+    "country": "LT",
+    "websiteUrl": "https://movingcare.lt",
+    "contactEmail": "sales@movingcare.lt",
+    "contactPhone": "+370 64175893",
+    "tagline": "Nestandartinių ir sunkių krovinių, įrangos bei baldų perkraustymas Žaliakalnyje.",
+    "descriptionEt": "UAB Movingcare, mis asub Kaunase Žaliakalnise piirkonnas, on spetsialiseerunud ebastandardsete ja raskete esemete transpordile - meditsiiniseadmed, tööstusmasinad, seifid ja kunstiteosed - ning tavapärasele kolimisteenusele. Ettevõte tegutseb Vilniuses, Kaunases ja Klaipėdas.",
+    "descriptionEn": "UAB Movingcare, located in the Žaliakalnis area of Kaunas, specializes in transporting non-standard and heavy items - medical equipment, industrial machinery, safes and artwork - alongside standard moving services. The company operates in Vilnius, Kaunas and Klaipėda.",
+    "registryCode": "304956881"
+  },
+  {
+    "name": "UAB Rasrama (Kauno filialas)",
+    "slug": "rasrama-kaunas",
+    "city": "Kaunas",
+    "lat": 54.9097,
+    "lng": 23.982,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Pramonės pr. 23, Kaunas",
+    "country": "LT",
+    "websiteUrl": null,
+    "contactEmail": null,
+    "contactPhone": "+370 67242499",
+    "tagline": "Vietinis ir tarptautinis krovinių pervežimas iš Gričiupio rajono.",
+    "descriptionEt": "Rasrama Kaunase filiaal Gričiupio piirkonnas pakub kohalikku ja rahvusvahelist kaubavedu. Andmed pärinevad ärikataloogist VisaLietuva.lt.",
+    "descriptionEn": "Rasrama's Kaunas branch, in the Gričiupis area, offers local and international cargo transport. Details are sourced from the VisaLietuva.lt business directory.",
+    "registryCode": null
+  },
+  {
+    "name": "MB Cargis",
+    "slug": "cargis-kaunas",
+    "city": "Kaunas",
+    "lat": 54.9073,
+    "lng": 24.0008,
+    "serviceTypes": [
+      "moving"
+    ],
+    "address": "Draugystės g. 17, Kaunas",
+    "country": "LT",
+    "websiteUrl": "https://www.cargis.lt",
+    "contactEmail": "info@cargis.lt",
+    "contactPhone": "+370 68312809",
+    "tagline": "Greitas krovinių pervežimas ir perkraustymo pagalba Petrašiūnuose.",
+    "descriptionEt": "MB Cargis, mis paikneb Kaunase Petrašiūnude piirkonnas, pakub kiiret kaubavedu ja kolimisabi eraisikutele ja ettevõtetele, sh osalist lastivedu üle Leedu. Sõiduki maht on 13,5 m³, kandevõime kuni 1200 kg.",
+    "descriptionEn": "MB Cargis, based in the Petrašiūnai area of Kaunas, offers rapid cargo transport and moving assistance for both individuals and businesses, including part-load shipments across Lithuania. Their vehicle has 13.5 m³ capacity and up to 1,200 kg payload.",
+    "registryCode": "304604741"
+  },
+  {
+    "name": "Kraustymo.lt",
+    "slug": "kraustymo-lt-kaunas",
+    "city": "Kaunas",
+    "lat": 54.9325,
+    "lng": 23.9273,
+    "serviceTypes": [
+      "moving",
+      "cleaning"
+    ],
+    "address": "Ašigalio g. 49, Kaunas",
+    "country": "LT",
+    "websiteUrl": "https://kraustymo.lt",
+    "contactEmail": "kraustymoo@gmail.com",
+    "contactPhone": "+370 66400300",
+    "tagline": "Perkraustymo, IKEA baldų surinkimo ir valymo paslaugos Eiguliuose.",
+    "descriptionEt": "Kraustymo.lt pakub Kaunase Eigulių piirkonnast mööbli ja kodutehnika kolimist, IKEA mööbli kokkupanekut, vana mööbli äravedu ning ka koristusteenust. Regulaarsed veod toimuvad ka liinil Kaunas-Vilnius-Kaunas.",
+    "descriptionEn": "Kraustymo.lt, operating from the Eiguliai area of Kaunas, offers furniture and appliance moving, IKEA furniture assembly, old furniture removal, and also cleaning services. They run regular routes between Kaunas and Vilnius as well.",
+    "registryCode": null
+  },
+  {
+    "name": "Transnita (Priekabos Kaune)",
+    "slug": "transnita-priekabos-kaune",
+    "city": "Kaunas",
+    "lat": 54.9085,
+    "lng": 23.8932,
+    "serviceTypes": [
+      "trailer"
+    ],
+    "address": "Neries krantinė 16G, Kaunas",
+    "country": "LT",
+    "websiteUrl": "https://priekaboskaune.lt",
+    "contactEmail": "paulius@transnita.lt",
+    "contactPhone": "+370 67755737",
+    "tagline": "Priekabų, motociklų priekabų ir platformų nuoma Vilijampolėje, dirba 24/7.",
+    "descriptionEt": "Transnita rendib Kaunase Vilijampolė piirkonnast erinevaid haagiseid - kaanega ja kaaneta, mootorratta haagiseid ning platvormhaagiseid (3 m ja 5 m) - ööpäevaringselt. Näiteks 2,5 m kaaneta haagis maksab alates 9 eurost (3 tundi).",
+    "descriptionEn": "Transnita rents out various trailers - with and without covers, motorcycle trailers, and flatbed platforms (3m and 5m) - from the Vilijampolė area of Kaunas, available 24/7. A 2.5m uncovered trailer starts from €9 for 3 hours.",
+    "registryCode": null
+  },
+  {
+    "name": "JustRent",
+    "slug": "justrent-kaunas",
+    "city": "Kaunas",
+    "lat": 54.9284,
+    "lng": 23.853,
+    "serviceTypes": [
+      "trailer"
+    ],
+    "address": "Karklytės g. 2, Kaunas",
+    "country": "LT",
+    "websiteUrl": "https://justrent.lt",
+    "contactEmail": null,
+    "contactPhone": "+370 60025555",
+    "tagline": "Įvairių priekabų nuoma Šilainiuose - nuo dviračių iki automobilių vežimo priekabų.",
+    "descriptionEt": "JustRent rendib Kaunase Šilainiai piirkonnast erinevaid haagiseid - kaetud ja lahtised (2,5-6 m), mootorratta- ja ATV-haagiseid ning autoveohaagiseid (BE-kategooria). Hinnad algavad 6 eurost.",
+    "descriptionEn": "JustRent, based in the Šilainiai area of Kaunas, rents a range of trailers - covered and open (2.5-6m), motorcycle and ATV trailers, and car-transport trailers (BE category). Prices start from €6.",
+    "registryCode": null
+  },
+  {
+    "name": "Abdonas",
+    "slug": "abdonas-kaunas",
+    "city": "Kaunas",
+    "lat": 54.9192,
+    "lng": 23.9448,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Gaižiūnų g. 4, Kaunas",
+    "country": "LT",
+    "websiteUrl": "https://www.abdonas.lt",
+    "contactEmail": "abdonas@gmail.com",
+    "contactPhone": "+370 68818946",
+    "tagline": "Visos valymo paslaugos Žaliakalnyje: patalpos, kilimai, langai, fasadai jau 20 metų.",
+    "descriptionEt": "Abdonas pakub Kaunase Žaliakalnise piirkonnast juba üle 20 aasta täisvalikut koristusteenuseid - igapäevast ja remondijärgset koristust, vaipade ja mööbli puhastust, akende ja fassaadide pesu ning basseinihooldust.",
+    "descriptionEn": "Abdonas, based in the Žaliakalnis area of Kaunas, has offered a full range of cleaning services for over 20 years - daily and post-renovation cleaning, carpet and furniture cleaning, window and facade washing, and pool maintenance.",
+    "registryCode": null
+  },
+  {
+    "name": "UAB Namų Bitės",
+    "slug": "namu-bites-kaunas",
+    "city": "Kaunas",
+    "lat": 54.9394,
+    "lng": 23.9109,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "Panerių g. 297, Kaunas",
+    "country": "LT",
+    "websiteUrl": "https://namubites.lt",
+    "contactEmail": "paslaugos@namubites.lt",
+    "contactPhone": "+370 64061006",
+    "tagline": "Namų, biurų ir po remonto valymo paslaugos Šilainiuose.",
+    "descriptionEt": "UAB Namų Bitės pakub Kaunase Šilainiai piirkonnast kodude ja äriruumide koristust, remondijärgset koristust ning vaipade ja pehme mööbli süvapuhastust. Töötavad kell 8-17.",
+    "descriptionEn": "UAB Namų Bitės, operating from the Šilainiai area of Kaunas, provides home and office cleaning, post-renovation cleaning, and deep cleaning of carpets and upholstery. Operating hours are 8:00-17:00.",
+    "registryCode": "305900608"
+  },
+  {
+    "name": "UAB Gaisvė",
+    "slug": "gaisve-kaunas",
+    "city": "Kaunas",
+    "lat": 54.902,
+    "lng": 23.9316,
+    "serviceTypes": [
+      "cleaning"
+    ],
+    "address": "P. Vaičaičio g. 1, Kaunas",
+    "country": "LT",
+    "websiteUrl": "https://www.gaisve.lt",
+    "contactEmail": "info@gaisve.lt",
+    "contactPhone": "+370 62082626",
+    "tagline": "Socialinė valymo įmonė Žaliakalnyje - patalpų, fasadų ir teritorijos priežiūra.",
+    "descriptionEt": "UAB Gaisvė on Kaunase Žaliakalnise piirkonnas tegutsev sotsiaalne ettevõte, mis pakub siseruumide koristust, fassaadipesu ja territooriumihooldust ning aitab tööturule integreerida sotsiaalse tõrjutuse riskiga inimesi. Ettevõttel on 8 aasta kogemus ja 38 töötajat.",
+    "descriptionEn": "UAB Gaisvė is a social enterprise in the Žaliakalnis area of Kaunas offering indoor cleaning, facade washing and grounds maintenance, while helping integrate people at risk of social exclusion into the workforce. The company has 8 years of experience and 38 employees.",
+    "registryCode": null
+  }
+]
