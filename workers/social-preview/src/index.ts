@@ -147,31 +147,41 @@ const HUB_DESC: Record<Lang, (noun: string, city: string) => string> = {
 
 // ── Homepage copy per language ─────────────────────────────────────────────────
 //
-// Geography honesty (see estonia-space-hub/CLAUDE.md): the directory covers all
-// of Estonia and the concierge runs Tallinn/Harjumaa first. It previously
-// claimed "across the Baltics" / "visā Latvijā" / "visoje Lietuvoje" — coverage
-// the business does not have.
+// Geography honesty: two different claims live here and they have two different
+// footprints.
+//   • The DIRECTORY — what a visitor can browse, compare and contact — now spans
+//     Estonia, Latvia and Lithuania (live LV/LT providers verified in production
+//     2026-08: Rīga, Daugavpils, Rēzekne, Jēkabpils, Valmiera, Cēsis, Sigulda,
+//     Ogre, Salaspils; Vilnius, Kaunas, Klaipėda, Šiauliai, Panevėžys). Coverage
+//     claims may say "the Baltics".
+//   • The CONCIERGE — "send one request, we broker 2–3 offers" — is still run out
+//     of Estonia and is strongest in Tallinn/Harjumaa. Never phrase it so a Rīga
+//     or Vilnius customer reads full-service parity into it.
+// The titles below therefore say what the directory holds and where; the "one
+// request → 2–3 offers" promise moved into the description, where it carries no
+// country name. It used to sit in the title welded to a country, which read as a
+// full-service guarantee once the title said "Baltics".
 
 // No em dash here: withSiteName() appends " — Ruumly", and two of them in one
-// title reads badly in a search result.
+// title reads badly in a search result. Use a colon if you need a break.
 const HOME_TITLE: Record<Lang, string> = {
-  et: "Kolimisabi Eestis: üks päring, 2–3 pakkumist",
-  en: "Moving in Estonia: one request, 2–3 offers",
-  ru: "Переезд в Эстонии: один запрос, 2–3 предложения",
-  lv: "Pārvākšanās Igaunijā: viens pieprasījums, 2–3 piedāvājumi",
-  lt: "Perkraustymas Estijoje: viena užklausa, 2–3 pasiūlymai",
+  et: "Kolimine, laopind ja haagised Baltikumis",
+  en: "Movers, storage and trailers in the Baltics",
+  ru: "Переезд, склады и прицепы в странах Балтии",
+  lv: "Pārcēlāji, noliktavas un piekabes Baltijā",
+  lt: "Krovėjai, sandėliai ir priekabos Baltijos šalyse",
 };
 
 const HOME_DESC: Record<Lang, string> = {
-  // Geography still says Estonia deliberately. The LV/LT directory import had not
-  // landed when this was written, and the geography-honesty rule says we do not
-  // advertise a market before we can actually serve it. Widen to the Baltics only
-  // once those providers are live and verified in production.
-  et: "Kolimine, laopind, haagis, kaubik ja koristus — kõik ühest kohast. Saada üks päring, toome 2–3 pakkumist, tavaliselt 24 tunniga.",
-  en: "Movers, storage, trailers, vans and cleaning across Estonia. Send one request and get 2–3 offers, usually within 24 hours.",
-  ru: "Переезд, склад, прицепы, фургоны и уборка по всей Эстонии. Один запрос — 2–3 предложения, обычно за 24 часа.",
-  lv: "Pārvākšanās, noliktavas, piekabes, furgoni un uzkopšana Igaunijā. Viens pieprasījums — 2–3 piedāvājumi 24 stundās.",
-  lt: "Perkraustymas, sandėliai, priekabos, mikroautobusai ir valymas Estijoje. Viena užklausa — 2–3 pasiūlymai per 24 val.",
+  // Widened 2026-08: the LV/LT directory import is live, so "across Estonia" was
+  // understating real coverage. Geography here describes the DIRECTORY only —
+  // the concierge match loop is still Estonia-run, so don't rewrite these into a
+  // per-country service promise.
+  et: "Kolimine, laopind, haagis, kaubik ja koristus — kõik ühest kohast. Partnerid Eestis, Lätis ja Leedus. Üks päring, 2–3 pakkumist, tavaliselt 24 tunniga.",
+  en: "Movers, storage, trailers, vans and cleaning — verified partners in Estonia, Latvia and Lithuania. One request, 2–3 offers, usually within 24 hours.",
+  ru: "Переезд, склад, прицепы, фургоны и уборка. Проверенные партнёры в Эстонии, Латвии и Литве. Один запрос — 2–3 предложения, обычно за 24 часа.",
+  lv: "Pārvākšanās, noliktavas, piekabes, furgoni un uzkopšana. Pārbaudīti partneri Igaunijā, Latvijā un Lietuvā. Viens pieprasījums — 2–3 piedāvājumi 24 stundās.",
+  lt: "Perkraustymas, sandėliai, priekabos, furgonai ir valymas. Patikrinti partneriai Estijoje, Latvijoje ir Lietuvoje. Viena užklausa — 2–3 pasiūlymai per 24 val.",
 };
 
 function parseLang(segment: string | undefined): Lang {
@@ -226,7 +236,7 @@ const DEFAULT_IMAGE = "https://ruumly.eu/ruumly-og.png?v=3";
 // Bump to invalidate cached OG HTML at the edge (caches.default persists across
 // deploys, so changing og:image/title/desc otherwise won't reach crawlers until
 // the entry's TTL expires).
-const OG_CACHE_VERSION = "4";
+const OG_CACHE_VERSION = "5";
 const DEFAULT_TITLE = HOME_TITLE.en;
 const DEFAULT_DESC  = HOME_DESC.en;
 
