@@ -2,7 +2,6 @@ using System.Data;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
 using Ruumly.Backend.Constants;
 using Ruumly.Backend.Data;
@@ -25,7 +24,8 @@ namespace Ruumly.Backend.Controllers;
 public class AdminOffersController(
     RuumlyDbContext db,
     IBackgroundEmailQueue emailQueue,
-    IConfiguration config) : AdminBaseController(db)
+    IConfiguration config,
+    IConciergeOutreachService outreachService) : AdminBaseController(db)
 {
     // Reply-To on customer/provider correspondence — matches the info@ address
     // printed in the email signatures (EmailTranslations). This is NOT the ops
@@ -381,6 +381,8 @@ public class AdminOffersController(
                 .ToListAsync())
             .ToHashSet();
 
+        var opsPhone = await OpsPhone.ResolveAsync(Db);
+
         var recipients = new List<OutreachPreviewItemDto>(requestedIds.Count);
         foreach (var supplierId in requestedIds)
         {
@@ -395,7 +397,7 @@ public class AdminOffersController(
             // a sample "Submit your price" link. The real per-row token is minted
             // only at send time, so this preview token is ephemeral (never stored).
             var message = ProviderOutreachComposer.Compose(
-                lead, supplier, config["AppUrl"], OfferToken.Generate());
+                lead, supplier, config["AppUrl"], OfferToken.Generate(), opsPhone);
             var email = string.IsNullOrWhiteSpace(supplier.ContactEmail)
                 ? null
                 : supplier.ContactEmail.Trim();
@@ -423,6 +425,9 @@ public class AdminOffersController(
     /// ContactEmail (the rest are reported back as skipped). The email carries
     /// lead facts only — category, route, details, date — never the customer's
     /// name/email/phone; replies land in the ops inbox via Reply-To.
+    /// The sending itself lives in <see cref="IConciergeOutreachService"/>, which
+    /// the automatic fan-out on concierge intake also uses — one implementation,
+    /// so admin-sent and auto-sent outreach can never drift apart.
     /// </summary>
     [HttpPost("leads/{id:guid}/outreach")]
     public async Task<IActionResult> SendOutreach(Guid id, [FromBody] OutreachRequest body)
@@ -434,90 +439,10 @@ public class AdminOffersController(
         if (requestedIds.Count == 0)
             return BadRequest(Error("supplierIds must contain at least one supplier."));
 
-        var suppliers = await Db.Suppliers
-            .Where(s => requestedIds.Contains(s.Id))
-            .ToDictionaryAsync(s => s.Id);
+        var result = await outreachService.SendAsync(
+            lead, requestedIds, body.Resend, User.GetUserId().ToString());
 
-        var sent    = new List<object>();
-        var skipped = new List<object>();
-        var emails  = new List<(string To, string Subject, string Body)>();
-        IDbContextTransaction? transaction = null;
-
-        try
-        {
-            if (Db.Database.IsRelational())
-                transaction = await Db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
-
-            var contactedSupplierIds = (await Db.ProviderOutreaches
-                    .Where(o => o.DemandLeadId == id && requestedIds.Contains(o.SupplierId))
-                    .Select(o => o.SupplierId)
-                    .Distinct()
-                    .ToListAsync())
-                .ToHashSet();
-
-            foreach (var supplierId in requestedIds)
-            {
-                if (!suppliers.TryGetValue(supplierId, out var supplier))
-                {
-                    skipped.Add(new { supplierId, supplierName = (string?)null, reason = "not_found" });
-                    continue;
-                }
-                if (string.IsNullOrWhiteSpace(supplier.ContactEmail))
-                {
-                    skipped.Add(new { supplierId, supplierName = (string?)supplier.Name, reason = "no_email" });
-                    continue;
-                }
-                if (!body.Resend && contactedSupplierIds.Contains(supplierId))
-                {
-                    skipped.Add(new { supplierId, supplierName = (string?)supplier.Name, reason = "already_contacted" });
-                    continue;
-                }
-
-                var to = supplier.ContactEmail.Trim();
-                // Per-recipient quote token: the provider opens /{lang}/quote/{token}
-                // and submits a price without an account. Minted here so the link in
-                // the email and the stored row always carry the same token.
-                var quoteToken = OfferToken.Generate();
-                var message = ProviderOutreachComposer.Compose(
-                    lead, supplier, config["AppUrl"], quoteToken);
-                emails.Add((to, message.Subject, message.TextBody));
-
-                var row = new ProviderOutreach
-                {
-                    Id           = Guid.NewGuid(),
-                    DemandLeadId = lead.Id,
-                    SupplierId   = supplier.Id,
-                    SentTo       = to,
-                    SentAt       = DateTime.UtcNow,
-                    Status       = ProviderOutreachStatus.Sent,
-                    QuoteToken   = quoteToken,
-                };
-                Db.ProviderOutreaches.Add(row);
-                sent.Add(MapOutreach(row, supplier.Name));
-            }
-
-            // First outreach is the first admin touch: New → Contacted (stamps
-            // ContactedAt). Leads further down the funnel keep their status.
-            if (emails.Count > 0 && lead.Status == DemandLeadStatus.New)
-                DemandLeadLifecycle.MoveTo(lead, DemandLeadStatus.Contacted);
-
-            Audit("lead.outreach_sent", User.GetUserId().ToString(), lead.Id.ToString(),
-                  $"Sent: {sent.Count}, skipped: {skipped.Count}");
-
-            // Save and commit BEFORE enqueueing: Hangfire commits jobs on its own
-            // connection, so failed persistence must never double-email providers.
-            await Db.SaveChangesAsync();
-            if (transaction is not null)
-                await transaction.CommitAsync();
-        }
-        catch (Exception ex) when (IsSerializationFailure(ex))
-        {
-            if (transaction is not null)
-            {
-                try { await transaction.RollbackAsync(); }
-                catch { /* A failed commit may already have closed the transaction. */ }
-            }
-
+        if (result.SerializationConflict)
             return Conflict(new
             {
                 error = "Provider outreach changed concurrently.",
@@ -525,17 +450,21 @@ public class AdminOffersController(
                 statusCode = StatusCodes.Status409Conflict,
                 retryable = true,
             });
-        }
-        finally
+
+        return Ok(new
         {
-            if (transaction is not null)
-                await transaction.DisposeAsync();
-        }
-
-        foreach (var (to, subject, emailBody) in emails)
-            emailQueue.EnqueueEmail(to, subject, emailBody, htmlBody: null, replyTo: OpsReplyTo);
-
-        return Ok(new { sent, skipped });
+            sent = result.Sent
+                .Select(s => MapOutreach(s.Row, s.SupplierName))
+                .ToList(),
+            skipped = result.Skipped
+                .Select(s => (object)new
+                {
+                    supplierId   = s.SupplierId,
+                    supplierName = s.SupplierName,
+                    reason       = s.Reason,
+                })
+                .ToList(),
+        });
     }
 
     private static bool IsSerializationFailure(Exception exception)

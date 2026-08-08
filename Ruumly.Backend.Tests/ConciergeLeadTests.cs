@@ -23,9 +23,11 @@ public class ConciergeLeadTests
 {
     private sealed class CapturingEmailQueue : IBackgroundEmailQueue
     {
-        public List<(string To, string Subject, string TextBody)> Emails { get; } = [];
+        public List<(string To, string Subject, string TextBody, string? HtmlBody, string? ReplyTo)> Emails { get; } = [];
         public void EnqueueEmail(string to, string subject, string textBody, string? htmlBody = null)
-            => Emails.Add((to, subject, textBody));
+            => Emails.Add((to, subject, textBody, htmlBody, null));
+        public void EnqueueEmail(string to, string subject, string textBody, string? htmlBody, string? replyTo)
+            => Emails.Add((to, subject, textBody, htmlBody, replyTo));
         public void EnqueueVerificationEmail(Guid userId) { }
     }
 
@@ -40,9 +42,11 @@ public class ConciergeLeadTests
             => Task.CompletedTask;
     }
 
-    private static SupportController MakeSupport(RuumlyDbContext db, IBackgroundEmailQueue queue) =>
+    private static SupportController MakeSupport(
+        RuumlyDbContext db, IBackgroundEmailQueue queue, IConciergeOutreachService? outreach = null) =>
         new(db, queue, new NoOpNotifications(),
             new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(),
+            outreach ?? TestServices.Outreach(db, queue),
             Microsoft.Extensions.Logging.Abstractions.NullLogger<SupportController>.Instance)
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },
@@ -120,6 +124,156 @@ public class ConciergeLeadTests
         db.DemandLeads.Single().Category.Should().Be(DemandLeadCategory.Moving);
     }
 
+    // ─── Retired consumer categories: packing + insurance (2026-08) ───────────
+    // Market research across EE/LV/LT: packing is NEVER sold standalone in the
+    // Baltics — it is a line item inside a moving company's offer; and "insurance"
+    // here means CMR carrier liability sold B2B to hauliers, not something a
+    // household buys. Neither may create a top-level lead in its own category
+    // (nobody to route it to), but the ask must never be silently discarded.
+
+    [Fact]
+    public async Task RequestConcierge_PackingAlone_CreatesMovingLead_AndKeepsThePackingAskVisible()
+    {
+        var db    = TestDbContext.Create();
+        var queue = new CapturingEmailQueue();
+
+        SeedMovingProvider(db, "Tallinn Movers", "m@x.ee");
+        await db.SaveChangesAsync();
+
+        var result = await MakeSupport(db, queue).RequestConcierge(new ConciergeRequest(
+            Email: "cust@x.ee", City: "Tallinn", Categories: ["Packing"],
+            Details: "2-room flat, 3rd floor"));
+
+        result.Should().BeOfType<OkObjectResult>();
+
+        var lead = db.DemandLeads.Single();
+        lead.Category.Should().Be(DemandLeadCategory.Moving,
+            "packing is not a standalone business here — it is priced inside a mover's offer");
+
+        // The admin-facing signal lives in the English machine summary, which is
+        // what the admin list view shows.
+        lead.Query.Should().Contain("moving", "the routed category leads the machine summary");
+        lead.Query.Should().Contain("packing", "the admin must still see that packing help was asked for");
+
+        // ...and NOT in Details. That field is printed verbatim into a cold email
+        // written in the PROVIDER's language, so an English ops note in brackets
+        // would land in the middle of an Estonian mail and read like spam.
+        lead.Details.Should().Be("2-room flat, 3rd floor",
+            "Details carries the customer's own words and nothing else");
+        lead.Details.Should().NotContain("Packing help requested");
+        lead.Details.Should().NotContain("[");
+
+        queue.Emails.Single(e => e.To == "info@ruumly.eu").TextBody
+            .Should().Contain("packing (routed as: moving)",
+                "the ops alert reports what was asked AND how it was routed");
+
+        // A moving lead fans out normally, and the mover we ask for a price sees
+        // that packing is part of the job — in Estonian, because the seeded
+        // supplier is an EE company.
+        const string packingEstonian =
+            "Klient soovib lisaks pakkimisabi — palun arvestage see oma hinna sisse.";
+        var providerEmail = ProviderEmails(queue).Should().ContainSingle().Subject;
+        providerEmail.TextBody.Should().Contain(packingEstonian);
+        providerEmail.HtmlBody.Should().Contain(packingEstonian);
+        providerEmail.TextBody.Should().NotContain("Packing help requested",
+            "the provider must never receive the English ops note");
+    }
+
+    [Fact]
+    public async Task RequestConcierge_InsuranceAlone_FallsBackToAny_NeverAnInsuranceLead()
+    {
+        var db    = TestDbContext.Create();
+        var queue = new CapturingEmailQueue();
+
+        SeedMovingProvider(db, "Tallinn Movers", "m@x.ee");
+        await db.SaveChangesAsync();
+
+        var result = await MakeSupport(db, queue).RequestConcierge(new ConciergeRequest(
+            Email: "cust@x.ee", City: "Tallinn", Categories: ["insurance"]));
+
+        result.Should().BeOfType<OkObjectResult>();
+
+        var lead = db.DemandLeads.Single();
+        lead.Category.Should().Be(DemandLeadCategory.Any,
+            "there is no consumer insurance product to route to — an admin decides by hand");
+        lead.Category.Should().NotBe(DemandLeadCategory.Insurance);
+
+        // Written down where the admin works — never in Details. "no consumer
+        // product; route by hand" is an instruction to US, and Details is printed
+        // verbatim into provider mail.
+        lead.Query.Should().Contain("insurance",
+            "the request is routed by hand, so what was asked must be written down");
+        lead.Details.Should().BeNull("the visitor typed no details of their own");
+
+        queue.Emails.Single(e => e.To == "info@ruumly.eu").TextBody
+            .Should().Contain("insurance (routed as: any)");
+        ProviderEmails(queue).Should().BeEmpty("an Any lead never blasts providers");
+    }
+
+    [Fact]
+    public async Task RequestConcierge_MovingPlusPacking_StillCreatesAMovingLead()
+    {
+        var db = TestDbContext.Create();
+
+        var result = await MakeSupport(db, new CapturingEmailQueue()).RequestConcierge(
+            new ConciergeRequest(Email: "cust@x.ee", City: "Tallinn",
+                Categories: ["moving", "packing"]));
+
+        result.Should().BeOfType<OkObjectResult>();
+
+        var lead = db.DemandLeads.Single();
+        lead.Category.Should().Be(DemandLeadCategory.Moving,
+            "packing resolves to moving, so the pair is ONE category — not the Any fallback");
+        lead.Query.Should().Contain("packing", "the add-on is still recorded");
+    }
+
+    // Regression guard for the retained enum members. New leads are never created
+    // in Packing/Insurance any more, but production rows already carry them and the
+    // Category column persists the enum NAME — deleting a member would make those
+    // rows unreadable. Every read path an admin uses must keep working.
+    [Fact]
+    public async Task PreExistingPackingAndInsuranceLeads_AreStillReadable()
+    {
+        var db  = TestDbContext.Create();
+        var now = DateTime.UtcNow;
+
+        DemandLead Legacy(DemandLeadCategory category) => new()
+        {
+            Id = Guid.NewGuid(), Email = "old@x.ee", City = "Tallinn",
+            Category = category, Language = "et", Source = "concierge",
+            Status = DemandLeadStatus.New, CreatedAt = now.AddDays(-30),
+        };
+
+        db.DemandLeads.AddRange(Legacy(DemandLeadCategory.Packing), Legacy(DemandLeadCategory.Insurance));
+        await db.SaveChangesAsync();
+
+        var admin = MakeAdmin(db);
+
+        var (total, items) = ReadLeads(await admin.GetLeads(
+            status: null, source: null, category: null, city: null));
+        total.Should().Be(2, "historical leads must not vanish from the admin queue");
+        items.Select(i => Prop(i, "category"))
+             .Should().BeEquivalentTo(new[] { "packing", "insurance" });
+
+        // The category filter still resolves both slugs (they remain in the storage
+        // catalogue even though nobody can select them any more).
+        ReadLeads(await admin.GetLeads(status: null, source: null, category: "packing", city: null))
+            .Total.Should().Be(1);
+        ReadLeads(await admin.GetLeads(status: null, source: null, category: "insurance", city: null))
+            .Total.Should().Be(1);
+
+        // Match suggestions and localized labels must not throw on them either.
+        foreach (var lead in db.DemandLeads.ToList())
+        {
+            (await admin.GetLeadMatches(lead.Id)).Should().BeOfType<OkObjectResult>();
+            Ruumly.Backend.Constants.ServiceCategories.SlugFor(lead.Category)
+                .Should().BeOneOf("packing", "insurance");
+            foreach (var lang in new[] { "et", "en", "ru", "lv", "lt" })
+                Ruumly.Backend.Helpers.EmailTranslations.For(lang)
+                    .CategoryLabel(lead.Category).Should().NotBeNullOrWhiteSpace();
+        }
+    }
+
     [Fact]
     public async Task RequestConcierge_MissingEmailOrCity_400_NoLead()
     {
@@ -147,7 +301,9 @@ public class ConciergeLeadTests
     }
 
     // A1 — enriched instant ops alert: a one-click workspace deep link + how many
-    // providers we could reach right now (nearby, 25 km).
+    // providers we could reach right now (nearby, 25 km). Since the auto-fanout
+    // landed, intake queues TWO kinds of mail — the ops alert and one provider
+    // outreach per contacted provider — so each is asserted by recipient.
     [Fact]
     public async Task RequestConcierge_OpsAlert_IncludesWorkspaceDeepLink_AndNearbyProviderCount()
     {
@@ -172,12 +328,209 @@ public class ConciergeLeadTests
         await MakeSupport(db, queue).RequestConcierge(new ConciergeRequest(
             Email: "cust@x.ee", City: "Tallinn", Categories: ["moving"]));
 
-        var email  = queue.Emails.Should().ContainSingle().Subject;
+        var email  = queue.Emails.Should().ContainSingle(e => e.To == "info@ruumly.eu").Subject;
         var leadId = db.DemandLeads.Single().Id;
+        email.Subject.Should().Be("New concierge request — Tallinn");
         email.TextBody.Should().Contain("1 providers within 25 km",
             "the alert tells ops how many providers are reachable right now");
         email.TextBody.Should().Contain($"admin?tab=leads&lead={leadId}",
             "the alert deep-links into the lead's workspace");
+        email.TextBody.Should().Contain("Auto-contacted: 1 provider(s) within 25 km — Tallinn Movers",
+            "the alert reports what the auto-fanout did, so ops knows whether hand-work is still needed");
+
+        // The second message intake now queues: the availability request the
+        // auto-fanout sent to that provider.
+        var outreach = ProviderEmails(queue).Should().ContainSingle().Subject;
+        outreach.To.Should().Be("m@x.ee");
+        outreach.Subject.Should().Contain("Ruumly");
+        outreach.ReplyTo.Should().Be("info@ruumly.eu");
+    }
+
+    // ─── Auto-fanout on intake ────────────────────────────────────────────────
+    // Live data: 10 leads, 8 provider emails EVER sent, one lead contacted 13 h
+    // late and one never — while the single batch that did go out got a 75 %
+    // reply rate. Outreach must not wait for an admin to open the workspace.
+
+    private static Supplier SeedMovingProvider(
+        RuumlyDbContext db, string name, string? contactEmail, string city = "Tallinn")
+    {
+        var supplier = new Supplier
+        {
+            Id = Guid.NewGuid(), Name = name, ContactName = "C",
+            ContactEmail = contactEmail ?? "", ContactPhone = "1", IsActive = true,
+        };
+        db.Suppliers.Add(supplier);
+        db.Listings.Add(new Listing
+        {
+            Id = Guid.NewGuid(), SupplierId = supplier.Id, Supplier = supplier,
+            Type = ListingType.Moving, Title = $"Moving — {name}", City = city,
+            IsActive = true, PriceFrom = 50m, PriceUnit = "onetime", UpdatedAt = DateTime.UtcNow,
+        });
+        return supplier;
+    }
+
+    private static void SetSetting(RuumlyDbContext db, string key, string value) =>
+        db.PlatformSettings.Add(new PlatformSetting { Key = key, Value = value });
+
+    private static List<(string To, string Subject, string TextBody, string? HtmlBody, string? ReplyTo)>
+        ProviderEmails(CapturingEmailQueue queue) =>
+        queue.Emails.Where(e => e.To != "info@ruumly.eu").ToList();
+
+    [Fact]
+    public async Task RequestConcierge_AutoFanout_EmailsAtMostTheConfiguredMax()
+    {
+        var db    = TestDbContext.Create();
+        var queue = new CapturingEmailQueue();
+
+        for (var i = 0; i < 8; i++)
+            SeedMovingProvider(db, $"Mover {i}", $"mover{i}@x.ee");
+        SetSetting(db, "conciergeAutoOutreachMax", "3");
+        await db.SaveChangesAsync();
+
+        var result = await MakeSupport(db, queue).RequestConcierge(new ConciergeRequest(
+            Email: "cust@x.ee", City: "Tallinn", Categories: ["moving"]));
+
+        result.Should().BeOfType<OkObjectResult>();
+        ProviderEmails(queue).Should().HaveCount(3, "conciergeAutoOutreachMax caps one lead's fanout");
+        db.ProviderOutreaches.Should().HaveCount(3, "one row per email, minted with its own quote token");
+        db.ProviderOutreaches.Select(o => o.QuoteToken).Should().OnlyHaveUniqueItems();
+        db.DemandLeads.Single().Status.Should().Be(DemandLeadStatus.Contacted,
+            "the first outreach is the first touch");
+        db.DemandLeads.Single().ContactedAt.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task RequestConcierge_AutoFanout_ClampsMaxToTwelve()
+    {
+        var db    = TestDbContext.Create();
+        var queue = new CapturingEmailQueue();
+
+        for (var i = 0; i < 15; i++)
+            SeedMovingProvider(db, $"Mover {i}", $"mover{i}@x.ee");
+        SetSetting(db, "conciergeAutoOutreachMax", "99");
+        await db.SaveChangesAsync();
+
+        await MakeSupport(db, queue).RequestConcierge(new ConciergeRequest(
+            Email: "cust@x.ee", City: "Tallinn", Categories: ["moving"]));
+
+        ProviderEmails(queue).Should().HaveCount(12, "an absurd setting is clamped to 12, not obeyed");
+    }
+
+    [Fact]
+    public async Task RequestConcierge_AutoFanout_DisabledBySetting_EmailsNobody()
+    {
+        var db    = TestDbContext.Create();
+        var queue = new CapturingEmailQueue();
+
+        SeedMovingProvider(db, "Tallinn Movers", "m@x.ee");
+        SetSetting(db, "conciergeAutoOutreach", "false");
+        await db.SaveChangesAsync();
+
+        var result = await MakeSupport(db, queue).RequestConcierge(new ConciergeRequest(
+            Email: "cust@x.ee", City: "Tallinn", Categories: ["moving"]));
+
+        result.Should().BeOfType<OkObjectResult>();
+        ProviderEmails(queue).Should().BeEmpty("the master switch is off");
+        db.ProviderOutreaches.Should().BeEmpty();
+        db.DemandLeads.Single().Status.Should().Be(DemandLeadStatus.New);
+        queue.Emails.Single(e => e.To == "info@ruumly.eu").TextBody
+            .Should().Contain("Auto-outreach: OFF",
+                "ops must be told the lead needs hand-work");
+    }
+
+    [Fact]
+    public async Task RequestConcierge_CategoryAny_NeverFansOut()
+    {
+        var db    = TestDbContext.Create();
+        var queue = new CapturingEmailQueue();
+
+        SeedMovingProvider(db, "Tallinn Movers", "m@x.ee");
+        await db.SaveChangesAsync();
+
+        // Two categories → Category.Any: we don't know what to ask a provider to price.
+        var result = await MakeSupport(db, queue).RequestConcierge(new ConciergeRequest(
+            Email: "cust@x.ee", City: "Tallinn", Categories: ["moving", "warehouse"]));
+
+        result.Should().BeOfType<OkObjectResult>();
+        db.DemandLeads.Single().Category.Should().Be(DemandLeadCategory.Any);
+        ProviderEmails(queue).Should().BeEmpty("a category-less request must not blast providers");
+        db.ProviderOutreaches.Should().BeEmpty();
+        queue.Emails.Single(e => e.To == "info@ruumly.eu").TextBody
+            .Should().Contain("Auto-outreach: skipped");
+    }
+
+    [Fact]
+    public async Task RequestConcierge_AutoFanout_SkipsProvidersWithoutEmail_AndCountsThem()
+    {
+        var db    = TestDbContext.Create();
+        var queue = new CapturingEmailQueue();
+
+        SeedMovingProvider(db, "Reachable", "reach@x.ee");
+        SeedMovingProvider(db, "No Address One", null);
+        SeedMovingProvider(db, "No Address Two", "   ");
+        await db.SaveChangesAsync();
+
+        await MakeSupport(db, queue).RequestConcierge(new ConciergeRequest(
+            Email: "cust@x.ee", City: "Tallinn", Categories: ["moving"]));
+
+        ProviderEmails(queue).Should().ContainSingle().Which.To.Should().Be("reach@x.ee");
+        db.ProviderOutreaches.Should().ContainSingle();
+        queue.Emails.Single(e => e.To == "info@ruumly.eu").TextBody
+            .Should().Contain("(2 skipped: no email)",
+                "ops needs to know which providers we cannot reach at all");
+    }
+
+    private sealed class ThrowingOutreach : IConciergeOutreachService
+    {
+        public Task<OutreachSendResult> SendAsync(DemandLead lead, IReadOnlyList<Guid> supplierIds,
+            bool resend, string actor, CancellationToken ct = default)
+            => throw new InvalidOperationException("boom");
+
+        public Task<AutoOutreachSummary> AutoFanOutAsync(DemandLead lead, CancellationToken ct = default)
+            => throw new InvalidOperationException("boom");
+    }
+
+    [Fact]
+    public async Task RequestConcierge_FanoutThrows_LeadStillSaved_AndRequestSucceeds()
+    {
+        var db    = TestDbContext.Create();
+        var queue = new CapturingEmailQueue();
+
+        var result = await MakeSupport(db, queue, new ThrowingOutreach())
+            .RequestConcierge(new ConciergeRequest(
+                Email: "cust@x.ee", City: "Tallinn", Categories: ["moving"]));
+
+        result.Should().BeOfType<OkObjectResult>(
+            "a broken fanout must never 500 a real customer or lose the lead");
+        db.DemandLeads.Should().ContainSingle();
+        queue.Emails.Single(e => e.To == "info@ruumly.eu").TextBody
+            .Should().Contain("Auto-outreach: FAILED",
+                "the alert must confess the failure instead of implying providers were contacted");
+    }
+
+    [Fact]
+    public async Task RequestConcierge_AutoFanout_NeverLeaksCustomerIdentityToProviders()
+    {
+        var db    = TestDbContext.Create();
+        var queue = new CapturingEmailQueue();
+
+        SeedMovingProvider(db, "Tallinn Movers", "m@x.ee");
+        await db.SaveChangesAsync();
+
+        await MakeSupport(db, queue).RequestConcierge(new ConciergeRequest(
+            Email: "mari.maasikas@example.com", City: "Tallinn", Name: "Mari Maasikas",
+            Phone: "+372 5555 1234", Categories: ["moving"],
+            Details: "2-room flat"));
+
+        var providerEmail = ProviderEmails(queue).Should().ContainSingle().Subject;
+        providerEmail.ReplyTo.Should().Be("info@ruumly.eu", "a provider's reply must land in the ops inbox");
+        providerEmail.HtmlBody.Should().NotBeNullOrWhiteSpace("the outreach email ships HTML, not plain text only");
+        foreach (var secret in new[] { "mari.maasikas@example.com", "Mari Maasikas", "+372 5555 1234" })
+        {
+            providerEmail.Subject.Should().NotContain(secret);
+            providerEmail.TextBody.Should().NotContain(secret);
+            providerEmail.HtmlBody.Should().NotContain(secret);
+        }
     }
 
     // ─── Admin lifecycle: first-touch stamp ───────────────────────────────────

@@ -139,7 +139,7 @@ public class ProviderOutreachNpgsqlTests(PostgresIntegrationFixture pg)
 
     private static AdminOffersController MakeAdmin(
         RuumlyDbContext db, IBackgroundEmailQueue queue) =>
-        new(db, queue, new ConfigurationBuilder().Build())
+        new(db, queue, new ConfigurationBuilder().Build(), TestServices.Outreach(db, queue))
         {
             ControllerContext = new ControllerContext
             {

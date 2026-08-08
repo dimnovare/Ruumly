@@ -26,7 +26,12 @@ public record QuoteLeadRequest(
 /// Public concierge intake ("tell us what you need, we find the partner").
 /// Not tied to any listing — captured as a <c>DemandLead</c> with
 /// <c>Source = "concierge"</c> and worked by the admin CRM.
-/// Categories accepts "warehouse" | "moving" | "trailer" (case-insensitive).
+/// Categories accepts the consumer-selectable slugs (case-insensitive):
+/// "warehouse" | "moving" | "trailer" | "cleaning" | "vanrental".
+/// "packing" and "insurance" are still recognised — they are live in indexed URLs
+/// and old clients — but never produce a lead in their own category: packing is
+/// routed to moving as an add-on, insurance falls back to Any. See
+/// Constants/ServiceCategories.RetainedNotSoldSlugs.
 /// </summary>
 public record ConciergeRequest(
     string Email,

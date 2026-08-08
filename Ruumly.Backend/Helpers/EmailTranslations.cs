@@ -125,14 +125,49 @@ public static class EmailTranslations
         // customer name/email/phone; the admin brokers the introduction
         string OutreachSubjectTpl,
         string OutreachGreeting,
-        string OutreachBodyTpl,
+        // One-line value proposition for a COLD recipient who has never heard of
+        // Ruumly: a real customer request, free to answer, no commitment, no
+        // signup needed to quote.
+        string OutreachIntro,
         string OutreachAsk,
+        // Discrete field labels — the request facts are rendered as a table in
+        // HTML and as "Label: value" lines in the text fallback.
+        string OutreachLabelService,
+        string OutreachLabelLocation,
+        string OutreachLabelDate,
+        string OutreachLabelDetails,
+        // Shown INSTEAD of a bare "—" when the customer gave no date / no
+        // details: a provider must never be asked to price a dash.
+        string OutreachDateAsap,
+        string OutreachDetailsMissing,
+        // Packing add-on. A "packing" request is routed to a Moving lead, so the
+        // lead's Category cannot carry the ask; ProviderOutreachComposer recovers
+        // it from the Query marker (ServiceCategories.HasPackingAddOn) and renders
+        // THIS line. It exists so the intent never has to travel as English prose
+        // inside Details, which is printed verbatim into a cold email written in
+        // the provider's own language.
+        string OutreachPackingAddOn,
+        // Next-day demand is the dominant pattern — a need date within
+        // ProviderOutreachComposer.UrgentWithinDays is flagged in the subject
+        // line and at the top of the body.
+        string OutreachUrgentBadge,
+        string OutreachUrgentTpl,
         // Primary CTA of the provider outreach email — points at the tokenized
         // quote page ("Submit your price"), replacing "reply to this email" as
         // the action. The URL is appended by ProviderOutreachComposer.
         string OutreachQuoteCta,
+        // Explicit low-friction alternative to the link: Reply-To is the ops
+        // inbox, so a plain reply with a price works today.
+        string OutreachReplyAlternative,
         string OutreachSignature,
-        // Service-category labels missing from the legacy EmailType* trio
+        // Label for the optional support phone line (PlatformSettings opsPhone).
+        // The whole line is omitted when the setting is unset.
+        string OutreachPhoneLabel,
+        // Service-category labels missing from the legacy EmailType* trio.
+        // CategoryPacking / CategoryInsurance are STILL REFERENCED and must not be
+        // deleted: we stopped selling those two as consumer services in 2026-08, but
+        // DemandLead rows created before that are still worked in the admin CRM and
+        // still generate provider outreach, which renders CategoryLabel(lead.Category).
         string CategoryCleaning,
         string CategoryPacking,
         string CategoryVanRental,
@@ -150,7 +185,11 @@ public static class EmailTranslations
                 .Replace("{listing}", listing)
                 .Replace("{price}", price);
 
-        /// <summary>Localized label for any DemandLeadCategory (Any → generic "service").</summary>
+        /// <summary>
+        /// Localized label for any DemandLeadCategory (Any → generic "service").
+        /// Packing/Insurance stay mapped on purpose — new leads are never created in
+        /// those categories any more, but historical ones must still render.
+        /// </summary>
         public string CategoryLabel(DemandLeadCategory category) => category switch
         {
             DemandLeadCategory.Warehouse => EmailTypeWarehouse,
@@ -168,12 +207,10 @@ public static class EmailTranslations
                 .Replace("{category}", category)
                 .Replace("{city}", city);
 
-        public string OutreachBody(string category, string city, string details, string date) =>
-            OutreachBodyTpl
-                .Replace("{category}", category)
-                .Replace("{city}", city)
-                .Replace("{details}", details)
-                .Replace("{date}", date);
+        /// <summary>"URGENT: the customer needs this by {date}" — only rendered
+        /// when the lead actually carries a near-term need date.</summary>
+        public string OutreachUrgent(string date) =>
+            OutreachUrgentTpl.Replace("{date}", date);
     }
 
     private static readonly EmailStrings Et = new(
@@ -287,10 +324,21 @@ public static class EmailTranslations
         OfferSignature:                "Ruumly meeskond\ninfo@ruumly.eu",
         OutreachSubjectTpl:            "Ruumly — kliendipäring: {category}, {city}",
         OutreachGreeting:              "Tere!",
-        OutreachBodyTpl:               "Klient asukohas {city} vajab teenust: {category}.\nLisainfo: {details}\nSoovitud aeg: {date}",
+        OutreachIntro:                 "Ruumly viib kliendid kokku kohalike teenusepakkujatega. See on päris kliendi päring — vastamine on tasuta ja mittesiduv ning hinna esitamiseks ei ole kontot vaja.",
         OutreachAsk:                   "Kas saate selle töö vastu võtta? Esitage oma hind allolevalt lingilt ja viime teid kliendiga kokku.",
+        OutreachLabelService:          "Teenus",
+        OutreachLabelLocation:         "Asukoht",
+        OutreachLabelDate:             "Soovitud aeg",
+        OutreachLabelDetails:          "Lisainfo",
+        OutreachDateAsap:              "esimesel võimalusel — klient kuupäeva ei märkinud, täpsustame selle üle",
+        OutreachDetailsMissing:        "klient ei täpsustanud — küsime tema käest üle",
+        OutreachPackingAddOn:          "Klient soovib lisaks pakkimisabi — palun arvestage see oma hinna sisse.",
+        OutreachUrgentBadge:           "KIIRE",
+        OutreachUrgentTpl:             "KIIRE: klient vajab teenust {date}",
         OutreachQuoteCta:              "Esitage oma hind",
+        OutreachReplyAlternative:      "Või vastake lihtsalt sellele e-kirjale koos hinnaga — kiri jõuab otse meie meeskonnani.",
         OutreachSignature:             "Ruumly meeskond\ninfo@ruumly.eu",
+        OutreachPhoneLabel:            "Tel",
         CategoryCleaning:              "Koristus",
         CategoryPacking:               "Pakkimine",
         CategoryVanRental:             "Kaubiku rent",
@@ -409,10 +457,21 @@ public static class EmailTranslations
         OfferSignature:                "The Ruumly team\ninfo@ruumly.eu",
         OutreachSubjectTpl:            "Ruumly — customer request: {category}, {city}",
         OutreachGreeting:              "Hello!",
-        OutreachBodyTpl:               "A customer in {city} needs: {category}.\nDetails: {details}\nPreferred date: {date}",
+        OutreachIntro:                 "Ruumly connects customers with local providers. This is a real customer request — answering is free, there is no commitment, and you don't need an account to send a price.",
         OutreachAsk:                   "Can you take this job? Submit your price using the link below and we'll connect you with the customer.",
+        OutreachLabelService:          "Service",
+        OutreachLabelLocation:         "Location",
+        OutreachLabelDate:             "Preferred date",
+        OutreachLabelDetails:          "Details",
+        OutreachDateAsap:              "as soon as possible — the customer gave no date, we'll confirm it",
+        OutreachDetailsMissing:        "not specified — we'll check with the customer",
+        OutreachPackingAddOn:          "The customer also wants packing help — please include it in your price.",
+        OutreachUrgentBadge:           "URGENT",
+        OutreachUrgentTpl:             "URGENT: the customer needs this by {date}",
         OutreachQuoteCta:              "Submit your price",
+        OutreachReplyAlternative:      "Or simply reply to this email with your price — it reaches our team directly.",
         OutreachSignature:             "The Ruumly team\ninfo@ruumly.eu",
+        OutreachPhoneLabel:            "Phone",
         CategoryCleaning:              "Cleaning",
         CategoryPacking:               "Packing",
         CategoryVanRental:             "Van rental",
@@ -530,10 +589,21 @@ public static class EmailTranslations
         OfferSignature:                "Команда Ruumly\ninfo@ruumly.eu",
         OutreachSubjectTpl:            "Ruumly — запрос клиента: {category}, {city}",
         OutreachGreeting:              "Здравствуйте!",
-        OutreachBodyTpl:               "Клиент из города {city} ищет услугу: {category}.\nДетали: {details}\nЖелаемая дата: {date}",
+        OutreachIntro:                 "Ruumly соединяет клиентов с местными исполнителями. Это запрос реального клиента — ответ бесплатный, ни к чему не обязывает, и для отправки цены не нужен аккаунт.",
         OutreachAsk:                   "Можете взять этот заказ? Отправьте вашу цену по ссылке ниже, и мы свяжем вас с клиентом.",
+        OutreachLabelService:          "Услуга",
+        OutreachLabelLocation:         "Местоположение",
+        OutreachLabelDate:             "Желаемая дата",
+        OutreachLabelDetails:          "Детали",
+        OutreachDateAsap:              "как можно скорее — клиент не указал дату, мы её уточним",
+        OutreachDetailsMissing:        "клиент не указал — мы уточним у него",
+        OutreachPackingAddOn:          "Клиент также хочет помощь с упаковкой — пожалуйста, включите её в свою цену.",
+        OutreachUrgentBadge:           "СРОЧНО",
+        OutreachUrgentTpl:             "СРОЧНО: услуга нужна клиенту к {date}",
         OutreachQuoteCta:              "Отправьте вашу цену",
+        OutreachReplyAlternative:      "Или просто ответьте на это письмо, указав свою цену — оно придёт напрямую нашей команде.",
         OutreachSignature:             "Команда Ruumly\ninfo@ruumly.eu",
+        OutreachPhoneLabel:            "Тел.",
         CategoryCleaning:              "Уборка",
         CategoryPacking:               "Упаковка",
         CategoryVanRental:             "Аренда фургона",
@@ -652,10 +722,21 @@ public static class EmailTranslations
         OfferSignature:                "Ruumly komanda\ninfo@ruumly.eu",
         OutreachSubjectTpl:            "Ruumly — klienta pieprasījums: {category}, {city}",
         OutreachGreeting:              "Sveiki!",
-        OutreachBodyTpl:               "Klients pilsētā {city} meklē pakalpojumu: {category}.\nDetaļas: {details}\nVēlamais datums: {date}",
+        OutreachIntro:                 "Ruumly savieno klientus ar vietējiem pakalpojumu sniedzējiem. Šis ir īsta klienta pieprasījums — atbildēt ir bez maksas un bez saistībām, un cenas nosūtīšanai konts nav vajadzīgs.",
         OutreachAsk:                   "Vai varat uzņemties šo darbu? Iesniedziet savu cenu, izmantojot zemāk esošo saiti, un mēs jūs savienosim ar klientu.",
+        OutreachLabelService:          "Pakalpojums",
+        OutreachLabelLocation:         "Atrašanās vieta",
+        OutreachLabelDate:             "Vēlamais datums",
+        OutreachLabelDetails:          "Detaļas",
+        OutreachDateAsap:              "pēc iespējas ātrāk — klients nenorādīja datumu, mēs to precizēsim",
+        OutreachDetailsMissing:        "klients nenorādīja — mēs to noskaidrosim",
+        OutreachPackingAddOn:          "Klients vēlas arī palīdzību ar iepakošanu — lūdzu, iekļaujiet to savā cenā.",
+        OutreachUrgentBadge:           "STEIDZAMI",
+        OutreachUrgentTpl:             "STEIDZAMI: klientam pakalpojums nepieciešams līdz {date}",
         OutreachQuoteCta:              "Iesniedziet savu cenu",
+        OutreachReplyAlternative:      "Vai vienkārši atbildiet uz šo e-pastu ar savu cenu — tas nonāks tieši pie mūsu komandas.",
         OutreachSignature:             "Ruumly komanda\ninfo@ruumly.eu",
+        OutreachPhoneLabel:            "Tālr.",
         CategoryCleaning:              "Uzkopšana",
         CategoryPacking:               "Iepakošana",
         CategoryVanRental:             "Furgona noma",
@@ -774,10 +855,21 @@ public static class EmailTranslations
         OfferSignature:                "Ruumly komanda\ninfo@ruumly.eu",
         OutreachSubjectTpl:            "Ruumly — kliento užklausa: {category}, {city}",
         OutreachGreeting:              "Sveiki!",
-        OutreachBodyTpl:               "Klientas mieste {city} ieško paslaugos: {category}.\nDetalės: {details}\nPageidaujama data: {date}",
+        OutreachIntro:                 "Ruumly sujungia klientus su vietos paslaugų teikėjais. Tai tikro kliento užklausa — atsakyti nemokama, be įsipareigojimų, o kainai pateikti paskyros nereikia.",
         OutreachAsk:                   "Ar galite imtis šio darbo? Pateikite savo kainą naudodami žemiau esančią nuorodą ir mes sujungsime jus su klientu.",
+        OutreachLabelService:          "Paslauga",
+        OutreachLabelLocation:         "Vieta",
+        OutreachLabelDate:             "Pageidaujama data",
+        OutreachLabelDetails:          "Detalės",
+        OutreachDateAsap:              "kuo greičiau — klientas nenurodė datos, mes ją patikslinsime",
+        OutreachDetailsMissing:        "klientas nenurodė — mes pasitikslinsime",
+        OutreachPackingAddOn:          "Klientas taip pat pageidauja pakavimo pagalbos — prašome įtraukti ją į savo kainą.",
+        OutreachUrgentBadge:           "SKUBU",
+        OutreachUrgentTpl:             "SKUBU: klientui paslauga reikalinga iki {date}",
         OutreachQuoteCta:              "Pateikite savo kainą",
+        OutreachReplyAlternative:      "Arba tiesiog atsakykite į šį laišką nurodydami savo kainą — jis pasieks mūsų komandą tiesiogiai.",
         OutreachSignature:             "Ruumly komanda\ninfo@ruumly.eu",
+        OutreachPhoneLabel:            "Tel.",
         CategoryCleaning:              "Valymas",
         CategoryPacking:               "Pakavimas",
         CategoryVanRental:             "Furgono nuoma",

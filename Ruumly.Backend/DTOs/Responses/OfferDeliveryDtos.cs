@@ -11,8 +11,12 @@ public sealed record OutreachPreviewItemDto(
 
 public sealed record OutreachPreviewResponse(IReadOnlyList<OutreachPreviewItemDto> Recipients);
 
+/// <summary>
+/// A composed provider-outreach email. <see cref="HtmlBody"/> is the delivered
+/// body; <see cref="TextBody"/> is the fallback (and what the admin preview shows).
+/// </summary>
 public sealed record ProviderOutreachMessage(
-    string Language, string Subject, string TextBody);
+    string Language, string Subject, string TextBody, string? HtmlBody = null);
 
 public sealed record PublicOfferLeadDto(
     string Category, string City, string? ToCity, DateTime? NeedDate, string? Details);

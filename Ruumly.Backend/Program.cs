@@ -396,6 +396,7 @@ builder.Services.AddScoped<IIntegrationDispatchService, IntegrationDispatchServi
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IFeaturedPartnersService, FeaturedPartnersService>();
+builder.Services.AddScoped<IConciergeOutreachService, ConciergeOutreachService>();
 builder.Services.AddScoped<ISupplierProfileService, SupplierProfileService>();
 builder.Services.AddScoped<IPaymentService, MontonioPaymentService>();
 builder.Services.AddScoped<IPlacesService, PlacesService>();

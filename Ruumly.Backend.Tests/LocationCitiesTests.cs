@@ -94,6 +94,28 @@ public class LocationCitiesTests
         Cities(await MakePublic(db).GetCities("not-a-service")).Should().BeEmpty();
     }
 
+    // 2026-08: packing and insurance stopped being consumer-facing services, but
+    // their city hubs (/{lang}/search?type=packing|insurance&city=X) are LIVE AND
+    // INDEXED. Those requests must keep resolving to something real instead of
+    // suddenly returning an empty dropdown to a visitor arriving from Google.
+    [Fact]
+    public async Task Cities_RetiredServiceSlugs_ResolveInsteadOfDeadEnding()
+    {
+        var db      = TestDbContext.Create();
+        var mover   = Directory("Kolimine OÜ", "kolimine-ou", "[\"moving\",\"packing\"]");
+        var cleaner = Directory("Puhastus OÜ", "puhastus-ou", "[\"cleaning\"]");
+        db.Suppliers.AddRange(mover, cleaner);
+        db.SupplierLocations.AddRange(Location(mover, "Tallinn"), Location(cleaner, "Pärnu"));
+        await db.SaveChangesAsync();
+
+        Cities(await MakePublic(db).GetCities("packing")).Should().Equal(["Tallinn"],
+            "packing resolves to the moving pool — the movers who actually do the packing");
+        Cities(await MakePublic(db).GetCities("insurance")).Should().Equal(["Pärnu", "Tallinn"],
+            "insurance has no consumer equivalent, so it falls back to the generic city list");
+        Cities(await MakePublic(db).GetCities("not-a-service")).Should().BeEmpty(
+            "an unknown slug still means nothing can match — only KNOWN retired slugs are rewritten");
+    }
+
     [Fact]
     public async Task Cities_DedupeCaseInsensitively_AcrossBothPools()
     {

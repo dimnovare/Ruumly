@@ -72,6 +72,7 @@ public class MovingQuoteLeadTests
         RuumlyDbContext db, IBackgroundEmailQueue queue, INotificationService notif) =>
         new(db, queue, notif,
             new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(),
+            TestServices.Outreach(db, queue),
             Microsoft.Extensions.Logging.Abstractions.NullLogger<SupportController>.Instance)
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },

@@ -19,6 +19,26 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
 {
     private static object Error(string msg) => new { error = msg };
 
+    /// <summary>
+    /// Normalizes a public <c>?type=</c> filter to the slug we should actually
+    /// serve. packing/insurance are no longer consumer-facing services, but their
+    /// city hubs (/{lang}/search?type=insurance&amp;city=X and the service×city
+    /// pages) are LIVE AND INDEXED — those requests must resolve to something real
+    /// instead of suddenly returning an empty page:
+    ///   "packing"   → "moving"  (packing is an add-on inside a mover's offer)
+    ///   "insurance" → null      (no filter at all → the generic search)
+    /// An unknown slug is passed through untouched so it still means "nothing can
+    /// match" rather than silently widening to everything.
+    /// </summary>
+    private static string? ResolvePublicTypeSlug(string? type)
+    {
+        var slug = type?.Trim().ToLowerInvariant();
+        if (string.IsNullOrEmpty(slug)) return null;
+        return Constants.ServiceCategories.BySlug.ContainsKey(slug)
+            ? Constants.ServiceCategories.PublicAliasFor(slug)
+            : slug;
+    }
+
     // ── GET /api/locations/cities ─────────────────────────────────────────────
     [HttpGet("cities")]
     [AllowAnonymous]
@@ -29,7 +49,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         // providers, zero listings) and marketplace inventory (Listings). This
         // used to query Listings alone, which returns an EMPTY dropdown in
         // production where the directory IS the supply. Union both.
-        var slug    = type?.Trim().ToLowerInvariant();
+        var slug    = ResolvePublicTypeSlug(type);
         var hasType = !string.IsNullOrWhiteSpace(slug);
         ListingType? listingType = hasType && Enum.TryParse<ListingType>(slug, true, out var parsed)
             ? parsed
@@ -52,7 +72,7 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         }
         else if (hasType && Constants.ServiceCategories.BySlug.ContainsKey(slug!))
         {
-            // Directory-only categories (cleaning, packing, vanrental, insurance).
+            // Directory-only consumer categories (cleaning, vanrental).
             locationQuery = locationQuery.Where(l =>
                 l.Supplier!.IsDirectoryListing
                 && l.Supplier.ServiceTypesJson != null
@@ -153,10 +173,11 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         if (!string.IsNullOrWhiteSpace(city))
             query = query.Where(l => l.City.ToLower().Contains(city.ToLower()));
 
-        if (!string.IsNullOrWhiteSpace(type))
+        var typeSlug = ResolvePublicTypeSlug(type);
+        if (!string.IsNullOrWhiteSpace(typeSlug))
         {
-            var slug = type.Trim().ToLowerInvariant();
-            if (Enum.TryParse<ListingType>(type, true, out var lt))
+            var slug = typeSlug;
+            if (Enum.TryParse<ListingType>(slug, true, out var lt))
             {
                 // Vertical filter matches inventory-backed locations AND directory
                 // profiles whose supplier covers that service (zero listings).
@@ -169,8 +190,8 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
             }
             else if (Constants.ServiceCategories.BySlug.ContainsKey(slug))
             {
-                // Directory-only categories (cleaning, packing, vanrental, insurance)
-                // have no ListingType — only directory profiles can match.
+                // Directory-only consumer categories (cleaning, vanrental) have no
+                // ListingType — only directory profiles can match.
                 var token = $"\"{slug}\"";
                 query = query.Where(l =>
                     l.Supplier!.IsDirectoryListing

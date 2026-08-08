@@ -1,0 +1,307 @@
+{
+  "generatedAt": "2026-08-08",
+  "method": "Own website contact page first, then the company's own legal/policy documents, then registry-derived directories (inforegister.ee / ariregister.rik.ee). Every address below was read off a page that was actually fetched; nothing is pattern-completed from a domain name. Two addresses were recovered by decoding Cloudflare email-protection payloads that the sites themselves emit (transer.ee, vanonsite.com) - those are the sites' own published mailto links, not guesses.",
+  "confidenceRubric": {
+    "high": "email read on the company's own website (optionally corroborated by the business registry)",
+    "medium": "email read only on a registry-derived directory (official registered contact), not published on their own site",
+    "low": "identity of the business or the validity of the contact is uncertain"
+  },
+  "rows": [
+    {
+      "storedName": "ADB Gjensidige Eesti filiaal",
+      "status": "found",
+      "contactEmail": "info@gjensidige.ee",
+      "contactPhone": "+372 611 6112",
+      "websiteUrl": "https://www.gjensidige.ee",
+      "registryCode": "11193232",
+      "legalName": "Akciné draudimo bendrové \"Gjensidige\" Eesti filiaal",
+      "emailKind": "general",
+      "confidence": "medium",
+      "notes": "Registered as a branch of the Lithuanian insurer, at Veskiposti tn 2/1, Tallinn. Registered 22.11.2005, active, ~EUR 184M turnover. gjensidige.ee is a JavaScript SPA and ships NO email address in its HTML - it only offers a phone (611 6112) and a web form - so info@gjensidige.ee comes from the official registered contact data, not from their site. Second registered phone: +372 675 5380. A named employee address (sofya.koledenkova@gjensidige.ee) is also listed in the registry but should not be cold-mailed. Insurance partner, not a storage supplier - low priority for lead routing.",
+      "sources": [
+        "https://www.inforegister.ee/en/11193232-AKCINE-DRAUDIMO-BENDROVE-GJENSIDIGE-EESTI-FILIAAL/",
+        "https://www.gjensidige.ee/Kontakt"
+      ]
+    },
+    {
+      "storedName": "Alexela haagiserent",
+      "status": "found",
+      "contactEmail": "alexela@alexela.ee",
+      "contactPhone": "+372 629 0000",
+      "websiteUrl": "https://www.alexela.ee",
+      "registryCode": "10015238",
+      "legalName": "ALEXELA AS",
+      "emailKind": "general",
+      "confidence": "high",
+      "notes": "Read directly off Alexela's own contacts page. For a B2B/partnership approach use ariklient@alexela.ee (business-client inbox, also published on the same page) rather than the general one. The trailer product is 'Alexela Haagis' - a self-service smart trailer rented from Alexela filling stations, built with Tiki (tiki.ee); if the aim is a moving-day trailer partnership, Alexela's business-client desk is the right door. Big corporate - expect a slow, procurement-shaped response.",
+      "sources": [
+        "https://www.alexela.ee/et/eraklient/abi-ja-kontakt/kontakt/kontaktid",
+        "https://www.inforegister.ee/en/10015238-ALEXELA-AS/"
+      ]
+    },
+    {
+      "storedName": "Ants Viljandi",
+      "status": "found",
+      "contactEmail": "info@ansvil.ee",
+      "contactPhone": "+372 434 5630",
+      "websiteUrl": "https://ansvil.ee",
+      "registryCode": "10248646",
+      "legalName": "osaühing Ants Viljandi",
+      "emailKind": "general",
+      "confidence": "high",
+      "notes": "Real, long-established Viljandi transport company (founded 1994, Toome tn 15, Viljandi). Registered EMTAK activities explicitly include Moving services (49421) plus trailer rental and car rental - so this is a genuine Viljandi moving/trailer supplier, and the second Viljandi provider is legitimate. Their contact page also lists named people with direct addresses: tonis@ansvil.ee, mait@ansvil.ee, gert@ansvil.ee, kristi@ansvil.ee (+372 503 9022 mobile). Start with info@ansvil.ee.",
+      "sources": [
+        "https://ansvil.ee/kontakt/",
+        "https://www.inforegister.ee/en/10248646-ANTS-VILJANDI-OU/"
+      ]
+    },
+    {
+      "storedName": "Bolt Drive",
+      "status": "found",
+      "contactEmail": "estonia-drive@bolt.eu",
+      "contactPhone": null,
+      "websiteUrl": "https://bolt.eu/en-ee/",
+      "registryCode": "14339972",
+      "legalName": "Bolt Services EE OÜ",
+      "emailKind": "general",
+      "confidence": "high",
+      "notes": "Taken from Bolt's own Bolt Drive Estonia Terms and Conditions PDF (in force from 01.06.2024), which states verbatim: 'Aadress: Vana-Louna tn 15, 10134 Tallinn, Eesti / E-post: estonia-drive@bolt.eu'. That is the official Bolt Drive contact channel for Estonia. Two other Bolt addresses exist but are worse fits: info@bolt.eu (in-app payment support, same PDF) and notices.estonia@bolt.eu (legal notices, business registry). Bolt does not publish a phone for Drive - support is in-app. Expect a support queue rather than a partnerships human.",
+      "sources": [
+        "https://assets.ctfassets.net/tk7rwcciwvbq/4OTxsnGrrSuDvG1N4auwpt/1d2c6b0c669241d49cd0ea83be70ef88/20240110_Bolt_Drive_Terms_and_Conditions__Estonia__-EST-_-clean-_2024.04.pdf",
+        "https://www.inforegister.ee/en/14339972-BOLT-SERVICES-EE-OU/"
+      ]
+    },
+    {
+      "storedName": "Box Storage",
+      "status": "found",
+      "contactEmail": "peteris.gulans@boxstorage.lv",
+      "contactPhone": "+372 5555 5870",
+      "websiteUrl": "https://boxstorage.ee",
+      "registryCode": "16848152",
+      "legalName": "BOX STORAGE PUNANE 46 OÜ",
+      "emailKind": "named",
+      "confidence": "medium",
+      "notes": "IMPORTANT: boxstorage.ee publishes NO email address anywhere - I checked the ET, EN and RU contact pages and the sitemap; they expose only the phone +372 5555 5870 and a web form. The address given here is the official registered contact for the Estonian entity and is a named person at the Latvian parent group (boxstorage.lv), not an Estonian ops inbox - so a lead sent there may be slow or ignored. Facility: Punane 46, 13619 Tallinn (Lasnamae), self-storage from ~1 m3, 24/7 smart-key access, office weekdays 09:00-18:00. Recommendation: use the phone as the primary channel for this one, or ask them during onboarding for a proper Estonian ops inbox before relying on email routing. Registry accountant contact elo.rahamagi@donte.ee is a bookkeeping firm - do not use.",
+      "sources": [
+        "https://www.inforegister.ee/en/16848152-BOX-STORAGE-PUNANE-46-OU/",
+        "https://boxstorage.ee/et/kontaktid/punane",
+        "https://boxstorage.ee/en/contacts/punane"
+      ]
+    },
+    {
+      "storedName": "Hoog Mobility OÜ",
+      "status": "found",
+      "contactEmail": "support@hoogmobility.ee",
+      "contactPhone": null,
+      "websiteUrl": "https://hoogmobility.ee",
+      "registryCode": "16526164",
+      "legalName": "Hoog Mobility OÜ",
+      "emailKind": "general",
+      "confidence": "high",
+      "notes": "support@hoogmobility.ee is published on their own help page (hoogmobility.ee/abi/). The business registry lists a second general address, info@hoogmobility.ee - use that one for a partnership approach, support@ for operational matters. Registered at Sauna tn 6, Rapla (not Tallinn), registered 29.06.2022. Caveat on fit: Hoog is primarily e-scooters and Hoog Delivery courier service; they do have a /haagised/ (trailers) line, which is presumably why they are in the directory. Verify they actually serve moving-day trailer demand in Harjumaa before routing leads.",
+      "sources": [
+        "https://hoogmobility.ee/abi/",
+        "https://www.inforegister.ee/en/16526164-HOOG-MOBILITY-OU/"
+      ]
+    },
+    {
+      "storedName": "Kaubikuterent.ee",
+      "status": "found",
+      "contactEmail": "info@dragonetrent.ee",
+      "contactPhone": "+372 527 8932",
+      "websiteUrl": "https://kaubikuterent.ee",
+      "registryCode": "12208964",
+      "legalName": "OÜ Dragonet",
+      "emailKind": "general",
+      "confidence": "high",
+      "notes": "The stored name is a domain, not a company. kaubikuterent.ee is operated by OU Dragonet (Roosaare tee 3b-4, Peetri, Rae vald); their main brand is dragonetrent.ee. The email is published in their own privacy policy at kaubikuterent.ee/privaatsus/ (which also states 'reg.kood 12208964') and corroborated by the registry. The public-facing site itself only shows the phone. Do NOT confuse with the similarly named kaubikute-rent.ee (Kotka 44, Eesti Autorent OU, reg 12523134) - that is a different company.",
+      "sources": [
+        "https://kaubikuterent.ee/privaatsus/",
+        "https://www.inforegister.ee/en/12208964-DRAGONET-OU/"
+      ]
+    },
+    {
+      "storedName": "KolimisPartner",
+      "status": "ambiguous",
+      "contactEmail": "info@kolimispartner.ee",
+      "contactPhone": null,
+      "websiteUrl": "https://kolimispartner.ee",
+      "registryCode": null,
+      "legalName": null,
+      "emailKind": "general",
+      "confidence": "low",
+      "notes": "TREAT WITH SUSPICION - do not route real customer leads here until a human confirms it. The address info@kolimispartner.ee IS published on their homepage, so it is not invented. But: (1) the only phone on the site is '+372 567 890 121', which is not a valid Estonian number (Estonian mobiles are 7-8 digits; this is 9 and sequential) - it reads as placeholder text; (2) there is no company named Kolimispartner in the Estonian business register, and the site names no legal entity or registry code anywhere; (3) the content is generic SEO copy with an unverifiable '5.0 rating'. This looks like a lead-generation/affiliate landing page rather than a moving firm with trucks. Suggested action: send one probe email; if no substantive reply, drop the record.",
+      "sources": [
+        "https://kolimispartner.ee/"
+      ]
+    },
+    {
+      "storedName": "Ladu32",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "contactPhone": "+372 502 4800",
+      "websiteUrl": "https://ladu32.ee",
+      "registryCode": "12642258",
+      "legalName": "FI Arendused OÜ",
+      "emailKind": null,
+      "confidence": "medium",
+      "notes": "No email exists to find. I fetched ladu32.ee (ET and EN), /ladu32/, /spaces/, /pricing/ and /privacy-policy/ - every page publishes only the phone +372 502 4800 and the contact person Igo Sagri. The owning company FI Arendused OU (12642258) has NO contact email recorded in the business registry either (its Contacts block is empty apart from the address). Phone is the only channel. Also a fit warning: Ladu32 is a 16-unit commercial warehouse/production park at Kesk tee 32, Juri (Rae vald), units 93-320 m2 on 6-month-minimum contracts from 5.6 EUR/m2. That is commercial leasing, not consumer self-storage - it will almost never be the right answer for an 'I'm moving' request. Consider deprioritising it in matching rather than chasing an email.",
+      "sources": [
+        "https://ladu32.ee/en/ladu32/",
+        "https://ladu32.ee/en/privacy-policy/",
+        "https://www.inforegister.ee/en/12642258-FI-ARENDUSED-OU/"
+      ]
+    },
+    {
+      "storedName": "Miil OÜ",
+      "status": "found",
+      "contactEmail": "info@miil.ee",
+      "contactPhone": "+372 601 2957",
+      "websiteUrl": "https://www.miil.ee",
+      "registryCode": "10435963",
+      "legalName": "Osaühing MIIL",
+      "emailKind": "general",
+      "confidence": "high",
+      "notes": "THIS IS THE LAGEDI PROVIDER - Miil OU's registered and operating address is Valtsi tn 1, Lagedi alevik, Rae vald, 75303. Fixing this record makes Lagedi reachable. Read off their own contacts page and confirmed in the registry. Established 1998, ~30 years trading, container transport and sideloaders. They run Smart Warehouse container storage including Viljandi Vaksali 36, plus self-storage in Tallinn - so this record also covers part of the Viljandi gap. Named sales contacts on the same page if info@ is slow: Rait +372 505 9595, Heiki +372 504 0658 (heiki@miil.ee), Lauri +372 504 2025.",
+      "sources": [
+        "https://www.miil.ee/en/contacts/",
+        "https://www.miil.ee/en/toode/smart-warehouse-viljandi/",
+        "https://www.inforegister.ee/en/10435963-MIIL-OU/"
+      ]
+    },
+    {
+      "storedName": "Moving Expert",
+      "status": "found",
+      "contactEmail": "info@movingexpert.ee",
+      "contactPhone": "+372 5695 8874",
+      "websiteUrl": "https://movingexpert.ee",
+      "registryCode": "14461489",
+      "legalName": "TJU NT OÜ",
+      "emailKind": "general",
+      "confidence": "high",
+      "notes": "Published as a mailto on their own contacts page and confirmed in the registry. Operating company is TJU NT OU (Joe tn 9, Tallinn kesklinn), registered 2018, EMTAK includes Moving services (49421). Same company also runs expresskolimine.ee (info@expresskolimine.ee) - so if they go quiet on one brand, the other reaches the same team. Do not confuse with moving.ee / info@moving.ee, which is a different Tallinn mover.",
+      "sources": [
+        "https://movingexpert.ee/en/contacts",
+        "https://www.inforegister.ee/en/14461489-TJU-NT-OU/"
+      ]
+    },
+    {
+      "storedName": "NarvaSklad",
+      "status": "defunct",
+      "contactEmail": null,
+      "contactPhone": "+372 5363 3313",
+      "websiteUrl": "https://www.narvasklad.ee",
+      "registryCode": "10054540",
+      "legalName": "Osaühing ESTIN Warehousing",
+      "emailKind": null,
+      "confidence": "high",
+      "notes": "REMOVE THIS RECORD - and note that removing it does not lose Narva coverage, because it never provided any. Evidence: (1) the operating company Osauhing ESTIN Warehousing (10054540), which publishes the same phone +372 5363 3313, was DELETED from the Estonian business register on 04.08.2026 - four days before this research; its VAT number expired the same day and its balance sheet total is minus EUR 1,221,790, i.e. this is a wind-up/insolvency, not a rebrand. (2) The rental subdomain arenda.narvasklad.ee no longer resolves (NXDOMAIN). (3) What remains at narvasklad.ee is a single-page asset-sale listing: an 11,361 m2 Class A customs warehouse at Kadastiku tn 39b, Narva, offered at EUR 5,540,000 + VAT, contactable only by phone/WhatsApp - no email is published anywhere on the site. (4) Even when trading it was a bonded/pallet logistics warehouse (21,500 pallet places, 7-tier racking), never consumer self-storage, so it could not have served an 'I'm moving' request. I searched in Estonian and Russian for any consumer self-storage or storage-box rental in Narva/Ida-Virumaa and found none - the nearest real self-storage operators are all in Tallinn. Narva coverage needs a new supplier (best candidates to approach: a Narva moving/transport firm with spare warehouse space, not a self-storage brand, because none exists there).",
+      "sources": [
+        "https://www.inforegister.ee/en/10054540-ESTIN-WAREHOUSING-OU",
+        "https://www.narvasklad.ee/ru/",
+        "https://arenda.narvasklad.ee/"
+      ]
+    },
+    {
+      "storedName": "Puhastustäht OÜ",
+      "status": "found",
+      "contactEmail": "info@puhastustaht.ee",
+      "contactPhone": "+372 5893 5890",
+      "websiteUrl": "https://www.puhastustaht.ee",
+      "registryCode": "16490319",
+      "legalName": "PUHASTUSTÄHT OÜ",
+      "emailKind": "general",
+      "confidence": "high",
+      "notes": "Confirmed twice - on their own /kontakt/ page and as the official registered contact. Small cleaning company (2026 forecast turnover ~EUR 37k). Note the registered address is Jaopi, Pohara kula, Parnu linn, Parnu maakond - i.e. Parnu county, NOT Tallinn/Harjumaa. Confirm their actual service radius before routing move-out cleaning leads for Tallinn.",
+      "sources": [
+        "https://www.puhastustaht.ee/kontakt/",
+        "https://www.inforegister.ee/en/16490319-PUHASTUSTAHT-OU/"
+      ]
+    },
+    {
+      "storedName": "Salva Kindlustuse AS",
+      "status": "found",
+      "contactEmail": "salva@salva.ee",
+      "contactPhone": "+372 680 0500",
+      "websiteUrl": "https://www.salva.ee",
+      "registryCode": "10284984",
+      "legalName": "Salva Kindlustuse AS",
+      "emailKind": "general",
+      "confidence": "medium",
+      "notes": "Estonian-owned insurer since 1993, Parnu mnt 16, Tallinn, share capital EUR 3.2M. Like Gjensidige, salva.ee is a JavaScript SPA whose HTML contains no email ('You need to enable JavaScript to run this app'), so this address comes from the official registered contact data rather than a page I could read on their own site - hence medium, not high. It is their long-standing general inbox and is the address their social profiles use. Insurance partner, not a storage supplier; a partnership approach should probably go through a named broker/partner manager rather than the general desk.",
+      "sources": [
+        "https://www.inforegister.ee/en/10284984-SALVA-KINDLUSTUSE-AS/",
+        "https://www.salva.ee/et/salvast/kontakt"
+      ]
+    },
+    {
+      "storedName": "Tartu Kolimine",
+      "status": "found",
+      "contactEmail": "info@tartukolimine.ee",
+      "contactPhone": "+372 501 5312",
+      "websiteUrl": "https://tartukolimine.ee",
+      "registryCode": "11204875",
+      "legalName": "KUTO Tootmine OÜ",
+      "emailKind": "general",
+      "confidence": "high",
+      "notes": "Read as a mailto on their own /kontakt/ page, which also prints 'Reg. nr. 11204875'. That registry code belongs to KUTO Tootmine OU (Ridakula tee 18, Lohkva kula, Luunja vald, Tartu county) - so 'Tartu Kolimine' is a trading name, not the legal entity; expect invoices under KUTO Tootmine OU. Registered EMTAK includes moving services. Registry also lists kutotootmine@hot.ee, but info@tartukolimine.ee is the customer-facing one and is the better address.",
+      "sources": [
+        "https://tartukolimine.ee/kontakt/",
+        "https://www.inforegister.ee/en/11204875-KUTO-TOOTMINE-OU/"
+      ]
+    },
+    {
+      "storedName": "Transer",
+      "status": "found",
+      "contactEmail": "info@transer.ee",
+      "contactPhone": "+372 505 7232",
+      "websiteUrl": "https://transer.ee",
+      "registryCode": "14758686",
+      "legalName": "Shipster OÜ",
+      "emailKind": "general",
+      "confidence": "high",
+      "notes": "The address is published on transer.ee itself but wrapped in Cloudflare email-protection, which is why a plain page scrape shows nothing; decoding their own mailto payload yields info@transer.ee, and the business registry independently lists info@transer.ee for the same company, so this is confirmed from two sides. Legal entity is Shipster OU (Tehnika tn 117-10, Tallinn kesklinn), registered 2019, sole EMTAK activity Moving services (49421) - a genuine mover. They also use info@shipster.eu. Their site advertises 7-days-a-week service and card payment.",
+      "sources": [
+        "https://transer.ee/kontakt/",
+        "https://www.inforegister.ee/en/14758686-SHIPSTER-OU/"
+      ]
+    },
+    {
+      "storedName": "VANonsite",
+      "status": "found",
+      "contactEmail": "contact@vanonsite.com",
+      "contactPhone": "+48 733 589 539",
+      "websiteUrl": "https://vanonsite.com",
+      "registryCode": "16572879",
+      "legalName": "1WAYEUROPE OÜ",
+      "emailKind": "general",
+      "confidence": "high",
+      "notes": "Also Cloudflare-obfuscated on their own contact page; decoding their mailto payloads gives contact@vanonsite.com consistently (three separate occurrences). VANonsite is a brand of 1WAYEUROPE OU (Lootsa tn 5, Lasnamae, Tallinn, reg 16572879), whose registered activity is freight forwarding, 2025 turnover ~EUR 1.7M. Fit warning: despite the stored classification as van rental, this is NOT a van-hire company - it is an international/long-distance removals and relocation operator (packing, storage, EU-wide moves), and both published phones are POLISH numbers (+48 733 589 539 and +48 691 986 138), suggesting the operations desk sits in Poland. Good for cross-border moves out of Estonia; wrong answer for a same-day Tallinn van.",
+      "sources": [
+        "https://vanonsite.com/contact/",
+        "https://www.inforegister.ee/en/16572879-1WAYEUROPE-OU/"
+      ]
+    },
+    {
+      "storedName": "Miniladu24.eu Viljandi",
+      "status": "ambiguous",
+      "contactEmail": null,
+      "contactPhone": "+372 527 7638",
+      "websiteUrl": null,
+      "registryCode": "12940866",
+      "legalName": "RAL-EST OÜ",
+      "emailKind": null,
+      "confidence": "high",
+      "notes": "SOLVED, and the phone is NOT a typo - but the record is mislabelled. +372 5277638 is the officially registered phone number of RAL-EST OU (reg 12940866, Iva tee 20, Viiratsi alevik, Viljandi vald) - it appears both in the official Estonian Business Register entry for that company and on their own website ralest.ee. That is why the founder's call landed on a real business that did not recognise a storage brand: RAL-EST's public identity today is powder coating and chemical paint stripping ('Ral-Est - meie teame, kuidas varvida'), and their site markets nothing else. The storage link is real but secondary: RAL-EST's registered EMTAK activities include Real Estate Rental (68201) alongside Coating of metals (25511), the company sits in Viiratsi (which matches the stored viiratsiladu@gmail.com), and the Miniladu24.eu Facebook page is titled 'Miniladu24.eu | Viiratski'. The storage brand itself is dead: miniladu24.eu returns NXDOMAIN, the soov.ee ad has been removed ('Kuulutust ei leitud'), and both city24.ee listings for the Koidu 13 Viljandi miniladu are marked 'Kuulutus ei ole aktiivne' (last touched 11.07.2025 and 18.08.2025). RECOMMENDATION: do NOT null the phone - it is verifiably a live, correct business number from a primary registry source, so blanking it would destroy good data. Instead relabel the record to RAL-EST OU and set the email to ralestou@gmail.com (their registered and site-published address, contact person Olev Ustinov, company active with 6 employees), then ask them once whether they still rent storage boxes in Viiratsi / Koidu 13. If the answer is no, delete the record - Viljandi is still covered by Blackline OU (Vaksali 36 container storage, info@blackline.ee) and Miil OU (Smart Warehouse, Vaksali 36, info@miil.ee), plus Ants Viljandi for moving. Do not trust the stored viiratsiladu@gmail.com: it could not be verified anywhere and the brand behind it no longer exists online. NOTE also that Miniladu24 OU (reg 16960995) IS a real registered company - but it is a different, newer business at Lepa tee 4, Loo, Harjumaa (miniladu24.ee), registered 08.04.2024, with nothing to do with Viljandi.",
+      "sources": [
+        "https://ariregister.rik.ee/est/company/12940866/RAL-EST-O%C3%9C",
+        "https://www.inforegister.ee/en/12940866-RAL-EST-OU/",
+        "https://ralest.ee/",
+        "https://www.city24.ee/real-estate/garages-for-rent/viljandi-maakond-viljandi-linn-koidu-tn/8465038",
+        "https://www.city24.ee/real-estate/commercials-for-rent/viljandi-maakond-viljandi-linn-koidu-tn/8171599?i=0",
+        "https://soov.ee/25574411-miniladu-viljandis/details.html",
+        "https://www.inforegister.ee/en/16960995-MINILADU24-OU/"
+      ]
+    }
+  ]
+}

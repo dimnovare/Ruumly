@@ -81,27 +81,35 @@ public class DirectorySupplierTests
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },
         };
 
-    private static SupportController MakeSupport(RuumlyDbContext db) =>
-        new(db, new CapturingEmailQueue(), new NoOpNotifications(),
+    private static SupportController MakeSupport(RuumlyDbContext db)
+    {
+        var queue = new CapturingEmailQueue();
+        return new(db, queue, new NoOpNotifications(),
             new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(),
+            TestServices.Outreach(db, queue),
             Microsoft.Extensions.Logging.Abstractions.NullLogger<SupportController>.Instance)
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },
         };
+    }
 
     private static object? Prop(object o, string name) =>
         o.GetType().GetProperty(name)!.GetValue(o);
 
     private static DirectorySupplierRow Row(
         string name = "Puhastus OÜ", string slug = "puhastus-ou", string city = "Tallinn",
-        double? lat = 59.437, double? lng = 24.754, List<string>? serviceTypes = null) =>
+        double? lat = 59.437, double? lng = 24.754, List<string>? serviceTypes = null,
+        string? country = null) =>
         new(
             Name: name, Slug: slug, City: city, Lat: lat, Lng: lng,
-            ServiceTypes: serviceTypes ?? ["cleaning"],
+            ServiceTypes: serviceTypes ?? ["cleaning"], Country: country,
             WebsiteUrl: "https://puhastus.ee", ContactEmail: "info@puhastus.ee",
             ContactPhone: "+372 555", Tagline: "Kolimisjärgne puhastus",
             DescriptionEt: "Puhastame kõik.", LogoUrl: "https://cdn/logo.png",
             RegistryCode: null);
+
+    private const double RigaLat = 56.9496, RigaLng = 24.1052;
+    private const double VilniusLat = 54.6872, VilniusLng = 25.2797;
 
     // ─── POST /api/admin/suppliers/bulk ───────────────────────────────────────
 
@@ -198,6 +206,35 @@ public class DirectorySupplierTests
         db.Suppliers.Single().Slug.Should().Be("good-one");
     }
 
+    // packing/insurance stopped being CONSUMER services in 2026-08, but they remain
+    // valid SUPPLY-side metadata: knowing which movers also pack is what powers the
+    // packing add-on, and dropping the tag on import would destroy that. The import
+    // validates against the storage catalogue, not the sales catalogue.
+    [Fact]
+    public async Task Bulk_StillImportsAndStoresRetainedServiceTypes()
+    {
+        var db = TestDbContext.Create();
+
+        var result = await MakeDirectory(db).BulkCreateDirectorySuppliers(
+        [
+            Row(name: "Kolimine OÜ", slug: "kolimine-ou",
+                serviceTypes: ["moving", "packing"]),
+            Row(name: "Kindlustus OÜ", slug: "kindlustus-ou",
+                serviceTypes: ["insurance"]),
+        ]);
+        var body = result.Should().BeOfType<OkObjectResult>().Subject.Value!;
+
+        ((List<object>)Prop(body, "errors")!).Should().BeEmpty(
+            "a retired consumer category is still a valid supplier service type");
+        ((List<string>)Prop(body, "created")!).Should().Equal(["kolimine-ou", "kindlustus-ou"]);
+
+        db.Suppliers.Single(s => s.Slug == "kolimine-ou").ServiceTypesJson
+            .Should().Be("[\"moving\",\"packing\"]",
+                "a mover that also packs keeps its packing tag — that IS the add-on signal");
+        db.Suppliers.Single(s => s.Slug == "kindlustus-ou").ServiceTypesJson
+            .Should().Be("[\"insurance\"]", "stored data is never rewritten by a sales decision");
+    }
+
     [Fact]
     public async Task Bulk_EmptyOrOversizedBatch_ReturnsBadRequest()
     {
@@ -209,6 +246,140 @@ public class DirectorySupplierTests
         var tooMany = Enumerable.Range(0, 501).Select(i => Row(slug: $"s-{i}")).ToList();
         (await ctl.BulkCreateDirectorySuppliers(tooMany)).Should().BeOfType<BadRequestObjectResult>();
         db.Suppliers.Should().BeEmpty();
+    }
+
+    // ─── Baltic expansion: per-country bounding boxes ─────────────────────────
+    // Supplier.Country decides the language of the provider outreach email
+    // (Helpers/ProviderOutreachComposer), so importing a Latvian or Lithuanian
+    // provider under the Estonian box would cold-email them in Estonian.
+
+    [Fact]
+    public async Task Bulk_RigaRow_DeclaredLatvian_ImportsWithCountryLV()
+    {
+        var db = TestDbContext.Create();
+
+        var result = await MakeDirectory(db).BulkCreateDirectorySuppliers(
+        [
+            Row(name: "Tīrīšana SIA", slug: "tirisana-sia", city: "Rīga",
+                lat: RigaLat, lng: RigaLng, country: "LV"),
+        ]);
+        var body = result.Should().BeOfType<OkObjectResult>().Subject.Value!;
+
+        ((List<object>)Prop(body, "errors")!).Should().BeEmpty();
+        ((List<string>)Prop(body, "created")!).Should().Equal(["tirisana-sia"],
+            "Riga sits inside the Latvian bounding box");
+
+        db.Suppliers.Single().Country.Should().Be("LV",
+            "Supplier.Country picks the outreach email language — LV must not be emailed in Estonian");
+        db.SupplierLocations.Single().Country.Should().Be("LV",
+            "the pin's country must match the supplier's, not the EE launch default");
+        db.SupplierLocations.Single().Lat.Should().Be(RigaLat);
+    }
+
+    [Fact]
+    public async Task Bulk_VilniusRow_DeclaredLithuanian_ImportsWithCountryLT()
+    {
+        var db = TestDbContext.Create();
+
+        var result = await MakeDirectory(db).BulkCreateDirectorySuppliers(
+        [
+            Row(name: "Valymas UAB", slug: "valymas-uab", city: "Vilnius",
+                lat: VilniusLat, lng: VilniusLng, country: "LT"),
+        ]);
+        var body = result.Should().BeOfType<OkObjectResult>().Subject.Value!;
+
+        ((List<object>)Prop(body, "errors")!).Should().BeEmpty();
+        ((List<string>)Prop(body, "created")!).Should().Equal(["valymas-uab"]);
+
+        db.Suppliers.Single().Country.Should().Be("LT");
+        db.SupplierLocations.Single().Country.Should().Be("LT");
+        db.SupplierLocations.Single().Lng.Should().Be(VilniusLng);
+    }
+
+    [Fact]
+    public async Task Bulk_CoordinatesOutsideTheDeclaredCountry_AreRejected()
+    {
+        var db = TestDbContext.Create();
+
+        var result = await MakeDirectory(db).BulkCreateDirectorySuppliers(
+        [
+            // The real bug this guards: a Riga provider filed under Estonia.
+            Row(name: "Riga as EE",   slug: "riga-as-ee",   city: "Rīga",
+                lat: RigaLat, lng: RigaLng, country: "EE"),
+            Row(name: "Riga default", slug: "riga-default", city: "Rīga",
+                lat: RigaLat, lng: RigaLng),
+            // ...and the mirror image: an Estonian pin claiming Lithuania.
+            Row(name: "Tallinn as LT", slug: "tallinn-as-lt", country: "LT"),
+        ]);
+        var body = result.Should().BeOfType<OkObjectResult>().Subject.Value!;
+
+        ((List<string>)Prop(body, "created")!).Should().BeEmpty(
+            "coordinates are checked against the box of the country the row claims");
+        var errors = (List<object>)Prop(body, "errors")!;
+        errors.Should().HaveCount(3);
+        ((string)Prop(errors[0], "reason")!).Should().Contain("outside EE bounds");
+        ((string)Prop(errors[1], "reason")!).Should().Contain("outside EE bounds",
+            "an omitted country still means Estonia");
+        ((string)Prop(errors[2], "reason")!).Should().Contain("outside LT bounds");
+        db.Suppliers.Should().BeEmpty();
+        db.SupplierLocations.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Bulk_LowerCaseCountry_IsNormalizedToUpperCase()
+    {
+        var db = TestDbContext.Create();
+
+        await MakeDirectory(db).BulkCreateDirectorySuppliers(
+        [
+            Row(name: "Tīrīšana SIA", slug: "tirisana-sia", city: "Rīga",
+                lat: RigaLat, lng: RigaLng, country: "lv"),
+        ]);
+
+        db.Suppliers.Single().Country.Should().Be("LV",
+            "ProviderOutreachComposer matches upper-case codes");
+        db.SupplierLocations.Single().Country.Should().Be("LV");
+    }
+
+    [Theory]
+    [InlineData("FI")]
+    [InlineData("XX")]
+    public async Task Bulk_UnknownCountry_FailsOnlyThatRow(string country)
+    {
+        var db = TestDbContext.Create();
+
+        var result = await MakeDirectory(db).BulkCreateDirectorySuppliers(
+        [
+            Row(name: "Siivous OY", slug: "siivous-oy", city: "Helsinki",
+                lat: 60.1699, lng: 24.9384, country: country),
+            Row(),
+        ]);
+        var body = result.Should().BeOfType<OkObjectResult>().Subject.Value!;
+
+        ((List<string>)Prop(body, "created")!).Should().Equal(["puhastus-ou"],
+            "an unsupported country fails its own row and never aborts the batch");
+        var errors = (List<object>)Prop(body, "errors")!;
+        errors.Should().HaveCount(1);
+        var reason = (string)Prop(errors[0], "reason")!;
+        reason.Should().Contain($"unknown country '{country}'");
+        reason.Should().Contain("EE").And.Contain("LV").And.Contain("LT",
+            "the reason lists the supported markets so a bad import is diagnosable");
+        db.Suppliers.Should().HaveCount(1);
+        db.Suppliers.Single().Slug.Should().Be("puhastus-ou");
+    }
+
+    [Fact]
+    public async Task Bulk_CountryOmitted_StillImportsAsEstonia()
+    {
+        var db = TestDbContext.Create();
+
+        var result = await MakeDirectory(db).BulkCreateDirectorySuppliers([Row()]);
+        var body   = result.Should().BeOfType<OkObjectResult>().Subject.Value!;
+
+        ((List<object>)Prop(body, "errors")!).Should().BeEmpty();
+        db.Suppliers.Single().Country.Should().Be("EE",
+            "the rows already imported in production carry no country field");
+        db.SupplierLocations.Single().Country.Should().Be("EE");
     }
 
     // ─── Concierge intake: new event categories ───────────────────────────────
@@ -227,11 +398,16 @@ public class DirectorySupplierTests
         lead.Query.Should().Contain("cleaning", "the machine summary lists the requested categories");
     }
 
+    // Every slug is still ACCEPTED (old clients and indexed URLs keep working), but
+    // the two retired ones no longer produce a lead in their own category — see the
+    // 2026-08 decision in Constants/ServiceCategories.RetainedNotSoldSlugs and the
+    // dedicated cases in ConciergeLeadTests.
     [Theory]
-    [InlineData("packing",   DemandLeadCategory.Packing)]
     [InlineData("VANRENTAL", DemandLeadCategory.VanRental)]
-    [InlineData("insurance", DemandLeadCategory.Insurance)]
-    public async Task RequestConcierge_AcceptsNewCategorySlugs_CaseInsensitive(
+    [InlineData("Cleaning",  DemandLeadCategory.Cleaning)]
+    [InlineData("packing",   DemandLeadCategory.Moving)]
+    [InlineData("insurance", DemandLeadCategory.Any)]
+    public async Task RequestConcierge_AcceptsCategorySlugs_CaseInsensitive(
         string slug, DemandLeadCategory expected)
     {
         var db = TestDbContext.Create();

@@ -22,9 +22,30 @@ public partial class AdminDirectoryController(RuumlyDbContext db) : AdminBaseCon
 {
     private const int MaxRows = 500;
 
-    // Estonia bounding box — directory launch is EE-only (Tallinn/Harjumaa first).
-    private const double MinLat = 57.5, MaxLat = 59.7;
-    private const double MinLng = 21.7, MaxLng = 28.2;
+    /// <summary>
+    /// Country used when a row omits <c>country</c>. This is DELIBERATE backward
+    /// compatibility, not an oversight: the endpoint launched EE-only and every row
+    /// already imported into production predates the field, so a missing country has
+    /// to keep meaning Estonia. Do not "fix" this to null/required without migrating
+    /// the existing import scripts — and note the stakes: Supplier.Country picks the
+    /// language of the provider outreach email (Helpers/ProviderOutreachComposer),
+    /// so a wrong country cold-emails a Latvian provider in Estonian.
+    /// </summary>
+    private const string DefaultCountry = "EE";
+
+    private readonly record struct GeoBox(double MinLat, double MaxLat, double MinLng, double MaxLng);
+
+    /// <summary>
+    /// Bounding box per supported market. Opening a new country is ONE line here —
+    /// validation, the allowed-values error text and the stored Country all read
+    /// from this map.
+    /// </summary>
+    private static readonly Dictionary<string, GeoBox> CountryBounds = new(StringComparer.Ordinal)
+    {
+        ["EE"] = new(57.5, 59.7, 21.7, 28.2),
+        ["LV"] = new(55.6, 58.1, 20.9, 28.3),
+        ["LT"] = new(53.8, 56.5, 20.9, 26.9),
+    };
 
     private static readonly string[] ReservedSlugs =
         ["dashboard", "onboarding", "new", "edit", "admin", "api"];
@@ -70,9 +91,11 @@ public partial class AdminDirectoryController(RuumlyDbContext db) : AdminBaseCon
                 continue;
             }
 
-            var now  = DateTime.UtcNow;
-            var name = row.Name!.Trim();
-            var city = row.City!.Trim();
+            var now     = DateTime.UtcNow;
+            var name    = row.Name!.Trim();
+            var city    = row.City!.Trim();
+            // Validated above: guaranteed to be a supported, upper-cased code.
+            var country = NormalizeCountry(row.Country);
 
             var supplier = new Supplier
             {
@@ -88,7 +111,8 @@ public partial class AdminDirectoryController(RuumlyDbContext db) : AdminBaseCon
                 LongDescriptionTranslationsJson = BuildDescriptionsJson(row),
                 LogoUrl         = NullIfBlank(row.LogoUrl),
                 IntegrationType = IntegrationType.Manual,
-                Country         = "EE",
+                // Also picks the provider outreach email language — see DefaultCountry.
+                Country         = country,
                 IsActive        = true,
                 IsPartnerPagePublished = true,
                 IsDirectoryListing     = true,
@@ -106,7 +130,7 @@ public partial class AdminDirectoryController(RuumlyDbContext db) : AdminBaseCon
                 Name        = name,
                 Address     = NullIfBlank(row.Address) ?? city,
                 City        = city,
-                Country     = "EE",
+                Country     = country,
                 Lat         = row.Lat!.Value,
                 Lng         = row.Lng!.Value,
                 IsActive    = true,
@@ -153,10 +177,23 @@ public partial class AdminDirectoryController(RuumlyDbContext db) : AdminBaseCon
             return $"'{slug}' is a reserved slug";
         if (string.IsNullOrWhiteSpace(row.City))
             return "city is required";
-        if (row.Lat is not { } lat || lat is < MinLat or > MaxLat)
-            return $"lat is required and must be within {MinLat}-{MaxLat}";
-        if (row.Lng is not { } lng || lng is < MinLng or > MaxLng)
-            return $"lng is required and must be within {MinLng}-{MaxLng}";
+
+        // Coordinates are checked against the box of the row's OWN country, so a
+        // Riga pin imported as "EE" is rejected instead of silently landing in the
+        // Estonian directory (and later being cold-emailed in Estonian).
+        var country = NormalizeCountry(row.Country);
+        if (!CountryBounds.TryGetValue(country, out var box))
+            return $"unknown country '{country}' (allowed: {string.Join("|", CountryBounds.Keys)})";
+        if (row.Lat is not { } lat)
+            return "lat is required";
+        if (lat < box.MinLat || lat > box.MaxLat)
+            return FormattableString.Invariant(
+                $"coordinates outside {country} bounds: lat must be within {box.MinLat}-{box.MaxLat}");
+        if (row.Lng is not { } lng)
+            return "lng is required";
+        if (lng < box.MinLng || lng > box.MaxLng)
+            return FormattableString.Invariant(
+                $"coordinates outside {country} bounds: lng must be within {box.MinLng}-{box.MaxLng}");
 
         // Imported rows come from scraped third-party data and render on public
         // pages (map popups, partner pages) — refuse anything markup-shaped and
@@ -184,6 +221,14 @@ public partial class AdminDirectoryController(RuumlyDbContext db) : AdminBaseCon
 
         return null;
     }
+
+    /// <summary>
+    /// Trims and upper-cases the row's country ("lv" → "LV"); a missing/blank value
+    /// falls back to <see cref="DefaultCountry"/>. Whether the result is a supported
+    /// market is decided by <see cref="CountryBounds"/> in ValidateRow.
+    /// </summary>
+    private static string NormalizeCountry(string? raw) =>
+        string.IsNullOrWhiteSpace(raw) ? DefaultCountry : raw.Trim().ToUpperInvariant();
 
     private static bool IsNullOrHttpUrl(string? url) =>
         string.IsNullOrWhiteSpace(url)

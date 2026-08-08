@@ -80,7 +80,14 @@ const OG_LOCALE: Record<Lang, string> = {
 // answers none of them.
 
 /** Route section → service. `warehouse` is the listing detail route for storage. */
-type Service = "storage" | "moving" | "trailer" | "vanrental" | "cleaning" | "packing" | "insurance";
+// "packing" and "insurance" were retired as consumer categories in 2026-08:
+// research across EE/LV/LT found packing is never sold standalone (always a line
+// item inside a move) and that "moving insurance" here is CMR carrier liability
+// sold B2B to hauliers, not cover a household can buy. Their hub URLs now 301 to
+// moving / generic search (see estonia-space-hub/vercel.json), so the Worker must
+// NOT model them — an unmodelled route returns specific:false and is passed
+// through untouched, letting the redirect happen.
+type Service = "storage" | "moving" | "trailer" | "vanrental" | "cleaning";
 
 const SERVICE_NOUN: Record<Lang, Record<Service, string>> = {
   et: {
@@ -89,8 +96,6 @@ const SERVICE_NOUN: Record<Lang, Record<Service, string>> = {
     trailer:   "Haagise rent",
     vanrental: "Kaubiku rent",
     cleaning:  "Koristusteenus",
-    packing:   "Pakkimine ja pakkematerjal",
-    insurance: "Kolimiskindlustus",
   },
   en: {
     storage:   "Self storage",
@@ -98,8 +103,6 @@ const SERVICE_NOUN: Record<Lang, Record<Service, string>> = {
     trailer:   "Trailer rental",
     vanrental: "Van rental",
     cleaning:  "Cleaning services",
-    packing:   "Packing and boxes",
-    insurance: "Moving insurance",
   },
   ru: {
     storage:   "Аренда склада",
@@ -107,8 +110,6 @@ const SERVICE_NOUN: Record<Lang, Record<Service, string>> = {
     trailer:   "Аренда прицепа",
     vanrental: "Аренда фургона",
     cleaning:  "Уборка",
-    packing:   "Упаковка и коробки",
-    insurance: "Страхование переезда",
   },
   lv: {
     storage:   "Noliktavas noma",
@@ -116,8 +117,6 @@ const SERVICE_NOUN: Record<Lang, Record<Service, string>> = {
     trailer:   "Piekabju noma",
     vanrental: "Furgonu noma",
     cleaning:  "Uzkopšanas pakalpojumi",
-    packing:   "Iepakošana un kastes",
-    insurance: "Pārvākšanās apdrošināšana",
   },
   lt: {
     storage:   "Sandėlio nuoma",
@@ -125,8 +124,6 @@ const SERVICE_NOUN: Record<Lang, Record<Service, string>> = {
     trailer:   "Priekabų nuoma",
     vanrental: "Mikroautobusų nuoma",
     cleaning:  "Valymo paslaugos",
-    packing:   "Pakavimas ir dėžės",
-    insurance: "Perkraustymo draudimas",
   },
 };
 
@@ -166,11 +163,15 @@ const HOME_TITLE: Record<Lang, string> = {
 };
 
 const HOME_DESC: Record<Lang, string> = {
-  et: "Kolimine, laopind, haagis, kaubik, koristus, pakkimine ja kindlustus — kõik ühest kohast. Saada üks päring, toome 2–3 pakkumist, tavaliselt 24 tunniga.",
-  en: "Movers, storage, trailers, vans, cleaning, packing and insurance across Estonia. Send one request and get 2–3 offers, usually within 24 hours.",
-  ru: "Переезд, склад, прицепы, фургоны, уборка, упаковка и страхование по всей Эстонии. Один запрос — 2–3 предложения, обычно за 24 часа.",
-  lv: "Pārvākšanās, noliktavas, piekabes, furgoni, uzkopšana, iepakošana un apdrošināšana Igaunijā. Viens pieprasījums — 2–3 piedāvājumi 24 stundās.",
-  lt: "Perkraustymas, sandėliai, priekabos, mikroautobusai, valymas, pakavimas ir draudimas Estijoje. Viena užklausa — 2–3 pasiūlymai per 24 val.",
+  // Geography still says Estonia deliberately. The LV/LT directory import had not
+  // landed when this was written, and the geography-honesty rule says we do not
+  // advertise a market before we can actually serve it. Widen to the Baltics only
+  // once those providers are live and verified in production.
+  et: "Kolimine, laopind, haagis, kaubik ja koristus — kõik ühest kohast. Saada üks päring, toome 2–3 pakkumist, tavaliselt 24 tunniga.",
+  en: "Movers, storage, trailers, vans and cleaning across Estonia. Send one request and get 2–3 offers, usually within 24 hours.",
+  ru: "Переезд, склад, прицепы, фургоны и уборка по всей Эстонии. Один запрос — 2–3 предложения, обычно за 24 часа.",
+  lv: "Pārvākšanās, noliktavas, piekabes, furgoni un uzkopšana Igaunijā. Viens pieprasījums — 2–3 piedāvājumi 24 stundās.",
+  lt: "Perkraustymas, sandėliai, priekabos, mikroautobusai ir valymas Estijoje. Viena užklausa — 2–3 pasiūlymai per 24 val.",
 };
 
 function parseLang(segment: string | undefined): Lang {
@@ -366,8 +367,6 @@ const HUB_SECTIONS: Record<string, Service> = {
   trailer:   "trailer",
   vanrental: "vanrental",
   cleaning:  "cleaning",
-  packing:   "packing",
-  insurance: "insurance",
 };
 
 async function resolveOgData(

@@ -5,11 +5,12 @@
 > we return 2–3 offers." Every task below earns its place only by growing qualified demand,
 > raising the supplier match rate, or proving the loop converts — not by adding features.
 
-Last updated: 2026-07-11. Owner: Dim. Direction: the 2026-07 Sergei Anikin pivot
+Last updated: 2026-08-08. Owner: Dim. Direction: the 2026-07 Sergei Anikin pivot
 (see `docs/superpowers/specs/2026-07-10-overhaul-design.md` and the `pivot-concierge-direction`
-memory). Status: the concierge loop, the 7-service event framing, the free provider directory
-(163 real Estonian providers), the admin offer/outreach workspace, and the SEO foundation are
-**shipped and live**. Focus now: **run the manual match loop and prove the funnel converts.**
+memory). Status: the concierge loop, the event framing, the free provider directory
+(163 real Estonian providers, now expanding to LV/LT), the admin offer/outreach workspace,
+and the SEO foundation are **shipped and live**. Focus now: **run the manual match loop and
+prove the funnel converts.**
 
 ---
 
@@ -19,13 +20,49 @@ Storage/moving is a **low-frequency, high-CAC** category. Selling a marketplace 
 fails: they join only for incremental profit ("bring me 5 paying clients and I'll join in 5
 minutes"), so partner-acquisition-first is pushing on a string. The leverage is **demand**:
 organize around the life event ("I'm moving" pulls in storage, movers, a van, a trailer,
-packing/boxes, cleaning, insurance — 7 services), capture the request, and hand suppliers
+cleaning — plus packing as part of the move), capture the request, and hand suppliers
 *real customers who are searching right now*. Supply is then acquired by showing ROI, not by
-selling software. Geography: **Tallinn/Harjumaa first** for the ops loop (density before
-breadth); the directory itself is all-Estonia.
+selling software.
+
+**Geography (updated 2026-08).** The **ops loop** stays **Tallinn/Harjumaa-first** (density
+before breadth — the auto-fanout starts at a 25 km radius). The **directory is going Baltic**:
+the admin import validates EE/LV/LT rows against per-country bounding boxes, and
+`Supplier.Country` picks the outreach language so a Latvian provider is never cold-emailed in
+Estonian. LV/LT = directory coverage and SEO surface, **not** a second concierge ops loop.
 
 **The business problem = the demand→match→offer loop.** Make it work, measure it honestly,
 then charge suppliers for delivered customers. That is the whole plan.
+
+---
+
+## The service set (decided 2026-08 — 5 sold, 2 retained-for-data)
+
+**Consumer-selectable: `warehouse · moving · trailer · cleaning · vanrental`.**
+
+`packing` and `insurance` were **withdrawn as consumer categories** on the evidence of market
+research run independently across Estonia, Latvia and Lithuania:
+
+- **packing** is *never* sold as a standalone business anywhere in the Baltics — it is always a
+  line item inside a moving company's offer. Lithuania's national directory even has a dedicated
+  "pakavimo paslaugos" category that lists the same two companies as its general moving category.
+  Advertising it as bookable sends a customer into a dead end with no supplier to quote.
+- **insurance** in this market means **CMR carrier-liability cover sold B2B to hauliers**, not
+  goods-in-transit cover a household can buy. Wrong customer entirely, and it was already the
+  thinnest vertical (one Estonian city).
+
+What that means concretely: **packing is now an add-on attribute of a moving request** (intake
+maps it to `moving` and records the intent as a `+packing-addon` marker in the lead's Query
+machine summary, which the ops alert reports and `ProviderOutreachComposer` reads back to render a
+*localized* packing line — never as English prose in `Details`, which is printed verbatim into a
+cold email written in the provider's own language); **insurance falls back to `Any`** so an admin
+routes it by hand rather than the request being dropped.
+
+**Retained for data, NOT deleted.** The `Packing`/`Insurance` enum members and every stored
+`ServiceTypesJson` value stay: production `DemandLead` rows already carry those categories and the
+column persists enum NAMES, so deleting a member makes historical leads unreadable. Knowing which
+movers also pack is *useful supplier metadata* — it is what powers the add-on. Single source of
+truth: `Constants/ServiceCategories` (`BySlug` = storage catalogue, `ConsumerSlugs` = sales
+catalogue, `PublicAliasFor` = how a retired slug resolves on a public surface).
 
 ---
 
@@ -107,9 +144,19 @@ Acceptance: at least one supplier paying for a Ruumly-delivered customer; ops-la
 The SEO foundation was silently broken (client head never rendered in prod) and is now
 fixed + guarded; the ranking surfaces are the storage city hubs. Amplify from there.
 
-- [ ] **City-hub SEO** for all 7 services (storage/moving/trailer live; cleaning/packing/
-      vanrental/insurance being added), leading with the concierge CTA. Tallinn is the biggest
+- [ ] **City-hub SEO** for the 5 consumer services (storage/moving/trailer live; cleaning/
+      vanrental being added), leading with the concierge CTA. Tallinn is the biggest
       opportunity (116 impressions at pos 49 pre-fix; re-indexing requested).
+- [ ] **Retire the packing/insurance hubs without losing the equity** (backend done 2026-08:
+      the sitemap no longer emits `/packing/{city}` or `/insurance/{city}`, and the search API
+      resolves the retired filters instead of dead-ending — `?type=packing` serves the moving
+      pool, `?type=insurance` serves the generic search). **Still to do off-backend:**
+      1. **Frontend router** (`estonia-space-hub`): 301 `/{lang}/packing/{city}` →
+         `/{lang}/moving/{city}` and `/{lang}/insurance/{city}` → `/{lang}/search?city={city}`;
+         drop both from the service pickers on the request form and search filters.
+      2. **Edge (Vercel `vercel.json` rewrites or the Cloudflare Worker)**: a real 301 is worth
+         more than a client-side redirect for the already-indexed URLs.
+      3. Re-submit the sitemap in GSC afterwards so the removals are picked up.
 - [ ] **Event-intent content**: "moving checklist / 30-day plan", "moving to Tallinn",
       neighbourhood + size guides — internal-linked home ↔ hubs ↔ categories ↔ request funnel.
       ET ("laopindade rent / kolimine") + EN ("storage near me / self storage {city}"), the
@@ -143,7 +190,11 @@ Acceptance: the loop runs with less founder time per request; a second geography
 
 - ❌ Don't rebuild the marketplace as the front door — it stays a demoted, functional ops layer.
 - ❌ Don't chase partner self-serve signups as a success metric — supply follows demand ROI.
-- ❌ Don't add an 8th vertical or new country before Tallinn's loop converts.
+- ❌ Don't add a new vertical before Tallinn's loop converts — the count went **down** to 5 in
+      2026-08 (packing folded into moving, insurance dropped), and that was the right direction.
+- ❌ Don't confuse the Baltic **directory** expansion with opening a second **ops loop**. LV/LT
+      get directory rows and SEO surface; the concierge match loop stays Tallinn/Harjumaa until
+      it converts here.
 - ❌ Don't ship SEO changes without the production head-in-DOM gate (react-helmet-async taught
       us: a green dev build is not proof the tags reach prod).
 
@@ -153,7 +204,7 @@ Acceptance: the loop runs with less founder time per request; a second geography
 
 1. **Now:** run the match loop + honest concierge metrics (Phase 0) — the only real work.
 2. **Wk 2–8:** prove supplier ROI → charge per delivered customer; Montonio for the ops layer (Phase 1).
-3. **Wk 4–16:** 7-service SEO + event content to widen demand (Phase 2).
+3. **Wk 4–16:** 5-service SEO + event content to widen demand (Phase 2).
 4. **M2–5:** deepen the loop + a second city (Phase 3).
 
 Phase 0 is the whole game right now. Everything else amplifies a loop that must first convert.

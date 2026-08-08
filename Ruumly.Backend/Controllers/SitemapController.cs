@@ -16,11 +16,25 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
     private static readonly string[] Langs = ["et", "en", "ru", "lv", "lt"];
 
     // Directory-only service categories (no ListingType, no show-flag gate). Each
-    // slug doubles as its city-hub route segment (/cleaning/{city}, …). These map
-    // to the DemandLeadCategory members Cleaning/Packing/VanRental/Insurance and
-    // are the exact frontend CityPage vertical routes.
+    // slug doubles as its city-hub route segment (/cleaning/{city}, …) and is an
+    // exact frontend CityPage vertical route. Today: cleaning + vanrental.
+    //
+    // DERIVED from the consumer (sales) catalogue minus the three verticals that
+    // have a ListingType — those get their own show-flag-gated hubs above. Deriving
+    // it means a category we stop selling can never keep leaking into the sitemap.
+    //
+    // That is exactly what happened to packing and insurance in 2026-08: we no
+    // longer sell either as a consumer service (packing is an add-on of a moving
+    // request; insurance here is B2B carrier liability — see
+    // ServiceCategories.RetainedNotSoldSlugs), so advertising city hubs for them to
+    // Google would rank pages we cannot serve. Their URLs are already indexed: the
+    // backend stops LISTING them, and the search API resolves the equivalent
+    // ?type= filters (packing → moving, insurance → generic) so they don't dead-end.
+    // The 301s themselves belong in the frontend router / edge — see docs/ROADMAP.md.
     private static readonly string[] DirectoryOnlyCategoryHubs =
-        ["cleaning", "packing", "vanrental", "insurance"];
+        Constants.ServiceCategories.ConsumerSlugs
+            .Where(slug => !Enum.TryParse<Models.Enums.ListingType>(slug, ignoreCase: true, out _))
+            .ToArray();
 
     // Emits five <url> entries (one per language prefix) for a given path.
     // path "" → {BaseUrl}/{lang} (no trailing slash) for the homepage.
@@ -235,10 +249,11 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
                 cityHubs.Add($"/moving/{slug}");
             if (showTrailer && services.Contains("trailer"))
                 cityHubs.Add($"/trailer/{slug}");
-            // Directory-only event categories (cleaning/packing/vanrental/
-            // insurance): no ListingType, no show-flag gate — emit the city hub
-            // /{category}/{slug} wherever a directory provider in that city
-            // actually advertises the service. The slug IS the route segment.
+            // Directory-only event categories (cleaning/vanrental): no ListingType,
+            // no show-flag gate — emit the city hub /{category}/{slug} wherever a
+            // directory provider in that city actually advertises the service. The
+            // slug IS the route segment. A supplier may still CARRY "packing" or
+            // "insurance" in ServiceTypesJson; it just never becomes a hub.
             foreach (var svc in DirectoryOnlyCategoryHubs)
                 if (services.Contains(svc))
                     cityHubs.Add($"/{svc}/{slug}");

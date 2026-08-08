@@ -47,6 +47,7 @@ public class ContactFormTests
     private static SupportController MakeController(RuumlyDbContext db, IBackgroundEmailQueue emailQueue)
         => new SupportController(db, emailQueue, new NoOpNotifications(),
                 new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(),
+                TestServices.Outreach(db, emailQueue),
                 Microsoft.Extensions.Logging.Abstractions.NullLogger<SupportController>.Instance)
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }

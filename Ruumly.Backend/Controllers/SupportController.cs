@@ -20,6 +20,7 @@ public class SupportController(
     IBackgroundEmailQueue emailQueue,
     INotificationService notificationService,
     IConfiguration config,
+    IConciergeOutreachService outreachService,
     ILogger<SupportController> logger) : ControllerBase
 {
     /// <summary>
@@ -169,13 +170,35 @@ public class SupportController(
         var city   = Clamp(req.City, 100)!;
         var toCity = Clamp(req.ToCity, 100);
 
-        // Parse the requested categories (any ServiceCategories slug — warehouse,
-        // moving, trailer, cleaning, packing, vanrental, insurance — case-
-        // insensitive). Exactly one valid category maps to that enum value;
-        // zero or several fall back to Any — the admin routes it manually.
-        var validCategories = (req.Categories ?? [])
+        // What the visitor actually submitted, validated against the STORAGE
+        // catalogue (case-insensitive) so a retired slug is recognised rather than
+        // silently dropped. Kept for the ops alert: the admin must see the request
+        // as it was made, not only as we routed it.
+        var submitted = (req.Categories ?? [])
             .Select(c => c?.Trim().ToLowerInvariant())
             .Where(c => c is not null && ServiceCategories.BySlug.ContainsKey(c))
+            .Select(c => c!)
+            .Distinct()
+            .ToList();
+
+        // packing/insurance are retained-for-data, not sold (see
+        // ServiceCategories.RetainedNotSoldSlugs). Neither may produce a top-level
+        // lead in its own category — there is nobody to route it to:
+        //   packing   → resolved to moving; the packing intent is recorded as a
+        //               marker in the Query machine summary, which the ops alert
+        //               reports and ProviderOutreachComposer reads back to render a
+        //               LOCALIZED packing line. Never discarded.
+        //   insurance → resolved to nothing; the lead lands on Any and an admin
+        //               routes it by hand rather than it being dropped.
+        var packingRequested   = submitted.Contains(ServiceCategories.Packing);
+        var insuranceRequested = submitted.Contains(ServiceCategories.Insurance);
+
+        // Exactly one resolved category maps to that enum value; zero or several
+        // fall back to Any — the admin routes it manually. "moving"+"packing"
+        // resolves to the single category "moving", so it still fans out.
+        var validCategories = submitted
+            .Select(ServiceCategories.PublicAliasFor)
+            .Where(c => c is not null)
             .Select(c => c!)
             .Distinct()
             .ToList();
@@ -189,14 +212,34 @@ public class SupportController(
 
         // Compact ENGLISH machine summary for the admin list view — never
         // translated labels. E.g. "concierge: moving+warehouse | Tallinn→Tartu | 2026-08-15".
+        // A retired category is appended as an explicit "+packing-addon" /
+        // "+insurance-asked" marker so the routing is visible and never looks like
+        // the visitor asked for less than they did.
+        // The markers lead the summary, so the 500-char tail clamp below can never
+        // truncate them (see ServiceCategories.HasPackingAddOn for the full contract).
+        var categorySummary = validCategories.Count > 0 ? string.Join('+', validCategories) : "any";
+        if (packingRequested)   categorySummary += $" {ServiceCategories.PackingAddOnMarker}";
+        if (insuranceRequested) categorySummary += $" {ServiceCategories.InsuranceAskedMarker}";
+
         var parts = new List<string>
         {
-            validCategories.Count > 0 ? string.Join('+', validCategories) : "any",
+            categorySummary,
             toCity is not null ? $"{city}→{toCity}" : city,
         };
         if (req.NeedDate is { } needDate)
             parts.Add(needDate.ToString("yyyy-MM-dd"));
-        var query = $"concierge: {string.Join(" | ", parts)}";
+        var query = $"{ServiceCategories.ConciergeQueryPrefix}{string.Join(" | ", parts)}";
+
+        // Details stays the CUSTOMER'S OWN WORDS and nothing else. It is the one
+        // field ProviderOutreachComposer prints verbatim into a cold email that is
+        // written in the PROVIDER's language — an English ops note in brackets in
+        // the middle of an Estonian mail reads like spam and undoes the whole point
+        // of that template. The retired-category signal lives in the Query marker
+        // (machine summary, admin list view) and in the ops alert instead; the
+        // provider sees packing as a localized fact line rendered by the composer.
+        // Insurance never reaches a provider at all — "no consumer product; route
+        // by hand" is an instruction to us, not to a mover.
+        var details = Clamp(req.Details, 2000);
 
         var lead = new DemandLead
         {
@@ -209,7 +252,7 @@ public class SupportController(
             // JSON binds a bare "yyyy-MM-dd" to Kind=Unspecified, which Npgsql rejects
             // for timestamptz — normalize to UTC midnight (calendar-date semantics).
             NeedDate  = req.NeedDate is { } nd ? DateTime.SpecifyKind(nd.Date, DateTimeKind.Utc) : null,
-            Details   = Clamp(req.Details, 2000),
+            Details   = details,
             Category  = category,
             Query     = query.Length > 500 ? query[..500] : query,
             Source    = "concierge",
@@ -222,10 +265,35 @@ public class SupportController(
         await db.SaveChangesAsync();
 
         // The lead is persisted — from here NOTHING may fail the customer's
-        // request. Enrich the instant ops alert (the concierge "phone alert")
-        // with a one-click deep link into the lead's workspace and how many
-        // providers we could reach right now. Nearby scope = the same 25 km the
-        // admin outreach step defaults to, so the count matches what they'll see.
+        // request.
+
+        // ── Auto-fanout ───────────────────────────────────────────────────────
+        // Ask nearby providers for a price RIGHT NOW instead of waiting for an
+        // admin to open the workspace. Live data said manual-only outreach was
+        // the whole failure: 10 leads, 8 provider emails ever sent, one lead
+        // contacted 13 h late and one never at all — while the single batch that
+        // did go out got a 75 % reply rate. The customer's request must never
+        // depend on someone being awake.
+        //
+        // A failure here must never 500 a real customer or lose the lead: it is
+        // wrapped whole, logged loudly with the lead id, and reported in the ops
+        // alert so the admin knows to work it by hand.
+        AutoOutreachSummary fanout;
+        try
+        {
+            fanout = await outreachService.AutoFanOutAsync(lead);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex,
+                "Auto-outreach failed for concierge lead {LeadId} — lead saved, NOBODY contacted.", lead.Id);
+            fanout = AutoOutreachSummary.Skipped("failed");
+        }
+
+        // Enrich the instant ops alert (the concierge "phone alert") with a
+        // one-click deep link into the lead's workspace and how many providers we
+        // could reach right now. Nearby scope = the same 25 km the admin outreach
+        // step defaults to, so the count matches what they'll see.
 
         // The count is decorative: a failure here must never cost us the alert
         // (a saved-but-unannounced lead is the exact silent-lead failure this
@@ -251,17 +319,28 @@ public class SupportController(
             ? $"Matches: {count} providers within 25 km\n"
             : "";
 
+        // Report what the visitor ASKED for, and — when a retired category was
+        // rerouted (packing → moving, insurance → any) — what it was routed as. An
+        // alert that only printed the routed category would quietly hide the ask.
+        var askedLine = submitted.Count > 0 ? string.Join(", ", submitted) : "any";
+        var routedSlug = ServiceCategories.SlugFor(lead.Category);
+        if (packingRequested || insuranceRequested)
+            askedLine += $" (routed as: {routedSlug})";
+
         try
         {
             emailQueue.EnqueueEmail(
                 to:       await OpsInbox.ResolveAsync(db),
                 subject:  $"New concierge request — {lead.City}",
                 textBody: $"From: {lead.Name} <{lead.Email}> {lead.Phone}\n" +
-                          $"Categories: {(validCategories.Count > 0 ? string.Join(", ", validCategories) : "any")}\n" +
+                          $"Categories: {askedLine}\n" +
                           $"City: {lead.City}{(lead.ToCity is not null ? $" → {lead.ToCity}" : "")}\n" +
                           $"Date: {(lead.NeedDate?.ToString("yyyy-MM-dd") ?? "-")}\n" +
                           $"Language: {lead.Language}\n" +
-                          matchLine + "\n" +
+                          matchLine +
+                          // What the auto-fanout actually did — so the admin
+                          // instantly knows whether this still needs hand-work.
+                          fanout.Describe() + "\n\n" +
                           $"{lead.Details}\n\n" +
                           $"Open the workspace: {adminLink}\n" +
                           $"Work it from the admin CRM → Leads.");

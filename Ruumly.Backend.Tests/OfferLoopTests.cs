@@ -35,9 +35,7 @@ public class OfferLoopTests
     }
 
     private static AdminOffersController MakeAdmin(RuumlyDbContext db, IBackgroundEmailQueue queue) =>
-        new(db, queue, new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string?> { ["AppUrl"] = "https://ruumly.eu" })
-                .Build())
+        new(db, queue, TestServices.Config(), TestServices.Outreach(db, queue, TestServices.Config()))
         {
             ControllerContext = new ControllerContext
             {

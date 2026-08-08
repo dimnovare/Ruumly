@@ -199,8 +199,11 @@ public class OfferSelectionNpgsqlTests(PostgresIntegrationFixture pg)
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },
         };
 
-    private static AdminOffersController MakeAdmin(RuumlyDbContext db) =>
-        new(db, new CapturingEmailQueue(), new ConfigurationBuilder().Build())
+    private static AdminOffersController MakeAdmin(RuumlyDbContext db)
+    {
+        var queue = new CapturingEmailQueue();
+        return new(db, queue, new ConfigurationBuilder().Build(),
+            TestServices.Outreach(db, queue))
         {
             ControllerContext = new ControllerContext
             {
@@ -214,4 +217,5 @@ public class OfferSelectionNpgsqlTests(PostgresIntegrationFixture pg)
                 },
             },
         };
+    }
 }

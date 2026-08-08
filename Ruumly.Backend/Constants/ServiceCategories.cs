@@ -8,6 +8,13 @@ namespace Ruumly.Backend.Constants;
 /// concierge intake (POST /api/leads/request) and the provider directory
 /// (Supplier.ServiceTypesJson), so a category added to the enum is automatically
 /// accepted everywhere.
+///
+/// TWO AUDIENCES, TWO SETS (2026-08 founder decision):
+///   • <see cref="BySlug"/> — the STORAGE catalogue. What a supplier row may carry
+///     in ServiceTypesJson and what a historical DemandLead may already be tagged
+///     with. Nothing is ever removed from it.
+///   • <see cref="ConsumerSlugs"/> — the SALES catalogue. What a visitor may pick
+///     in the concierge intake and public search, and what the sitemap advertises.
 /// </summary>
 public static class ServiceCategories
 {
@@ -17,9 +24,124 @@ public static class ServiceCategories
             .Where(c => c != DemandLeadCategory.Any)
             .ToDictionary(c => c.ToString().ToLowerInvariant(), c => c);
 
+    public const string Packing   = "packing";
+    public const string Moving    = "moving";
+    public const string Insurance = "insurance";
+
+    /// <summary>
+    /// RETAINED FOR DATA, NOT FOR SALE. These slugs stay fully valid on the supply
+    /// side — a mover that also packs keeps its "packing" tag (useful supplier
+    /// metadata, and it is what powers the packing add-on) — but are never offered
+    /// to a consumer as a top-level service.
+    ///
+    /// Why (market research across EE/LV/LT, 2026-08):
+    ///   • packing   — never sold standalone anywhere in the Baltics; it is always a
+    ///     line item inside a moving company's offer. Lithuania's national directory
+    ///     even lists the same two companies under "pakavimo paslaugos" as under its
+    ///     general moving category. Advertising it as bookable sends the customer to
+    ///     a dead end with nobody to quote.
+    ///   • insurance — in this market that means CMR carrier-liability cover sold B2B
+    ///     to hauliers, not goods-in-transit cover a household can buy. Wrong customer
+    ///     entirely, and the thinnest vertical we had (one Estonian city).
+    ///
+    /// DO NOT delete the matching <see cref="DemandLeadCategory"/> members or purge
+    /// stored ServiceTypesJson values: production DemandLead rows already carry these
+    /// categories and some columns persist enum NAMES, so removing a member breaks
+    /// reading historical leads. This is a presentation/routing change only.
+    /// </summary>
+    public static readonly IReadOnlySet<string> RetainedNotSoldSlugs =
+        new HashSet<string>(StringComparer.Ordinal) { Packing, Insurance };
+
+    /// <summary>
+    /// Slugs a consumer may actually choose: the public concierge intake, public
+    /// search filters and the sitemap's service×city hubs all read from this.
+    /// </summary>
+    public static readonly IReadOnlyList<string> ConsumerSlugs =
+        BySlug.Keys.Where(s => !RetainedNotSoldSlugs.Contains(s)).ToList();
+
+    /// <summary>True when a visitor is allowed to pick this slug as a service.</summary>
+    public static bool IsConsumerSlug(string? slug) =>
+        slug is not null && BySlug.ContainsKey(slug) && !RetainedNotSoldSlugs.Contains(slug);
+
+    /// <summary>
+    /// What a slug arriving on a PUBLIC surface should be served as:
+    ///   consumer slug → itself
+    ///   "packing"     → "moving"  (packing is an add-on line inside a mover's offer)
+    ///   "insurance"   → null      (no consumer equivalent — generic search / Any lead)
+    ///   unknown slug  → null
+    /// Callers that must tell "retired" apart from "never existed" check
+    /// <see cref="BySlug"/> first — the city hubs for both retired slugs are live and
+    /// indexed, so those URLs must resolve to something real rather than dead-end.
+    /// </summary>
+    public static string? PublicAliasFor(string? slug) => slug switch
+    {
+        Packing                  => Moving,
+        Insurance                => null,
+        _ when IsConsumerSlug(slug) => slug,
+        _                        => null,
+    };
+
     /// <summary>Slug for a concrete category ("cleaning"); Any → "any".</summary>
     public static string SlugFor(DemandLeadCategory category) =>
         category.ToString().ToLowerInvariant();
+
+    // ─── Add-on markers carried in DemandLead.Query ───────────────────────────
+    //
+    // HOW THE PACKING ADD-ON TRAVELS FROM INTAKE TO THE PROVIDER EMAIL.
+    //
+    // A "packing" request is routed to a Moving lead (see PublicAliasFor), so the
+    // lead's own Category can no longer tell anyone that packing was asked for.
+    // That intent is written as a marker into the Query machine summary — NOT into
+    // Details — and ProviderOutreachComposer reads it back at compose time to
+    // render a properly LOCALIZED packing line.
+    //
+    // Why Query and not Details:
+    //   • Details is printed VERBATIM to the provider (and is the customer's own
+    //     free text). An English ops note in the middle of an Estonian cold email
+    //     is exactly the credibility leak this marker exists to avoid.
+    //   • Query is English by existing convention, is what the admin list view
+    //     shows, and is already where the routing is spelled out.
+    //   • No migration: both columns already exist.
+    //
+    // Why it survives the clamps: the intake builds Query as
+    // "concierge: {categories}{markers} | {city}[→{toCity}] | {date}" and clamps
+    // the TAIL at 500 chars, so the marker — always in the first segment, at most
+    // a few dozen characters in — can never be truncated away. The 2000-char
+    // Details clamp is now irrelevant to the signal, and the customer's own words
+    // are no longer pushed out to make room for an ops note.
+
+    /// <summary>Prefix the concierge intake stamps on every Query it writes.</summary>
+    public const string ConciergeQueryPrefix = "concierge: ";
+
+    /// <summary>Appended to the Query category summary when packing was asked for on a lead routed elsewhere.</summary>
+    public const string PackingAddOnMarker = "+packing-addon";
+
+    /// <summary>Appended to the Query category summary when insurance was asked for; admin-only, never shown to a provider.</summary>
+    public const string InsuranceAskedMarker = "+insurance-asked";
+
+    /// <summary>
+    /// True when this lead's Query carries the packing add-on marker in the
+    /// segment the intake actually wrote.
+    ///
+    /// Deliberately strict: other lead sources put RAW CUSTOMER TEXT in Query
+    /// (SupportController's routed quote-request leads store the visitor's
+    /// message there), and even a concierge Query interpolates the customer's
+    /// city after the first " | ". Requiring the concierge prefix AND restricting
+    /// the search to the leading category segment means a visitor cannot type
+    /// "+packing-addon" into a free-text field and inject a line into provider mail.
+    /// </summary>
+    public static bool HasPackingAddOn(string? query)
+    {
+        if (string.IsNullOrEmpty(query) ||
+            !query.StartsWith(ConciergeQueryPrefix, StringComparison.Ordinal))
+            return false;
+
+        var head      = query[ConciergeQueryPrefix.Length..];
+        var separator = head.IndexOf(" | ", StringComparison.Ordinal);
+        if (separator >= 0) head = head[..separator];
+
+        return head.Contains(PackingAddOnMarker, StringComparison.Ordinal);
+    }
 
     /// <summary>
     /// Normalizes a raw list of service-type slugs (trim + lowercase + dedupe)
@@ -27,6 +149,11 @@ public static class ServiceCategories
     /// Unknown slugs are silently dropped so a self-serve applicant's free-form
     /// input can be persisted safely into Supplier.ServiceTypesJson without
     /// rejecting the whole application.
+    ///
+    /// SUPPLY side — validates against the full storage catalogue on purpose, so
+    /// "packing"/"insurance" are still accepted and stored. They are supplier
+    /// metadata (which movers also pack), not things we sell; see
+    /// <see cref="RetainedNotSoldSlugs"/>.
     /// </summary>
     public static List<string> NormalizeAndValidate(IEnumerable<string>? raw) =>
         (raw ?? [])

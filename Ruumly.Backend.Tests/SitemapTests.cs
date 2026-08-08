@@ -230,13 +230,13 @@ public class SitemapTests
     }
 
     [Fact]
-    public async Task Sitemap_DirectoryCity_EmitsNewEventCategoryHubs()
+    public async Task Sitemap_DirectoryCity_EmitsDirectoryOnlyCategoryHubs()
     {
-        // A directory provider advertising the new directory-only categories
-        // (cleaning + insurance) must surface /cleaning/{city} and /insurance/{city}
+        // A directory provider advertising the directory-only consumer categories
+        // (cleaning + vanrental) must surface /cleaning/{city} and /vanrental/{city}
         // hubs — and never invent hubs for categories it doesn't advertise.
         var body = await RenderSitemapWithDirectoryLocationAsync(
-            "Tallinn", serviceTypesJson: """["cleaning","insurance"]""");
+            "Tallinn", serviceTypesJson: """["cleaning","vanrental"]""");
 
         foreach (var lang in Langs)
         {
@@ -245,12 +245,39 @@ public class SitemapTests
             body.Should().Contain(
                 $"<xhtml:link rel=\"alternate\" hreflang=\"{lang}\" href=\"{BaseUrl}/{lang}/cleaning/tallinn\"/>");
         }
-        body.Should().Contain($"<loc>{BaseUrl}/et/insurance/tallinn</loc>");
-        body.Should().NotContain($"<loc>{BaseUrl}/et/packing/tallinn</loc>",
-            "no provider in this city advertises packing");
-        body.Should().NotContain($"<loc>{BaseUrl}/et/vanrental/tallinn</loc>");
+        body.Should().Contain($"<loc>{BaseUrl}/et/vanrental/tallinn</loc>");
+        body.Should().NotContain($"<loc>{BaseUrl}/et/moving/tallinn</loc>",
+            "no provider in this city advertises moving");
         body.Should().NotContain($"<loc>{BaseUrl}/et/storage/tallinn</loc>",
             "an explicit service list without warehouse suppresses the storage anchor");
+    }
+
+    // 2026-08: we stopped selling packing (an add-on of a moving request) and
+    // insurance (B2B carrier liability here, not a household product). A supplier
+    // may still CARRY those service types — that is useful supply-side metadata —
+    // but we must not ask Google to rank a city page we cannot serve.
+    [Fact]
+    public async Task Sitemap_NeverEmitsPackingOrInsuranceHubs_EvenWhenAProviderAdvertisesThem()
+    {
+        var body = await RenderSitemapWithDirectoryLocationAsync(
+            "Tallinn", serviceTypesJson: """["warehouse","moving","cleaning","vanrental","packing","insurance"]""");
+
+        // The retired pair is gone from every language.
+        foreach (var lang in Langs)
+        {
+            body.Should().NotContain($"/{lang}/packing/tallinn",
+                "packing is an add-on of a moving request, not a bookable service");
+            body.Should().NotContain($"/{lang}/insurance/tallinn",
+                "consumer insurance is not a product we can fulfil");
+        }
+
+        // Everything else this provider advertises still ships.
+        foreach (var hub in new[] { "storage", "moving", "cleaning", "vanrental" })
+        {
+            body.Should().Contain($"<loc>{BaseUrl}/et/{hub}/tallinn</loc>",
+                $"/{hub}/{{city}} is still a live vertical");
+            body.Should().Contain($"<loc>{BaseUrl}/ru/{hub}/tallinn</loc>");
+        }
     }
 
     private static async Task<string> RenderSitemapWithBlogAsync(string? enabled, string? articlesJson)

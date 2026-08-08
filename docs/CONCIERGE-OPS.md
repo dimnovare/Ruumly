@@ -102,6 +102,16 @@ Pitch order: (1) here is a real customer/lead volume, (2) enquiries are free rig
 - Hero flip: PlatformSettings `conciergeFirst` ("true"/"false") — admin → Settings.
   Old marketplace hero returns instantly when "false". `conciergeCities` = operating-area
   hint shown in the funnel.
+- **Auto-fanout (2026-08):** a new concierge request emails nearby providers for a price
+  immediately — outreach no longer waits for an admin to open the workspace. Candidates
+  come from the same provider-candidate finder (25 km, widened to 50 then 100 only if the
+  quota is unfilled); the lead moves New → Contacted and the ops alert says exactly what
+  was sent ("Auto-contacted: 4 provider(s) within 25 km (1 skipped: no email) — …").
+  A request with category `any` never fans out (nothing specific to ask for) and neither
+  does anything else when the switch is off — the alert says so, and it is then hand-work.
+  Settings: `conciergeAutoOutreach` ("true"/"false", default true),
+  `conciergeAutoOutreachMax` (default 6, clamped 1..12), `opsPhone` (support phone in the
+  provider email; empty = the phone line is omitted).
 - Workspace endpoints (v2, backward-compatible — no migration):
   - Providers: `GET /api/admin/leads/{id}/provider-candidates?q=&scope=nearby|all&category=lead|any&radiusKm=25&limit=50`
     (unique suppliers, Haversine distance from the lead's city anchor, exact-city first;
