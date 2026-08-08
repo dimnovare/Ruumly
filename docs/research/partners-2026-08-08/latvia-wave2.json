@@ -1,0 +1,3774 @@
+{
+  "generatedAt": "2026-08-08",
+  "country": "LV",
+  "rows": [
+    {
+      "name": "EASYSTORAGE — Mežciems",
+      "slug": "easystorage-prusu-riga",
+      "country": "LV",
+      "city": "Rīga",
+      "address": "Prūšu iela 46, Rīga, LV-1057",
+      "lat": 56.9083,
+      "lng": 24.1955,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": "https://www.easy-storage.lv/",
+      "contactEmail": null,
+      "contactPhone": "+371 28656062",
+      "tagline": "Individuālās glabāšanas noliktavas ar klimata kontroli un piekļuvi 24/7 Mežciemā.",
+      "descriptionEt": "EASYSTORAGE on Riia isehoiustamise operaator Prūšu tänaval Mežciemsis. Boksid on kliimakontrolliga: temperatuur hoitakse vähemalt 12 kraadi juures ja õhuniiskus umbes 37 protsenti. Ligipääs on kiipkaardiga ööpäev läbi ning hoovis saab auto laadimiseks ukse ette sõita.",
+      "descriptionEn": "EASYSTORAGE is a Riga self-storage operator on Prūšu iela in the Mežciems district. Units are climate controlled, holding at least 12 degrees and roughly 37 percent humidity, with CCTV and fire protection. Access is by smart card around the clock and vehicles can drive up to the unit door for loading.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.easy-storage.lv/en",
+        "https://xn--mantuglabtuve-4qb.lv/en/storage/easystorage"
+      ]
+    },
+    {
+      "name": "Ask Storage",
+      "slug": "ask-storage-riga",
+      "country": "LV",
+      "city": "Rīga",
+      "address": "Uriekstes iela 3, Rīga, LV-1005",
+      "lat": 56.9885,
+      "lng": 24.1156,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": "https://askstorage.lv/",
+      "contactEmail": null,
+      "contactPhone": "+371 26230000",
+      "tagline": "Sausas un hermētiskas noliktavas no 2,5 m² Sarkandaugavā ar piebraukšanu pie durvīm.",
+      "descriptionEt": "Ask Storage on 2013. aastast tegutsev hoiuteenuse pakkuja Riias Uriekstes tänaval. Boksid on kuivad ja hermeetilised, kõrgusega 2,59 meetrit ja pindalaga 2,5 kuni 30 ruutmeetrit, autoga saab sõita otse ukse ette. Territoorium on avatud ööpäev läbi, videovalve all ja tasuta parkimisega.",
+      "descriptionEn": "Ask Storage has operated since 2013 on Uriekstes iela in Riga's Sarkandaugava area. Units are dry and hermetic, 2.59 m high and 2.5 to 30 m² in size, with vehicle access right up to the door. The site is open around the clock with video surveillance, lighting and free customer parking.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://askstorage.lv/",
+        "https://askstorage.lv/product/noliktavas-noma/"
+      ]
+    },
+    {
+      "name": "KEEPP",
+      "slug": "keepp-riga",
+      "country": "LV",
+      "city": "Rīga",
+      "address": "Ganību dambis 19, Rīga, LV-1005",
+      "lat": 56.9786,
+      "lng": 24.1124,
+      "serviceTypes": [
+        "warehouse",
+        "moving"
+      ],
+      "websiteUrl": "https://keepp.lv/",
+      "contactEmail": "info@keepp.lv",
+      "contactPhone": "+371 27882266",
+      "tagline": "Mantu noliktavas no 35 € mēnesī pie Skanstes, ar kravu pārvadājumiem no 30 € par reisu.",
+      "descriptionEt": "KEEPP on hoiukompleks Ganību dambisel, viie minuti kaugusel Riia kesklinnast ja kolme minuti kaugusel Skanste piirkonnast. Bokse on neljas suuruses alates 3,5 ruutmeetrist kuni 30 ruutmeetrini, hinnaga alates 35 eurot kuus, automaatselt tõstetavate uste ja kahe võtmekomplektiga. Lisaks hoiustamisele pakub KEEPP kaubaveoteenust Riias ja selle ümbruses alates 30 eurost reisi kohta.",
+      "descriptionEn": "KEEPP is a storage facility on Ganību dambis, five minutes from Riga's centre and three from the Skanste district. Units come in four sizes from 3.5 m² to 30 m², from €35 per month, with automatic lifting gates and two sets of keys. Alongside storage, KEEPP runs a cargo transport service in and around Riga starting at €30 per trip.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://keepp.lv/",
+        "https://xn--mantuglabtuve-4qb.lv/en/storage/keepp"
+      ]
+    },
+    {
+      "name": "SIA DZEŅI Serviss",
+      "slug": "dzeni-serviss-riga",
+      "country": "LV",
+      "city": "Rīga",
+      "address": "Kandavas iela 29A, Rīga, LV-1083",
+      "lat": 56.9492,
+      "lng": 24.0475,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": "https://dzeniserviss.lv/",
+      "contactEmail": null,
+      "contactPhone": "+371 29377746",
+      "tagline": "Dzīvokļu un māju uzkopšana Rīgā: ģenerāltīrīšana, regulāra uzkopšana un tīrīšana pēc remonta.",
+      "descriptionEt": "DZEŅI Serviss on Riia koristusettevõte, mis teenindab nii kortereid ja eramuid kui ka äri- ja tootmispindu. Teenuste hulka kuuluvad üldkoristus, regulaarne koristus ja remondijärgne koristus ning akende pesu käsitsi või teleskoopvarrega kuni 25 meetri kõrguseni. Ettevõte hooldab ka haljasalasid ja sillutist.",
+      "descriptionEn": "DZEŅI Serviss is a Riga cleaning company working for flats and houses as well as commercial and industrial premises. Services include general cleaning, regular cleaning and post-renovation cleaning, plus window washing by hand or telescopic pole up to 25 metres. The firm also maintains lawns, gardens and paved surfaces.",
+      "registryCode": "40203342406",
+      "sourceQuality": "official",
+      "sources": [
+        "https://dzeniserviss.lv/"
+      ]
+    },
+    {
+      "name": "Vivar Serviss, SIA",
+      "slug": "vivar-serviss-riga",
+      "country": "LV",
+      "city": "Rīga",
+      "address": "Firsa Sadovņikova iela 20, Rīga, LV-1003",
+      "lat": 56.9409,
+      "lng": 24.1347,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": "https://vivar.lv/",
+      "contactEmail": "vivar@vivar.lv",
+      "contactPhone": "+371 20078807",
+      "tagline": "Kopš 2011. gada veic dzīvokļu un māju uzkopšanu, ģenerāltīrīšanu un mīksto mēbeļu tīrīšanu.",
+      "descriptionEt": "Vivar Serviss on 2011. aastast tegutsev Riia koristusettevõte, mis teenindab nii eraisikuid kui juriidilisi kliente. Teenuste hulka kuuluvad korterite ja majade koristus, üldkoristus, akende ja fassaadide pesu, vaipade ja pehme mööbli keemiline puhastus ning põrandate vahatamine. Ettevõte töötab elu-, äri- ja tööstuspindadel.",
+      "descriptionEn": "Vivar Serviss is a Riga cleaning company operating since 2011 for both private and business customers. Its services cover home and apartment cleaning, general cleaning, window and facade washing, chemical cleaning of carpets and soft furniture, and floor waxing. It works across residential, commercial and industrial properties.",
+      "registryCode": "40103460942",
+      "sourceQuality": "official",
+      "sources": [
+        "https://vivar.lv/",
+        "https://vivar.lv/uzkopsanas-tirisanas-pakalpojumi/maju-un-dzivoklu-tirisana/"
+      ]
+    },
+    {
+      "name": "Spiediens, SIA",
+      "slug": "spiediens-riga",
+      "country": "LV",
+      "city": "Rīga",
+      "address": "Turaidas iela 2, Rīga, LV-1039",
+      "lat": 56.9691,
+      "lng": 24.1568,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 27766530",
+      "tagline": "Uzkopšanas serviss Rīgas Teikas apkaimē privātpersonām un uzņēmumiem.",
+      "descriptionEt": "Spiediens on Riia koristusteenuse pakkuja, kelle kontor asub Turaidas tänaval Teika linnaosas. Ettevõte on kantud Läti suurima teenuste kataloogi koristusteenuste rubriiki. Kontaktandmed pärinevad kataloogist, mitte ettevõtte enda kodulehelt, seega tasub need kõne ajal üle kinnitada.",
+      "descriptionEn": "Spiediens is a Riga cleaning services provider based on Turaidas iela in the Teika district. It is listed in the cleaning-services section of Latvia's main business directory. Contact details come from that directory rather than the company's own site, so they are worth reconfirming on first call.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsanas-serviss.zl.lv/"
+      ]
+    },
+    {
+      "name": "Tīratlona serviss, SIA",
+      "slug": "tiratlona-serviss-riga",
+      "country": "LV",
+      "city": "Rīga",
+      "address": "Kurzemes prospekts 148, Rīga, LV-1069",
+      "lat": 56.9582,
+      "lng": 23.9989,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 20412031",
+      "tagline": "Uzkopšanas pakalpojumi Imantā un Rīgas rietumu daļā.",
+      "descriptionEt": "Tīratlona serviss on koristusettevõte Riia Imanta linnaosas Kurzemes puiesteel. Ettevõte on kirjas Läti peamise ärikataloogi koristusteenuste rubriigis. Kontaktandmed pärinevad kataloogist, seega tuleks need esimesel kõnel üle kinnitada.",
+      "descriptionEn": "Tīratlona serviss is a cleaning company on Kurzemes prospekts in Riga's Imanta district. It appears in the cleaning-services category of Latvia's main business directory. Its contact details are directory-sourced and should be reconfirmed on the first call.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsanas-serviss.zl.lv/"
+      ]
+    },
+    {
+      "name": "Logu spožuma serviss, SIA",
+      "slug": "logu-spozuma-serviss-riga",
+      "country": "LV",
+      "city": "Rīga",
+      "address": "Lāčplēša iela 116, Rīga, LV-1003",
+      "lat": 56.941,
+      "lng": 24.1296,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 22462090",
+      "tagline": "Logu mazgāšana un uzkopšanas darbi Rīgas centrā un Latgales priekšpilsētā.",
+      "descriptionEt": "Logu spožuma serviss on Riia kesklinnas Lāčplēša tänaval tegutsev koristusettevõte, mis on spetsialiseerunud akende pesule. Akende pesu on Läti kolimisjärgse koristuse tavapärane osa, mistõttu ettevõte sobib kolimispakettidesse. Kontaktandmed pärinevad ärikataloogist.",
+      "descriptionEn": "Logu spožuma serviss is a cleaning firm on Lāčplēša iela in central Riga specialising in window washing. Window cleaning is a standard line item in Latvian move-out cleaning, which makes the firm a fit for moving packages. Contact details are directory-sourced.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsanas-serviss.zl.lv/"
+      ]
+    },
+    {
+      "name": "Genti.lv",
+      "slug": "genti-lv-riga",
+      "country": "LV",
+      "city": "Rīga",
+      "address": "Talsu iela 30A, Rīga, LV-1002",
+      "lat": 56.9377,
+      "lng": 24.0678,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 26166228",
+      "tagline": "Uzkopšanas pakalpojumi Āgenskalnā un Pārdaugavā.",
+      "descriptionEt": "Genti.lv on koristusteenuse pakkuja Riia Āgenskalnsi linnaosas Talsu tänaval. Ettevõte on kirjas Läti peamise ärikataloogi koristusteenuste rubriigis. Kontaktandmed pärinevad kataloogist ja tuleks esimesel kõnel üle kinnitada.",
+      "descriptionEn": "Genti.lv is a cleaning provider on Talsu iela in Riga's Āgenskalns district on the left bank. It is listed in the cleaning-services category of Latvia's main business directory. Contact details are directory-sourced and should be reconfirmed on the first call.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsanas-serviss.zl.lv/"
+      ]
+    },
+    {
+      "name": "Alviri, SIA",
+      "slug": "alviri-marupe",
+      "country": "LV",
+      "city": "Mārupe",
+      "address": "Smiltnieku iela 2, Mārupe, Mārupes novads, LV-2167",
+      "lat": 56.9178,
+      "lng": 24.0134,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 20407407",
+      "tagline": "Profesionāla tīrīšana un dzīvokļu uzkopšana Mārupē un Rīgas apkaimē.",
+      "descriptionEt": "Alviri on koristusettevõte Mārupes Smiltnieku tänaval, Riia lõunapiiril. Ettevõte pakub laia valikut professionaalseid puhastusteenuseid, sealhulgas korterite ja majade koristust. Kontaktandmed pärinevad ärikataloogist.",
+      "descriptionEn": "Alviri is a cleaning company on Smiltnieku iela in Mārupe, on Riga's southern edge. It offers a broad range of professional cleaning work, including flat and house cleaning. Contact details are directory-sourced.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsanas-serviss.zl.lv/"
+      ]
+    },
+    {
+      "name": "SIA VIATEK 1 — Beķergrāvja noliktava",
+      "slug": "viatek1-bekergravja-riga",
+      "country": "LV",
+      "city": "Rīga",
+      "address": "Beķergrāvja iela 7, Rīga, LV-1007",
+      "lat": 57.006,
+      "lng": 24.084,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": "https://www.viatek.lv/",
+      "contactEmail": "viatek@latnet.lv",
+      "contactPhone": "+371 67221604",
+      "tagline": "Noliktavu pakalpojumi Pārdaugavā: preču uzglabāšana un piegāde no noliktavas.",
+      "descriptionEt": "VIATEK 1 on 1995. aastast tegutsev Läti ettevõte, mis pakub lisaks tehnilise soola tarnele ka laoteenust Riias. Beķergrāvja tänava ladu Voleri piirkonnas võtab vastu kauba hoiustamiseks ja korraldab sealt väljaveo. Tegemist on ärilise laopinnaga, mitte isehoiustamise boksidega.",
+      "descriptionEn": "VIATEK 1 has operated since 1995 and, alongside its technical-salt business, runs warehousing services in Riga. The Beķergrāvja iela warehouse in the Voleri area takes goods into storage and handles delivery out of the warehouse. This is commercial warehouse space rather than self-storage units.",
+      "registryCode": "40003274376",
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viatek.lv/kontakti",
+        "https://www.viatek.lv/"
+      ]
+    },
+    {
+      "name": "SIA VIATEK 1 — Ganību dambja noliktava",
+      "slug": "viatek1-ganibu-dambis-riga",
+      "country": "LV",
+      "city": "Rīga",
+      "address": "Ganību dambis 22G, Rīga, LV-1045",
+      "lat": 56.9777,
+      "lng": 24.1197,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": "https://www.viatek.lv/",
+      "contactEmail": "viatek@latnet.lv",
+      "contactPhone": "+371 66002667",
+      "tagline": "Noliktavas platība Skanstes rajonā ar preču uzglabāšanu un izsniegšanu.",
+      "descriptionEt": "VIATEK 1 teine Riia ladu asub Ganību dambisel Skanste piirkonnas. Ladu pakub kauba hoiustamist ja väljastamist ärikliendile. Ettevõttel on eraldi telefoninumber just selle lao jaoks.",
+      "descriptionEn": "VIATEK 1's second Riga warehouse is on Ganību dambis in the Skanste district. It provides goods storage and release for business customers. The company publishes a separate phone number for this site.",
+      "registryCode": "40003274376",
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viatek.lv/kontakti",
+        "https://meklesanas-rezultats.zl.lv/noliktavu+noma/"
+      ]
+    },
+    {
+      "name": "SIA VIATEK 1 — Limbažu noliktava",
+      "slug": "viatek1-limbazi",
+      "country": "LV",
+      "city": "Limbaži",
+      "address": "Dzegužu iela 1, Limbaži, Limbažu novads, LV-4001",
+      "lat": 57.5149,
+      "lng": 24.7351,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": "https://www.viatek.lv/",
+      "contactEmail": "viatek@latnet.lv",
+      "contactPhone": "+371 67221604",
+      "tagline": "Noliktavas bāze Limbažos — viena no retajām noliktavu platībām Vidzemes ziemeļos.",
+      "descriptionEt": "VIATEK 1 peab Limbažis Dzegužu tänaval laobaasi, mis on üks väheseid laopindu Põhja-Vidzemes. Ladu kuulub sama ettevõtte võrku nagu kaks Riia lattu. Piirkonnas, kus laopinda peaaegu ei pakuta, on see märkimisväärne varustaja.",
+      "descriptionEn": "VIATEK 1 operates a warehouse base on Dzegužu iela in Limbaži, one of very few warehouse sites in northern Vidzeme. It belongs to the same network as the company's two Riga warehouses. In a region with almost no warehouse supply this is a notable option.",
+      "registryCode": "40003274376",
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viatek.lv/kontakti"
+      ]
+    },
+    {
+      "name": "ACE Logistics Latvia, SIA",
+      "slug": "ace-logistics-latvia-marupe",
+      "country": "LV",
+      "city": "Mārupe",
+      "address": "\"Kargo\" k-1, Mārupe, Mārupes novads, LV-2167",
+      "lat": 56.9154,
+      "lng": 23.9884,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 67207049",
+      "tagline": "Loģistikas un noliktavu pakalpojumi Kargo kompleksā pie lidostas Mārupē.",
+      "descriptionEt": "ACE Logistics Latvia tegutseb Mārupes Kargo kompleksis Riia lennujaama läheduses. Ettevõte pakub logistika- ja laoteenust, mis sobib eelkõige ärikliendile ja suuremale kaubale. Kontaktandmed pärinevad ärikataloogist.",
+      "descriptionEn": "ACE Logistics Latvia operates from the Kargo complex in Mārupe near Riga airport. The company provides logistics and warehousing aimed mainly at business customers and larger consignments. Contact details are directory-sourced.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://meklesanas-rezultats.zl.lv/noliktavu+noma/"
+      ]
+    },
+    {
+      "name": "SIA KABI RENT, Ādažu nomas punkts",
+      "slug": "kabi-rent-adazi",
+      "country": "LV",
+      "city": "Ādaži",
+      "address": "Rīgas gatve 51, Ādaži, Ādažu novads, LV-2164",
+      "lat": 57.0804,
+      "lng": 24.3173,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.kabi.lv/",
+      "contactEmail": null,
+      "contactPhone": "+371 20393905",
+      "tagline": "Piekabju noma Ādažos pašapkalpošanās režīmā — 5 € pirmā stunda, 18 € diennaktī.",
+      "descriptionEt": "Üleriigilise KABI haagiserendi iseteeninduspunkt Ādažis Rīgas maanteel. Haagis avatakse mobiilirakendusega Bluetoothi kaudu, personali kohal ei ole ja teenus töötab ööpäev läbi. Hind on 5 eurot esimene tund, 3 eurot iga järgnev ja ööpäeva ülempiir 18 eurot.",
+      "descriptionEn": "Self-service point of the national KABI trailer-rental network on Rīgas gatve in Ādaži. Trailers are unlocked with a mobile app over Bluetooth, with no staff on site, available around the clock. Pricing is €5 for the first hour, €3 per additional hour, capped at €18 per day.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://kabi.lv/nomas-punkti/",
+        "https://kabi.lv/"
+      ]
+    },
+    {
+      "name": "SIA KABI RENT, Dobeles nomas punkts",
+      "slug": "kabi-rent-dobele",
+      "country": "LV",
+      "city": "Dobele",
+      "address": "Jāņa Čakstes iela 2C, Dobele, Dobeles novads, LV-3701",
+      "lat": 56.6245,
+      "lng": 23.2871,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.kabi.lv/",
+      "contactEmail": null,
+      "contactPhone": "+371 20393905",
+      "tagline": "Piekabju noma Dobelē bez personāla, atverot piekabi ar mobilo lietotni.",
+      "descriptionEt": "KABI haagiserendi iseteeninduspunkt Dobeles Jāņa Čakstes tänaval, kaubandusobjekti juures. Haagised avatakse mobiilirakendusega ja neid saab rentida ööpäev läbi ilma teenindajata. Dobeles on see praktiliselt ainus avalikult broneeritav haagiserendi punkt.",
+      "descriptionEn": "KABI self-service trailer point on Jāņa Čakstes iela in Dobele, at a retail site. Trailers are unlocked with the mobile app and can be rented around the clock with no attendant. In Dobele this is effectively the only publicly bookable trailer rental point.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://kabi.lv/nomas-punkti/",
+        "https://kabi.lv/"
+      ]
+    },
+    {
+      "name": "SIA KABI RENT, Kuldīgas nomas punkts",
+      "slug": "kabi-rent-kuldiga",
+      "country": "LV",
+      "city": "Kuldīga",
+      "address": "Ganību iela 20, Kuldīga, Kuldīgas novads, LV-3301",
+      "lat": 56.9571,
+      "lng": 21.9914,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.kabi.lv/",
+      "contactEmail": null,
+      "contactPhone": "+371 20393905",
+      "tagline": "Piekabju noma Kuldīgā visu diennakti ar atvēršanu caur lietotni.",
+      "descriptionEt": "KABI haagiserendi iseteeninduspunkt Kuldīga Ganību tänaval. Nii lahtised kui kilekattega haagised avatakse mobiilirakendusega Bluetoothi kaudu ööpäev läbi. Kuldīga on Kuramaa sisemaa üks väheseid haagiserendi kohti.",
+      "descriptionEn": "KABI self-service trailer point on Ganību iela in Kuldīga. Both open and covered trailers are unlocked via the mobile app over Bluetooth, available around the clock. Kuldīga is one of the few trailer rental options in inland Courland.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://kabi.lv/nomas-punkti/",
+        "https://kabi.lv/"
+      ]
+    },
+    {
+      "name": "SIA KABI RENT, Madonas nomas punkts",
+      "slug": "kabi-rent-madona",
+      "country": "LV",
+      "city": "Madona",
+      "address": "Rūpniecības iela 24, Madona, Madonas novads, LV-4801",
+      "lat": 56.8594,
+      "lng": 26.2282,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.kabi.lv/",
+      "contactEmail": null,
+      "contactPhone": "+371 20393905",
+      "tagline": "Piekabju noma Madonā pašapkalpošanās režīmā jebkurā diennakts laikā.",
+      "descriptionEt": "KABI haagiserendi iseteeninduspunkt Madona Rūpniecības tänaval. Haagis broneeritakse ja avatakse mobiilirakendusega, teenindajat kohal ei ole. Hind on 5 eurot esimene tund ja kuni 18 eurot ööpäevas.",
+      "descriptionEn": "KABI self-service trailer point on Rūpniecības iela in Madona. Trailers are booked and unlocked through the mobile app with no attendant on site. Pricing is €5 for the first hour and up to €18 per day.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://kabi.lv/nomas-punkti/",
+        "https://kabi.lv/"
+      ]
+    },
+    {
+      "name": "SIA KABI RENT, Ķekavas nomas punkts",
+      "slug": "kabi-rent-kekava",
+      "country": "LV",
+      "city": "Ķekava",
+      "address": "Rīgas iela 22A, Ķekava, Ķekavas novads, LV-2123",
+      "lat": 56.8319,
+      "lng": 24.232,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.kabi.lv/",
+      "contactEmail": null,
+      "contactPhone": "+371 20393905",
+      "tagline": "Piekabju noma Ķekavā uz Rīgas ielas, pieejama visu diennakti bez personāla.",
+      "descriptionEt": "KABI haagiserendi iseteeninduspunkt Ķekava Rīgas tänaval, Riiast lõunas kulgeva peatee ääres. Haagis avatakse mobiilirakendusega ja teenus on saadaval ööpäev läbi. Punkt teenindab hästi Riia lõunasuunalist eeslinnaliiklust.",
+      "descriptionEn": "KABI self-service trailer point on Rīgas iela in Ķekava, on the main road running south out of Riga. Trailers are unlocked with the mobile app and the service is available around the clock. The point serves the southern commuter belt well.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://kabi.lv/nomas-punkti/",
+        "https://kabi.lv/"
+      ]
+    },
+    {
+      "name": "SIA KABI RENT, Babītes nomas punkts",
+      "slug": "kabi-rent-babite",
+      "country": "LV",
+      "city": "Babīte",
+      "address": "\"Reiņi\", Spilve, Babītes pagasts, Mārupes novads, LV-1029",
+      "lat": 56.9578,
+      "lng": 23.961,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.kabi.lv/",
+      "contactEmail": null,
+      "contactPhone": "+371 20393905",
+      "tagline": "Piekabju noma Spilvē pie Babītes, Rīgas rietumu izejā, pieejama visu diennakti.",
+      "descriptionEt": "KABI haagiserendi iseteeninduspunkt Spilve asulas Babītes vallas, Jūrmalas maantee ääres Riia lääneväljapääsu juures. Haagis avatakse mobiilirakendusega ilma teenindajata. Asukoht sobib Riia lääneosa ja Jūrmala suunal kolijatele.",
+      "descriptionEn": "KABI self-service trailer point at Spilve in Babīte parish, on Jūrmalas gatve at Riga's western exit. Trailers are unlocked with the mobile app, with no attendant on site. The location suits moves in western Riga and towards Jūrmala.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://kabi.lv/nomas-punkti/",
+        "https://kabi.lv/"
+      ]
+    },
+    {
+      "name": "SIA KABI RENT, Raganas nomas punkts",
+      "slug": "kabi-rent-ragana",
+      "country": "LV",
+      "city": "Ragana",
+      "address": "Tirgus iela 5C, Ragana, Krimuldas pagasts, Siguldas novads, LV-2144",
+      "lat": 57.181,
+      "lng": 24.7141,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.kabi.lv/",
+      "contactEmail": null,
+      "contactPhone": "+371 20393905",
+      "tagline": "Piekabju noma Raganā pie Vidzemes šosejas, atverama ar mobilo lietotni.",
+      "descriptionEt": "KABI haagiserendi iseteeninduspunkt Ragana asulas Krimulda vallas, Vidzeme maantee ääres. Haagis avatakse mobiilirakendusega Bluetoothi kaudu ööpäev läbi. Punkt katab Sigulda ja Limbaži vahelist piirkonda.",
+      "descriptionEn": "KABI self-service trailer point at Ragana in Krimulda parish, on the Vidzeme highway. Trailers are unlocked with the mobile app over Bluetooth around the clock. The point covers the area between Sigulda and Limbaži.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://kabi.lv/nomas-punkti/",
+        "https://kabi.lv/"
+      ]
+    },
+    {
+      "name": "VIADA Baltija AS — DUS Bauska, piekabju noma",
+      "slug": "viada-bauska",
+      "country": "LV",
+      "city": "Bauska",
+      "address": "\"Dīči\", Kalna iela, Bauska, Bauskas novads, LV-3901",
+      "lat": 56.4182,
+      "lng": 24.1818,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+      "contactEmail": "info@viadabaltija.lv",
+      "contactPhone": "+371 80000208",
+      "tagline": "Piekabju noma Bauskas degvielas uzpildes stacijā, jautā operatoram no 8:00 līdz 22:00.",
+      "descriptionEt": "VIADA on Läti kütusekett, mis pakub haagiserenti umbes 90 tanklas üle riigi, sealhulgas Bauska tanklas. Haagise annab välja tankla operaator kohapeal kella 8st 22ni. Haagis tuleb tagastada täpselt samasse tanklasse, kust see välja võeti.",
+      "descriptionEn": "VIADA is a Latvian fuel station chain offering trailer rental at around 90 stations nationwide, including the Bauska station. Trailers are handed over by the station operator on site between 08:00 and 22:00. The trailer must be returned to exactly the same station it was rented from.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+        "https://www.viada.lv/dus/"
+      ]
+    },
+    {
+      "name": "VIADA Baltija AS — DUS Limbaži, piekabju noma",
+      "slug": "viada-limbazi",
+      "country": "LV",
+      "city": "Limbaži",
+      "address": "Cēsu iela 32, Limbaži, Limbažu novads, LV-4001",
+      "lat": 57.5123,
+      "lng": 24.7294,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+      "contactEmail": "info@viadabaltija.lv",
+      "contactPhone": "+371 80000208",
+      "tagline": "Piekabju noma Limbažu degvielas uzpildes stacijā Cēsu ielā.",
+      "descriptionEt": "VIADA tankla Limbažis Cēsu tänaval annab välja rendihaagiseid. Haagise võtab välja tankla operaator kella 8st 22ni ja see tuleb tagastada samasse jaama. Põhja-Vidzemes on tankla sageli ainus haagiserendi võimalus.",
+      "descriptionEn": "The VIADA station on Cēsu iela in Limbaži rents out trailers. They are issued by the station operator between 08:00 and 22:00 and must be returned to the same station. In northern Vidzeme the fuel station is often the only trailer option.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+        "https://www.viada.lv/dus/"
+      ]
+    },
+    {
+      "name": "VIADA Baltija AS — DUS Madona, piekabju noma",
+      "slug": "viada-madona",
+      "country": "LV",
+      "city": "Madona",
+      "address": "Rūpniecības iela 19, Madona, Madonas novads, LV-4801",
+      "lat": 56.8589,
+      "lng": 26.2059,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+      "contactEmail": "info@viadabaltija.lv",
+      "contactPhone": "+371 80000208",
+      "tagline": "Piekabju noma Madonas degvielas uzpildes stacijā Rūpniecības ielā.",
+      "descriptionEt": "VIADA tankla Madona Rūpniecības tänaval pakub haagiserenti. Haagise annab välja operaator kohapeal kella 8st 22ni ja tagastada tuleb samasse jaama. Madonas on lisaks sellele ka KABI iseteeninduspunkt.",
+      "descriptionEn": "The VIADA station on Rūpniecības iela in Madona offers trailer rental. Trailers are issued on site by the operator between 08:00 and 22:00 and returned to the same station. Madona also has a KABI self-service point on the same street.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+        "https://www.viada.lv/dus/"
+      ]
+    },
+    {
+      "name": "VIADA Baltija AS — DUS Krāslava, piekabju noma",
+      "slug": "viada-kraslava",
+      "country": "LV",
+      "city": "Krāslava",
+      "address": "Vasarnieku iela 6, Krāslava, Krāslavas novads, LV-5601",
+      "lat": 55.9058,
+      "lng": 27.1795,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+      "contactEmail": "info@viadabaltija.lv",
+      "contactPhone": "+371 80000208",
+      "tagline": "Piekabju noma Krāslavā — praktiski vienīgā piekabju noma pilsētā.",
+      "descriptionEt": "VIADA tankla Krāslava Vasarnieku tänaval annab välja rendihaagiseid. Haagise väljastab operaator kohapeal kella 8st 22ni. Kagu-Lätis on tankla praktiliselt ainus haagiserendi võimalus.",
+      "descriptionEn": "The VIADA station on Vasarnieku iela in Krāslava rents out trailers. They are issued by the station operator on site between 08:00 and 22:00. In south-eastern Latvia the fuel station is practically the only trailer option.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+        "https://www.viada.lv/dus/"
+      ]
+    },
+    {
+      "name": "VIADA Baltija AS — DUS Ludza, piekabju noma",
+      "slug": "viada-ludza",
+      "country": "LV",
+      "city": "Ludza",
+      "address": "Latgales iela 22A, Ludza, Ludzas novads, LV-5701",
+      "lat": 56.5388,
+      "lng": 27.7019,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+      "contactEmail": "info@viadabaltija.lv",
+      "contactPhone": "+371 80000208",
+      "tagline": "Piekabju noma Ludzas degvielas uzpildes stacijā Latgales ielā.",
+      "descriptionEt": "VIADA tankla Ludza Latgales tänaval pakub haagiserenti. Haagise annab välja operaator kella 8st 22ni ja see tuleb tagastada samasse jaama. Ludzas ei ole muud avalikku haagiserendi pakkujat.",
+      "descriptionEn": "The VIADA station on Latgales iela in Ludza offers trailer rental. Trailers are issued by the operator between 08:00 and 22:00 and must be returned to the same station. Ludza has no other public trailer rental provider.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+        "https://www.viada.lv/dus/"
+      ]
+    },
+    {
+      "name": "VIADA Baltija AS — DUS Balvi, piekabju noma",
+      "slug": "viada-balvi",
+      "country": "LV",
+      "city": "Balvi",
+      "address": "Stacijas iela 13, Balvi, Balvu novads, LV-4501",
+      "lat": 57.1415,
+      "lng": 27.2452,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+      "contactEmail": "info@viadabaltija.lv",
+      "contactPhone": "+371 80000208",
+      "tagline": "Piekabju noma Balvos, Stacijas ielā, no plkst. 8:00 līdz 22:00.",
+      "descriptionEt": "VIADA tankla Balvi Stacijas tänaval annab välja rendihaagiseid. Haagise väljastab operaator kohapeal kella 8st 22ni. Kirde-Lätis on see üks väheseid haagiserendi punkte.",
+      "descriptionEn": "The VIADA station on Stacijas iela in Balvi rents out trailers. They are issued by the station operator on site between 08:00 and 22:00. In north-eastern Latvia this is one of very few trailer rental points.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+        "https://www.viada.lv/dus/"
+      ]
+    },
+    {
+      "name": "VIADA Baltija AS — DUS Gulbene, piekabju noma",
+      "slug": "viada-gulbene",
+      "country": "LV",
+      "city": "Gulbene",
+      "address": "Baložu iela 19, Gulbene, Gulbenes novads, LV-4401",
+      "lat": 57.1717,
+      "lng": 26.7411,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+      "contactEmail": "info@viadabaltija.lv",
+      "contactPhone": "+371 80000208",
+      "tagline": "Piekabju noma Gulbenes degvielas uzpildes stacijā Baložu ielā.",
+      "descriptionEt": "VIADA tankla Gulbene Baložu tänaval pakub haagiserenti. Haagise annab välja operaator kella 8st 22ni ja tagastus toimub samasse jaama. Gulbenes ei leidu muud avalikku haagiserendi teenust.",
+      "descriptionEn": "The VIADA station on Baložu iela in Gulbene offers trailer rental. Trailers are issued by the operator between 08:00 and 22:00 and returned to the same station. No other public trailer rental service exists in Gulbene.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+        "https://www.viada.lv/dus/"
+      ]
+    },
+    {
+      "name": "VIADA Baltija AS — DUS Alūksne, piekabju noma",
+      "slug": "viada-aluksne",
+      "country": "LV",
+      "city": "Alūksne",
+      "address": "Gulbenes iela 1C, Alūksne, Alūksnes novads, LV-4301",
+      "lat": 57.4138,
+      "lng": 27.0423,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+      "contactEmail": "info@viadabaltija.lv",
+      "contactPhone": "+371 80000208",
+      "tagline": "Piekabju noma Alūksnē, Gulbenes ielā, izsniedz stacijas operators.",
+      "descriptionEt": "VIADA tankla Alūksne Gulbenes tänaval annab välja rendihaagiseid. Väljastus toimub operaatori kaudu kella 8st 22ni ja haagis tuleb tagastada samasse jaama. Alūksne on Läti kaugeim kirdenurk, kus muud renditeenust praktiliselt ei ole.",
+      "descriptionEn": "The VIADA station on Gulbenes iela in Alūksne rents out trailers. They are issued through the station operator between 08:00 and 22:00 and must be returned to the same station. Alūksne sits in Latvia's far north-east where almost no other rental service exists.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+        "https://www.viada.lv/dus/"
+      ]
+    },
+    {
+      "name": "VIADA Baltija AS — DUS Aizkraukle, piekabju noma",
+      "slug": "viada-aizkraukle",
+      "country": "LV",
+      "city": "Aizkraukle",
+      "address": "Jaunceltnes iela 16, Aizkraukle, Aizkraukles novads, LV-5101",
+      "lat": 56.6119,
+      "lng": 25.2492,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+      "contactEmail": "info@viadabaltija.lv",
+      "contactPhone": "+371 80000208",
+      "tagline": "Piekabju noma Aizkrauklē, Jaunceltnes ielā, no plkst. 8:00 līdz 22:00.",
+      "descriptionEt": "VIADA tankla Aizkraukle Jaunceltnes tänaval pakub haagiserenti. Haagise väljastab operaator kohapeal ja see tuleb tagastada samasse jaama. Aizkrauklen tegutseb lisaks üks kohalik haagiserendi ettevõte.",
+      "descriptionEn": "The VIADA station on Jaunceltnes iela in Aizkraukle offers trailer rental. Trailers are issued on site by the operator and must be returned to the same station. Aizkraukle also has one local independent trailer rental firm.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+        "https://www.viada.lv/dus/"
+      ]
+    },
+    {
+      "name": "VIADA Baltija AS — DUS Viļāni, piekabju noma",
+      "slug": "viada-vilani",
+      "country": "LV",
+      "city": "Viļāni",
+      "address": "Rīgas iela 52, Viļāni, Rēzeknes novads, LV-4650",
+      "lat": 56.5647,
+      "lng": 26.9338,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+      "contactEmail": "info@viadabaltija.lv",
+      "contactPhone": "+371 80000208",
+      "tagline": "Piekabju noma Viļānos pie Rīgas ielas, izsniedz degvielas stacijas operators.",
+      "descriptionEt": "VIADA tankla Viļāni Rīgas tänaval annab välja rendihaagiseid. Väljastus käib operaatori kaudu kella 8st 22ni. Väikelinnas on tankla ainus haagiserendi võimalus.",
+      "descriptionEn": "The VIADA station on Rīgas iela in Viļāni rents out trailers. They are issued through the operator between 08:00 and 22:00. In a town this size the fuel station is the only trailer option.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+        "https://www.viada.lv/dus/"
+      ]
+    },
+    {
+      "name": "VIADA Baltija AS — DUS Kuldīga, piekabju noma",
+      "slug": "viada-kuldiga",
+      "country": "LV",
+      "city": "Kuldīga",
+      "address": "Graudu iela 9, Kuldīga, Kuldīgas novads, LV-3301",
+      "lat": 56.9587,
+      "lng": 21.9862,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+      "contactEmail": "info@viadabaltija.lv",
+      "contactPhone": "+371 80000208",
+      "tagline": "Piekabju noma Kuldīgas degvielas uzpildes stacijā Graudu ielā.",
+      "descriptionEt": "VIADA tankla Kuldīga Graudu tänaval pakub haagiserenti. Haagise annab välja operaator kella 8st 22ni ja tagastada tuleb samasse jaama. Kuldīgas on lisaks ka KABI iseteeninduspunkt.",
+      "descriptionEn": "The VIADA station on Graudu iela in Kuldīga offers trailer rental. Trailers are issued by the operator between 08:00 and 22:00 and returned to the same station. Kuldīga also has a KABI self-service point nearby.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+        "https://www.viada.lv/dus/"
+      ]
+    },
+    {
+      "name": "VIADA Baltija AS — DUS Tukums, piekabju noma",
+      "slug": "viada-tukums",
+      "country": "LV",
+      "city": "Tukums",
+      "address": "Zemgales iela 25, Tukums, Tukuma novads, LV-3101",
+      "lat": 56.9574,
+      "lng": 23.1771,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+      "contactEmail": "info@viadabaltija.lv",
+      "contactPhone": "+371 80000208",
+      "tagline": "Piekabju noma Tukumā, Zemgales ielā, no plkst. 8:00 līdz 22:00.",
+      "descriptionEt": "VIADA tankla Tukums Zemgales tänaval annab välja rendihaagiseid. Väljastus toimub operaatori kaudu ja haagis tuleb tagastada samasse jaama. Tukums on lisaks ka kohalikke haagiserendi pakkujaid.",
+      "descriptionEn": "The VIADA station on Zemgales iela in Tukums rents out trailers. They are issued through the station operator and must be returned to the same station. Tukums also has local independent trailer rental firms.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+        "https://www.viada.lv/dus/"
+      ]
+    },
+    {
+      "name": "VIADA Baltija AS — DUS Ventspils 1, piekabju noma",
+      "slug": "viada-ventspils-inzenieru",
+      "country": "LV",
+      "city": "Ventspils",
+      "address": "Inženieru iela 2, Ventspils, LV-3601",
+      "lat": 57.3822,
+      "lng": 21.5673,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+      "contactEmail": "info@viadabaltija.lv",
+      "contactPhone": "+371 80000208",
+      "tagline": "Piekabju noma Ventspilī, Inženieru ielā, izsniedz stacijas operators.",
+      "descriptionEt": "VIADA tankla Ventspilsis Inženieru tänaval pakub haagiserenti. Haagise annab välja operaator kella 8st 22ni ja tagastus toimub samasse jaama. Ventspilsis on lisaks ka KABI iseteeninduspunkt.",
+      "descriptionEn": "The VIADA station on Inženieru iela in Ventspils offers trailer rental. Trailers are issued by the operator between 08:00 and 22:00 and returned to the same station. Ventspils also has a KABI self-service point.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+        "https://www.viada.lv/dus/"
+      ]
+    },
+    {
+      "name": "VIADA Baltija AS — DUS Ventspils 2, piekabju noma",
+      "slug": "viada-ventspils-kurzemes",
+      "country": "LV",
+      "city": "Ventspils",
+      "address": "Kurzemes iela 59, Ventspils, LV-3602",
+      "lat": 57.3969,
+      "lng": 21.6146,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+      "contactEmail": "info@viadabaltija.lv",
+      "contactPhone": "+371 80000208",
+      "tagline": "Otrā VIADA piekabju nomas vieta Ventspilī, Kurzemes ielā.",
+      "descriptionEt": "VIADA teine Ventspilsi tankla Kurzemes tänaval annab samuti välja rendihaagiseid. Väljastus käib operaatori kaudu kella 8st 22ni. Kaks jaama katavad linna vastasotsi.",
+      "descriptionEn": "VIADA's second Ventspils station, on Kurzemes iela, also rents out trailers. They are issued through the operator between 08:00 and 22:00. The two stations cover opposite ends of the city.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+        "https://www.viada.lv/dus/"
+      ]
+    },
+    {
+      "name": "VIADA Baltija AS — DUS Grobiņa, piekabju noma",
+      "slug": "viada-grobina",
+      "country": "LV",
+      "city": "Grobiņa",
+      "address": "Lielā iela 8, Grobiņa, Dienvidkurzemes novads, LV-3430",
+      "lat": 56.5361,
+      "lng": 21.1437,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+      "contactEmail": "info@viadabaltija.lv",
+      "contactPhone": "+371 80000208",
+      "tagline": "Piekabju noma Grobiņā, Lielajā ielā, netālu no Liepājas.",
+      "descriptionEt": "VIADA tankla Grobiņa Lielā tänaval pakub haagiserenti. Haagise annab välja operaator kella 8st 22ni. Grobiņa asub Liepāja külje all ja katab Lõuna-Kuramaa maapiirkonda.",
+      "descriptionEn": "The VIADA station on Lielā iela in Grobiņa offers trailer rental. Trailers are issued by the operator between 08:00 and 22:00. Grobiņa sits just outside Liepāja and covers the rural south Courland area.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+        "https://www.viada.lv/dus/"
+      ]
+    },
+    {
+      "name": "VIADA Baltija AS — DUS Salacgrīva, piekabju noma",
+      "slug": "viada-salacgriva",
+      "country": "LV",
+      "city": "Salacgrīva",
+      "address": "Vidzemes iela 29, Salacgrīva, Limbažu novads, LV-4033",
+      "lat": 57.7435,
+      "lng": 24.361,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+      "contactEmail": "info@viadabaltija.lv",
+      "contactPhone": "+371 80000208",
+      "tagline": "Piekabju noma Salacgrīvā pie Vidzemes ielas, ceļā uz Igaunijas robežu.",
+      "descriptionEt": "VIADA tankla Salacgrīva Vidzemes tänaval annab välja rendihaagiseid. Väljastus toimub operaatori kaudu kella 8st 22ni. Jaam asub Tallinna maantee ääres Eesti piiri suunas.",
+      "descriptionEn": "The VIADA station on Vidzemes iela in Salacgrīva rents out trailers. They are issued through the operator between 08:00 and 22:00. The station sits on the main road towards the Estonian border.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+        "https://www.viada.lv/dus/"
+      ]
+    },
+    {
+      "name": "VIADA Baltija AS — DUS Cēsis, piekabju noma",
+      "slug": "viada-cesis",
+      "country": "LV",
+      "city": "Cēsis",
+      "address": "Valmieras iela 12, Cēsis, Cēsu novads, LV-4101",
+      "lat": 57.32,
+      "lng": 25.2918,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+      "contactEmail": "info@viadabaltija.lv",
+      "contactPhone": "+371 80000208",
+      "tagline": "Piekabju noma Cēsīs, Valmieras ielā, no plkst. 8:00 līdz 22:00.",
+      "descriptionEt": "VIADA tankla Cēsis Valmieras tänaval pakub haagiserenti. Haagise annab välja operaator kohapeal ja see tuleb tagastada samasse jaama. Cēsis on lisaks ka KABI iseteeninduspunkt.",
+      "descriptionEn": "The VIADA station on Valmieras iela in Cēsis offers trailer rental. Trailers are issued on site by the operator and must be returned to the same station. Cēsis also has a KABI self-service point.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+        "https://www.viada.lv/dus/"
+      ]
+    },
+    {
+      "name": "VIADA Baltija AS — DUS Ādaži, piekabju noma",
+      "slug": "viada-adazi",
+      "country": "LV",
+      "city": "Ādaži",
+      "address": "Rīgas gatve 65, Ādaži, Ādažu novads, LV-2164",
+      "lat": 57.0896,
+      "lng": 24.3141,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+      "contactEmail": "info@viadabaltija.lv",
+      "contactPhone": "+371 80000208",
+      "tagline": "Piekabju noma Ādažos pie Rīgas gatves, izsniedz stacijas operators.",
+      "descriptionEt": "VIADA tankla Ādažis Rīgas maantee ääres annab välja rendihaagiseid. Väljastus toimub operaatori kaudu kella 8st 22ni. Ādažis tegutseb samal tänaval ka KABI iseteeninduspunkt.",
+      "descriptionEn": "The VIADA station on Rīgas gatve in Ādaži rents out trailers. They are issued through the operator between 08:00 and 22:00. A KABI self-service point also operates on the same street in Ādaži.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+        "https://www.viada.lv/dus/"
+      ]
+    },
+    {
+      "name": "VIADA Baltija AS — DUS Ogre, piekabju noma",
+      "slug": "viada-ogre",
+      "country": "LV",
+      "city": "Ogre",
+      "address": "Rīgas iela 116, Ogre, Ogres novads, LV-5001",
+      "lat": 56.8191,
+      "lng": 24.5629,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+      "contactEmail": "info@viadabaltija.lv",
+      "contactPhone": "+371 80000208",
+      "tagline": "Piekabju noma Ogrē, Rīgas ielā, no plkst. 8:00 līdz 22:00.",
+      "descriptionEt": "VIADA tankla Ogre Rīgas tänaval pakub haagiserenti. Haagise annab välja operaator kohapeal ja tagastada tuleb samasse jaama. Ogres ei olnud seni ühtki kirjeldatud haagiserendi punkti.",
+      "descriptionEn": "The VIADA station on Rīgas iela in Ogre offers trailer rental. Trailers are issued on site by the operator and returned to the same station. Ogre previously had no recorded trailer rental point.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+        "https://www.viada.lv/dus/"
+      ]
+    },
+    {
+      "name": "VIADA Baltija AS — DUS Kārsava, piekabju noma",
+      "slug": "viada-karsava",
+      "country": "LV",
+      "city": "Kārsava",
+      "address": "Šosejas iela 5A, Kārsava, Ludzas novads, LV-5717",
+      "lat": 56.7749,
+      "lng": 27.6879,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+      "contactEmail": "info@viadabaltija.lv",
+      "contactPhone": "+371 80000208",
+      "tagline": "Piekabju noma Kārsavā, Šosejas ielā, Latgales austrumu daļā.",
+      "descriptionEt": "VIADA tankla Kārsava Šosejas tänaval annab välja rendihaagiseid. Väljastus toimub operaatori kaudu kella 8st 22ni. Ida-Latgales on see praktiliselt ainus haagiserendi punkt.",
+      "descriptionEn": "The VIADA station on Šosejas iela in Kārsava rents out trailers. They are issued through the operator between 08:00 and 22:00. In eastern Latgale this is practically the only trailer rental point.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+        "https://www.viada.lv/dus/"
+      ]
+    },
+    {
+      "name": "VIADA Baltija AS — DUS Dundaga, piekabju noma",
+      "slug": "viada-dundaga",
+      "country": "LV",
+      "city": "Dundaga",
+      "address": "Talsu iela 21, Dundaga, Talsu novads, LV-3270",
+      "lat": 57.5032,
+      "lng": 22.3519,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+      "contactEmail": "info@viadabaltija.lv",
+      "contactPhone": "+371 80000208",
+      "tagline": "Piekabju noma Dundagā, Talsu ielā, ziemeļu Kurzemē.",
+      "descriptionEt": "VIADA tankla Dundaga Talsu tänaval pakub haagiserenti. Haagise annab välja operaator kohapeal kella 8st 22ni. Põhja-Kuramaal, kus muid rendipunkte ei ole, katab jaam laia maapiirkonna.",
+      "descriptionEn": "The VIADA station on Talsu iela in Dundaga offers trailer rental. Trailers are issued on site by the operator between 08:00 and 22:00. In northern Courland, where no other rental points exist, the station covers a wide rural area.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.viada.lv/degvielasuzpildesstacijas/produkti-un-pakalpojumi/piekabju-noma/",
+        "https://www.viada.lv/dus/"
+      ]
+    },
+    {
+      "name": "Tersus, SIA",
+      "slug": "tersus-riga",
+      "country": "LV",
+      "city": "Rīga",
+      "address": "Tērbatas iela 74, Rīga, LV-1001",
+      "lat": 56.9586,
+      "lng": 24.1333,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 67761227",
+      "tagline": "Uzkopšanas serviss Rīgas centrā privātpersonām un uzņēmumiem.",
+      "descriptionEt": "Tersus on koristusteenuse pakkuja Riia kesklinnas Tērbatas tänaval. Ettevõte on kirjas Läti peamise ärikataloogi koristusteenuste rubriigis. Kontaktandmed pärinevad kataloogist, mitte ettevõtte enda kodulehelt, seega tasub need esimesel kõnel üle kinnitada.",
+      "descriptionEn": "Tersus is a cleaning services provider on Tērbatas iela in central Riga. It is listed in the cleaning-services section of Latvia's main business directory. Contact details are directory-sourced rather than taken from the company's own site, so they are worth reconfirming on first contact.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsanas-serviss.zl.lv/Centrs"
+      ]
+    },
+    {
+      "name": "Housing Service, SIA",
+      "slug": "housing-service-riga",
+      "country": "LV",
+      "city": "Rīga",
+      "address": "Matīsa iela 45, Rīga, LV-1009",
+      "lat": 56.9553,
+      "lng": 24.1375,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29346564",
+      "tagline": "Telpu uzkopšana un apsaimniekošana Rīgas Avotu apkaimē.",
+      "descriptionEt": "Housing Service on koristus- ja haldusteenuse pakkuja Riia Avoti piirkonnas Matīsa tänaval. Ettevõte teenindab nii elu- kui äripindu. Kontaktandmed pärinevad ärikataloogist.",
+      "descriptionEn": "Housing Service provides cleaning and property maintenance in Riga's Avoti neighbourhood on Matīsa iela. The company works on both residential and commercial premises. Contact details are directory-sourced.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsanas-serviss.zl.lv/Centrs"
+      ]
+    },
+    {
+      "name": "Viss Tīrībā, SIA",
+      "slug": "viss-tiriba-riga",
+      "country": "LV",
+      "city": "Rīga",
+      "address": "Ģertrūdes iela 115, Rīga, LV-1009",
+      "lat": 56.9486,
+      "lng": 24.139,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29413589",
+      "tagline": "Uzkopšanas pakalpojumi Rīgā — dzīvokļu un biroju tīrīšana.",
+      "descriptionEt": "Viss Tīrībā on Riia koristusettevõte Ģertrūdes tänaval Avoti piirkonnas. Ettevõte pakub korterite ja büroopindade koristust. Kontaktandmed pärinevad ärikataloogist ja tuleks esimesel kõnel üle kinnitada.",
+      "descriptionEn": "Viss Tīrībā is a Riga cleaning company on Ģertrūdes iela in the Avoti district. It offers flat and office cleaning. Contact details are directory-sourced and should be reconfirmed on the first call.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsanas-serviss.zl.lv/Centrs"
+      ]
+    },
+    {
+      "name": "XClean, SIA",
+      "slug": "xclean-riga",
+      "country": "LV",
+      "city": "Rīga",
+      "address": "Lienes iela 16, Rīga, LV-1009",
+      "lat": 56.952,
+      "lng": 24.1483,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 27894130",
+      "tagline": "Profesionāla telpu uzkopšana Rīgā, arī pēc remonta.",
+      "descriptionEt": "XClean on koristusettevõte Riia Lienes tänaval. Ettevõte pakub professionaalset ruumide koristust, sealhulgas remondijärgset koristust. Kontaktandmed pärinevad ärikataloogist.",
+      "descriptionEn": "XClean is a cleaning company on Lienes iela in Riga. It provides professional premises cleaning, including post-renovation work. Contact details are directory-sourced.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsanas-serviss.zl.lv/Centrs"
+      ]
+    },
+    {
+      "name": "Delinams, SIA",
+      "slug": "delinams-riga",
+      "country": "LV",
+      "city": "Rīga",
+      "address": "Krišjāņa Valdemāra iela 17, Rīga, LV-1010",
+      "lat": 56.9564,
+      "lng": 24.1121,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29138678",
+      "tagline": "Uzkopšanas serviss Rīgas centrā, Krišjāņa Valdemāra ielā.",
+      "descriptionEt": "Delinams on koristusteenuse pakkuja Riia kesklinnas Krišjāņa Valdemāra tänaval. Ettevõte on kirjas Läti peamise ärikataloogi koristusrubriigis. Kontaktandmed pärinevad kataloogist.",
+      "descriptionEn": "Delinams is a cleaning services provider on Krišjāņa Valdemāra iela in central Riga. It appears in the cleaning category of Latvia's main business directory. Contact details are directory-sourced.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsanas-serviss.zl.lv/Centrs"
+      ]
+    },
+    {
+      "name": "Lat Lux, SIA",
+      "slug": "lat-lux-riga",
+      "country": "LV",
+      "city": "Rīga",
+      "address": "Brīvības iela 118, Rīga, LV-1001",
+      "lat": 56.962,
+      "lng": 24.1357,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29997978",
+      "tagline": "Telpu uzkopšanas pakalpojumi Rīgā, Brīvības ielā.",
+      "descriptionEt": "Lat Lux on koristusettevõte Riia Brīvības tänaval kesklinnas. Ettevõte pakub ruumide koristusteenust era- ja ärikliendile. Kontaktandmed pärinevad ärikataloogist.",
+      "descriptionEn": "Lat Lux is a cleaning company on Brīvības iela in central Riga. It offers premises cleaning for private and business customers. Contact details are directory-sourced.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsanas-serviss.zl.lv/Centrs"
+      ]
+    },
+    {
+      "name": "Greeserv Riga, SIA",
+      "slug": "greeserv-riga",
+      "country": "LV",
+      "city": "Rīga",
+      "address": "Ernesta Birznieka-Upīša iela 21A, Rīga, LV-1011",
+      "lat": 56.9499,
+      "lng": 24.1291,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 26111636",
+      "tagline": "Uzkopšanas serviss Rīgā, Ernesta Birznieka-Upīša ielā.",
+      "descriptionEt": "Greeserv Riga on koristusteenuse pakkuja Riia Ernesta Birznieka-Upīša tänaval. Ettevõte teenindab büroo- ja elupindu. Kontaktandmed pärinevad ärikataloogist ja tasub need üle kinnitada.",
+      "descriptionEn": "Greeserv Riga is a cleaning provider on Ernesta Birznieka-Upīša iela in Riga. It serves office and residential premises. Contact details are directory-sourced and worth reconfirming.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsanas-serviss.zl.lv/Centrs"
+      ]
+    },
+    {
+      "name": "Verona-S, SIA",
+      "slug": "verona-s-riga",
+      "country": "LV",
+      "city": "Rīga",
+      "address": "Krišjāņa Valdemāra iela 4, Rīga, LV-1010",
+      "lat": 56.9543,
+      "lng": 24.1091,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 67332730",
+      "tagline": "Uzkopšanas pakalpojumi Rīgas centrā pie Krišjāņa Valdemāra ielas.",
+      "descriptionEt": "Verona-S on koristusettevõte Riia kesklinnas Krišjāņa Valdemāra tänaval. Ettevõte on kirjas ärikataloogi koristusteenuste rubriigis ja kasutab lauatelefoni. Kontaktandmed pärinevad kataloogist.",
+      "descriptionEn": "Verona-S is a cleaning company on Krišjāņa Valdemāra iela in central Riga. It is listed in the cleaning-services category of the business directory and uses a landline number. Contact details are directory-sourced.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsanas-serviss.zl.lv/Centrs"
+      ]
+    },
+    {
+      "name": "Saldo EC, SIA",
+      "slug": "saldo-ec-jurmala",
+      "country": "LV",
+      "city": "Jūrmala",
+      "address": "Trikātas iela 2, Jūrmala, LV-2015",
+      "lat": 56.9733,
+      "lng": 23.8261,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 25489400",
+      "tagline": "Uzkopšanas pakalpojumi Jūrmalā, Dzintaru rajonā.",
+      "descriptionEt": "Saldo EC on koristusteenuse pakkuja Jūrmalas Trikātas tänaval Dzintari piirkonnas. Ettevõte on kirjas Läti peamise ärikataloogi koristusteenuste rubriigis. Kontaktandmed pärinevad kataloogist ja tuleks esimesel kõnel üle kinnitada.",
+      "descriptionEn": "Saldo EC is a cleaning services provider on Trikātas iela in the Dzintari part of Jūrmala. It is listed in the cleaning-services category of Latvia's main business directory. Contact details are directory-sourced and should be reconfirmed on the first call.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsanas-serviss.zl.lv/J%C5%ABrmala"
+      ]
+    },
+    {
+      "name": "Sargeņģelis Latvija, SIA",
+      "slug": "sargengelis-latvija-jurmala",
+      "country": "LV",
+      "city": "Jūrmala",
+      "address": "Kāpu iela 47B, Jūrmala, LV-2008",
+      "lat": 56.9636,
+      "lng": 23.7075,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29986896",
+      "tagline": "Uzkopšanas serviss Jūrmalā, Melluži un Asaru apkaimē.",
+      "descriptionEt": "Sargeņģelis Latvija on koristusettevõte Jūrmalas Kāpu tänaval Melluži piirkonnas. Ettevõte teenindab Jūrmala lääneosa suvila- ja eramupiirkonda. Kontaktandmed pärinevad ärikataloogist.",
+      "descriptionEn": "Sargeņģelis Latvija is a cleaning company on Kāpu iela in the Melluži part of Jūrmala. It serves the summer-house and detached-home belt in the western half of the resort. Contact details are directory-sourced.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsanas-serviss.zl.lv/J%C5%ABrmala"
+      ]
+    },
+    {
+      "name": "Kā jauns, tīrīšanas darbnīca",
+      "slug": "ka-jauns-jurmala",
+      "country": "LV",
+      "city": "Jūrmala",
+      "address": "Skolas iela 32, Jūrmala, LV-2016",
+      "lat": 56.9554,
+      "lng": 23.6059,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 20440664",
+      "tagline": "Tīrīšanas darbnīca Kauguros — mēbeļu, paklāju un telpu tīrīšana.",
+      "descriptionEt": "Kā jauns on puhastustöökoda Jūrmalas Skolas tänaval Kauguri piirkonnas. Töökoda tegeleb mööbli, vaipade ja ruumide puhastusega. Kauguri on Jūrmala kõige tihedamalt asustatud korterelamute piirkond, mis teeb selle kolimisjärgse koristuse jaoks oluliseks.",
+      "descriptionEn": "Kā jauns is a cleaning workshop on Skolas iela in the Kauguri district of Jūrmala. It handles furniture, carpet and premises cleaning. Kauguri is the resort's densest apartment-block area, which makes it the most relevant part of Jūrmala for move-out cleaning.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsanas-serviss.zl.lv/J%C5%ABrmala"
+      ]
+    },
+    {
+      "name": "MASS Industry, SIA",
+      "slug": "mass-industry-jurmala",
+      "country": "LV",
+      "city": "Jūrmala",
+      "address": "29. līnija 1, Jūrmala, LV-2010",
+      "lat": 56.9946,
+      "lng": 23.8955,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 20142766",
+      "tagline": "Uzkopšanas pakalpojumi Jūrmalas Lielupes apkaimē.",
+      "descriptionEt": "MASS Industry on koristusteenuse pakkuja Jūrmalas 29. liinil Lielupe piirkonnas, Riia-poolses otsas. Ettevõte on kirjas ärikataloogi koristusrubriigis. Kontaktandmed pärinevad kataloogist.",
+      "descriptionEn": "MASS Industry is a cleaning provider on 29. līnija in the Lielupe area of Jūrmala, at the Riga end of the resort. It appears in the cleaning category of the business directory. Contact details are directory-sourced.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsanas-serviss.zl.lv/J%C5%ABrmala"
+      ]
+    },
+    {
+      "name": "Saules vējš, IK",
+      "slug": "saules-vejs-jurmala",
+      "country": "LV",
+      "city": "Jūrmala",
+      "address": "Jomas iela 15, Jūrmala, LV-2015",
+      "lat": 56.9727,
+      "lng": 23.7932,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 22058740",
+      "tagline": "Uzkopšanas pakalpojumi Majoros, Jūrmalas centrālajā daļā.",
+      "descriptionEt": "Saules vējš on koristusteenuse pakkuja Jūrmalas Jomas tänaval Majori keskuses. Tegemist on üksikettevõtjaga, kes teenindab Jūrmala keskosa kortereid ja suvilaid. Kontaktandmed pärinevad ärikataloogist.",
+      "descriptionEn": "Saules vējš is a cleaning provider on Jomas iela in the centre of Majori, Jūrmala. It is a sole trader serving flats and holiday homes in the central part of the resort. Contact details are directory-sourced.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsanas-serviss.zl.lv/J%C5%ABrmala"
+      ]
+    },
+    {
+      "name": "APEX Group, SIA",
+      "slug": "apex-group-riga",
+      "country": "LV",
+      "city": "Rīga",
+      "address": "Lāčplēša iela 37, Rīga, LV-1011",
+      "lat": 56.9534,
+      "lng": 24.1281,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29390845",
+      "tagline": "Uzkopšanas serviss Rīgā, Lāčplēša ielā, privātpersonām un uzņēmumiem.",
+      "descriptionEt": "APEX Group on koristusteenuse pakkuja Riia Lāčplēša tänaval. Ettevõte teenindab nii eraisikuid kui ettevõtteid. Kontaktandmed pärinevad ärikataloogist.",
+      "descriptionEn": "APEX Group is a cleaning services provider on Lāčplēša iela in Riga. It serves both private individuals and companies. Contact details are directory-sourced.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsanas-serviss.zl.lv/Centrs"
+      ]
+    },
+    {
+      "name": "Siverts",
+      "slug": "siverts-kuldiga",
+      "country": "LV",
+      "city": "Kuldīga",
+      "address": "Tehnikas iela 9, Kuldīga, Kuldīgas nov., LV-3301",
+      "lat": 56.9777,
+      "lng": 21.9675,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": "siverts@inbox.lv",
+      "contactPhone": "+371 29275949",
+      "tagline": "Pārvietošanās, pārvākšanās un pārcelšanās serviss Kuldīgā un Kuldīgas novadā.",
+      "descriptionEt": "Kuldīga kolimisteenus, mis tegeleb kodude ja kontorite ümberkolimisega Kuldīga linnas ja ümbritsevas vallas. Ettevõte on Läti ettevõtete kataloogis registreeritud kolimis- ja ümberasumisteenuse pakkujana. Kontakt telefoni ja e-posti teel.",
+      "descriptionEn": "A local moving and relocation service based in Kuldīga, covering homes and offices in the town and the surrounding Kuldīga municipality. Listed in the Latvian business directory under relocation and moving services. Reachable by phone and email.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://viss.lv/katalogs/parvietosanas_parvaksanas_parcelsanas_serviss/latvija/"
+      ]
+    },
+    {
+      "name": "ALra, SIA",
+      "slug": "alra-kuldiga",
+      "country": "LV",
+      "city": "Kuldīga",
+      "address": "Peldu iela 19, Kuldīga, Kuldīgas nov., LV-3301",
+      "lat": 56.9595,
+      "lng": 21.9996,
+      "serviceTypes": [
+        "moving",
+        "vanrental"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 26411325",
+      "tagline": "Kravu pārvadājumi un auto noma Kuldīgā, pieejami arī pārvākšanās braucieni.",
+      "descriptionEt": "Kuldīga veoteenuse ja autorendi ettevõte, mis on kataloogides kirjas nii kaubaveo kui ka sõidukirendi pakkujana. Sobib väiksemateks kolimisvedudeks Kuldīga piirkonnas. Kontakt telefoni teel.",
+      "descriptionEn": "A Kuldīga-based freight transport and vehicle rental company, listed in local directories under both cargo transport and car rental. Suitable for smaller removal jobs around Kuldīga. Contact by phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://kravu-parvadajumi.zl.lv/Kuld%C4%ABga",
+        "https://ventspils.pilseta24.lv/uznemumi?pro=Auto+noma"
+      ]
+    },
+    {
+      "name": "Rezerve, SIA — Autocentrs un auto noma",
+      "slug": "rezerve-autocentrs-kuldiga",
+      "country": "LV",
+      "city": "Kuldīga",
+      "address": "Ēdoles iela 54, Kuldīga, Kuldīgas nov., LV-3301",
+      "lat": 56.9696,
+      "lng": 21.9317,
+      "serviceTypes": [
+        "vanrental"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29237448",
+      "tagline": "Autocentrs Kuldīgā ar auto nomas nodaļu Ēdoles ielā.",
+      "descriptionEt": "Kuldīga autokeskus, kus lisaks remonditöökojale tegutseb ka autorendiosakond. Rendisuunal on eraldi telefoninumber. Asub Ēdoles tänaval.",
+      "descriptionEn": "A Kuldīga car centre that runs a vehicle rental desk alongside its workshop. The rental side has its own phone line. Located on Ēdoles iela.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://ventspils.pilseta24.lv/uznemumi?pro=Auto+noma"
+      ]
+    },
+    {
+      "name": "Mako Transports, SIA",
+      "slug": "mako-transports-kuldiga",
+      "country": "LV",
+      "city": "Kuldīga",
+      "address": "Mucenieku iela 37, Kuldīga, Kuldīgas nov., LV-3301",
+      "lat": 56.9675,
+      "lng": 21.9584,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29997676",
+      "tagline": "Kravu pārvadājumu uzņēmums Kuldīgā, Mucenieku ielā.",
+      "descriptionEt": "Kuldīgas veoettevõte, mis on kataloogides kirjas kaubaveo teenuse pakkujana. Sobib mööbli ja kolimiskoorma vedudeks Kurzeme piirkonnas. Kontakt telefoni teel.",
+      "descriptionEn": "A Kuldīga freight haulier listed in Latvian directories under cargo transport. Usable for furniture and household loads around the Kurzeme region. Contact by phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://kravu-parvadajumi.zl.lv/Kuld%C4%ABga",
+        "https://kuldiga.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi"
+      ]
+    },
+    {
+      "name": "UGO Transport, SIA",
+      "slug": "ugo-transport-kuldiga",
+      "country": "LV",
+      "city": "Kuldīga",
+      "address": "Planīcas iela 65, Kuldīga, Kuldīgas nov., LV-3301",
+      "lat": 56.966,
+      "lng": 21.9374,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 27119039",
+      "tagline": "Kravu pārvadājumi Kuldīgā un visā Kurzemē.",
+      "descriptionEt": "Kuldīga veoettevõte Planīcas tänaval. Kataloogides märgitud kaubaveo teenuse pakkujaks. Kontakt mobiiltelefoni teel.",
+      "descriptionEn": "A Kuldīga haulage company on Planīcas iela. Listed in directories as a cargo transport provider. Contact by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://kravu-parvadajumi.zl.lv/Kuld%C4%ABga",
+        "https://kuldiga.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi"
+      ]
+    },
+    {
+      "name": "KLZ, SIA",
+      "slug": "klz-kuldiga",
+      "country": "LV",
+      "city": "Kuldīga",
+      "address": "Ganību iela 21, Kuldīga, Kuldīgas nov., LV-3301",
+      "lat": 56.9578,
+      "lng": 21.9833,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 63320672",
+      "tagline": "Noliktavu pakalpojumi Kuldīgas rūpnieciskajā zonā Ganību ielā.",
+      "descriptionEt": "Kuldīga ettevõte, mis on kohalikus ettevõtete kataloogis kirjas laoteenuste pakkujana. Asub linna tööstusalal Ganību tänaval. Kontakt lauatelefoni teel.",
+      "descriptionEn": "A Kuldīga company listed in the local business directory under warehouse services. Located in the town's industrial zone on Ganību iela. Contact via landline.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://kuldiga.pilseta24.lv/uznemumi?pro=Noliktavu+pakalpojumi"
+      ]
+    },
+    {
+      "name": "IBA Pluss, SIA",
+      "slug": "iba-pluss-skrunda",
+      "country": "LV",
+      "city": "Skrunda",
+      "address": "Dārza iela 8-2, Skrunda, Kuldīgas nov., LV-3326",
+      "lat": 56.6672,
+      "lng": 22.0177,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 28447488",
+      "tagline": "Kravu pārvadājumu pakalpojumi Skrundā un tuvākajā apkārtnē.",
+      "descriptionEt": "Väike veoettevõte Skrundas, mis on ettevõtete kataloogis kirjas kaubaveo pakkujana. Üks väheseid kolimisveoks sobivaid teenusepakkujaid selles väikelinnas. Kontakt mobiiltelefoni teel.",
+      "descriptionEn": "A small haulage business in Skrunda, listed in the business directory under cargo transport. One of the few providers in this small town that can handle a removal load. Contact by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://kuldiga.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi"
+      ]
+    },
+    {
+      "name": "Carolina LV, SIA",
+      "slug": "carolina-lv-saldus",
+      "country": "LV",
+      "city": "Saldus",
+      "address": "Skrundas iela 31A, Saldus, Saldus nov., LV-3801",
+      "lat": 56.6589,
+      "lng": 22.4909,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 26548867",
+      "tagline": "Ģenerāltīrīšana, mājokļu un ofisu uzkopšana Saldū un Saldus novadā.",
+      "descriptionEt": "Saldusi koristusettevõte, mis pakub üldkoristust, kodude ja kontorite koristust. Kirjas nii 1188 ettevõtete kataloogis kui ka kohalikus Saldus ettevõtete registris. Kontakt mobiiltelefoni teel.",
+      "descriptionEn": "A Saldus cleaning company offering deep cleaning plus regular home and office cleaning. Listed both in the 1188 national business catalogue and in the local Saldus directory. Contact by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://saldus.pilseta24.lv/uznemumi?pro=Uzkop%C5%A1anas+serviss",
+        "https://www.1188.lv/katalogs/uzkopsanas-serviss-5940"
+      ]
+    },
+    {
+      "name": "SVA Autocentrs Saldū",
+      "slug": "sva-autocentrs-saldus",
+      "country": "LV",
+      "city": "Saldus",
+      "address": "Dzirnavu iela 8, Saldus, Saldus nov., LV-3801",
+      "lat": 56.6593,
+      "lng": 22.4758,
+      "serviceTypes": [
+        "vanrental"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29247785",
+      "tagline": "Autocentrs Saldū ar auto nomas pakalpojumu Dzirnavu ielā.",
+      "descriptionEt": "Saldusi autokeskus, mis pakub muu hulgas sõidukirenti. Kirjas kohalikus ettevõtete kataloogis autorendi kategoorias. Asub Dzirnavu tänaval kesklinna lähedal.",
+      "descriptionEn": "A Saldus car centre that also offers vehicle rental. Listed in the local business directory under car rental. Located on Dzirnavu iela close to the town centre.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://ventspils.pilseta24.lv/uznemumi?pro=Auto+noma"
+      ]
+    },
+    {
+      "name": "ADE Truck, SIA",
+      "slug": "ade-truck-saldus",
+      "country": "LV",
+      "city": "Saldus",
+      "address": "Lielā iela 9, Saldus, Saldus nov., LV-3801",
+      "lat": 56.664,
+      "lng": 22.4915,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 26537338",
+      "tagline": "Kravu pārvadājumu uzņēmums Saldus centrā, Lielajā ielā.",
+      "descriptionEt": "Saldusi veoettevõte, mis on kirjas kohalikus kataloogis kaubaveo pakkujana. Asub Saldusi peatänaval. Kontakt mobiiltelefoni teel.",
+      "descriptionEn": "A Saldus haulage company listed in the local directory under cargo transport. Located on the town's main street. Contact by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://saldus.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi"
+      ]
+    },
+    {
+      "name": "AVB grupa, SIA",
+      "slug": "avb-grupa-saldus",
+      "country": "LV",
+      "city": "Saldus",
+      "address": "Striķu iela 7A, Saldus, Saldus nov., LV-3801",
+      "lat": 56.6652,
+      "lng": 22.4943,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29197173",
+      "tagline": "Kravu pārvadājumi Saldū un Saldus novadā ar savu autoparku.",
+      "descriptionEt": "Saldusi veofirma Striķu tänaval, kirjas kohalikus ettevõtete kataloogis kaubaveo kategoorias. Sobib mööbli- ja kolimisvedudeks Kurzemes lääneosas. Kontakt mobiiltelefoni teel.",
+      "descriptionEn": "A Saldus haulier on Striķu iela, listed in the local business directory under cargo transport. Suitable for furniture and household moves in western Kurzeme. Contact by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://saldus.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi"
+      ]
+    },
+    {
+      "name": "DTS Transport, SIA",
+      "slug": "dts-transport-saldus",
+      "country": "LV",
+      "city": "Saldus",
+      "address": "Jelgavas iela 21-4, Saldus, Saldus nov., LV-3801",
+      "lat": 56.6665,
+      "lng": 22.4991,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29803916",
+      "tagline": "Kravu pārvadājumu pakalpojumi Saldū, Jelgavas ielā.",
+      "descriptionEt": "Saldusi veoettevõte, mis on kohalikus kataloogis kirjas kaubaveo teenuse pakkujana. Asub Jelgavas tänaval linna idaosas. Kontakt mobiiltelefoni teel.",
+      "descriptionEn": "A Saldus transport company listed in the local directory as a cargo transport provider. Based on Jelgavas iela in the eastern part of town. Contact by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://saldus.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi"
+      ]
+    },
+    {
+      "name": "Talsu Autocentrs",
+      "slug": "talsu-autocentrs-talsi",
+      "country": "LV",
+      "city": "Talsi",
+      "address": "Raiņa iela 88, Talsi, Talsu nov., LV-3201",
+      "lat": 57.2331,
+      "lng": 22.5604,
+      "serviceTypes": [
+        "trailer",
+        "vanrental"
+      ],
+      "websiteUrl": "https://www.talsuautocentrs.lv/",
+      "contactEmail": null,
+      "contactPhone": "+371 22025366",
+      "tagline": "Piekabju, mikroautobusu un kravas auto noma Talsos par izdevīgām cenām.",
+      "descriptionEt": "Talsi autokeskus, mille rendiosakond annab välja haagiseid, mikrobusse ja kaubikuid. Valikus on 2,5 m ja 3 m haagised, kaetud ja katmata, kaheteljelised haagised ning autoveoplatvormid, hinnaga umbes 20-30 eurot ööpäev. Rendiosakonnal on eraldi telefon ja see on avatud ka laupäeviti.",
+      "descriptionEn": "A Talsi car centre whose rental desk hires out trailers, minibuses and cargo vans. The fleet includes 2.5 m and 3 m trailers with and without covers, twin-axle trailers and car transporters at roughly EUR 20-30 per 24 hours. The rental desk has its own phone line and opens on Saturday mornings too.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.talsuautocentrs.lv/piekabju-noma/",
+        "https://www.talsuautocentrs.lv/auto-noma/"
+      ]
+    },
+    {
+      "name": "E loģistika, SIA",
+      "slug": "e-logistika-talsi",
+      "country": "LV",
+      "city": "Talsi",
+      "address": "Darba iela 15, Talsi, Talsu nov., LV-3201",
+      "lat": 57.2463,
+      "lng": 22.5773,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 26400082",
+      "tagline": "Loģistikas un kravu pārvadājumu pakalpojumi Talsos, Darba ielā.",
+      "descriptionEt": "Talsi logistika- ja veoettevõte, mis asub linna tööstuspiirkonnas Darba tänaval. Kirjas kohalikus kataloogis kaubaveo kategoorias. Kontakt mobiiltelefoni teel.",
+      "descriptionEn": "A Talsi logistics and haulage company based in the town's industrial area on Darba iela. Listed in the local directory under cargo transport. Contact by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://talsi.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi"
+      ]
+    },
+    {
+      "name": "Auva, SIA",
+      "slug": "auva-talsi",
+      "country": "LV",
+      "city": "Talsi",
+      "address": "Celtnieku iela 13, Talsi, Talsu nov., LV-3201",
+      "lat": 57.2309,
+      "lng": 22.5644,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29498017",
+      "tagline": "Kravu pārvadājumu uzņēmums Talsos, Celtnieku ielas rūpnieciskajā zonā.",
+      "descriptionEt": "Talsi veoettevõte Celtnieku tänava tööstusalal. Kirjas kohalikus ettevõtete kataloogis kaubaveo pakkujana. Kontakt mobiiltelefoni teel.",
+      "descriptionEn": "A Talsi haulage company in the Celtnieku iela industrial area. Listed in the local business directory as a cargo transport provider. Contact by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://talsi.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi"
+      ]
+    },
+    {
+      "name": "L.M.Trans, SIA",
+      "slug": "lm-trans-roja",
+      "country": "LV",
+      "city": "Roja",
+      "address": "Miera iela 38A, Roja, Rojas pagasts, Talsu nov., LV-3264",
+      "lat": 57.4995,
+      "lng": 22.8072,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29491454",
+      "tagline": "Kravu pārvadājumi Rojā un Rīgas jūras līča piekrastē.",
+      "descriptionEt": "Roja veoettevõte, mis on kohalikus kataloogis kirjas kaubaveo pakkujana. Üks väheseid selliseid teenusepakkujaid Liivi lahe rannikualevis. Kontakt mobiiltelefoni teel.",
+      "descriptionEn": "A haulage company in Roja, listed in the local directory under cargo transport. One of very few such providers in this Gulf of Riga coastal village. Contact by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://talsi.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi"
+      ]
+    },
+    {
+      "name": "Korins, SIA",
+      "slug": "korins-mersrags",
+      "country": "LV",
+      "city": "Mērsrags",
+      "address": "Kanāla iela 17, Mērsrags, Mērsraga pagasts, Talsu nov., LV-3284",
+      "lat": 57.3291,
+      "lng": 23.1086,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 26139998",
+      "tagline": "Kravu pārvadājumi Mērsragā un Talsu novada piekrastē.",
+      "descriptionEt": "Mērsragi veoettevõte sadama kanali ääres. Kirjas kohalikus ettevõtete kataloogis kaubaveo kategoorias. Kontakt mobiiltelefoni teel.",
+      "descriptionEn": "A haulage business in Mērsrags, near the harbour canal. Listed in the local business directory under cargo transport. Contact by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://talsi.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi"
+      ]
+    },
+    {
+      "name": "SIA \"Labā komanda\"",
+      "slug": "laba-komanda-ventspils",
+      "country": "LV",
+      "city": "Ventspils",
+      "address": "",
+      "lat": 57.3904,
+      "lng": 21.5636,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": "https://labakomanda.com/",
+      "contactEmail": "info@labakomanda.com",
+      "contactPhone": "+371 27469379",
+      "tagline": "Dzīvokļu, māju un biroju uzkopšana Ventspilī un Kuldīgā, arī pēc remonta.",
+      "descriptionEt": "Ventspilsis ja Kuldīgas tegutsev koristusettevõte, mis pakub korterite ja majade koristust, aknapesu, äriruumide koristust ning remondijärgset koristust. Teenuste hulgas on ka pehme mööbli ja autoistmete keemiline puhastus. Ettevõtte enda veebileht annab registrikoodi 40203448522, telefoni ja e-posti.",
+      "descriptionEn": "A cleaning company operating in Ventspils and Kuldīga, offering apartment and house cleaning, window washing, commercial premises cleaning and post-renovation cleaning. It also does chemical cleaning of upholstery and car seats. Contact details and registry number 40203448522 come from the company's own website.",
+      "registryCode": "40203448522",
+      "sourceQuality": "official",
+      "sources": [
+        "https://labakomanda.com/"
+      ]
+    },
+    {
+      "name": "HB Servis, SIA",
+      "slug": "hb-servis-ventspils",
+      "country": "LV",
+      "city": "Ventspils",
+      "address": "Dzintaru iela 48, Ventspils, LV-3602",
+      "lat": 57.4035,
+      "lng": 21.5761,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29526452",
+      "tagline": "Uzkopšanas serviss Ventspilī, Dzintaru ielā.",
+      "descriptionEt": "Ventspilsi koristusteenuse ettevõte, mis on kohalikus ettevõtete kataloogis kirjas koristusteenuse kategoorias. Asub Dzintaru tänaval sadamapoolses linnaosas. Kontakt mobiiltelefoni teel.",
+      "descriptionEn": "A Ventspils cleaning services company listed in the local business directory under cleaning services. Based on Dzintaru iela on the port side of the city. Contact by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://ventspils.pilseta24.lv/uznemumi?pro=Uzkop%C5%A1anas+serviss"
+      ]
+    },
+    {
+      "name": "Skorp, SIA — Serviss",
+      "slug": "skorp-serviss-ventspils",
+      "country": "LV",
+      "city": "Ventspils",
+      "address": "Inženieru iela 81-41, Ventspils, LV-3601",
+      "lat": 57.3837,
+      "lng": 21.5492,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 26469470",
+      "tagline": "Uzkopšanas pakalpojumi Ventspilī, Inženieru ielā.",
+      "descriptionEt": "Ventspilsi teenindusettevõte, mis on kohalikus kataloogis kirjas koristusteenuse pakkujana. Asub Inženieru tänaval, linna peamise läbisõidutee ääres. Kontakt mobiiltelefoni teel.",
+      "descriptionEn": "A Ventspils service company listed in the local directory as a cleaning services provider. Located on Inženieru iela along the city's main through road. Contact by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://ventspils.pilseta24.lv/uznemumi?pro=Uzkop%C5%A1anas+serviss"
+      ]
+    },
+    {
+      "name": "EJ Transports, SIA",
+      "slug": "ej-transports-ventspils",
+      "country": "LV",
+      "city": "Ventspils",
+      "address": "P. Stradiņa iela 17-35, Ventspils, LV-3602",
+      "lat": 57.4045,
+      "lng": 21.5838,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 28732857",
+      "tagline": "Pasažieru un kravu pārvadājumi Ventspilī un Ventspils novadā.",
+      "descriptionEt": "Ventspilsi veoettevõte, mis pakub nii reisijate- kui kaubavedu. Kirjas kohalikus ettevõtete kataloogis ja ZL.LV transporditeenuste nimekirjas. Kontakt mobiiltelefoni teel.",
+      "descriptionEn": "A Ventspils transport company offering both passenger and cargo transport. Listed in the local business directory and in the ZL.LV transport services index. Contact by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://ventspils.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi",
+        "https://transporta-pakalpojumi.zl.lv/Ventspils"
+      ]
+    },
+    {
+      "name": "AVArent, IK",
+      "slug": "avarent-ventspils",
+      "country": "LV",
+      "city": "Ventspils",
+      "address": "Lāčplēša iela 10, Ventspils, LV-3601",
+      "lat": 57.3866,
+      "lng": 21.5801,
+      "serviceTypes": [
+        "vanrental"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 27419273",
+      "tagline": "Auto noma Ventspilī, Lāčplēša ielā, īstermiņa un ilgtermiņa nomai.",
+      "descriptionEt": "Ventspilsi autorendiettevõte Lāčplēša tänaval. Kirjas kohalikus kataloogis ja ZL.LV autorendi nimekirjas Ventspilsi rendipakkujana. Kontakt mobiiltelefoni teel.",
+      "descriptionEn": "A vehicle rental operator in Ventspils on Lāčplēša iela. Listed in the local directory and in the ZL.LV car rental index as a Ventspils rental provider. Contact by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://ventspils.pilseta24.lv/uznemumi?pro=Auto+noma",
+        "https://autonoma.zl.lv/Ventspils"
+      ]
+    },
+    {
+      "name": "A un S Serviss, SIA",
+      "slug": "a-un-s-serviss-grobina",
+      "country": "LV",
+      "city": "Grobiņa",
+      "address": "Mētru iela 4, Grobiņa, Dienvidkurzemes nov., LV-3430",
+      "lat": 56.533,
+      "lng": 21.1665,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": "https://www.asserviss.lv",
+      "contactEmail": "asserviss@gmail.com",
+      "contactPhone": "+371 27826142",
+      "tagline": "Uzkopšanas darbi, logu mazgāšana un telpu tīrīšana pēc remonta Grobiņā.",
+      "descriptionEt": "Grobiņa teenindusettevõte, mis pakub koristustöid, hoonete hooldust, akende pesu ja remondijärgset koristust. Lisaks tegeleb ehitus- ja remonditööde, ventilatsiooni paigalduse ning territooriumi hooldusega. Kontaktid on kinnitatud ettevõtte enda veebilehelt, registrikood 42103047101.",
+      "descriptionEn": "A Grobiņa service company providing cleaning work, building maintenance, window washing and post-renovation cleaning. It also handles construction and repair, ventilation installation and grounds maintenance. Contact details were confirmed on the company's own website; registry number 42103047101.",
+      "registryCode": "42103047101",
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.asserviss.lv",
+        "https://liepaja.pilseta24.lv/katalogs/info/a-un-s-serviss-sia"
+      ]
+    },
+    {
+      "name": "Lateira, SIA",
+      "slug": "lateira-grobina",
+      "country": "LV",
+      "city": "Grobiņa",
+      "address": "Lauktehnikas iela 16, Grobiņa, Dienvidkurzemes nov., LV-3430",
+      "lat": 56.5273,
+      "lng": 21.1542,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 27032003",
+      "tagline": "Kravu pārvadājumi Grobiņā un Liepājas apkārtnē.",
+      "descriptionEt": "Grobiņa veoettevõte tööstusalal Lauktehnikas tänaval. Kirjas Liepāja piirkonna ettevõtete kataloogis kaubaveo kategoorias. Kontakt mobiiltelefoni teel.",
+      "descriptionEn": "A haulage company in Grobiņa's industrial area on Lauktehnikas iela. Listed in the Liepāja regional business directory under cargo transport. Contact by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://liepaja.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi"
+      ]
+    },
+    {
+      "name": "A.L. Cargo, SIA",
+      "slug": "al-cargo-grobina",
+      "country": "LV",
+      "city": "Grobiņa",
+      "address": "Stacijas iela 5, Grobiņa, Dienvidkurzemes nov., LV-3430",
+      "lat": 56.5363,
+      "lng": 21.1803,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 28737439",
+      "tagline": "Kravu pārvadājumu uzņēmums Grobiņā, Stacijas ielā.",
+      "descriptionEt": "Grobiņa veoettevõte raudteejaama lähedal Stacijas tänaval. Kirjas Liepāja piirkonna kataloogis kaubaveo pakkujana. Kontakt mobiiltelefoni teel.",
+      "descriptionEn": "A Grobiņa haulage business on Stacijas iela near the railway station. Listed in the Liepāja regional directory as a cargo transport provider. Contact by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://liepaja.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi"
+      ]
+    },
+    {
+      "name": "SL Cleaning, SIA",
+      "slug": "sl-cleaning-priekule",
+      "country": "LV",
+      "city": "Priekule",
+      "address": "Jaunā iela 6, Priekule, Dienvidkurzemes nov., LV-3434",
+      "lat": 56.4464,
+      "lng": 21.6012,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 28977212",
+      "tagline": "Uzkopšanas serviss Priekulē un Dienvidkurzemes novadā.",
+      "descriptionEt": "Priekule koristusettevõte, mis on Liepāja piirkonna ettevõtete kataloogis kirjas koristusteenuse pakkujana. Ainus sellises kategoorias registreeritud ettevõte selles väikelinnas. Registrikood 40203016059.",
+      "descriptionEn": "A cleaning services company in Priekule, listed in the Liepāja regional business directory under cleaning services. The only provider of its kind registered in this small town. Registry number 40203016059.",
+      "registryCode": "40203016059",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://liepaja.pilseta24.lv/katalogs/info/sl-cleaning-sia",
+        "https://liepaja.pilseta24.lv/uznemumi?adr=Priekule&pro=Uzkop%C5%A1anas+serviss"
+      ]
+    },
+    {
+      "name": "Freiga, SIA",
+      "slug": "freiga-aizpute",
+      "country": "LV",
+      "city": "Aizpute",
+      "address": "Sakas iela 9, Aizpute, Dienvidkurzemes nov., LV-3456",
+      "lat": 56.7219,
+      "lng": 21.5908,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 28693021",
+      "tagline": "Uzkopšanas serviss Aizputē un tuvākajā apkārtnē.",
+      "descriptionEt": "Aizpute koristusettevõte, mis on Liepāja piirkonna kataloogis kirjas koristusteenuse kategoorias. Asub Sakas tänaval. Registrikood 42103079253, kontakt mobiiltelefoni teel.",
+      "descriptionEn": "A cleaning services company in Aizpute, listed in the Liepāja regional directory under cleaning services. Based on Sakas iela. Registry number 42103079253; contact by mobile phone.",
+      "registryCode": "42103079253",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://liepaja.pilseta24.lv/katalogs/info/freiga-sia",
+        "https://liepaja.pilseta24.lv/uznemumi?adr=Priekule&pro=Uzkop%C5%A1anas+serviss"
+      ]
+    },
+    {
+      "name": "G & M Transport, SIA",
+      "slug": "gm-transport-dobele",
+      "country": "LV",
+      "city": "Dobele",
+      "address": "Zemgales iela 48, Dobele, Dobeles nov., LV-3701",
+      "lat": 56.6053,
+      "lng": 23.2784,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 20230928",
+      "tagline": "Kravu pārvadājumi Dobelē un Dobeles novadā.",
+      "descriptionEt": "Dobele veoettevõte Zemgales tänaval. Kirjas Dobele piirkonna ettevõtete kataloogis kaubaveo kategoorias. Kontakt mobiiltelefoni teel.",
+      "descriptionEn": "A Dobele haulage company on Zemgales iela. Listed in the Dobele regional business directory under cargo transport. Contact by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://dobele.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi"
+      ]
+    },
+    {
+      "name": "Ontime, SIA",
+      "slug": "ontime-dobele",
+      "country": "LV",
+      "city": "Dobele",
+      "address": "Viestura iela 6A, Dobele, Dobeles nov., LV-3701",
+      "lat": 56.6234,
+      "lng": 23.2782,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29340383",
+      "tagline": "Kravu pārvadājumu uzņēmums Dobelē, Viestura ielā.",
+      "descriptionEt": "Dobele veoettevõte Viestura tänaval. Kirjas kohalikus ettevõtete kataloogis kaubaveo pakkujana. Kontakt mobiiltelefoni teel.",
+      "descriptionEn": "A Dobele transport company on Viestura iela. Listed in the local business directory as a cargo transport provider. Contact by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://dobele.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi"
+      ]
+    },
+    {
+      "name": "ELMINO, SIA",
+      "slug": "elmino-dobele",
+      "country": "LV",
+      "city": "Dobele",
+      "address": "Meža prospekts 29, Dobele, Dobeles nov., LV-3701",
+      "lat": 56.6123,
+      "lng": 23.2851,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29991681",
+      "tagline": "Kravu pārvadājumi Dobelē, Meža prospektā.",
+      "descriptionEt": "Dobele veoettevõte Meža puiestee ääres. Kirjas Dobele piirkonna kataloogis kaubaveo kategoorias. Kontakt mobiiltelefoni teel.",
+      "descriptionEn": "A Dobele haulage business on Meža prospekts. Listed in the Dobele regional directory under cargo transport. Contact by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://dobele.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi"
+      ]
+    },
+    {
+      "name": "SIA \"NJ Pakalpojumi\"",
+      "slug": "nj-pakalpojumi-liepaja",
+      "country": "LV",
+      "city": "Liepāja",
+      "address": "Uliha iela 121-16, Liepāja, LV-3401",
+      "lat": 56.4978,
+      "lng": 21.0041,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": "https://njpakalpojumi.lv/",
+      "contactEmail": "njpakalpojumi@inbox.lv",
+      "contactPhone": "+371 22163369",
+      "tagline": "Ikdienas uzkopšanas darbi, logu mazgāšana un teritoriju kopšana Liepājā.",
+      "descriptionEt": "Liepāja teenindusettevõte, mis pakub igapäevast koristust, akende ja fassaadide pesu, katuste ja vihmaveetorude puhastust ning territooriumide hooldust. Talvel tegeleb lume koristuse ja äraveoga. Kontaktid ja registrikood 42103079446 pärinevad ettevõtte enda veebilehelt.",
+      "descriptionEn": "A Liepāja service company offering daily cleaning, window and facade washing, roof and gutter cleaning, and grounds maintenance. In winter it also handles snow clearing and removal. Contact details and registry number 42103079446 come from the company's own website.",
+      "registryCode": "42103079446",
+      "sourceQuality": "official",
+      "sources": [
+        "http://njpakalpojumi.lv/en/kontakti/",
+        "https://www.1188.lv/katalogs/uzkopsanas-serviss-5940"
+      ]
+    },
+    {
+      "name": "CleanUp, SIA",
+      "slug": "cleanup-liepaja",
+      "country": "LV",
+      "city": "Liepāja",
+      "address": "Mirdzas Ķempes iela 26-32, Liepāja, LV-3407",
+      "lat": 56.4809,
+      "lng": 21.0277,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29225031",
+      "tagline": "Uzkopšanas serviss Liepājā, Ziemeļu priekšpilsētā.",
+      "descriptionEt": "Liepāja koristusettevõte, mis on Liepāja ettevõtete kataloogis kirjas koristusteenuse kategoorias. Asub Mirdzas Ķempes tänaval linna lõunaosas. Registrikood 40203507474.",
+      "descriptionEn": "A Liepāja cleaning services company listed in the Liepāja business directory under cleaning services. Based on Mirdzas Ķempes iela in the southern part of the city. Registry number 40203507474.",
+      "registryCode": "40203507474",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://liepaja.pilseta24.lv/katalogs/info/cleanup-sia",
+        "https://liepaja.pilseta24.lv/uznemumi?adr=Priekule&pro=Uzkop%C5%A1anas+serviss"
+      ]
+    },
+    {
+      "name": "Impel Serviks Kurzeme, filiāle",
+      "slug": "impel-serviks-kurzeme-liepaja",
+      "country": "LV",
+      "city": "Liepāja",
+      "address": "Ziemeļu iela 19, Liepāja, LV-3405",
+      "lat": 56.5353,
+      "lng": 21.0155,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29246342",
+      "tagline": "Profesionāls uzkopšanas serviss uzņēmumiem Liepājā un Kurzemē.",
+      "descriptionEt": "Impel koristusteenuste kontserni Kurzeme filiaal Liepājas. Teenindab ettevõtteid ja tootmishooneid Liepāja ning ümbritseva Kurzeme piirkonnas. Kirjas Liepāja ettevõtete kataloogis koristusteenuse kategoorias.",
+      "descriptionEn": "The Kurzeme branch of the Impel facility-services group, based in Liepāja. It serves companies and industrial premises across Liepāja and the wider Kurzeme region. Listed in the Liepāja business directory under cleaning services.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://liepaja.pilseta24.lv/uznemumi?adr=Priekule&pro=Uzkop%C5%A1anas+serviss"
+      ]
+    },
+    {
+      "name": "LPX Trade, SIA",
+      "slug": "lpx-trade-liepaja",
+      "country": "LV",
+      "city": "Liepāja",
+      "address": "Palangas iela 7, Liepāja, LV-3401",
+      "lat": 56.4949,
+      "lng": 21.0038,
+      "serviceTypes": [
+        "warehouse",
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29207409",
+      "tagline": "Noliktavu pakalpojumi un kravu pārvadājumi Liepājā, Palangas ielā.",
+      "descriptionEt": "Liepāja ettevõte, mis on kohalikus kataloogis kirjas nii laoteenuste kui ka kaubaveo pakkujana. Asub Palangas tänaval linna lõunaosas. Kontakt mobiiltelefoni teel.",
+      "descriptionEn": "A Liepāja company listed in the local directory under both warehouse services and cargo transport. Located on Palangas iela in the southern part of the city. Contact by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://kuldiga.pilseta24.lv/uznemumi?pro=Noliktavu+pakalpojumi",
+        "https://liepaja.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi"
+      ]
+    },
+    {
+      "name": "2G projekts, SIA",
+      "slug": "2g-projekts-liepaja",
+      "country": "LV",
+      "city": "Liepāja",
+      "address": "Ziemupes iela 24, Liepāja, LV-3405",
+      "lat": 56.5367,
+      "lng": 21.0409,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29428156",
+      "tagline": "Noliktavu pakalpojumi Liepājā, Ziemupes ielā.",
+      "descriptionEt": "Liepāja ettevõte, mis on kohalikus ettevõtete kataloogis kirjas laoteenuste pakkujana. Asub Ziemupes tänaval linna põhjaosa tööstusalal. Kontakt mobiiltelefoni teel.",
+      "descriptionEn": "A Liepāja company listed in the local business directory as a warehouse services provider. Located on Ziemupes iela in the northern industrial part of the city. Contact by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://kuldiga.pilseta24.lv/uznemumi?pro=Noliktavu+pakalpojumi",
+        "https://ventspils.pilseta24.lv/uznemumi?pro=Noliktavu+pakalpojumi"
+      ]
+    },
+    {
+      "name": "Virši-A DUS Alūksne — piekabju noma",
+      "slug": "virsi-aluksne",
+      "country": "LV",
+      "city": "Alūksne",
+      "address": "Rīgas iela 11, Alūksne, Alūksnes novads, LV-4301",
+      "lat": 57.4311,
+      "lng": 27.0229,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.virsi.lv/lv/biznesam/veikals/auto/piekabju-noma",
+      "contactEmail": null,
+      "contactPhone": "+371 64381110",
+      "tagline": "Virši-A degvielas uzpildes stacijā Alūksnē var nomāt vienass piekabi ar 30 EUR drošības naudu.",
+      "descriptionEt": "Virši-A tanklas Alūksnes rendib välja üheteljelisi haagiseid, mis sobivad kolimiseks ja ehitusmaterjali veoks. Haagis tuleb tagastada samasse jaama, kust see renditi, ajavahemikus 8.00-22.00. Tagatisraha on 30 eurot sularahas.",
+      "descriptionEn": "The Virši-A fuel station in Alūksne rents out single-axle trailers suitable for small moves and hauling building materials. Trailers must be returned to the same station between 08:00 and 22:00. A EUR 30 cash deposit applies.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://www.virsi.lv/lv/biznesam/veikals/auto/piekabju-noma",
+        "https://aluksne.pilseta24.lv/katalogs/info/virsia-as-degvielas-uzpildes-stacija-aluksne"
+      ]
+    },
+    {
+      "name": "Virši-A DUS Balvi — piekabju noma",
+      "slug": "virsi-balvi",
+      "country": "LV",
+      "city": "Balvi",
+      "address": "Krasta iela 3, Balvi, Balvu novads, LV-4501",
+      "lat": 57.1388,
+      "lng": 27.2578,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.virsi.lv/lv/biznesam/veikals/auto/piekabju-noma",
+      "contactEmail": null,
+      "contactPhone": "+371 64522064",
+      "tagline": "Balvu Virši-A stacijā Krasta ielā pieejama vienass piekabes noma pārvākšanās un kravu vešanai.",
+      "descriptionEt": "Virši-A tanklas Balvis rendib üheteljelisi haagiseid, mida saab kasutada mööbli ja koduse kraami vedamiseks. Rent käib kohapeal jaamas ja haagis tagastatakse samasse punkti. Tagatisraha on 30 eurot sularahas.",
+      "descriptionEn": "The Virši-A station in Balvi offers single-axle trailer rental for moving furniture and household goods. Rental is arranged at the station counter and the trailer is returned to the same point. A EUR 30 cash deposit applies.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://www.virsi.lv/lv/biznesam/veikals/auto/piekabju-noma",
+        "https://balvi.pilseta24.lv/katalogs/info/virsia-as-degvielas-uzpildes-stacija-balvi"
+      ]
+    },
+    {
+      "name": "Virši-A DUS Gulbene — piekabju noma",
+      "slug": "virsi-gulbene",
+      "country": "LV",
+      "city": "Gulbene",
+      "address": "Brīvības iela 97, Gulbene, Gulbenes novads, LV-4401",
+      "lat": 57.1827,
+      "lng": 26.7373,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.virsi.lv/lv/biznesam/veikals/auto/piekabju-noma",
+      "contactEmail": null,
+      "contactPhone": "+371 64472150",
+      "tagline": "Gulbenes Virši-A stacijā Brīvības ielā var īrēt vienass piekabi mantu un būvmateriālu pārvadāšanai.",
+      "descriptionEt": "Virši-A tanklas Gulbenes rendib üheteljelisi haagiseid lühiajaliseks kasutuseks. See on Gulbenes praktiliselt ainus avalik haagiserendipunkt, mis sobib väiksemaks kolimiseks. Tagatisraha on 30 eurot sularahas.",
+      "descriptionEn": "The Virši-A station in Gulbene rents single-axle trailers on a short-term basis. It is effectively the town's main public trailer rental point for small household moves. A EUR 30 cash deposit applies.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://www.virsi.lv/lv/biznesam/veikals/auto/piekabju-noma",
+        "https://gulbene.pilseta24.lv/katalogs/info/virsia-as-degvielas-uzpildes-stacija-gulbene"
+      ]
+    },
+    {
+      "name": "Virši-A DUS Jēkabpils — piekabju noma",
+      "slug": "virsi-jekabpils",
+      "country": "LV",
+      "city": "Jēkabpils",
+      "address": "Jāņa Akuratera iela 13, Jēkabpils, Jēkabpils novads, LV-5201",
+      "lat": 56.4856,
+      "lng": 25.8802,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.virsi.lv/lv/biznesam/veikals/auto/piekabju-noma",
+      "contactEmail": null,
+      "contactPhone": "+371 65235483",
+      "tagline": "Jēkabpils Virši-A stacijā Jāņa Akuratera ielā pieejama vienass piekabes noma uz vietas.",
+      "descriptionEt": "Virši-A tankla Jēkabpilsis Jāņa Akuratera tänaval rendib üheteljelisi haagiseid. Haagis renditakse ja tagastatakse samas jaamas, tööajal kella 8.00-22.00. Tagatisraha on 30 eurot sularahas.",
+      "descriptionEn": "The Virši-A station on Jāņa Akuratera street in Jēkabpils rents single-axle trailers. The trailer is picked up and returned at the same station between 08:00 and 22:00. A EUR 30 cash deposit applies.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://www.virsi.lv/lv/biznesam/veikals/auto/piekabju-noma",
+        "https://jekabpils.pilseta24.lv/katalogs/info/virsia-as-degvielas-uzpildes-stacija-jekabpils"
+      ]
+    },
+    {
+      "name": "Virši-A DUS Krustpils (Jēkabpils) — piekabju noma",
+      "slug": "virsi-krustpils-jekabpils",
+      "country": "LV",
+      "city": "Jēkabpils",
+      "address": "Varoņu iela 10, Jēkabpils, Jēkabpils novads, LV-5202",
+      "lat": 56.5134,
+      "lng": 25.8688,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.virsi.lv/lv/biznesam/veikals/auto/piekabju-noma",
+      "contactEmail": null,
+      "contactPhone": "+371 65238044",
+      "tagline": "Krustpils pusē Varoņu ielā Virši-A stacijā var nomāt gan vienass piekabi, gan divasu auto vedēju.",
+      "descriptionEt": "Virši-A Krustpilsi tankla Jēkabpilsi paremal kaldal rendib nii üheteljelisi haagiseid kui ka kaheteljelisi autoveohaagiseid. Kaheteljelise haagise tagatisraha on 50 eurot, üheteljelisel 30 eurot. Haagis tagastatakse samasse jaama.",
+      "descriptionEn": "The Virši-A Krustpils station on the right bank of Jēkabpils rents both single-axle trailers and two-axle car transporters. The deposit is EUR 50 for a two-axle unit and EUR 30 for a single-axle one. Trailers are returned to the same station.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://www.virsi.lv/lv/biznesam/veikals/auto/piekabju-noma",
+        "https://www.1188.lv/katalogs/degvielas-uzpildes-stacijas-1540/virsi-a-919616"
+      ]
+    },
+    {
+      "name": "Virši-A DUS Madona — piekabju noma",
+      "slug": "virsi-madona",
+      "country": "LV",
+      "city": "Madona",
+      "address": "Rūpniecības iela 49A, Madona, Madonas novads, LV-4801",
+      "lat": 56.8591,
+      "lng": 26.2318,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.virsi.lv/lv/biznesam/veikals/auto/piekabju-noma",
+      "contactEmail": null,
+      "contactPhone": "+371 64860622",
+      "tagline": "Madonas Virši-A stacijā Rūpniecības ielā var nomāt vienass piekabi mantu pārvešanai.",
+      "descriptionEt": "Virši-A tankla Madonas Rūpniecības tänaval rendib üheteljelisi haagiseid. Sobib väiksemaks kolimiseks, mööbli ja aiakraami veoks. Tagatisraha on 30 eurot sularahas.",
+      "descriptionEn": "The Virši-A station on Rūpniecības street in Madona rents single-axle trailers. It suits smaller moves and hauling furniture or garden materials. A EUR 30 cash deposit applies.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://www.virsi.lv/lv/biznesam/veikals/auto/piekabju-noma",
+        "https://madona.pilseta24.lv/katalogs/info/virsia-as-degvielas-uzpildes-stacija-madona"
+      ]
+    },
+    {
+      "name": "Virši-A DUS Rēzekne — piekabju noma",
+      "slug": "virsi-rezekne",
+      "country": "LV",
+      "city": "Rēzekne",
+      "address": "Stacijas iela 13, Rēzekne, LV-4601",
+      "lat": 56.5191,
+      "lng": 27.348,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://www.virsi.lv/lv/biznesam/veikals/auto/piekabju-noma",
+      "contactEmail": null,
+      "contactPhone": "+371 64121933",
+      "tagline": "Rēzeknes Virši-A stacijā Stacijas ielā pieejama gan vienass piekabe, gan divasu auto vedējs.",
+      "descriptionEt": "Virši-A tankla Rēzeknes kesklinnas rendib üheteljelisi haagiseid ja kaheteljelisi autoveohaagiseid. Kaheteljelise haagise tagatisraha on 50 eurot, üheteljelisel 30 eurot. Haagis tuleb tagastada samasse jaama.",
+      "descriptionEn": "The Virši-A station in central Rēzekne rents single-axle trailers and two-axle car transporters. The deposit is EUR 50 for a two-axle unit and EUR 30 for a single-axle one. Trailers must be returned to the same station.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://www.virsi.lv/lv/biznesam/veikals/auto/piekabju-noma",
+        "https://www.1188.lv/katalogs/degvielas-uzpildes-stacijas-1540/virsi-a-925443"
+      ]
+    },
+    {
+      "name": "SIA MARTEKS NOMA",
+      "slug": "marteks-noma-jekabpils",
+      "country": "LV",
+      "city": "Jēkabpils",
+      "address": "Brīvības iela 2E-1, Jēkabpils, LV-5201",
+      "lat": 56.4873,
+      "lng": 25.8908,
+      "serviceTypes": [
+        "trailer",
+        "vanrental"
+      ],
+      "websiteUrl": "https://www.marteksnoma.lv/",
+      "contactEmail": "noma@marteks.lv",
+      "contactPhone": "+371 20225885",
+      "tagline": "Jēkabpilī iznomā ekonomiskas automašīnas, pasažieru un kravas mikroautobusus, piekabes un treilerus.",
+      "descriptionEt": "MARTEKS NOMA on Jēkabpilsi rendifirma, mis pakub nii kaubikuid ja väikebusse kui ka haagiseid ja autoveotreilereid. Autopargis on kaheksa sõidukit, kaks haagist ja üks autoveotreiler. Kontor Brīvības tänaval on avatud tööpäeviti 9.00-18.00.",
+      "descriptionEn": "MARTEKS NOMA is a Jēkabpils rental company offering economy cars, passenger and cargo vans, trailers and car transporters. The fleet currently includes eight vehicles, two trailers and one car-carrying trailer. The Brīvības street office is open weekdays 09:00-18:00.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.marteksnoma.lv/",
+        "https://viss.lv/katalogs/auto_noma/latvija/jekabpils/",
+        "https://jekabpils.pilseta24.lv/uznemumi?pro=Auto+noma"
+      ]
+    },
+    {
+      "name": "SIA Kanti metāls",
+      "slug": "kanti-metals-livani",
+      "country": "LV",
+      "city": "Līvāni",
+      "address": "Celtniecības iela 2A, Līvāni, Līvānu novads, LV-5316",
+      "lat": 56.346,
+      "lng": 26.1844,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://kantimetals.lv/",
+      "contactEmail": "kanti.metals@inbox.lv",
+      "contactPhone": "+371 29494906",
+      "tagline": "Līvānu uzņēmums, kas līdzās metāla tirdzniecībai piedāvā piekabju nomu un transporta pakalpojumus.",
+      "descriptionEt": "Kanti metāls on Līvāni ettevõte, mille põhitegevus on metallitoodete müük, kuid mis pakub kõrvalteenusena ka haagiste renti ja transporditeenust. Filiaal asub Celtniecības tänaval. See on üks väheseid haagiserendi võimalusi Līvāni piirkonnas.",
+      "descriptionEn": "Kanti metāls is a Līvāni company whose core business is metal trading but which also offers trailer rental and transport services. Its branch is on Celtniecības street. It is one of the few trailer rental options in the Līvāni area.",
+      "registryCode": "45403048796",
+      "sourceQuality": "official",
+      "sources": [
+        "https://kantimetals.lv/",
+        "https://www.zl.lv/lv/uznemums/kanti-metals-sia/"
+      ]
+    },
+    {
+      "name": "DEPO Daugavpils — piekabju noma",
+      "slug": "depo-daugavpils",
+      "country": "LV",
+      "city": "Daugavpils",
+      "address": "Stacijas iela 129K, Daugavpils, LV-5401",
+      "lat": 55.8849,
+      "lng": 26.5098,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://depo.lv/pakalpojumi/piekabju-noma/",
+      "contactEmail": null,
+      "contactPhone": null,
+      "tagline": "DEPO Daugavpils veikalā Stacijas ielā pieejams piekabju nomas pakalpojums.",
+      "descriptionEt": "DEPO ehituskaubamaja Daugavpilsis pakub haagiserenti — teenus on saadaval kõigis DEPO kauplustes. Haagis sobib mööbli, ehitusmaterjali ja kodutehnika veoks. Rent vormistatakse kaupluses kohapeal.",
+      "descriptionEn": "The DEPO home improvement store in Daugavpils offers trailer rental; the service is available at every DEPO store. Trailers suit moving furniture, building materials and appliances. Rental is arranged in-store.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://depo.lv/pakalpojumi/piekabju-noma/",
+        "https://depo.lv/stores/daugavpils-stacijas-129k/"
+      ]
+    },
+    {
+      "name": "DEPO Jēkabpils — piekabju noma",
+      "slug": "depo-jekabpils",
+      "country": "LV",
+      "city": "Jēkabpils",
+      "address": "Kļavu iela 1, Jēkabpils, LV-5201",
+      "lat": 56.4923,
+      "lng": 25.8866,
+      "serviceTypes": [
+        "trailer"
+      ],
+      "websiteUrl": "https://depo.lv/pakalpojumi/piekabju-noma/",
+      "contactEmail": null,
+      "contactPhone": null,
+      "tagline": "DEPO Jēkabpils veikalā Kļavu ielā var noformēt piekabes nomu uz vietas.",
+      "descriptionEt": "DEPO ehituskaubamaja Jēkabpilsis pakub haagiserenti, mis on saadaval kõigis DEPO kauplustes. Haagist saab kasutada kolimisel mööbli ja kodutehnika vedamiseks. Rent vormistatakse kaupluses kohapeal.",
+      "descriptionEn": "The DEPO store in Jēkabpils offers trailer rental, a service available at all DEPO stores. The trailer can be used to move furniture and appliances. Rental is arranged in-store.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://depo.lv/pakalpojumi/piekabju-noma/",
+        "https://depo.lv/stores/jekabpils-klavu-1/"
+      ]
+    },
+    {
+      "name": "SIA Baltijas noliktavu serviss",
+      "slug": "baltijas-noliktavu-serviss-daugavpils",
+      "country": "LV",
+      "city": "Daugavpils",
+      "address": "Ķieģeļu iela 3, Kalkūni, Kalkūnes pagasts, Augšdaugavas novads, LV-5449",
+      "lat": 55.8347,
+      "lng": 26.4888,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 22442431",
+      "tagline": "Noliktavu pakalpojumu uzņēmums Kalkūnos pie Daugavpils, Ķieģeļu ielā.",
+      "descriptionEt": "Baltijas noliktavu serviss pakub laoteenust Kalkūnis, otse Daugavpilsi külje all Daugava vasakkaldal. Asukoht Ķieģeļu tänava tööstuspiirkonnas sobib nii kaubaladustuseks kui ka pikaajaliseks hoiustamiseks. Kontakt käib telefoni teel.",
+      "descriptionEn": "Baltijas noliktavu serviss provides warehousing in Kalkūni, immediately across the river from Daugavpils. Its location in the Ķieģeļu street industrial area suits both goods storage and longer-term holding. Contact is by phone.",
+      "registryCode": "41503062963",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://daugavpils.pilseta24.lv/katalogs/info/baltijas-noliktavu-serviss-sia",
+        "https://daugavpils.pilseta24.lv/uznemumi?pro=Noliktavu+pakalpojumi"
+      ]
+    },
+    {
+      "name": "SIA PIK, muitas noliktava",
+      "slug": "pik-muitas-noliktava-daugavpils",
+      "country": "LV",
+      "city": "Daugavpils",
+      "address": "Ķieģeļu iela 8P, Daugavpils, LV-5412",
+      "lat": 55.8406,
+      "lng": 26.4939,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 65434760",
+      "tagline": "Muitas noliktava un noliktavu pakalpojumi Daugavpilī, Ķieģeļu ielā 8P.",
+      "descriptionEt": "PIK haldab Daugavpilsis Ķieģeļu tänaval tolliladu ja pakub laoteenuseid. Asukoht on Daugava lõunakalda tööstus- ja logistikatsoonis raudtee lähedal. Sobib kaupade ladustamiseks ja tollivormistuseks.",
+      "descriptionEn": "PIK operates a customs warehouse and general warehousing services on Ķieģeļu street in Daugavpils. The site sits in the industrial and logistics zone on the south bank near the railway. It suits goods storage and customs clearance.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://daugavpils.pilseta24.lv/uznemumi?pro=Noliktavu+pakalpojumi"
+      ]
+    },
+    {
+      "name": "SIA Impex Logistics",
+      "slug": "impex-logistics-daugavpils",
+      "country": "LV",
+      "city": "Daugavpils",
+      "address": "Rīgas iela 64, Daugavpils, LV-5401",
+      "lat": 55.8734,
+      "lng": 26.5241,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 27181273",
+      "tagline": "Noliktavu pakalpojumu uzņēmums Daugavpils centrā, Rīgas ielā 64.",
+      "descriptionEt": "Impex Logistics pakub Daugavpilsis laoteenuseid. Ettevõtte aadress on kesklinnas Rīgas tänaval. Kontakt käib telefoni teel, veebilehte ettevõttel ei ole.",
+      "descriptionEn": "Impex Logistics provides warehousing services in Daugavpils. The company is registered on Rīgas street in the city centre. Contact is by phone; the company has no website.",
+      "registryCode": "41503080028",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://daugavpils.pilseta24.lv/katalogs/info/impex-logistics-sia",
+        "https://daugavpils.pilseta24.lv/uznemumi?pro=Noliktavu+pakalpojumi"
+      ]
+    },
+    {
+      "name": "SIA TKS",
+      "slug": "tks-daugavpils",
+      "country": "LV",
+      "city": "Daugavpils",
+      "address": "Višķu iela 21M, Daugavpils, LV-5410",
+      "lat": 55.8974,
+      "lng": 26.5616,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29361533",
+      "tagline": "Noliktavu pakalpojumi Daugavpils Ķīmiķu ciemata rūpnieciskajā zonā, Višķu ielā.",
+      "descriptionEt": "TKS pakub laoteenuseid Daugavpilsi Ķīmiķu asumi tööstuspiirkonnas Višķu tänaval. Piirkond on linna peamine lao- ja logistikaklaster. Kontakt käib telefoni teel.",
+      "descriptionEn": "TKS offers warehousing in the Ķīmiķu industrial district of Daugavpils on Višķu street. The area is the city's main warehousing and logistics cluster. Contact is by phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://daugavpils.pilseta24.lv/uznemumi?pro=Noliktavu+pakalpojumi"
+      ]
+    },
+    {
+      "name": "SIA Katiss, Daugavpils filiāle",
+      "slug": "katiss-daugavpils",
+      "country": "LV",
+      "city": "Daugavpils",
+      "address": "Andreja Pumpura iela 105G, Daugavpils, LV-5404",
+      "lat": 55.8875,
+      "lng": 26.5335,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 65451600",
+      "tagline": "Katiss filiāle Daugavpilī piedāvā noliktavu pakalpojumus Andreja Pumpura ielā.",
+      "descriptionEt": "Katissi Daugavpilsi filiaal pakub laoteenuseid Andreja Pumpura tänaval Jaunbūve piirkonnas. Objekt asub linna sees, mis teeb selle mugavaks lühiajaliseks hoiustamiseks. Kontakt käib lauatelefoni teel.",
+      "descriptionEn": "The Daugavpils branch of Katiss provides warehousing services on Andreja Pumpura street in the Jaunbūve district. The site is inside the city, which makes it convenient for shorter-term storage. Contact is by landline.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://daugavpils.pilseta24.lv/uznemumi?pro=Noliktavu+pakalpojumi"
+      ]
+    },
+    {
+      "name": "SIA Betonblock",
+      "slug": "betonblock-daugavpils",
+      "country": "LV",
+      "city": "Daugavpils",
+      "address": "Siguldas iela 6D, Daugavpils, LV-5404",
+      "lat": 55.8713,
+      "lng": 26.553,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29611159",
+      "tagline": "Daugavpils uzņēmums, kas nodarbojas ar loģistiku, kravu pārkraušanu un noliktavu pakalpojumiem.",
+      "descriptionEt": "Betonblock tegeleb Daugavpilsis logistika, kaubakäitluse ja laoteenustega Siguldas tänaval. Ettevõte on kirjas nii laoteenuste kui ka veoteenuste kataloogides. Kontakt käib mobiiltelefoni teel.",
+      "descriptionEn": "Betonblock handles logistics, cargo handling and warehousing on Siguldas street in Daugavpils. The company is listed under both warehousing and freight categories in local directories. Contact is by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://daugavpils.pilseta24.lv/uznemumi?pro=Noliktavu+pakalpojumi",
+        "https://kravu-parvadajumi.zl.lv/Daugavpils"
+      ]
+    },
+    {
+      "name": "SIA Prior Mere, Daugavpils filiāle",
+      "slug": "prior-mere-daugavpils",
+      "country": "LV",
+      "city": "Daugavpils",
+      "address": "Kārklu iela 2, Daugavpils, LV-5401",
+      "lat": 55.8814,
+      "lng": 26.5209,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29100927",
+      "tagline": "Uzkopšanas serviss Daugavpilī, Kārklu ielā, Dzelzceļnieka mikrorajonā.",
+      "descriptionEt": "Prior Mere Daugavpilsi filiaal pakub koristusteenust Kārklu tänaval Dzelzceļnieksi asumis. Sobib nii kolimisjärgseks suurpuhastuseks kui ka regulaarseks hoolduskoristuseks. Kontakt käib mobiiltelefoni teel.",
+      "descriptionEn": "The Daugavpils branch of Prior Mere provides cleaning services from Kārklu street in the Dzelzceļnieks district. It suits both post-move deep cleans and regular maintenance cleaning. Contact is by mobile phone.",
+      "registryCode": "41503046244",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://daugavpils.pilseta24.lv/katalogs/info/prior-mere-sia-filiale",
+        "https://daugavpils.pilseta24.lv/uznemumi?pro=Uzkop%C5%A1anas+pakalpojumi"
+      ]
+    },
+    {
+      "name": "SIA S&M Sauber",
+      "slug": "sm-sauber-malta",
+      "country": "LV",
+      "city": "Malta",
+      "address": "Parka iela 23-1, Malta, Maltas pagasts, Rēzeknes novads, LV-4630",
+      "lat": 56.3506,
+      "lng": 27.1594,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29431587",
+      "tagline": "Uzkopšanas pakalpojumu uzņēmums Maltā, Rēzeknes novadā, ar darbību visā Latgalē.",
+      "descriptionEt": "S&M Sauber on Maltas, Rēzekne vallas tegutsev koristusfirma. Piirkonnas on erialaseid koristusteenuse pakkujaid väga vähe, mistõttu see katab suure osa Rēzekne ümbrusest. Kontakt käib mobiiltelefoni teel.",
+      "descriptionEn": "S&M Sauber is a cleaning company based in Malta, Rēzekne municipality. Dedicated cleaning providers are scarce in the region, so it covers much of the wider Rēzekne area. Contact is by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://rezekne.pilseta24.lv/uznemumi?pro=Uzkop%C5%A1anas+pakalpojumi"
+      ]
+    },
+    {
+      "name": "SIA Aleks Group",
+      "slug": "aleks-group-rezekne",
+      "country": "LV",
+      "city": "Rēzekne",
+      "address": "Jupatovkas iela 9A, Rēzekne, LV-4601",
+      "lat": 56.5186,
+      "lng": 27.359,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 28320057",
+      "tagline": "Kravu pārvadājumu uzņēmums Rēzeknē, Jupatovkas ielā, pieejams arī mantu pārvešanai.",
+      "descriptionEt": "Aleks Group on Rēzeknes Jupatovkas tänaval tegutsev veofirma. Sarnaselt enamiku Latgale vedajatega võtab ta vastu ka eratellimusi mööbli ja koduse kraami vedamiseks. Kontakt käib mobiiltelefoni teel.",
+      "descriptionEn": "Aleks Group is a road haulage company on Jupatovkas street in Rēzekne. Like most Latgale hauliers it also takes private jobs moving furniture and household goods. Contact is by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://rezekne.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi%3A+auto"
+      ]
+    },
+    {
+      "name": "SIA BALT TRANS GROUP",
+      "slug": "balt-trans-group-rezekne",
+      "country": "LV",
+      "city": "Rēzekne",
+      "address": "Viļānu iela 4A, Rēzekne, LV-4601",
+      "lat": 56.5043,
+      "lng": 27.3228,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 28668500",
+      "tagline": "Kravu pārvadājumu uzņēmums Rēzeknes centrā, Viļānu ielā 4A.",
+      "descriptionEt": "BALT TRANS GROUP on Rēzeknes kesklinnas Viļānu tänaval registreeritud veofirma. Ettevõte tegeleb autoveoga ja on kättesaadav ka kohalike kolimisvedude jaoks. Kontakt käib mobiiltelefoni teel.",
+      "descriptionEn": "BALT TRANS GROUP is a road freight company registered on Viļānu street in central Rēzekne. It runs vehicle-based cargo transport and is reachable for local removal jobs. Contact is by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://rezekne.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi%3A+auto"
+      ]
+    },
+    {
+      "name": "SIA IGSE",
+      "slug": "igse-vilani",
+      "country": "LV",
+      "city": "Viļāni",
+      "address": "Celtnieku iela 4, Viļāni, Rēzeknes novads, LV-4650",
+      "lat": 56.5444,
+      "lng": 26.9306,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 22022347",
+      "tagline": "Viļānu kravu pārvadājumu uzņēmums Celtnieku ielā — praktiski vienīgais pilsētā.",
+      "descriptionEt": "IGSE on Viļāni linnas Celtnieku tänaval tegutsev veofirma. Viļānis on transporditeenuse pakkujaid väga vähe, mistõttu see on kohalike kolimisvedude peamine valik. Kontakt käib mobiiltelefoni teel.",
+      "descriptionEn": "IGSE is a freight transport company on Celtnieku street in Viļāni. Transport providers are very scarce in Viļāni, making it the main local option for removals. Contact is by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://rezekne.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi%3A+auto"
+      ]
+    },
+    {
+      "name": "SIA Damour A",
+      "slug": "damour-a-ludza",
+      "country": "LV",
+      "city": "Ludza",
+      "address": "Rūpniecības iela 1B, Ludza, Ludzas novads, LV-5701",
+      "lat": 56.5433,
+      "lng": 27.701,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 28394487",
+      "tagline": "Kravu pārvadājumu uzņēmums Ludzā, Rūpniecības ielā, pilsētas rūpnieciskajā zonā.",
+      "descriptionEt": "Damour A on Ludza linnas Rūpniecības tänaval tegutsev autoveofirma. Ludzas on väga vähe transporditeenuse pakkujaid, mistõttu kohalikud kolimised käivad tavaliselt just selliste vedajate kaudu. Kontakt käib mobiiltelefoni teel.",
+      "descriptionEn": "Damour A is a road haulage company on Rūpniecības street in Ludza. Transport providers are scarce in Ludza, so local moves typically go through hauliers like this one. Contact is by mobile phone.",
+      "registryCode": "40103374053",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://ludza.pilseta24.lv/katalogs/info/damour-a-sia",
+        "https://ludza.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi%3A+auto"
+      ]
+    },
+    {
+      "name": "SIA Ilma & J",
+      "slug": "ilma-j-kraslava",
+      "country": "LV",
+      "city": "Krāslava",
+      "address": "Atmodas iela 21, Krāslava, Krāslavas novads, LV-5601",
+      "lat": 55.8914,
+      "lng": 27.1949,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29135892",
+      "tagline": "Kravu pārvadājumu uzņēmums Krāslavā, Atmodas ielā 21.",
+      "descriptionEt": "Ilma & J on Krāslava linnas Atmodas tänaval tegutsev veofirma. Krāslavas ei ole eraldi kolimisfirmasid, mistõttu koduse kraami vedu tellitakse kohalikelt vedajatelt. Kontakt käib mobiiltelefoni teel.",
+      "descriptionEn": "Ilma & J is a freight transport company on Atmodas street in Krāslava. Krāslava has no dedicated removal firms, so household moves are arranged through local hauliers. Contact is by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://kraslava.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi%3A+auto"
+      ]
+    },
+    {
+      "name": "SIA Wood Land Trans",
+      "slug": "wood-land-trans-kraslava",
+      "country": "LV",
+      "city": "Krāslava",
+      "address": "Ezera iela 21, Krāslava, Krāslavas novads, LV-5601",
+      "lat": 55.8982,
+      "lng": 27.1756,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 26131147",
+      "tagline": "Autotransporta un kravu pārvadājumu uzņēmums Krāslavā, Ezera ielā.",
+      "descriptionEt": "Wood Land Trans on Krāslava Ezera tänaval registreeritud autoveofirma. Ettevõte veab kaupa Krāslava vallas ja laiemalt Latgales. Kontakt käib mobiiltelefoni teel.",
+      "descriptionEn": "Wood Land Trans is a road transport company registered on Ezera street in Krāslava. It carries cargo within Krāslava municipality and the wider Latgale region. Contact is by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://kraslava.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi%3A+auto"
+      ]
+    },
+    {
+      "name": "SIA B Force Logistics",
+      "slug": "b-force-logistics-preili",
+      "country": "LV",
+      "city": "Preiļi",
+      "address": "Latgales iela 3, Preiļi, Preiļu novads, LV-5301",
+      "lat": 56.2937,
+      "lng": 26.7191,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 20244755",
+      "tagline": "Loģistikas un kravu pārvadājumu uzņēmums Preiļu centrā, Latgales ielā 3.",
+      "descriptionEt": "B Force Logistics on Preiļi kesklinnas Latgales tänaval tegutsev logistika- ja veofirma. Preiļis eraldi kolimisteenuse pakkujaid ei ole, seega kohalikud veod käivad selliste ettevõtete kaudu. Kontakt käib mobiiltelefoni teel.",
+      "descriptionEn": "B Force Logistics is a logistics and freight company on Latgales street in central Preiļi. Preiļi has no dedicated removals firm, so local moves run through companies like this. Contact is by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://preili.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi%3A+auto"
+      ]
+    },
+    {
+      "name": "SIA Trans SN",
+      "slug": "trans-sn-preili",
+      "country": "LV",
+      "city": "Preiļi",
+      "address": "Daugavpils iela 68-24, Preiļi, Preiļu novads, LV-5301",
+      "lat": 56.28,
+      "lng": 26.721,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29413930",
+      "tagline": "Kravu pārvadājumu uzņēmums Preiļos, Daugavpils ielā, pilsētas dienvidu daļā.",
+      "descriptionEt": "Trans SN on Preiļi Daugavpilsi tänaval registreeritud autoveofirma. Ettevõte teenindab Preiļi valda ja Daugavpilsi suunda. Kontakt käib mobiiltelefoni teel.",
+      "descriptionEn": "Trans SN is a road haulage company registered on Daugavpils street in Preiļi. It serves Preiļi municipality and the corridor towards Daugavpils. Contact is by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://preili.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi%3A+auto"
+      ]
+    },
+    {
+      "name": "SIA K Transport",
+      "slug": "k-transport-aluksne",
+      "country": "LV",
+      "city": "Alūksne",
+      "address": "Viestura iela 3, Alūksne, Alūksnes novads, LV-4301",
+      "lat": 57.4116,
+      "lng": 27.0481,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29297180",
+      "tagline": "Kravu pārvadājumu uzņēmums Alūksnē, Viestura ielā, pilsētas centrā.",
+      "descriptionEt": "K Transport on Alūksne kesklinnas Viestura tänaval tegutsev veofirma. Alūksnes ei ole eraldi kolimisteenust pakkuvaid ettevõtteid, mistõttu kohalikud veod käivad kohalike vedajate kaudu. Kontakt käib mobiiltelefoni teel.",
+      "descriptionEn": "K Transport is a freight company on Viestura street in central Alūksne. Alūksne has no dedicated removals companies, so local moves are handled by hauliers like this one. Contact is by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://aluksne.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi%3A+auto"
+      ]
+    },
+    {
+      "name": "SIA RS cargo solution",
+      "slug": "rs-cargo-solution-aluksne",
+      "country": "LV",
+      "city": "Alūksne",
+      "address": "Kolberģa iela 10-1, Alūksne, Alūksnes novads, LV-4301",
+      "lat": 57.4283,
+      "lng": 27.0983,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 25729926",
+      "tagline": "Kravu pārvadājumu uzņēmums Alūksnē, Kolberģa ielā, pilsētas austrumu daļā.",
+      "descriptionEt": "RS cargo solution on Alūksne Kolberģa tänaval registreeritud veofirma. Ettevõte tegeleb autoveoga Alūksne vallas ja Vidzeme idaosas. Kontakt käib mobiiltelefoni teel.",
+      "descriptionEn": "RS cargo solution is a haulage company registered on Kolberģa street in Alūksne. It runs road transport across Alūksne municipality and eastern Vidzeme. Contact is by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://aluksne.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi%3A+auto"
+      ]
+    },
+    {
+      "name": "SIA Skandibus",
+      "slug": "skandibus-madona",
+      "country": "LV",
+      "city": "Madona",
+      "address": "Smilšu iela 6, Madona, Madonas novads, LV-4801",
+      "lat": 56.8458,
+      "lng": 26.2143,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": "https://www.skandibus.lv/",
+      "contactEmail": "birojs@skandibus.lv",
+      "contactPhone": "+371 26135401",
+      "tagline": "Madonas uzņēmums, kas piedāvā loģistiku un kravas pārvadājumus, kā arī autoservisa pakalpojumus.",
+      "descriptionEt": "Skandibus on Madonas Smilšu tänaval tegutsev ettevõte, mis pakub logistikat ja kaubavedu ning lisaks autoremonti ja tehnikamüüki. Tegemist on ühe suurema kohaliku veoteenuse pakkujaga Madonas piirkonnas. Kontakti saab e-posti või telefoni teel.",
+      "descriptionEn": "Skandibus operates from Smilšu street in Madona, offering logistics and freight transport alongside vehicle repair and equipment sales. It is one of the larger local transport providers in the Madona area. Contact by email or phone.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.skandibus.lv/",
+        "https://madona.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi%3A+auto"
+      ]
+    },
+    {
+      "name": "SIA Sireks",
+      "slug": "sireks-madona",
+      "country": "LV",
+      "city": "Madona",
+      "address": "Gaujas iela 24-10, Madona, Madonas novads, LV-4801",
+      "lat": 56.8601,
+      "lng": 26.2198,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29433715",
+      "tagline": "Kravu pārvadājumu uzņēmums Madonā, Gaujas ielā, pilsētas ziemeļu daļā.",
+      "descriptionEt": "Sireks on Madonas Gaujas tänaval registreeritud autoveofirma. Ettevõte veab kaupa Madonas vallas ja laiemalt Ida-Vidzemes. Kontakt käib mobiiltelefoni teel.",
+      "descriptionEn": "Sireks is a road haulage company registered on Gaujas street in Madona. It carries goods within Madona municipality and across eastern Vidzeme. Contact is by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://madona.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi%3A+auto"
+      ]
+    },
+    {
+      "name": "SIA A.Egles",
+      "slug": "a-egles-aizkraukle",
+      "country": "LV",
+      "city": "Aizkraukle",
+      "address": "Rūpniecības iela 9, Aizkraukle, Aizkraukles novads, LV-5101",
+      "lat": 56.6004,
+      "lng": 25.2414,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29164091",
+      "tagline": "Kravu pārvadājumu uzņēmums Aizkrauklē, Rūpniecības ielā, pilsētas rūpnieciskajā zonā.",
+      "descriptionEt": "A.Egles on Aizkraukle Rūpniecības tänaval tegutsev autoveofirma. Ettevõte asub linna tööstuspiirkonnas ja teenindab Aizkraukle valda. Kontakt käib mobiiltelefoni teel.",
+      "descriptionEn": "A.Egles is a road transport company on Rūpniecības street in Aizkraukle. It sits in the town's industrial zone and serves Aizkraukle municipality. Contact is by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "http://aizkraukle.pilseta24.lv/uznemumi?a=1&adr=%22Aizkraukle%22&n=1&pro=%22Kravu+p%C4%81rvad%C4%81jumi%3A+auto%22"
+      ]
+    },
+    {
+      "name": "SIA RG Auto",
+      "slug": "rg-auto-jekabpils",
+      "country": "LV",
+      "city": "Jēkabpils",
+      "address": "Latgales iela 44, Jēkabpils, Jēkabpils novads, LV-5202",
+      "lat": 56.51,
+      "lng": 25.8737,
+      "serviceTypes": [
+        "moving"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29262839",
+      "tagline": "Kravu pārvadājumu uzņēmums Jēkabpilī, Latgales ielā, Krustpils pusē.",
+      "descriptionEt": "RG Auto on Jēkabpilsi Krustpilsi poolel Latgales tänaval tegutsev autoveofirma. Ettevõte pakub veoteenust Jēkabpilsi vallas ja ümbruskonnas. Kontakt käib mobiiltelefoni teel.",
+      "descriptionEn": "RG Auto is a road haulage company on Latgales street on the Krustpils side of Jēkabpils. It provides transport within Jēkabpils municipality and the surrounding area. Contact is by mobile phone.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://preili.pilseta24.lv/uznemumi?pro=Kravu+p%C4%81rvad%C4%81jumi%3A+auto"
+      ]
+    },
+    {
+      "name": "SIA Vollers Riga",
+      "slug": "vollers-riga-salaspils",
+      "country": "LV",
+      "city": "Salaspils",
+      "address": "\"Lindes\", Salaspils pagasts, Salaspils novads, LV-2118",
+      "lat": 56.9123,
+      "lng": 24.3733,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": "https://www.vollers.com/ports-locations/riga",
+      "contactEmail": "vadim.puzanov@vollers.com",
+      "contactPhone": "+371 67956602",
+      "tagline": "Vollers Riga piedāvā vairāk nekā 18 000 m² segtu noliktavu, muitas noliktavu un saldētavu Salaspils pagastā.",
+      "descriptionEt": "Vollers Riga on rahvusvahelise Vollers Groupi Läti terminal Salaspilsi vallas Riia külje all. Ettevõte haldab üle 18 000 m² kaetud laopinda, tolliladu ning sügavkülmladu umbes 2200 europaleti jaoks. Ladu on ühendatud nii maantee- kui raudteevõrguga.",
+      "descriptionEn": "Vollers Riga is the Latvian terminal of the international Vollers Group, sited in Salaspils parish just outside Riga. It runs more than 18,000 m² of covered warehousing plus open storage, a bonded customs warehouse and deep-freeze capacity for roughly 2,200 europallets. The site is served by both road and rail connections.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.vollers.com/ports-locations/riga",
+        "https://noliktavu-pakalpojumi.zl.lv/Salaspils"
+      ]
+    },
+    {
+      "name": "SIA Kuehne+Nagel, Salaspils noliktavu loģistikas centrs",
+      "slug": "kuehne-nagel-salaspils",
+      "country": "LV",
+      "city": "Salaspils",
+      "address": "\"Rudeņi 2\", Salaspils pagasts, Salaspils novads, LV-2118",
+      "lat": 56.9069,
+      "lng": 24.376,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 67505860",
+      "tagline": "Kuehne+Nagel noliktavu loģistikas centrs Salaspils pagastā nodrošina līgumloģistiku un preču uzglabāšanu.",
+      "descriptionEt": "Kuehne+Nageli Läti lepingulise logistika keskus asub Salaspilsi vallas Rudeņi kinnistul, Ulbroka-Ogre tee ääres. Keskus pakub laopinda, komplekteerimist ja jaotust nii kohalikele kui rahvusvahelistele klientidele. Ettevõttel on eraldi terminal ka Riia lennujaamas.",
+      "descriptionEn": "The Latvian contract-logistics centre of Kuehne+Nagel sits at the Rudeņi property in Salaspils parish, on the Ulbroka-Ogre road. It offers warehousing, order picking and distribution for local and international clients. The group also operates a separate air-freight terminal at Riga airport.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://noliktavu-pakalpojumi.zl.lv/Salaspils"
+      ]
+    },
+    {
+      "name": "SIA Ilksis",
+      "slug": "ilksis-salaspils",
+      "country": "LV",
+      "city": "Salaspils",
+      "address": "\"Vēži\", Salaspils pagasts, Salaspils novads, LV-2118",
+      "lat": 56.9093,
+      "lng": 24.3827,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 67956795",
+      "tagline": "Ilksis iznomā noliktavu un ražošanas telpas Salaspils pagasta Vēžu īpašumā pie Ulbrokas–Ogres ceļa.",
+      "descriptionEt": "Ilksis on Salaspilsi valla laonduse ja kinnisvara haldamise ettevõte, mis rendib välja lao- ja tootmispinda Vēži kinnistul. Objekt asub Ulbroka-Ogre tee ääres, Riia ringtee lähedal. Ettevõte on registreeritud äriregistris koodiga 40003874102.",
+      "descriptionEn": "Ilksis is a Salaspils parish warehousing and property-management company that leases storage and light-industrial space at the Vēži property. The site lies on the Ulbroka-Ogre road close to the Riga bypass. The company is registered under number 40003874102.",
+      "registryCode": "40003874102",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://noliktavu-pakalpojumi.zl.lv/Salaspils",
+        "https://www.zl.lv/lv/uznemums/ilksis-sia/"
+      ]
+    },
+    {
+      "name": "SIA ACS Latvia",
+      "slug": "acs-latvia-salaspils",
+      "country": "LV",
+      "city": "Salaspils",
+      "address": "\"Rudeņi 6\", Salaspils pagasts, Salaspils novads, LV-2118",
+      "lat": 56.9095,
+      "lng": 24.3732,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 67813816",
+      "tagline": "ACS Latvia iznomā noliktavu un ražošanas telpas Rudeņu industriālajā teritorijā Salaspils pagastā.",
+      "descriptionEt": "ACS Latvia rendib välja lao- ja tootmispinda Rudeņi tööstusalal Salaspilsi vallas, kus paikneb ka Kuehne+Nageli logistikakeskus. Ettevõtte põhitegevus on oma kinnisvara rentimine ja haldamine. Äriregistri kood on 40003683866.",
+      "descriptionEn": "ACS Latvia leases warehouse and production premises in the Rudeņi industrial area of Salaspils parish, the same estate that hosts the Kuehne+Nagel logistics centre. Its registered activity is the rental and management of its own real estate. The company registry number is 40003683866.",
+      "registryCode": "40003683866",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://telpu-noma.zl.lv/Salaspils+novads",
+        "https://www.zl.lv/lv/uznemums/acs-latvia-sia/"
+      ]
+    },
+    {
+      "name": "SIA Presco Freight",
+      "slug": "presco-freight-dreilini",
+      "country": "LV",
+      "city": "Dreiliņi",
+      "address": "Garā iela 2, Dreiliņi, Stopiņu pagasts, Ropažu novads, LV-2130",
+      "lat": 56.937,
+      "lng": 24.236,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": "https://presco.lv/",
+      "contactEmail": null,
+      "contactPhone": "+371 22888555",
+      "tagline": "Presco Freight piedāvā noliktavu pakalpojumus un kravu ekspedīciju Dreiliņu industriālajā zonā.",
+      "descriptionEt": "Presco Freight on 2006. aastast tegutsev ekspedeerimisettevõte, mille kontor ja ladu asuvad Dreiliņis Stopiņi vallas. Lisaks maantee-, mere- ja raudteeveole pakub ettevõte laoteenust, tollivormistust ja projektilogistikat. Teenindatakse nii Läti kui rahvusvahelisi vedusid.",
+      "descriptionEn": "Presco Freight is a freight-forwarding company operating since 2006, with its office and warehouse in Dreiliņi, Stopiņi parish. Alongside road, sea and rail freight it provides warehousing, customs clearance and project logistics. It serves both domestic Latvian and international shipments.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://noliktavu-pakalpojumi.zl.lv/Ropa%C5%BEu+novads",
+        "https://presco.lv/"
+      ]
+    },
+    {
+      "name": "SIA LATLOG",
+      "slug": "latlog-stopini",
+      "country": "LV",
+      "city": "Stopiņi",
+      "address": "Getliņu iela 7A, Rumbula, Stopiņu pagasts, Ropažu novads, LV-2121",
+      "lat": 56.9067,
+      "lng": 24.2476,
+      "serviceTypes": [
+        "warehouse",
+        "moving"
+      ],
+      "websiteUrl": "https://www.latlog.lv/",
+      "contactEmail": "latlog@latlog.lv",
+      "contactPhone": "+371 26807741",
+      "tagline": "LATLOG nodrošina noliktavu pakalpojumus, kravu pārvadājumus un privātpersonu mantu pārvešanu Rumbulā.",
+      "descriptionEt": "LATLOG on Rumbula tööstusalal Stopiņi vallas tegutsev logistikaettevõte. Pakutakse laoteenust, temperatuurirežiimiga vedusid ning ka eraisikute vara transporti Lätis, Baltikumis ja Euroopas. Äriregistri kood on 40203599411.",
+      "descriptionEn": "LATLOG is a logistics company based in the Rumbula industrial area of Stopiņi parish. It provides warehousing, temperature-controlled freight and also moves private customers' belongings across Latvia, the Baltics and Europe. The company registry number is 40203599411.",
+      "registryCode": "40203599411",
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.latlog.lv/",
+        "https://www.zl.lv/lv/uznemums/latlog-sia/",
+        "https://noliktavu-pakalpojumi.zl.lv/Ropa%C5%BEu+novads"
+      ]
+    },
+    {
+      "name": "SIA FlexSpaces",
+      "slug": "flexspaces-ropazi",
+      "country": "LV",
+      "city": "Ropaži",
+      "address": "\"Straumēni 3\", Zaķumuiža, Ropažu pagasts, Ropažu novads, LV-2133",
+      "lat": 56.9707,
+      "lng": 24.4839,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29542672",
+      "tagline": "FlexSpaces nodarbojas ar uzglabāšanu un noliktavu saimniecību Zaķumuižā, Ropažu pagastā.",
+      "descriptionEt": "FlexSpaces on Zaķumuiža külas Ropaži vallas tegutsev laondusettevõte. Põhitegevusala on ladustamine ja laomajandus (NACE 5210). Äriregistri kood on 40203580683.",
+      "descriptionEn": "FlexSpaces is a storage business located at the Straumēni property in Zaķumuiža, Ropaži parish. Its registered main activity is warehousing and storage (NACE 5210). The company registry number is 40203580683.",
+      "registryCode": "40203580683",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://noliktavu-pakalpojumi.zl.lv/Ropa%C5%BEu+novads",
+        "https://www.zl.lv/lv/uznemums/flexspaces-sia/"
+      ]
+    },
+    {
+      "name": "SIA PICHE",
+      "slug": "piche-marupe",
+      "country": "LV",
+      "city": "Mārupe",
+      "address": "\"Vismaņi k-2\", Mārupes pagasts, Mārupes novads, LV-2167",
+      "lat": 56.9252,
+      "lng": 24.0028,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": "https://www.piche.eu/",
+      "contactEmail": "info@piche.eu",
+      "contactPhone": "+371 27334004",
+      "tagline": "PICHE attīsta un iznomā noliktavu un ražošanas parkus Mārupē, Valdlaučos, Olainē un Rīgā.",
+      "descriptionEt": "PICHE on Mārupe vallas Vismaņi kinnistul asuv lao- ja tööstusparkide arendaja ning haldaja. Ettevõttel on pargid Mārupes, Valdlauči (Ķekava vald) ja Riias ning arendused Olaines ja Dreiliņis. Renditav pind ulatub kümnetesse tuhandetesse ruutmeetritesse.",
+      "descriptionEn": "PICHE develops and leases warehouse and industrial parks from its base at the Vismaņi estate in Mārupe parish. Its portfolio includes parks in Mārupe, Valdlauči (Ķekava municipality) and Riga, with further development in Olaine and Dreiliņi. Available lettable space runs to tens of thousands of square metres.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.piche.eu/noliktavas-razosanas-telpu-noma"
+      ]
+    },
+    {
+      "name": "SIA REWICO Baltikum",
+      "slug": "rewico-baltikum-marupe",
+      "country": "LV",
+      "city": "Mārupe",
+      "address": "\"Vismaņi k-5\", Mārupes pagasts, Mārupes novads, LV-2167",
+      "lat": 56.9257,
+      "lng": 24.0094,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": "https://www.rewico.lv/",
+      "contactEmail": "office@rewico.lv",
+      "contactPhone": "+371 67152756",
+      "tagline": "REWICO Baltikum piedāvā noliktavu pakalpojumus, atmuitošanu un kravu pārvadājumus Mārupes Vismaņu kompleksā.",
+      "descriptionEt": "REWICO Baltikum on üle 20 aasta tegutsenud Läti logistikaettevõte, mille ladu asub Vismaņi kompleksis Mārupe vallas. Pakutakse laoteenust, tollivormistust ja kaubavedu. Äriregistri kood on 40003632770.",
+      "descriptionEn": "REWICO Baltikum is a Latvian logistics provider with more than twenty years on the market, operating a warehouse in the Vismaņi complex in Mārupe parish. Services cover warehousing, customs clearance and freight transport. The company registry number is 40003632770.",
+      "registryCode": "40003632770",
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.rewico.lv/",
+        "https://noliktavu-pakalpojumi.zl.lv/M%C4%81rupes+novads"
+      ]
+    },
+    {
+      "name": "SIA Total Transport",
+      "slug": "total-transport-marupe",
+      "country": "LV",
+      "city": "Mārupe",
+      "address": "Jelgavas ceļš 20, Tīraine, Mārupes pagasts, Mārupes novads, LV-2167",
+      "lat": 56.8881,
+      "lng": 24.0703,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": "https://www.totaltransport.lv/",
+      "contactEmail": "info@totaltransport.lv",
+      "contactPhone": "+371 29154054",
+      "tagline": "Total Transport apvieno noliktavu pakalpojumus Rīgas apkaimē ar kravu pārvadājumiem Baltijā un Eiropā.",
+      "descriptionEt": "Total Transport on Tīraine külas Mārupe vallas asuv transpordi- ja logistikaettevõte. Ettevõte pakub laoteenust Riia piirkonnas ning igapäevaseid vedusid Baltikumi, Beneluxi ja mujale Euroopasse. Ettevõttel on ISO 9001:2015 sertifikaat.",
+      "descriptionEn": "Total Transport is a transport and logistics company based at Tīraine in Mārupe parish. It combines warehousing near Riga with daily freight services to the Baltics, the Benelux countries and the wider European market. The company holds an ISO 9001:2015 certificate.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.totaltransport.lv/",
+        "https://noliktavu-pakalpojumi.zl.lv/M%C4%81rupes+novads"
+      ]
+    },
+    {
+      "name": "SIA Rīgas saldētava",
+      "slug": "rigas-saldetava-marupe",
+      "country": "LV",
+      "city": "Mārupe",
+      "address": "Robežnieku iela 7, Mārupe, Mārupes novads, LV-2167",
+      "lat": 56.9103,
+      "lng": 23.9993,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29490709",
+      "tagline": "Rīgas saldētava piedāvā saldētavas un temperatūras režīma noliktavas pakalpojumus no +4 līdz -18 grādiem.",
+      "descriptionEt": "Rīgas saldētava on Mārupes Robežnieku tänaval asuv külm- ja sügavkülmlao operaator. Laos on temperatuurirežiimid +4 kuni -18 kraadi, autonoomsed kambrid ning kauba sorteerimise, vastuvõtu ja väljastuse teenus. Äriregistri kood on 47101007260.",
+      "descriptionEn": "Rīgas saldētava operates a cold and deep-freeze storage facility on Robežnieku iela in Mārupe. The warehouse offers temperature regimes from +4 to -18 degrees in autonomous chambers, plus sorting, goods receipt, dispatch and stock management. The company registry number is 47101007260.",
+      "registryCode": "47101007260",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://noliktavu-pakalpojumi.zl.lv/M%C4%81rupes+novads",
+        "https://www.zl.lv/lv/uznemums/rigas-saldetava-sia/"
+      ]
+    },
+    {
+      "name": "SIA Dominante Park",
+      "slug": "dominante-park-kekava",
+      "country": "LV",
+      "city": "Ķekava",
+      "address": "\"Saulgoži\", Lielvārži, Ķekavas pagasts, Ķekavas novads, LV-2123",
+      "lat": 56.7926,
+      "lng": 24.2322,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 67019067",
+      "tagline": "Dominante Park ir viens no lielākajiem noliktavu un loģistikas parkiem Pierīgā pie Via Baltica Ķekavā.",
+      "descriptionEt": "Dominante Park on umbes 60 hektaril paiknev äri- ja logistikapark Ķekava vallas Via Baltica (A7) ääres, ligikaudu 20 km Riia kesklinnast. Pargis renditakse välja lao- ja tootmispinda mitmele logistikaettevõttele. Haldaja äriregistri kood on 40003696432.",
+      "descriptionEn": "Dominante Park is a roughly 60-hectare business and logistics park in Ķekava parish beside the Via Baltica (A7), about 20 km from central Riga. It leases warehouse and production space to a range of logistics operators. The managing company's registry number is 40003696432.",
+      "registryCode": "40003696432",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://www.zl.lv/lv/uznemums/dominante-park-sia/"
+      ]
+    },
+    {
+      "name": "SIA LV Logic",
+      "slug": "lv-logic-olaine",
+      "country": "LV",
+      "city": "Olaine",
+      "address": "\"Šarlotes\", Grēnes, Olaines pagasts, Olaines novads, LV-2127",
+      "lat": 56.8015,
+      "lng": 23.9454,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 67708400",
+      "tagline": "LV Logic nodrošina uzglabāšanu un noliktavu saimniecību Grēnēs, Olaines pagastā.",
+      "descriptionEt": "LV Logic on 2008. aastast tegutsev laondusettevõte, mille ladu asub Šarlotes kinnistul Grēnes külas Olaine vallas. Põhitegevusala on ladustamine ja laomajandus. Äriregistri kood on 40103168500.",
+      "descriptionEn": "LV Logic is a warehousing company operating since 2008 from the Šarlotes property at Grēnes in Olaine parish. Its registered main activity is storage and warehouse management. The company registry number is 40103168500.",
+      "registryCode": "40103168500",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://noliktavu-pakalpojumi.zl.lv/Olaines+novads",
+        "https://www.zl.lv/lv/uznemums/lv-logic-sia/"
+      ]
+    },
+    {
+      "name": "SIA DTD",
+      "slug": "dtd-adazi",
+      "country": "LV",
+      "city": "Ādaži",
+      "address": "\"Jauntrenči\", Eimuri, Ādažu pagasts, Ādažu novads, LV-2164",
+      "lat": 57.0857,
+      "lng": 24.2964,
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29156141",
+      "tagline": "DTD iznomā noliktavu telpas Eimuru teritorijā Ādažu pagastā, netālu no Vidzemes šosejas.",
+      "descriptionEt": "DTD on 2001. aastast tegutsev ettevõte, mis rendib välja laopinda Jauntrenči kinnistul Eimuri külas Ādaži vallas. Põhitegevusala on oma või renditud kinnisvara üürimine ja haldamine. Äriregistri kood on 40003558321.",
+      "descriptionEn": "DTD, active since 2001, leases warehouse premises at the Jauntrenči property in Eimuri, Ādaži parish. Its registered activity is the rental and management of owned or leased real estate. The company registry number is 40003558321.",
+      "registryCode": "40003558321",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://noliktavu-pakalpojumi.zl.lv/%C4%80da%C5%BEu+novads",
+        "https://www.zl.lv/lv/uznemums/dtd-sia/"
+      ]
+    },
+    {
+      "name": "SIA Eltoro",
+      "slug": "eltoro-salaspils",
+      "country": "LV",
+      "city": "Salaspils",
+      "address": "Meža iela 13A, Salaspils, Salaspils novads, LV-2121",
+      "lat": 56.8718,
+      "lng": 24.34,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": "https://www.eltoro.lv/",
+      "contactEmail": null,
+      "contactPhone": "+371 29417947",
+      "tagline": "Eltoro jau vairāk nekā desmit gadus veic dzīvojamo un biroja telpu profesionālo uzkopšanu Salaspilī un Rīgā.",
+      "descriptionEt": "Eltoro on Salaspilsis Meža tänaval asuv koristusettevõte, mis on tegutsenud üle kümne aasta. Teenused hõlmavad kodude ja kontorite professionaalset puhastust Riias ja ümbruskonnas. Äriregistri kood on 40003628737.",
+      "descriptionEn": "Eltoro is a cleaning company based on Meža iela in Salaspils, in business for more than ten years. It offers professional cleaning of homes and offices across Riga and the surrounding area. The company registry number is 40003628737.",
+      "registryCode": "40003628737",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsana.zl.lv/Salaspils+novads",
+        "https://www.zl.lv/lv/uznemums/eltoro-sia/",
+        "https://www.eltoro.lv/"
+      ]
+    },
+    {
+      "name": "SIA Molnix",
+      "slug": "molnix-salaspils",
+      "country": "LV",
+      "city": "Salaspils",
+      "address": "Gaismas iela 14, Salaspils, Salaspils novads, LV-2169",
+      "lat": 56.8547,
+      "lng": 24.3662,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 26363671",
+      "tagline": "Molnix piedāvā telpu uzkopšanas un darba apģērbu servisu Salaspilī un tuvākajā apkaimē.",
+      "descriptionEt": "Molnix on Salaspilsi Gaismas tänaval registreeritud koristusteenuse ettevõte. Pakutakse ruumide koristust ja tööriietuse teenust ettevõtetele ning eraklientidele. Äriregistri kood on 40103903554.",
+      "descriptionEn": "Molnix is a cleaning services company registered on Gaismas iela in Salaspils. It provides premises cleaning and a workwear service for business and private customers. The company registry number is 40103903554.",
+      "registryCode": "40103903554",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsana.zl.lv/Salaspils+novads",
+        "https://www.zl.lv/lv/uznemums/molnix-sia/"
+      ]
+    },
+    {
+      "name": "SIA Cipars Z",
+      "slug": "cipars-z-salaspils",
+      "country": "LV",
+      "city": "Salaspils",
+      "address": "Skolas iela 11 k-2, Salaspils, Salaspils novads, LV-2121",
+      "lat": 56.8552,
+      "lng": 24.3332,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 28849690",
+      "tagline": "Cipars Z ir Salaspilī reģistrēts uzkopšanas servisa uzņēmums, kas darbojas kopš 2016. gada.",
+      "descriptionEt": "Cipars Z on 2016. aastal asutatud koristusteenuse ettevõte Salaspilsis Skolas tänaval. Registreeritud tegevusala on muud puhastusteenused (NACE 8123). Äriregistri kood on 40103983259.",
+      "descriptionEn": "Cipars Z is a cleaning services company founded in 2016 and based on Skolas iela in Salaspils. Its registered activity is other cleaning services (NACE 8123). The company registry number is 40103983259.",
+      "registryCode": "40103983259",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsana.zl.lv/Salaspils+novads",
+        "https://www.zl.lv/lv/uznemums/cipars-z-sia/"
+      ]
+    },
+    {
+      "name": "SIA Rev.eko",
+      "slug": "reveko-marupe",
+      "country": "LV",
+      "city": "Mārupe",
+      "address": "Meldriņu iela 35, Mārupe, Mārupes novads, LV-2167",
+      "lat": 56.9109,
+      "lng": 24.0125,
+      "serviceTypes": [
+        "cleaning",
+        "warehouse"
+      ],
+      "websiteUrl": "https://www.reveko.lv/",
+      "contactEmail": "cleaning@reveko.lv",
+      "contactPhone": "+371 29850373",
+      "tagline": "Rev.eko apvieno loģistikas un kravu uzglabāšanas risinājumus ar uzkopšanas servisu Mārupē un Rīgā.",
+      "descriptionEt": "Rev.eko on Mārupes Meldriņu tänaval tegutsev ettevõte, millel on kaks suunda: logistika ja koristusteenused. Logistikapoolel pakutakse konteinervedu, tollivormistust ja kauba ladustamist, koristuspoolel kontorite ja tootmisruumide hooldust Mārupes, Jaunmārupes, Tīraines, Riias ja Babītes. Äriregistri kood on 40103191418.",
+      "descriptionEn": "Rev.eko, based on Meldriņu iela in Mārupe, runs two divisions: logistics and cleaning. The logistics side covers ocean container shipping, customs clearance and cargo storage, while the cleaning side maintains offices and production facilities in Mārupe, Jaunmārupe, Tīraine, Riga and Babīte. The company registry number is 40103191418.",
+      "registryCode": "40103191418",
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.reveko.lv/",
+        "https://www.zl.lv/lv/uznemums/reveko-sia/",
+        "https://uzkopsana.zl.lv/M%C4%81rupes+novads"
+      ]
+    },
+    {
+      "name": "SIA Extra saimnieks",
+      "slug": "extra-saimnieks-marupe",
+      "country": "LV",
+      "city": "Mārupe",
+      "address": "Sēļu iela 10, Mārupe, Mārupes novads, LV-2167",
+      "lat": 56.8966,
+      "lng": 24.0337,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 25664488",
+      "tagline": "Extra saimnieks nodrošina ēku apsaimniekošanu, telpu uzkopšanu un teritorijas uzturēšanu Mārupē.",
+      "descriptionEt": "Extra saimnieks on Mārupes Sēļu tänaval tegutsev kinnisvarahoolduse ettevõte. Teenuste hulka kuuluvad ruumide koristus, territooriumi hooldus, lumekoristus, haljastus ja avariiteenus. Äriregistri kood on 40203323161.",
+      "descriptionEn": "Extra saimnieks is a property maintenance company on Sēļu iela in Mārupe. Its services include premises cleaning, grounds upkeep, snow clearing, landscaping and emergency call-outs. The company registry number is 40203323161.",
+      "registryCode": "40203323161",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsana.zl.lv/M%C4%81rupes+novads",
+        "https://www.zl.lv/lv/uznemums/extra-saimnieks-sia/"
+      ]
+    },
+    {
+      "name": "SIA Maximum Cleaning",
+      "slug": "maximum-cleaning-marupe",
+      "country": "LV",
+      "city": "Mārupe",
+      "address": "Dzelzceļa iela 59, Mārupe, Mārupes novads, LV-2167",
+      "lat": 56.9022,
+      "lng": 24.0731,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": "https://www.maxclean.lv/",
+      "contactEmail": "maxcleanlv@gmail.com",
+      "contactPhone": "+371 27720007",
+      "tagline": "Maximum Cleaning veic mīksto mēbeļu, paklāju, matraču un grīdas segumu ķīmisko tīrīšanu Mārupē un Rīgas apkaimē.",
+      "descriptionEt": "Maximum Cleaning on Mārupes Dzelzceļa tänaval asuv puhastusettevõte, mis on spetsialiseerunud pehme mööbli, vaipade, madratsite ja põrandakatete keemilisele puhastusele. Lisaks tehakse aknapesu ja remondijärgset koristust. Väljasõit kuni 100 km raadiuses Riiast on tasuta.",
+      "descriptionEn": "Maximum Cleaning, on Dzelzceļa iela in Mārupe, specialises in chemical cleaning of upholstered furniture, carpets, mattresses and floor coverings. It also offers window washing and post-renovation cleaning. Call-outs within 100 km of Riga are free of charge.",
+      "registryCode": "40103998466",
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.maxclean.lv/",
+        "https://www.zl.lv/lv/uznemums/maximum-cleaning-sia/",
+        "https://uzkopsana.zl.lv/M%C4%81rupes+novads"
+      ]
+    },
+    {
+      "name": "SIA Gerc Latvia Group",
+      "slug": "gerc-latvia-group-marupe",
+      "country": "LV",
+      "city": "Mārupe",
+      "address": "Niedru iela 6, Mārupe, Mārupes novads, LV-2167",
+      "lat": 56.9131,
+      "lng": 24.0139,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29166808",
+      "tagline": "Gerc Latvia Group sniedz kombinētus ēku uzturēšanas un uzkopšanas pakalpojumus Mārupē.",
+      "descriptionEt": "Gerc Latvia Group on Mārupes Niedru tänaval registreeritud ettevõte, mille tegevusala on hoonete kombineeritud hooldus ja koristus. Teenindatakse äri- ja elamukinnisvara Riia lähipiirkonnas. Äriregistri kood on 40203108546.",
+      "descriptionEn": "Gerc Latvia Group, registered on Niedru iela in Mārupe, provides combined building maintenance and cleaning services. It serves commercial and residential property in the Riga suburbs. The company registry number is 40203108546.",
+      "registryCode": "40203108546",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsana.zl.lv/M%C4%81rupes+novads",
+        "https://www.zl.lv/lv/uznemums/gerc-latvia-group-sia/"
+      ]
+    },
+    {
+      "name": "SIA Aqualine",
+      "slug": "aqualine-jaunmarupe",
+      "country": "LV",
+      "city": "Jaunmārupe",
+      "address": "Mazcenu aleja 7-13, Jaunmārupe, Mārupes novads, LV-2166",
+      "lat": 56.8802,
+      "lng": 23.9452,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29514608",
+      "tagline": "Aqualine piedāvā telpu uzkopšanas un tīrīšanas pakalpojumus Jaunmārupē un Mārupes novadā.",
+      "descriptionEt": "Aqualine on Jaunmārupes Mazcenu alleel registreeritud koristusettevõte. Registreeritud tegevusala on muud puhastusteenused (NACE 8123). Äriregistri kood on 40203143700.",
+      "descriptionEn": "Aqualine is a cleaning company registered on Mazcenu aleja in Jaunmārupe. Its registered activity is other cleaning services (NACE 8123). The company registry number is 40203143700.",
+      "registryCode": "40203143700",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsana.zl.lv/M%C4%81rupes+novads",
+        "https://www.zl.lv/lv/uznemums/aqualine-sia/"
+      ]
+    },
+    {
+      "name": "SIA Sky Clean",
+      "slug": "sky-clean-marupe",
+      "country": "LV",
+      "city": "Mārupe",
+      "address": "Tehnikas iela 6, Lidosta \"Rīga\", Mārupes pagasts, Mārupes novads, LV-1053",
+      "lat": 56.9184,
+      "lng": 23.9801,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29636463",
+      "tagline": "Sky Clean sniedz uzkopšanas servisu lidostas \"Rīga\" teritorijā Mārupes pagastā.",
+      "descriptionEt": "Sky Clean on koristusteenuse ettevõte, mis tegutseb Riia lennujaama territooriumil Tehnikas tänaval Mārupe vallas. Registreeritud tegevusala on muud puhastusteenused (NACE 8123). Äriregistri kood on 40103571400.",
+      "descriptionEn": "Sky Clean is a cleaning services company operating from Tehnikas iela in the Riga Airport area of Mārupe parish. Its registered activity is other cleaning services (NACE 8123). The company registry number is 40103571400.",
+      "registryCode": "40103571400",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsana.zl.lv/M%C4%81rupes+novads",
+        "https://www.zl.lv/lv/uznemums/sky-clean-sia/"
+      ]
+    },
+    {
+      "name": "SIA General Cleaning",
+      "slug": "general-cleaning-kekava",
+      "country": "LV",
+      "city": "Ķekava",
+      "address": "Zālītes iela 10, Krustkalni, Ķekavas pagasts, Ķekavas novads, LV-2111",
+      "lat": 56.8878,
+      "lng": 24.141,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": "https://www.gcleaning.lv/",
+      "contactEmail": "info@gcleaning.lv",
+      "contactPhone": "+371 29963330",
+      "tagline": "General Cleaning veic biroju, ražotņu un logu uzkopšanu Ķekavas novadā un 150 km rādiusā ap Rīgu.",
+      "descriptionEt": "General Cleaning on Krustkalni külas Ķekava vallas asuv koristusettevõte. Teenused hõlmavad kontorite ja tootmishoonete igapäevast ning üldkoristust, akna- ja fassaadipesu, põrandahooldust, vaipade ja pehme mööbli puhastust ning remondijärgset koristust. Teenindatakse Riiat ja 150 km raadiust.",
+      "descriptionEn": "General Cleaning is a cleaning contractor based at Krustkalni in Ķekava parish. It handles daily and deep cleaning of offices and production facilities, window and facade washing, floor care, carpet and upholstery cleaning and post-renovation clean-ups. Its service area is Riga and a 150 km radius around it.",
+      "registryCode": "40203016839",
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.gcleaning.lv/",
+        "https://www.zl.lv/lv/uznemums/general-cleaning-sia/",
+        "https://uzkopsana.zl.lv/%C4%B6ekavas+novads"
+      ]
+    },
+    {
+      "name": "SIA EverSten (OZ Serviss)",
+      "slug": "eversten-oz-serviss-kekava",
+      "country": "LV",
+      "city": "Ķekava",
+      "address": "Cītaru iela 2, Valdlauči, Ķekavas pagasts, Ķekavas novads, LV-1076",
+      "lat": 56.9015,
+      "lng": 24.1473,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": "https://www.ozserviss.lv/",
+      "contactEmail": "ozserviss@gmail.com",
+      "contactPhone": "+371 26837872",
+      "tagline": "OZ Serviss piedāvā grīdu pulēšanu, paklāju un mēbeļu tīrīšanu, kā arī ozonēšanu Valdlaučos.",
+      "descriptionEt": "EverSten, mis turundab end nime all OZ Serviss, on Valdlauči asulas Ķekava vallas tegutsev puhastusettevõte. Teenused hõlmavad põrandate poleerimist ja vahatamist, vaipade ja mööbli puhastust ning osoneerimist. Äriregistri kood on 40203621642.",
+      "descriptionEn": "EverSten, trading as OZ Serviss, is a cleaning company based at Valdlauči in Ķekava parish. Its services include floor polishing and waxing, carpet and furniture cleaning and ozonation treatments, mainly for business clients. The company registry number is 40203621642.",
+      "registryCode": "40203621642",
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.ozserviss.lv/",
+        "https://www.zl.lv/lv/uznemums/eversten-sia/",
+        "https://uzkopsana.zl.lv/%C4%B6ekavas+novads"
+      ]
+    },
+    {
+      "name": "SIA SANELEKTRA (Powerwash.lv)",
+      "slug": "sanelektra-powerwash-kekava",
+      "country": "LV",
+      "city": "Ķekava",
+      "address": "Nākotnes iela 23, Ķekava, Ķekavas novads, LV-2123",
+      "lat": 56.8219,
+      "lng": 24.2364,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": "https://www.powerwash.lv/",
+      "contactEmail": "info@powerwash.lv",
+      "contactPhone": "+371 20774774",
+      "tagline": "Powerwash.lv ir ģimenes uzņēmums Ķekavā, kas veic bruģa, fasāžu, jumtu un notekcauruļu mazgāšanu ar augstspiedienu.",
+      "descriptionEt": "Powerwash.lv on Ķekavas Nākotnes tänaval tegutsev pereettevõte SIA SANELEKTRA, mis teeb kõrgsurvepesu. Puhastatakse sillutist, fassaade, katuseid, aedu, vihmaveesüsteeme ja monumente nii ettevõtetele kui eraklientidele. Äriregistri kood on 50103581241.",
+      "descriptionEn": "Powerwash.lv is the trading name of SIA SANELEKTRA, a family business on Nākotnes iela in Ķekava specialising in high-pressure washing. It cleans paving, facades, roofs, fences, gutters and monuments for both companies and private customers. The company registry number is 50103581241.",
+      "registryCode": "50103581241",
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.powerwash.lv/",
+        "https://uzkopsana.zl.lv/%C4%B6ekavas+novads"
+      ]
+    },
+    {
+      "name": "SIA Euro Cleaners",
+      "slug": "euro-cleaners-balozi",
+      "country": "LV",
+      "city": "Baloži",
+      "address": "Gobu iela 1-50, Baloži, Ķekavas novads, LV-2128",
+      "lat": 56.8804,
+      "lng": 24.1448,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29443313",
+      "tagline": "Euro Cleaners sniedz telpu uzkopšanas pakalpojumus Baložos un Ķekavas novadā.",
+      "descriptionEt": "Euro Cleaners on Baloži linnas Ķekava vallas registreeritud koristusettevõte. Pakutakse ruumide koristust ja hooldusteenuseid vastavalt kliendi vajadustele. Äriregistri kood on 40103755855.",
+      "descriptionEn": "Euro Cleaners is a cleaning services company registered in Baloži, Ķekava municipality. It provides premises cleaning and maintenance tailored to each customer's needs. The company registry number is 40103755855.",
+      "registryCode": "40103755855",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsana.zl.lv/%C4%B6ekavas+novads",
+        "https://www.zl.lv/lv/uznemums/euro-cleaners-sia/"
+      ]
+    },
+    {
+      "name": "SIA Deicija",
+      "slug": "deicija-baldone",
+      "country": "LV",
+      "city": "Baldone",
+      "address": "Pērses iela 1, Baldone, Ķekavas novads, LV-2125",
+      "lat": 56.7357,
+      "lng": 24.3755,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 26511114",
+      "tagline": "Deicija ir Baldonē reģistrēts uzkopšanas servisa uzņēmums, kas apkalpo Baldoni un Ķekavas novadu.",
+      "descriptionEt": "Deicija on Baldone linnas Pērses tänaval registreeritud koristusteenuse ettevõte. Ettevõte on kantud Läti ettevõtete kataloogi koristusteenuste rubriiki ning teenindab Baldone ja Ķekava valla piirkonda.",
+      "descriptionEn": "Deicija is a cleaning services company registered on Pērses iela in Baldone. It appears in the Latvian business directory under cleaning services and covers the Baldone and Ķekava municipality area.",
+      "registryCode": null,
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsana.zl.lv/%C4%B6ekavas+novads"
+      ]
+    },
+    {
+      "name": "SIA Maxximum",
+      "slug": "maxximum-olaine",
+      "country": "LV",
+      "city": "Olaine",
+      "address": "Jelgavas iela 3, Olaine, Olaines novads, LV-2114",
+      "lat": 56.7938,
+      "lng": 23.9376,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 27552864",
+      "tagline": "Maxximum veic ēku un ražošanas objektu tīrīšanu Olainē un Olaines novadā.",
+      "descriptionEt": "Maxximum on 2018. aastal asutatud koristusettevõte Olaine linnas Jelgavas tänaval. Registreeritud tegevusala on muud hoonete ja tootmisobjektide puhastusteenused (NACE 8122). Äriregistri kood on 40203120657.",
+      "descriptionEn": "Maxximum is a cleaning company founded in 2018 and based on Jelgavas iela in Olaine. Its registered activity is other building and industrial cleaning services (NACE 8122). The company registry number is 40203120657.",
+      "registryCode": "40203120657",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsana.zl.lv/Olaines+novads",
+        "https://www.zl.lv/lv/uznemums/maxximum-sia/"
+      ]
+    },
+    {
+      "name": "SIA MR Clean",
+      "slug": "mr-clean-jaunolaine",
+      "country": "LV",
+      "city": "Olaine",
+      "address": "Pūres iela 2-6, Jaunolaine, Olaines pagasts, Olaines novads, LV-2127",
+      "lat": 56.7979,
+      "lng": 23.9845,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 22113115",
+      "tagline": "MR Clean nodrošina vispārēju ēku tīrīšanu Jaunolainē un Olaines novadā kopš 2020. gada.",
+      "descriptionEt": "MR Clean on 2020. aastal asutatud koristusettevõte Jaunolaine alevikus Olaine vallas. Registreeritud tegevusala on hoonete üldpuhastus. Äriregistri kood on 40203254739.",
+      "descriptionEn": "MR Clean is a cleaning company established in 2020 and based at Jaunolaine in Olaine parish. Its registered activity is general building cleaning. The company registry number is 40203254739.",
+      "registryCode": "40203254739",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsana.zl.lv/Olaines+novads",
+        "https://www.zl.lv/lv/uznemums/mr-clean-sia/"
+      ]
+    },
+    {
+      "name": "SIA NAD uzkopšanas serviss",
+      "slug": "nad-uzkopsanas-serviss-adazi",
+      "country": "LV",
+      "city": "Ādaži",
+      "address": "Muižas iela 18, Ādaži, Ādažu novads, LV-2164",
+      "lat": 57.0968,
+      "lng": 24.3213,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29209368",
+      "tagline": "NAD uzkopšanas serviss tīra ēkas un ražošanas objektus Ādažos un Ādažu novadā.",
+      "descriptionEt": "NAD uzkopšanas serviss on Ādaži alevikus Muižas tänaval tegutsev koristusettevõte. Registreeritud tegevusala on muud hoonete ja tootmisobjektide puhastusteenused. Äriregistri kood on 40103767642.",
+      "descriptionEn": "NAD uzkopšanas serviss is a cleaning company operating from Muižas iela in Ādaži. Its registered activity is other building and production-facility cleaning services. The company registry number is 40103767642.",
+      "registryCode": "40103767642",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsana.zl.lv/%C4%80da%C5%BEu+novads",
+        "https://www.zl.lv/lv/uznemums/nad-uzkopsanas-serviss-sia/"
+      ]
+    },
+    {
+      "name": "SIA AreaClean",
+      "slug": "areaclean-carnikava",
+      "country": "LV",
+      "city": "Carnikava",
+      "address": "Tulpju iela 2A-18, Carnikava, Ādažu novads, LV-2163",
+      "lat": 57.1265,
+      "lng": 24.2879,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 29180071",
+      "tagline": "AreaClean piedāvā uzkopšanas servisu Carnikavā un Ādažu novada piejūras ciemos.",
+      "descriptionEt": "AreaClean on Carnikava alevikus Tulpju tänaval registreeritud koristusettevõte. Registreeritud tegevusala on muud puhastusteenused (NACE 8123). Äriregistri kood on 40203306759.",
+      "descriptionEn": "AreaClean is a cleaning company registered on Tulpju iela in Carnikava. Its registered activity is other cleaning services (NACE 8123). The company registry number is 40203306759.",
+      "registryCode": "40203306759",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsana.zl.lv/Carnikavas+pagasts",
+        "https://www.zl.lv/lv/uznemums/areaclean-sia/"
+      ]
+    },
+    {
+      "name": "SIA Alpīnisti",
+      "slug": "alpinisti-kalngale",
+      "country": "LV",
+      "city": "Carnikava",
+      "address": "Dzeguzes iela 38, Kalngale, Carnikavas pagasts, Ādažu novads, LV-2163",
+      "lat": 57.0804,
+      "lng": 24.1422,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 27870013",
+      "tagline": "Alpīnisti veic vispārīgus ēku tīrīšanas darbus, tostarp augstumos, Kalngalē un Carnikavas pagastā.",
+      "descriptionEt": "Alpīnisti on Kalngale külas Carnikava vallas registreeritud puhastusettevõte. Registreeritud tegevusala on hoonete üldpuhastusteenused, sealhulgas kõrgtööd. Äriregistri kood on 40203654817.",
+      "descriptionEn": "Alpīnisti is a cleaning company registered at Kalngale in Carnikava parish. Its registered activity is general building cleaning, including rope-access work at height. The company registry number is 40203654817.",
+      "registryCode": "40203654817",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsana.zl.lv/Carnikavas+pagasts",
+        "https://www.zl.lv/lv/uznemums/alpinisti-sia/"
+      ]
+    },
+    {
+      "name": "SIA Ingrado",
+      "slug": "ingrado-saulkrasti",
+      "country": "LV",
+      "city": "Saulkrasti",
+      "address": "Upes iela 9, Saulkrasti, Saulkrastu novads, LV-2161",
+      "lat": 57.3207,
+      "lng": 24.4183,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": null,
+      "contactEmail": null,
+      "contactPhone": "+371 25346777",
+      "tagline": "Ingrado ir vienīgais Saulkrastos reģistrētais vispārējās ēku tīrīšanas uzņēmums uzņēmumu katalogā.",
+      "descriptionEt": "Ingrado on Saulkrasti linnas Upes tänaval registreeritud koristusettevõte. Registreeritud tegevusala on hoonete üldpuhastus ja ruumide koristus. Äriregistri kood on 40103729231.",
+      "descriptionEn": "Ingrado is a cleaning company registered on Upes iela in Saulkrasti. Its registered activity is general building cleaning and premises maintenance. The company registry number is 40103729231.",
+      "registryCode": "40103729231",
+      "sourceQuality": "aggregator",
+      "sources": [
+        "https://uzkopsana.zl.lv/Saulkrasti",
+        "https://www.zl.lv/lv/uznemums/ingrado-sia/"
+      ]
+    },
+    {
+      "name": "SIA BaltRiga",
+      "slug": "baltriga-bauska",
+      "country": "LV",
+      "city": "Bauska",
+      "address": "Kareivju iela 3-40, Bauska, Bauskas novads, LV-3901",
+      "lat": 56.4046,
+      "lng": 24.1875,
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "websiteUrl": "https://www.baltriga.lv/",
+      "contactEmail": "baltrigasia@gmail.com",
+      "contactPhone": "+371 29556556",
+      "tagline": "BaltRiga veic profesionālu iekštelpu un ārtelpu uzkopšanu, tostarp pēcbūvniecības tīrīšanu, visā Latvijā.",
+      "descriptionEt": "BaltRiga on Bauskas registreeritud koristusettevõte, mis tegutseb kogu Lätis. Teenused hõlmavad ehitusjärgset koristust, igapäevast hooldust, aknapesu, ladude ja kaubanduspindade üldkoristust ning raskete plekkide eemaldamist. Ettevõte on nimetatud ka Bauska maakonna laoteenuste rubriigis.",
+      "descriptionEn": "BaltRiga is a cleaning contractor registered in Bauska and working across Latvia. Services include post-construction cleaning, daily maintenance, window washing, deep cleaning of warehouses and retail space and removal of stubborn stains such as concrete and rust. It also appears under warehouse services in the Bauska district directory.",
+      "registryCode": null,
+      "sourceQuality": "official",
+      "sources": [
+        "https://www.baltriga.lv/",
+        "https://uzkopsana.zl.lv/Bauskas+novads",
+        "https://noliktavu-pakalpojumi.zl.lv/Bauskas+novads"
+      ]
+    }
+  ]
+}
