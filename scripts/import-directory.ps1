@@ -34,6 +34,20 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+
+# Catch the placeholder before firing a doomed request - a 401 stack trace reads
+# like a broken script rather than "you forgot to paste the token".
+if ($Token -eq 'PASTE_TOKEN' -or $Token.Length -lt 40) {
+    Write-Host "That token is the placeholder, not a real one." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Open https://ruumly.eu logged in as admin, press F12, and paste this into the Console:"
+    Write-Host "  await (await fetch('https://api.ruumly.eu/api/auth/refresh',{method:'POST',credentials:'include'})).json()" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Copy the accessToken value (a long eyJ... string) and re-run with it in place of PASTE_TOKEN."
+    Write-Host "Tokens are short-lived; if a later batch 401s, mint a fresh one and re-run - imported rows are skipped."
+    exit 1
+}
+
 $headers = @{ Authorization = "Bearer $Token"; 'Content-Type' = 'application/json' }
 $grand = [ordered]@{ created = 0; skipped = 0; errors = 0 }
 $allErrors = @()
