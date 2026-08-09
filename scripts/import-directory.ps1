@@ -94,6 +94,26 @@ $allErrors = @()
 # row rather than a chain. Keep the code on the first branch, null it on the rest;
 # the branches are still distinct suppliers by slug, address and coordinates.
 $seenRegistryCodes = [System.Collections.Generic.HashSet[string]]::new()
+
+# Seed from production, not just from this run. Deduping only within the batch still
+# collides with a code already stored - which is what produced 5 "database error -
+# supplier not saved" rows on the first full run. A collision against an existing
+# supplier usually means the row IS that supplier under a new slug, so nulling the
+# code lets genuinely-new branches through while the duplicate stays visible as a row
+# you can eyeball.
+try {
+    $existing = Invoke-RestMethod -Uri "$ApiBase/admin/suppliers?page=1&limit=1000" -Headers $headers
+    $rows = if ($existing.items) { $existing.items } else { $existing }
+    $n = 0
+    foreach ($s in $rows) {
+        if (-not [string]::IsNullOrWhiteSpace($s.registryCode)) { [void]$seenRegistryCodes.Add([string]$s.registryCode); $n++ }
+    }
+    Write-Host "Seeded $n existing registry code(s) from production." -ForegroundColor DarkGray
+}
+catch {
+    Write-Warning "Could not read existing suppliers to seed registry codes: $($_.Exception.Message)"
+    Write-Warning "Continuing - expect 'database error - supplier not saved' on any code that already exists."
+}
 $deduped = 0
 function Resolve-RegistryCode($row) {
     $code = $row.registryCode
@@ -104,11 +124,16 @@ function Resolve-RegistryCode($row) {
 }
 
 foreach ($country in $Countries) {
-    $file = Join-Path $DataDir "import-$country.json"
-    if (-not (Test-Path $file)) { Write-Warning "missing $file - skipping $country"; continue }
+    # Glob rather than exact-name: research arrives in waves (import-LV.json,
+    # import-LV-wave2.json, ...). Matching one exact filename silently ignored a
+    # whole wave once - 363 rows that were never even attempted, with no warning,
+    # because "file not found" never fired.
+    $files = @(Get-ChildItem -Path $DataDir -Filter "import-$country*.json" -ErrorAction SilentlyContinue | Sort-Object Name)
+    if (-not $files) { Write-Warning "no import-$country*.json in $DataDir - skipping $country"; continue }
 
-    $rows = Get-Content $file -Raw -Encoding utf8 | ConvertFrom-Json
-    Write-Host "`n=== $country : $($rows.Count) rows ===" -ForegroundColor Cyan
+    $rows = @()
+    foreach ($f in $files) { $rows += @(Get-Content $f.FullName -Raw -Encoding utf8 | ConvertFrom-Json) }
+    Write-Host "`n=== $country : $($rows.Count) rows from $($files.Count) file(s): $(($files.Name) -join ', ') ===" -ForegroundColor Cyan
 
     for ($i = 0; $i -lt $rows.Count; $i += $BatchSize) {
         $end   = [Math]::Min($i + $BatchSize, $rows.Count) - 1
