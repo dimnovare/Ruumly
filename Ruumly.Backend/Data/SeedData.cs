@@ -2426,7 +2426,10 @@ public static class SeedData
             ["siteName"]            = ("Ruumly",         "Platform name"),
             ["siteEmail"]           = ("info@ruumly.eu", "Contact email"),
             ["opsInbox"]            = ("info@ruumly.eu", "Internal ops/alerts inbox (concierge intake, routed-quote leads, disputes, offer-chosen)"),
-            ["sitePhone"]           = ("+372 5649 7933", "Contact phone"),
+            // Blank by design. A real personal number seeded here is served publicly
+            // by GET /api/settings/public and rendered on the homepage; set a business
+            // number in admin settings if one is wanted.
+            ["sitePhone"]           = ("", "Contact phone (blank = hidden on the site)"),
             ["defaultLanguage"]     = ("et",             "Default UI language"),
             ["currency"]            = ("EUR",            "Currency code"),
             ["commissionRate"]      = ("5",              "Platform commission % on base price"),

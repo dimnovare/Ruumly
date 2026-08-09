@@ -77,7 +77,9 @@ public class SettingsController(RuumlyDbContext db) : ControllerBase
         {
             siteName           = settings.GetValueOrDefault("siteName",           "Ruumly"),
             siteEmail          = settings.GetValueOrDefault("siteEmail",          "info@ruumly.eu"),
-            sitePhone          = settings.GetValueOrDefault("sitePhone",          "+372 5555 1234"),
+            // Empty, not a placeholder number: consumers hide the phone on a falsy
+            // value, whereas "+372 5555 1234" would publish a fake contact number.
+            sitePhone          = settings.GetValueOrDefault("sitePhone",          ""),
             openHours          = settings.GetValueOrDefault("openHours",          "E–R 9–18"),
             openHoursSat       = settings.GetValueOrDefault("openHoursSat",       ""),
             inviteCodeRequired = settings.GetValueOrDefault("inviteCodeRequired", "false") == "true",
