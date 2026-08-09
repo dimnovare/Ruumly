@@ -102,13 +102,21 @@ $seenRegistryCodes = [System.Collections.Generic.HashSet[string]]::new()
 # code lets genuinely-new branches through while the duplicate stays visible as a row
 # you can eyeball.
 try {
-    $existing = Invoke-RestMethod -Uri "$ApiBase/admin/suppliers?page=1&limit=1000" -Headers $headers
-    $rows = if ($existing.items) { $existing.items } else { $existing }
-    $n = 0
-    foreach ($s in $rows) {
-        if (-not [string]::IsNullOrWhiteSpace($s.registryCode)) { [void]$seenRegistryCodes.Add([string]$s.registryCode); $n++ }
+    # The admin list caps at 100 per page regardless of limit, so page until it dries
+    # up. A single limit=1000 call silently seeded nothing.
+    $seedCount = 0
+    for ($page = 1; $page -le 30; $page++) {
+        $resp  = Invoke-RestMethod -Uri "$ApiBase/admin/suppliers?page=$page&limit=100" -Headers $headers
+        $batch = @(if ($null -ne $resp.items) { $resp.items } else { $resp })
+        if ($batch.Count -eq 0) { break }
+        foreach ($s in $batch) {
+            if (-not [string]::IsNullOrWhiteSpace($s.registryCode)) {
+                if ($seenRegistryCodes.Add([string]$s.registryCode)) { $seedCount++ }
+            }
+        }
+        if ($batch.Count -lt 100) { break }
     }
-    Write-Host "Seeded $n existing registry code(s) from production." -ForegroundColor DarkGray
+    Write-Host "Seeded $seedCount existing registry code(s) from production." -ForegroundColor DarkGray
 }
 catch {
     Write-Warning "Could not read existing suppliers to seed registry codes: $($_.Exception.Message)"
@@ -131,8 +139,16 @@ foreach ($country in $Countries) {
     $files = @(Get-ChildItem -Path $DataDir -Filter "import-$country*.json" -ErrorAction SilentlyContinue | Sort-Object Name)
     if (-not $files) { Write-Warning "no import-$country*.json in $DataDir - skipping $country"; continue }
 
-    $rows = @()
-    foreach ($f in $files) { $rows += @(Get-Content $f.FullName -Raw -Encoding utf8 | ConvertFrom-Json) }
+    # PowerShell 5.1 does NOT unroll the array ConvertFrom-Json returns - it arrives
+    # as ONE object, so @(...) yields a 1-element array holding all 77 rows. The
+    # symptom is a batch of "1 rows" and then "the property registryCode cannot be
+    # found on this object", because the object being read is the array itself. The
+    # inner foreach forces the unroll on both 5.1 and 7.
+    $rows = New-Object System.Collections.ArrayList
+    foreach ($f in $files) {
+        $parsed = Get-Content $f.FullName -Raw -Encoding utf8 | ConvertFrom-Json
+        foreach ($item in $parsed) { [void]$rows.Add($item) }
+    }
     Write-Host "`n=== $country : $($rows.Count) rows from $($files.Count) file(s): $(($files.Name) -join ', ') ===" -ForegroundColor Cyan
 
     for ($i = 0; $i -lt $rows.Count; $i += $BatchSize) {
