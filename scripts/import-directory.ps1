@@ -48,6 +48,41 @@ if ($Token -eq 'PASTE_TOKEN' -or $Token.Length -lt 40) {
     exit 1
 }
 
+# Hand-copying a ~400-char JWT out of a console pane silently drops characters, and
+# the API can only answer that with a 401 - which reads as "expired" and sends you
+# to mint another one that breaks the same way. Decode it here so a mangled paste is
+# named as a mangled paste.
+$segments = $Token -split '\.'
+if ($segments.Count -ne 3) {
+    Write-Host "That is not a complete JWT - expected 3 dot-separated segments, got $($segments.Count)." -ForegroundColor Yellow
+    Write-Host "You have probably copied only part of it. Use the clipboard method below." -ForegroundColor Yellow
+    exit 1
+}
+$payload = $segments[1].Replace('-', '+').Replace('_', '/')
+$payload = $payload.PadRight([int][Math]::Ceiling($payload.Length / 4) * 4, '=')
+try {
+    $claims = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($payload)) | ConvertFrom-Json
+}
+catch {
+    Write-Host "The token is CORRUPT - its payload will not decode. Characters were lost copying it." -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Copy it to the clipboard instead of selecting it by hand. In the F12 Console on ruumly.eu:"
+    Write-Host "  copy((await (await fetch('https://api.ruumly.eu/api/auth/refresh',{method:'POST',credentials:'include'})).json()).accessToken)" -ForegroundColor Cyan
+    Write-Host "then run:  ./scripts/import-directory.ps1 -Token (Get-Clipboard) -DataDir '$DataDir'" -ForegroundColor Cyan
+    exit 1
+}
+$expiresAt = [DateTimeOffset]::FromUnixTimeSeconds([long]$claims.exp).ToLocalTime()
+if ($expiresAt -lt [DateTimeOffset]::Now) {
+    Write-Host "That token expired at $expiresAt. Mint a fresh one." -ForegroundColor Yellow
+    exit 1
+}
+$role = $claims.'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
+if ($role -ne 'Admin') {
+    Write-Host "That token's role is '$role', not Admin - the bulk endpoint will reject it." -ForegroundColor Yellow
+    exit 1
+}
+Write-Host "Token OK - $($claims.email), role $role, valid until $($expiresAt.ToString('HH:mm:ss'))" -ForegroundColor Green
+
 $headers = @{ Authorization = "Bearer $Token"; 'Content-Type' = 'application/json' }
 $grand = [ordered]@{ created = 0; skipped = 0; errors = 0 }
 $allErrors = @()
