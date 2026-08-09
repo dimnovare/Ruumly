@@ -1,0 +1,2634 @@
+{
+  "generatedAt": "2026-08-09",
+  "rows": [
+    {
+      "slug": "katmar-puhastus-haapsalu",
+      "name": "Katmar Puhastus OÜ",
+      "country": "EE",
+      "city": "Haapsalu",
+      "status": "found",
+      "contactEmail": "katmarpuhastus@gmail.com",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://ariregister.rik.ee/est/company/14186333"
+      ],
+      "notes": "Registered contact. Registry phone +372 56475712 matches the directory row exactly."
+    },
+    {
+      "slug": "ass-transport-kardla",
+      "name": "ASS-Transport OÜ",
+      "country": "EE",
+      "city": "Kärdla",
+      "status": "found",
+      "contactEmail": "info@ivotar.ee",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "medium",
+      "sources": [
+        "https://ariregister.rik.ee/est/company/10435934"
+      ],
+      "notes": "Osauhing ASS - TRANSPORT, Kardla (Hiiumaa). Registry phone +372 5023094 matches the row. Registered mailbox sits on ivotar.ee, a different brand — verify on first contact."
+    },
+    {
+      "slug": "sr-simveod-kardla",
+      "name": "SR Simveod OÜ",
+      "country": "EE",
+      "city": "Kärdla",
+      "status": "found",
+      "contactEmail": "srsimveod@gmail.com",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://ariregister.rik.ee/est/company/10748142"
+      ],
+      "notes": "Registry phone +372 5137056 matches the row. One of only two movers on Hiiumaa island."
+    },
+    {
+      "slug": "kesk-log-eksped-narva",
+      "name": "Kesk Log & Eksped",
+      "country": "EE",
+      "city": "Narva",
+      "status": "found",
+      "contactEmail": "larissa@kesklog.ee",
+      "mxOk": true,
+      "emailKind": "named",
+      "confidence": "medium",
+      "sources": [
+        "https://ariregister.rik.ee/est/company/10661487"
+      ],
+      "notes": "Osauhing KESK LOG & EKSPED, Narva. Registry phone (+372 5518030) differs from the stored row phone (+372 5032118); name, city and activity match."
+    },
+    {
+      "slug": "move-home-narva",
+      "name": "Move Home Narva",
+      "country": "EE",
+      "city": "Narva",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [],
+      "notes": "No match in the Estonian business register for 'Move Home' (autocomplete returns nothing) and no website. Looks like an unregistered trade name / sole trader advertising only by phone (+372 55558999). Phone-only row."
+    },
+    {
+      "slug": "ntk-balt-narva",
+      "name": "NTK Balt OÜ",
+      "country": "EE",
+      "city": "Narva",
+      "status": "found",
+      "contactEmail": "gibuh@hotmail.com",
+      "mxOk": true,
+      "emailKind": "named",
+      "confidence": "medium",
+      "sources": [
+        "https://ariregister.rik.ee/est/company/10516851"
+      ],
+      "notes": "Osauhing NTK BALT, A. Puskini 5, Narva. Registry phone (+372 5659330) differs from the stored row phone (+372 3573210). Registered mailbox is a personal hotmail account."
+    },
+    {
+      "slug": "raivara-polva",
+      "name": "Raivara OÜ",
+      "country": "EE",
+      "city": "Põlva",
+      "status": "found",
+      "contactEmail": "raidolume@gmail.com",
+      "mxOk": true,
+      "emailKind": "named",
+      "confidence": "high",
+      "sources": [
+        "https://ariregister.rik.ee/est/company/14635883"
+      ],
+      "notes": "Registry phone +372 58321494 matches the row exactly."
+    },
+    {
+      "slug": "hepa-haagiserent-rapla",
+      "name": "Hepa haagiserent Rapla",
+      "country": "EE",
+      "city": "Rapla",
+      "status": "found",
+      "contactEmail": "info@hepa.ee",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://hepa.ee/haagiserent/"
+      ],
+      "notes": "General inbox published beside the trailer-rental pricing; kontakt page lists named staff. Also published on the same site: evelin.tapsi@hepa.ee, kaspar.nisu@hepa.ee, katrin.kaur@hepa.ee, merilin.poldoja@hepa.ee."
+    },
+    {
+      "slug": "trebank-valga",
+      "name": "Trebank OÜ",
+      "country": "EE",
+      "city": "Valga",
+      "status": "found",
+      "contactEmail": "Tanel.visnapuu.012@mail.ee",
+      "mxOk": true,
+      "emailKind": "named",
+      "confidence": "high",
+      "sources": [
+        "https://ariregister.rik.ee/est/company/16360508"
+      ],
+      "notes": "Registry phone +372 58911937 matches the row exactly. Owner's personal mail.ee address."
+    },
+    {
+      "slug": "bvt-projekt-miniladu-viljandi",
+      "name": "BVT Projekt OÜ – Koidu 13 miniladu",
+      "country": "EE",
+      "city": "Viljandi",
+      "status": "found",
+      "contactEmail": "olev@is.ee",
+      "mxOk": true,
+      "emailKind": "named",
+      "confidence": "medium",
+      "sources": [
+        "https://ariregister.rik.ee/est/company/14209956"
+      ],
+      "notes": "BVT Projekt OU, the Koidu 13 mini-storage in Viljandi. Directory row carries no phone, so identity rests on the registry code already stored on the row."
+    },
+    {
+      "slug": "pinnad-puhtaks-viljandi",
+      "name": "Pinnad-Puhtaks OÜ",
+      "country": "EE",
+      "city": "Viljandi",
+      "status": "found",
+      "contactEmail": "pinnadpuhtaks@gmail.com",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "medium",
+      "sources": [
+        "https://ariregister.rik.ee/est/company/14033121"
+      ],
+      "notes": "OU Pinnad-Puhtaks, Viljandi. Registry phone (+372 51923626) differs from the stored row phone (+372 55544413); name and city match."
+    },
+    {
+      "slug": "raiester-voru",
+      "name": "Raiester OÜ",
+      "country": "EE",
+      "city": "Võru",
+      "status": "found",
+      "contactEmail": "roel.jyrioo@mail.ee",
+      "mxOk": true,
+      "emailKind": "named",
+      "confidence": "high",
+      "sources": [
+        "https://ariregister.rik.ee/est/company/10512623"
+      ],
+      "notes": "Registry phone +372 58048434 matches the row exactly."
+    },
+    {
+      "slug": "veosiil-voru",
+      "name": "Veosiil OÜ",
+      "country": "EE",
+      "city": "Võru",
+      "status": "found",
+      "contactEmail": "algispihu@gmail.com",
+      "mxOk": true,
+      "emailKind": "named",
+      "confidence": "high",
+      "sources": [
+        "https://ariregister.rik.ee/est/company/11408098"
+      ],
+      "notes": "Registry phone +372 56732058 matches the row exactly."
+    },
+    {
+      "slug": "baltic-petroleum-anyksciai-mindaugo-g-23",
+      "name": "Baltic Petroleum degalinė, Anykščiai, Mindaugo g. 23",
+      "country": "LT",
+      "city": "Anykščiai",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "viada-anyksciai-a-vienuolio-g-34",
+      "name": "Viada degalinė, Anykščiai, A. Vienuolio g. 34",
+      "country": "LT",
+      "city": "Anykščiai",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/anyksciai-a-vienuolio-g-34/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "undzeno-imone-birzai",
+      "name": "V. Undzėno įmonė",
+      "country": "LT",
+      "city": "Biržai",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "https://www.undzenas.lt",
+        "https://www.undzenas.lt/index.php/kontaktai",
+        "https://www.undzenas.lt/index.php/apie-mus"
+      ],
+      "notes": "Site reachable but publishes no e-mail address — contact form and/or phone only. Checked 3 page(s) including the contact/about/privacy routes."
+    },
+    {
+      "slug": "viada-birzai-parodos-g-2",
+      "name": "Viada degalinė, Biržai, Parodos g. 2",
+      "country": "LT",
+      "city": "Biržai",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/parodos-g-2-birzai/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "baltic-petroleum-druskininkai-gardino-g-79",
+      "name": "Baltic Petroleum degalinė, Druskininkai, Gardino g. 79",
+      "country": "LT",
+      "city": "Druskininkai",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "viada-elektrenai-dubijos-g-36",
+      "name": "Viada degalinė, Elektrėnai, Dubijos g. 36",
+      "country": "LT",
+      "city": "Elektrėnai",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/elektrenu-sav-dubijos-g-36/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "viada-elektrenai-elektrines-g-6",
+      "name": "Viada degalinė, Elektrėnai, Elektrinės g. 6",
+      "country": "LT",
+      "city": "Elektrėnai",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/elektrines-g-6-elektrenai/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "viada-gargzdai-vilniaus-pl-65",
+      "name": "Viada degalinė, Gargždai, Vilniaus pl. 65",
+      "country": "LT",
+      "city": "Gargždai",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/saulazoliu-k-gargzdai/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "priekabu-nuoma-garliava",
+      "name": "Priekabų nuoma Garliava",
+      "country": "LT",
+      "city": "Garliava",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "https://www.priekabunuomagarliava.lt",
+        "https://www.priekabunuomagarliava.lt/kontaktai"
+      ],
+      "notes": "Site reachable but publishes no e-mail address — contact form and/or phone only. Checked 2 page(s) including the contact/about/privacy routes."
+    },
+    {
+      "slug": "viada-grigiskes-kovo-11-osios-g-75",
+      "name": "Viada degalinė, Grigiškės, Kovo 11-osios g. 75",
+      "country": "LT",
+      "city": "Grigiškės",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/kovo-11-osios-g-75-grigiskes/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "baltic-petroleum-griskabudis-a-skelcio-g-4",
+      "name": "Baltic Petroleum degalinė, Griškabūdis, A. Skelčio g. 4",
+      "country": "LT",
+      "city": "Griškabūdis",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "viada-ignalina-turistu-g-28a",
+      "name": "Viada degalinė, Ignalina, Turistų g. 28A",
+      "country": "LT",
+      "city": "Ignalina",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/turistu-g-28a-ignalina/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "viada-jasiunai-lydos-g-13",
+      "name": "Viada degalinė, Jašiūnai, Lydos g. 13",
+      "country": "LT",
+      "city": "Jašiūnai",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/lydos-g-13-jasiunai-salcininku-r/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "viada-jonava-darbininku-g-4d",
+      "name": "Viada degalinė, Jonava, Darbininkų g. 4D",
+      "country": "LT",
+      "city": "Jonava",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/darbininku-g-4d-jonava/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "viada-joniskis-vilniaus-g-51",
+      "name": "Viada degalinė, Joniškis, Vilniaus g. 51",
+      "country": "LT",
+      "city": "Joniškis",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/vilniaus-g-51-joniskis/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "baltic-petroleum-jurbarkas-muitines-g-22a",
+      "name": "Baltic Petroleum degalinė, Jurbarkas, Muitinės g. 22A",
+      "country": "LT",
+      "city": "Jurbarkas",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "viada-kaisiadorys-gedimino-g-135",
+      "name": "Viada degalinė, Kaišiadorys, Gedimino g. 135",
+      "country": "LT",
+      "city": "Kaišiadorys",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/gedimino-g-135-kaisiadorys/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "viada-kalvarija-dariaus-ir-gireno-g-81",
+      "name": "Viada degalinė, Kalvarija, Dariaus ir Girėno g. 81",
+      "country": "LT",
+      "city": "Kalvarija",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/dariaus-ir-gireno-g-81-kalvarija/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "balila-kaunas",
+      "name": "Balila, UAB",
+      "country": "LT",
+      "city": "Kaunas",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "http://www.balila.lt",
+        "http://www.balila.lt/uab-baila-kontaktai/"
+      ],
+      "notes": "Site reachable but publishes no e-mail address — contact form and/or phone only. Checked 2 page(s) including the contact/about/privacy routes."
+    },
+    {
+      "slug": "boxrent-kaunas",
+      "name": "UAB Boxrent",
+      "country": "LT",
+      "city": "Kaunas",
+      "status": "found",
+      "contactEmail": "info@boxrent.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://boxrent.lt/lt/locations/kaunas"
+      ],
+      "notes": ""
+    },
+    {
+      "slug": "corpus-a-kaunas",
+      "name": "Corpus A, Kauno filialas, UAB",
+      "country": "LT",
+      "city": "Kaunas",
+      "status": "found",
+      "contactEmail": "info@corpusa.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://corpusa.lt"
+      ],
+      "notes": "Corpus A cleaning chain — one inbox across its city branches. Also published on the same site: i.sevelioniene@corpusa.lt, info@corpuspro.lt."
+    },
+    {
+      "slug": "geros-priekabos-kaunas-draugystes",
+      "name": "UAB \"Geros Priekabos\" (Dainava)",
+      "country": "LT",
+      "city": "Kaunas",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "https://priekabunuoma.lt"
+      ],
+      "notes": "Site reachable but publishes no e-mail address — contact form and/or phone only. Checked 1 page(s) including the contact/about/privacy routes."
+    },
+    {
+      "slug": "geros-priekabos-kaunas-europos",
+      "name": "UAB \"Geros Priekabos\"",
+      "country": "LT",
+      "city": "Kaunas",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "https://priekabunuoma.lt"
+      ],
+      "notes": "Site reachable but publishes no e-mail address — contact form and/or phone only. Checked 1 page(s) including the contact/about/privacy routes."
+    },
+    {
+      "slug": "justrent-kaunas",
+      "name": "JustRent",
+      "country": "LT",
+      "city": "Kaunas",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "https://justrent.lt",
+        "https://justrent.lt/index.php/contact/"
+      ],
+      "notes": "Site reachable but publishes no e-mail address — contact form and/or phone only. Checked 2 page(s) including the contact/about/privacy routes."
+    },
+    {
+      "slug": "kirobox-kaunas",
+      "name": "Kirobox, MB",
+      "country": "LT",
+      "city": "Kaunas",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "https://kirobox.lt/",
+        "https://www.visalietuva.lt/imone/kirobox-mb"
+      ],
+      "notes": "Own site is a WordPress page with a contact form only ('Jusu el. pastas' form field, no mailto anywhere). Cross-checked the Lithuanian company directory: Kirobox, MB, Laisves al. 110, Kaunas, company code 307616268, director Audrius Kaupas, registered 2026-03-18 — the listing carries address and director but no e-mail. Genuinely phone/form-only. Young company (registered 2026), so a mailbox may appear later."
+    },
+    {
+      "slug": "veverent-pagiriai",
+      "name": "Veverent (Stits, MB)",
+      "country": "LT",
+      "city": "Kauno r.",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "https://veverent.lt",
+        "https://veverent.lt/kontaktai",
+        "https://veverent.lt/apie-mus",
+        "https://veverent.lt/privatumo-politika"
+      ],
+      "notes": "Site reachable but publishes no e-mail address — contact form and/or phone only. Checked 4 page(s) including the contact/about/privacy routes."
+    },
+    {
+      "slug": "viada-kelme-kestucio-g-1b",
+      "name": "Viada degalinė, Kelmė, Kęstučio g. 1B",
+      "country": "LT",
+      "city": "Kelmė",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/kelme-kestucio-g-1b/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "corpus-a-klaipeda",
+      "name": "Corpus A, Klaipėdos filialas, UAB",
+      "country": "LT",
+      "city": "Klaipėda",
+      "status": "found",
+      "contactEmail": "info@corpusa.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://corpusa.lt"
+      ],
+      "notes": "Corpus A cleaning chain — one inbox across its city branches. Also published on the same site: i.sevelioniene@corpusa.lt, info@corpuspro.lt."
+    },
+    {
+      "slug": "tavo-auto-klaipeda",
+      "name": "TAVO AUTO, MB",
+      "country": "LT",
+      "city": "Klaipėda",
+      "status": "found",
+      "contactEmail": "tavoauto0@gmail.com",
+      "mxOk": true,
+      "emailKind": "named",
+      "confidence": "high",
+      "sources": [
+        "https://tavo-auto.lt/"
+      ],
+      "notes": ""
+    },
+    {
+      "slug": "vakaru-paslaugu-centras-klaipeda",
+      "name": "VAKARŲ PASLAUGŲ CENTRAS, IĮ",
+      "country": "LT",
+      "city": "Klaipėda",
+      "status": "found",
+      "contactEmail": "info@vpcentras.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "http://www.vpcentras.lt/kontaktai.html"
+      ],
+      "notes": ""
+    },
+    {
+      "slug": "viada-kretingale-klaipedos-g-1a",
+      "name": "Viada degalinė, Kretingalė, Klaipėdos g. 1A",
+      "country": "LT",
+      "city": "Kretingalė",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/klaipedos-g-1a-kretingale/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "viada-kupiskis-pergales-g-15",
+      "name": "Viada degalinė, Kupiškis, Pergalės g. 15",
+      "country": "LT",
+      "city": "Kupiškis",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/pergales-g-15-kupiskis/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "baltic-petroleum-kedainiai-j-basanaviciaus-g-95b",
+      "name": "Baltic Petroleum degalinė, Kėdainiai, J. Basanavičiaus g. 95B",
+      "country": "LT",
+      "city": "Kėdainiai",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "baltic-petroleum-lazdijai-turistu-g-88",
+      "name": "Baltic Petroleum degalinė, Lazdijai, Turistų g. 88",
+      "country": "LT",
+      "city": "Lazdijai",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "viada-lazdijai-turistu-g-32",
+      "name": "Viada degalinė, Lazdijai, Turistų g. 32",
+      "country": "LT",
+      "city": "Lazdijai",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/lazdijai-turistu-g-32/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "baltic-petroleum-moletai-vilniaus-g-104",
+      "name": "Baltic Petroleum degalinė, Molėtai, Vilniaus g. 104",
+      "country": "LT",
+      "city": "Molėtai",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "viada-moletai-vilniaus-g-101",
+      "name": "Viada degalinė, Molėtai, Vilniaus g. 101",
+      "country": "LT",
+      "city": "Molėtai",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/vilniaus-g-101-moletai/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "baltic-petroleum-naujoji-akmene-v-kudirkos-g-21a",
+      "name": "Baltic Petroleum degalinė, Naujoji Akmenė, V. Kudirkos g. 21A",
+      "country": "LT",
+      "city": "Naujoji Akmenė",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "baltic-petroleum-oztakiai-dariaus-ir-gireno-g-77",
+      "name": "Baltic Petroleum degalinė, Ožtakiai, Dariaus ir Girėno g. 77",
+      "country": "LT",
+      "city": "Ožtakiai",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "viada-pabrade-vilniaus-g-116b",
+      "name": "Viada degalinė, Pabradė, Vilniaus g. 116B",
+      "country": "LT",
+      "city": "Pabradė",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/vilniaus-g-116b-pabrade/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "baltic-petroleum-pakruojis-statybininku-g-28",
+      "name": "Baltic Petroleum degalinė, Pakruojis, Statybininkų g. 28",
+      "country": "LT",
+      "city": "Pakruojis",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "viada-pakruojis-vytauto-didziojo-g-98",
+      "name": "Viada degalinė, Pakruojis, Vytauto Didžiojo g. 98",
+      "country": "LT",
+      "city": "Pakruojis",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/vytauto-didziojo-g-98-pakruojis/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "baltic-petroleum-pandelys-elektrines-g-1",
+      "name": "Baltic Petroleum degalinė, Pandėlys, Elektrinės g. 1",
+      "country": "LT",
+      "city": "Pandėlys",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "corpus-a-panevezys",
+      "name": "Corpus A, Panevėžio filialas, UAB",
+      "country": "LT",
+      "city": "Panevėžys",
+      "status": "found",
+      "contactEmail": "info@corpusa.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://corpusa.lt"
+      ],
+      "notes": "Corpus A cleaning chain — one inbox across its city branches. Also published on the same site: i.sevelioniene@corpusa.lt, info@corpuspro.lt."
+    },
+    {
+      "slug": "priekabu-nuoma-panevezys",
+      "name": "Priekabų nuoma Panevėžys",
+      "country": "LT",
+      "city": "Panevėžys",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "https://www.priekabu-nuoma-panevezys.lt"
+      ],
+      "notes": "Site reachable but publishes no e-mail address — contact form and/or phone only. Checked 1 page(s) including the contact/about/privacy routes."
+    },
+    {
+      "slug": "via3l-lt-panevezys",
+      "name": "VIA 3L LT, UAB Panevėžio filialas",
+      "country": "LT",
+      "city": "Panevėžys",
+      "status": "found",
+      "contactEmail": "lt@via3l.eu",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://via3l.eu/en/via-3l-contacts/"
+      ],
+      "notes": "Via 3L group, Lithuanian entity desk (VAT LT100000998516)."
+    },
+    {
+      "slug": "vidaila-panevezys",
+      "name": "Vidaila, UAB",
+      "country": "LT",
+      "city": "Panevėžys",
+      "status": "found",
+      "contactEmail": "info@vidaila.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.vidaila.lt/kontaktai.html"
+      ],
+      "notes": ""
+    },
+    {
+      "slug": "viada-pasvalys-vilniaus-g-50",
+      "name": "Viada degalinė, Pasvalys, Vilniaus g. 50",
+      "country": "LT",
+      "city": "Pasvalys",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/vilniaus-g-50-pasvalys/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "baltic-petroleum-plateliai-z-kalvarijos-g-1a",
+      "name": "Baltic Petroleum degalinė, Plateliai, Ž. Kalvarijos g. 1A",
+      "country": "LT",
+      "city": "Plateliai",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "ratuota-prekyba-plunge",
+      "name": "Ratuota prekyba, UAB (RP GROUP)",
+      "country": "LT",
+      "city": "Plungė",
+      "status": "found",
+      "contactEmail": "info@ratuotaprekyba.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://rpnuoma.lt/"
+      ],
+      "notes": "Matches the legal name Ratuota Prekyba. NB the site also emits 'example@mysite.com' inside a Wix form-validation string — that is a placeholder, not a contact."
+    },
+    {
+      "slug": "vadronas-plunge",
+      "name": "Vadronas, MB",
+      "country": "LT",
+      "city": "Plungė",
+      "status": "found",
+      "contactEmail": "vadronas@gmail.com",
+      "mxOk": true,
+      "emailKind": "named",
+      "confidence": "high",
+      "sources": [
+        "https://plovimasdronu.lt"
+      ],
+      "notes": ""
+    },
+    {
+      "slug": "viada-plunge-j-tumo-vaizganto-g-102",
+      "name": "Viada degalinė, Plungė, J. Tumo-Vaižganto g. 102",
+      "country": "LT",
+      "city": "Plungė",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/j-tumo-vaizganto-g-102-plunge/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "baltic-petroleum-priekule-klaipedos-g-61",
+      "name": "Baltic Petroleum degalinė, Priekulė, Klaipėdos g. 61",
+      "country": "LT",
+      "city": "Priekulė",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "baltic-petroleum-prienai-vilniaus-g-3a",
+      "name": "Baltic Petroleum degalinė, Prienai, Vilniaus g. 3A",
+      "country": "LT",
+      "city": "Prienai",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "baltic-petroleum-radviliskis-siauliu-g-1a",
+      "name": "Baltic Petroleum degalinė, Radviliškis, Šiaulių g. 1A",
+      "country": "LT",
+      "city": "Radviliškis",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "baltic-petroleum-raseiniai-vilniaus-g-30",
+      "name": "Baltic Petroleum degalinė, Raseiniai, Vilniaus g. 30",
+      "country": "LT",
+      "city": "Raseiniai",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "baltic-petroleum-rietavas-dariaus-ir-gireno-g-19",
+      "name": "Baltic Petroleum degalinė, Rietavas, Dariaus ir Girėno g. 19",
+      "country": "LT",
+      "city": "Rietavas",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "viada-rokiskis-panevezio-g-5",
+      "name": "Viada degalinė, Rokiškis, Panevėžio g. 5",
+      "country": "LT",
+      "city": "Rokiškis",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/panevezio-g-5-rokiskis/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "baltic-petroleum-sarakiskes-vytauto-g-61",
+      "name": "Baltic Petroleum degalinė, Sarakiškės, Vytauto g. 61",
+      "country": "LT",
+      "city": "Sarakiškės",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "baltic-petroleum-skuodas-vytauto-g-22",
+      "name": "Baltic Petroleum degalinė, Skuodas, Vytauto g. 22",
+      "country": "LT",
+      "city": "Skuodas",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "viada-skuodas-vilniaus-g-50",
+      "name": "Viada degalinė, Skuodas, Vilniaus g. 50",
+      "country": "LT",
+      "city": "Skuodas",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/vilniaus-g-50-skuodas/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "corpus-a-taurage",
+      "name": "Corpus A, Tauragės filialas, UAB",
+      "country": "LT",
+      "city": "Tauragė",
+      "status": "found",
+      "contactEmail": "info@corpusa.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://corpusa.lt"
+      ],
+      "notes": "Corpus A cleaning chain — one inbox across its city branches. Also published on the same site: i.sevelioniene@corpusa.lt, info@corpuspro.lt."
+    },
+    {
+      "slug": "viada-telsiai-pramones-g-2",
+      "name": "Viada degalinė, Telšiai, Pramonės g. 2",
+      "country": "LT",
+      "city": "Telšiai",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/pramones-g-2-telsiai/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "baltic-petroleum-trakai-vilniaus-g-33",
+      "name": "Baltic Petroleum degalinė, Trakai, Vilniaus g. 33",
+      "country": "LT",
+      "city": "Trakai",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "viada-ukmerge-ziedo-g-15",
+      "name": "Viada degalinė, Ukmergė, Žiedo g. 15",
+      "country": "LT",
+      "city": "Ukmergė",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/ziedo-g-15-ukmerge/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "viada-utena-metalo-g-8",
+      "name": "Viada degalinė, Utena, Metalo g. 8",
+      "country": "LT",
+      "city": "Utena",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/metalo-g-8-utena/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "viada-valkininkai-vilniaus-g-6",
+      "name": "Viada degalinė, Valkininkai, Vilniaus g. 6",
+      "country": "LT",
+      "city": "Valkininkai",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/varenos-sav-valkininkai-vilniaus-g-6/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "baltic-petroleum-varena-ciurlionio-g-63",
+      "name": "Baltic Petroleum degalinė, Varėna, Čiurlionio g. 63",
+      "country": "LT",
+      "city": "Varėna",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "via-3l-lt-vievis",
+      "name": "VIA 3L LT, UAB Vievio padalinys",
+      "country": "LT",
+      "city": "Vievis",
+      "status": "found",
+      "contactEmail": "lt@via3l.eu",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://via3l.eu/en/via-3l-contacts/"
+      ],
+      "notes": "Via 3L group. lt@via3l.eu is the Lithuanian entity's desk (VAT LT100000998516) — correct door for a Lithuanian warehouse row; via3l@via3l.eu is the group-wide inbox."
+    },
+    {
+      "slug": "viada-vievis-kauno-g-26",
+      "name": "Viada degalinė, Vievis, Kauno g. 26",
+      "country": "LT",
+      "city": "Vievis",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/kauno-g-26-vievis/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "viada-vievis-kauno-g-55a",
+      "name": "Viada degalinė, Vievis, Kauno g. 55A",
+      "country": "LT",
+      "city": "Vievis",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/vievis-kauno-g-55a/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "viada-vilkaviskis-vytauto-g-105",
+      "name": "Viada degalinė, Vilkaviškis, Vytauto g. 105",
+      "country": "LT",
+      "city": "Vilkaviškis",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/vytauto-g-105-vilkaviskis/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "vildega-vilkaviskis",
+      "name": "Vildega, UAB",
+      "country": "LT",
+      "city": "Vilkaviškis",
+      "status": "found",
+      "contactEmail": "info@vildega.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://vildega.lt/kontaktai/"
+      ],
+      "notes": "tautvydas@vildega.lt is the director's own address. Also published on the same site: tautvydas@vildega.lt."
+    },
+    {
+      "slug": "baltic-air-logistics-terminal-vilnius",
+      "name": "BALTIC AIR LOGISTICS TERMINAL, UAB",
+      "country": "LT",
+      "city": "Vilnius",
+      "status": "found",
+      "contactEmail": "info@balt-cargo.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balt-cargo.lt"
+      ],
+      "notes": "Also published on the same site: bdk@balt-cargo.lt, cargo@balt-cargo.lt."
+    },
+    {
+      "slug": "box-storage-vilnius",
+      "name": "Box Storage",
+      "country": "LT",
+      "city": "Vilnius",
+      "status": "found",
+      "contactEmail": "laisves@boxstorage.lt",
+      "mxOk": true,
+      "emailKind": "named",
+      "confidence": "high",
+      "sources": [
+        "https://boxstorage.lt/lt/kontaktai/laisves"
+      ],
+      "notes": ""
+    },
+    {
+      "slug": "eirena-vilnius",
+      "name": "Eirena",
+      "country": "LT",
+      "city": "Vilnius",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "https://transportopaslaugos.com",
+        "https://transportopaslaugos.com/kontaktai",
+        "https://transportopaslaugos.com/apie"
+      ],
+      "notes": "Site reachable but publishes no e-mail address — contact form and/or phone only. Checked 3 page(s) including the contact/about/privacy routes."
+    },
+    {
+      "slug": "elkerija-vilnius",
+      "name": "ELKERIJA, MB",
+      "country": "LT",
+      "city": "Vilnius",
+      "status": "found",
+      "contactEmail": "info@elkerija.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://elkerija.lt/lt/privatumo-politika"
+      ],
+      "notes": ""
+    },
+    {
+      "slug": "litperlas-vilnius",
+      "name": "Litperlas, MB",
+      "country": "LT",
+      "city": "Vilnius",
+      "status": "found",
+      "contactEmail": "info@litperlas.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.litperlas.lt/susisiekti"
+      ],
+      "notes": ""
+    },
+    {
+      "slug": "liutukai-lt-vilnius",
+      "name": "LIŪTUKAI LT, UAB",
+      "country": "LT",
+      "city": "Vilnius",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "https://tvarkaubiurus.lt"
+      ],
+      "notes": "Site reachable but publishes no e-mail address — contact form and/or phone only. Checked 1 page(s) including the contact/about/privacy routes."
+    },
+    {
+      "slug": "servekt-vilnius",
+      "name": "Servekt, UAB",
+      "country": "LT",
+      "city": "Vilnius",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "http://www.servekt.eu",
+        "http://www.servekt.eu/Contact/",
+        "http://www.servekt.eu/About-Us/"
+      ],
+      "notes": "Site reachable but publishes no e-mail address — contact form and/or phone only. Checked 3 page(s) including the contact/about/privacy routes."
+    },
+    {
+      "slug": "svaros-laikas-vilnius",
+      "name": "ŠVAROS LAIKAS, UAB",
+      "country": "LT",
+      "city": "Vilnius",
+      "status": "found",
+      "contactEmail": "info@svaroslaikas.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.svaroslaikas.lt/contact/"
+      ],
+      "notes": ""
+    },
+    {
+      "slug": "transportira-vilnius",
+      "name": "Transportira",
+      "country": "LT",
+      "city": "Vilnius",
+      "status": "found",
+      "contactEmail": "info@transportira.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://transportira.lt"
+      ],
+      "notes": ""
+    },
+    {
+      "slug": "transporto-krovos-projektai-vilnius",
+      "name": "UAB \"Transporto krovos projektai\"",
+      "country": "LT",
+      "city": "Vilnius",
+      "status": "found",
+      "contactEmail": "info@tkprojektai.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://tkprojektai.lt/lt_LT/kontaktai/"
+      ],
+      "notes": ""
+    },
+    {
+      "slug": "ubara-vilnius",
+      "name": "UBARA, UAB",
+      "country": "LT",
+      "city": "Vilnius",
+      "status": "found",
+      "contactEmail": "info@ubara.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.ubara.lt/kontaktai/"
+      ],
+      "notes": "Also published on the same site: personalas@ubara.lt, regina.bunikaityte@ubara.lt, rita.mogilnickiene@ubara.lt."
+    },
+    {
+      "slug": "vilniaus-sigma-vilnius",
+      "name": "UAB Vilniaus Sigma",
+      "country": "LT",
+      "city": "Vilnius",
+      "status": "found",
+      "contactEmail": "admin@sigma.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "medium",
+      "sources": [
+        "https://www.sigma.lt"
+      ],
+      "notes": "General inbox from the homepage; the kontaktai page lists six named staff mailboxes."
+    },
+    {
+      "slug": "viada-visaginas-statybininku-g-1",
+      "name": "Viada degalinė, Visaginas, Statybininkų g. 1",
+      "country": "LT",
+      "city": "Visaginas",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/statybininku-g-1-visaginas/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "viada-azuolu-buda-marijampoles-g-53",
+      "name": "Viada degalinė, Ąžuolų Būda, Marijampolės g. 53",
+      "country": "LT",
+      "city": "Ąžuolų Būda",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/azuolu-budos-k-marijampole/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "baltic-petroleum-sakiai-sodu-g-1",
+      "name": "Baltic Petroleum degalinė, Šakiai, Sodų g. 1",
+      "country": "LT",
+      "city": "Šakiai",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "baltic-petroleum-salcininkai-vilniaus-g-5a",
+      "name": "Baltic Petroleum degalinė, Šalčininkai, Vilniaus g. 5A",
+      "country": "LT",
+      "city": "Šalčininkai",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "corpus-a-siauliai",
+      "name": "Corpus A, Šiaulių filialas, UAB",
+      "country": "LT",
+      "city": "Šiauliai",
+      "status": "found",
+      "contactEmail": "info@corpusa.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://corpusa.lt"
+      ],
+      "notes": "Corpus A cleaning chain — one inbox across its city branches. Also published on the same site: i.sevelioniene@corpusa.lt, info@corpuspro.lt."
+    },
+    {
+      "slug": "saurida-degaline-pramones-siauliai",
+      "name": "Saurida degalinė Šiauliai, Pramonės g.",
+      "country": "LT",
+      "city": "Šiauliai",
+      "status": "found",
+      "contactEmail": "info@saurida.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.saurida.lt"
+      ],
+      "notes": "Saurida forecourt chain — one inbox for both Siauliai stations. Also published on the same site: balionai@saurida.lt, dujos@saurida.lt, justina.k@saurida.lt, komercija@saurida.lt."
+    },
+    {
+      "slug": "saurida-degaline-vilniaus-siauliai",
+      "name": "Saurida degalinė Šiauliai, Vilniaus g.",
+      "country": "LT",
+      "city": "Šiauliai",
+      "status": "found",
+      "contactEmail": "info@saurida.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.saurida.lt"
+      ],
+      "notes": "Saurida forecourt chain — one inbox for both Siauliai stations. Also published on the same site: balionai@saurida.lt, dujos@saurida.lt, justina.k@saurida.lt, komercija@saurida.lt."
+    },
+    {
+      "slug": "baltic-petroleum-silale-rytinio-kelio-g-2",
+      "name": "Baltic Petroleum degalinė, Šilalė, Rytinio Kelio g. 2",
+      "country": "LT",
+      "city": "Šilalė",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "viada-silute-tilzes-g-59",
+      "name": "Viada degalinė, Šilutė, Tilžės g. 59",
+      "country": "LT",
+      "city": "Šilutė",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/tilzes-g-59-silute/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "baltic-petroleum-sirvintos-musninku-g-21",
+      "name": "Baltic Petroleum degalinė, Širvintos, Musninkų g. 21",
+      "country": "LT",
+      "city": "Širvintos",
+      "status": "found",
+      "contactEmail": "info@balticpetroleum.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://balticpetroleum.lt/priekabu-nuoma"
+      ],
+      "notes": "Baltic Petroleum forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: privatumas@balticpetroleum.lt."
+    },
+    {
+      "slug": "viada-sirvintos-plento-g-4",
+      "name": "Viada degalinė, Širvintos, Plento g. 4",
+      "country": "LT",
+      "city": "Širvintos",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/plento-g-4-sirvintos/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "viada-svencionys-vilniaus-g-50a",
+      "name": "Viada degalinė, Švenčionys, Vilniaus g. 50A",
+      "country": "LT",
+      "city": "Švenčionys",
+      "status": "found",
+      "contactEmail": "info@viada.lt",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.viada.lt/degaline/vilniaus-g-50a-svencionys/"
+      ],
+      "notes": "Viada forecourt chain — one inbox for all filling stations that rent trailers. Also published on the same site: pasitikejimolinija@viada.lt, privatumas@viada.lt."
+    },
+    {
+      "slug": "virsi-aluksne",
+      "name": "Virši-A DUS Alūksne — piekabju noma",
+      "country": "LV",
+      "city": "Alūksne",
+      "status": "found",
+      "contactEmail": "info@virsi.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.virsi.lv/lv/biznesam/veikals/auto/piekabju-noma"
+      ],
+      "notes": "Virsi forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: atbalsts@virsi.lv, birojs@virsi.lv, datuaizsardziba@virsi.lv, gramatvediba@virsi.lv."
+    },
+    {
+      "slug": "kabi-rent-babite",
+      "name": "SIA KABI RENT, Babītes nomas punkts",
+      "country": "LV",
+      "city": "Babīte",
+      "status": "found",
+      "contactEmail": "info@kabi.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.kabi.lv/kontakti/"
+      ],
+      "notes": "Kabi trailer-rental chain — a single inbox serves every branch."
+    },
+    {
+      "slug": "virsi-balvi",
+      "name": "Virši-A DUS Balvi — piekabju noma",
+      "country": "LV",
+      "city": "Balvi",
+      "status": "found",
+      "contactEmail": "info@virsi.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.virsi.lv/lv/biznesam/veikals/auto/piekabju-noma"
+      ],
+      "notes": "Virsi forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: atbalsts@virsi.lv, birojs@virsi.lv, datuaizsardziba@virsi.lv, gramatvediba@virsi.lv."
+    },
+    {
+      "slug": "kabi-rent-cesis",
+      "name": "SIA KABI RENT, Cēsu nomas punkts",
+      "country": "LV",
+      "city": "Cēsis",
+      "status": "found",
+      "contactEmail": "info@kabi.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.kabi.lv/kontakti/"
+      ],
+      "notes": "Kabi trailer-rental chain — a single inbox serves every branch."
+    },
+    {
+      "slug": "depo-daugavpils",
+      "name": "DEPO Daugavpils — piekabju noma",
+      "country": "LV",
+      "city": "Daugavpils",
+      "status": "found",
+      "contactEmail": "klientu.atbalsts@depo.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "medium",
+      "sources": [
+        "https://depo.lv/"
+      ],
+      "notes": "DEPO DIY chain customer-support inbox — same mailbox as depo-jekabpils."
+    },
+    {
+      "slug": "nova-clean-daugavpils",
+      "name": "SIA Nova Clean",
+      "country": "LV",
+      "city": "Daugavpils",
+      "status": "found",
+      "contactEmail": "novacleanlv@gmail.com",
+      "mxOk": true,
+      "emailKind": "named",
+      "confidence": "high",
+      "sources": [
+        "https://ncserviss.lv/lv/kontakti"
+      ],
+      "notes": ""
+    },
+    {
+      "slug": "kabi-rent-dobele",
+      "name": "SIA KABI RENT, Dobeles nomas punkts",
+      "country": "LV",
+      "city": "Dobele",
+      "status": "found",
+      "contactEmail": "info@kabi.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.kabi.lv/kontakti/"
+      ],
+      "notes": "Kabi trailer-rental chain — a single inbox serves every branch."
+    },
+    {
+      "slug": "presco-freight-dreilini",
+      "name": "SIA Presco Freight",
+      "country": "LV",
+      "city": "Dreiliņi",
+      "status": "found",
+      "contactEmail": "rv@presco.lv",
+      "mxOk": true,
+      "emailKind": "named",
+      "confidence": "high",
+      "sources": [
+        "https://presco.lv/contact"
+      ],
+      "notes": "Presco Freight publishes no general inbox — only three named ones. rv@ is Raivis Vaivods, CEO; os@presco.lv is the CFO and accountant@presco.lv is bookkeeping."
+    },
+    {
+      "slug": "virsi-gulbene",
+      "name": "Virši-A DUS Gulbene — piekabju noma",
+      "country": "LV",
+      "city": "Gulbene",
+      "status": "found",
+      "contactEmail": "info@virsi.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.virsi.lv/lv/biznesam/veikals/auto/piekabju-noma"
+      ],
+      "notes": "Virsi forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: atbalsts@virsi.lv, birojs@virsi.lv, datuaizsardziba@virsi.lv, gramatvediba@virsi.lv."
+    },
+    {
+      "slug": "rentmotors-jelgava",
+      "name": "Rent Motors — auto un kravas furgonu noma Jelgavā",
+      "country": "LV",
+      "city": "Jelgava",
+      "status": "found",
+      "contactEmail": "info@rentmotors.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://rentmotors.lv/"
+      ],
+      "notes": ""
+    },
+    {
+      "slug": "vrautonoma-jelgava",
+      "name": "SIA VRautonoma.lv",
+      "country": "LV",
+      "city": "Jelgava",
+      "status": "found",
+      "contactEmail": "info@vrautonoma.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://vrautonoma.lv/kontakti/"
+      ],
+      "notes": ""
+    },
+    {
+      "slug": "depo-jekabpils",
+      "name": "DEPO Jēkabpils — piekabju noma",
+      "country": "LV",
+      "city": "Jēkabpils",
+      "status": "found",
+      "contactEmail": "klientu.atbalsts@depo.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "medium",
+      "sources": [
+        "https://depo.lv/"
+      ],
+      "notes": "DEPO DIY chain customer-support inbox (one for the whole chain, covers depo-jekabpils and depo-daugavpils). Trailer rental is a side service of the store."
+    },
+    {
+      "slug": "virsi-jekabpils",
+      "name": "Virši-A DUS Jēkabpils — piekabju noma",
+      "country": "LV",
+      "city": "Jēkabpils",
+      "status": "found",
+      "contactEmail": "info@virsi.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.virsi.lv/lv/biznesam/veikals/auto/piekabju-noma"
+      ],
+      "notes": "Virsi forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: atbalsts@virsi.lv, birojs@virsi.lv, datuaizsardziba@virsi.lv, gramatvediba@virsi.lv."
+    },
+    {
+      "slug": "virsi-krustpils-jekabpils",
+      "name": "Virši-A DUS Krustpils (Jēkabpils) — piekabju noma",
+      "country": "LV",
+      "city": "Jēkabpils",
+      "status": "found",
+      "contactEmail": "info@virsi.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.virsi.lv/lv/biznesam/veikals/auto/piekabju-noma"
+      ],
+      "notes": "Virsi forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: atbalsts@virsi.lv, birojs@virsi.lv, datuaizsardziba@virsi.lv, gramatvediba@virsi.lv."
+    },
+    {
+      "slug": "kabi-rent-kuldiga",
+      "name": "SIA KABI RENT, Kuldīgas nomas punkts",
+      "country": "LV",
+      "city": "Kuldīga",
+      "status": "found",
+      "contactEmail": "info@kabi.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.kabi.lv/kontakti/"
+      ],
+      "notes": "Kabi trailer-rental chain — a single inbox serves every branch."
+    },
+    {
+      "slug": "amela1-liepaja",
+      "name": "AMELA1",
+      "country": "LV",
+      "city": "Liepāja",
+      "status": "found",
+      "contactEmail": "rgrey@inbox.lv.lv",
+      "mxOk": false,
+      "emailKind": "named",
+      "confidence": "low",
+      "sources": [
+        "https://amela.lv/musu-kontakti-un-rekviziti/"
+      ],
+      "notes": "PUBLISHED AS-IS AND BROKEN: the site prints 'rgrey@inbox.lv.lv'. That domain has no MX, so mail will bounce. The intended mailbox is almost certainly on inbox.lv, but this has NOT been confirmed and must not be corrected blind — phone the company (+371 26526210) first."
+    },
+    {
+      "slug": "kabi-liepaja",
+      "name": "KABI piekabju noma — Liepāja",
+      "country": "LV",
+      "city": "Liepāja",
+      "status": "found",
+      "contactEmail": "info@kabi.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.kabi.lv/kontakti/"
+      ],
+      "notes": "Kabi trailer-rental chain — a single inbox serves every branch."
+    },
+    {
+      "slug": "uzkopsana-liepaja",
+      "name": "Uzkopšana Liepāja",
+      "country": "LV",
+      "city": "Liepāja",
+      "status": "found",
+      "contactEmail": "info@uzkopsanaliepaja.lv",
+      "mxOk": false,
+      "emailKind": "general",
+      "confidence": "low",
+      "sources": [
+        "https://www.uzkopsanaliepaja.lv/"
+      ],
+      "notes": "Published on their own site but the domain has NO MX on any of three resolvers (it is a Google Sites host, A-records 216.239.x.x only). Mail cannot be delivered. Unusable as-is."
+    },
+    {
+      "slug": "kabi-rent-madona",
+      "name": "SIA KABI RENT, Madonas nomas punkts",
+      "country": "LV",
+      "city": "Madona",
+      "status": "found",
+      "contactEmail": "info@kabi.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.kabi.lv/kontakti/"
+      ],
+      "notes": "Kabi trailer-rental chain — a single inbox serves every branch."
+    },
+    {
+      "slug": "virsi-madona",
+      "name": "Virši-A DUS Madona — piekabju noma",
+      "country": "LV",
+      "city": "Madona",
+      "status": "found",
+      "contactEmail": "info@virsi.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.virsi.lv/lv/biznesam/veikals/auto/piekabju-noma"
+      ],
+      "notes": "Virsi forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: atbalsts@virsi.lv, birojs@virsi.lv, datuaizsardziba@virsi.lv, gramatvediba@virsi.lv."
+    },
+    {
+      "slug": "deppo-ogre",
+      "name": "SIA DEPPO",
+      "country": "LV",
+      "city": "Ogre",
+      "status": "found",
+      "contactEmail": "info@deppo.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://deppo.lv/"
+      ],
+      "notes": "Deppo van rental, Ogre — one inbox, two rows."
+    },
+    {
+      "slug": "deppo-ogre-2",
+      "name": "SIA DEPPO — busu un vieglo auto noma",
+      "country": "LV",
+      "city": "Ogre",
+      "status": "found",
+      "contactEmail": "info@deppo.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://deppo.lv/"
+      ],
+      "notes": "Deppo van rental, Ogre — one inbox, two rows."
+    },
+    {
+      "slug": "kabi-rent-ragana",
+      "name": "SIA KABI RENT, Raganas nomas punkts",
+      "country": "LV",
+      "city": "Ragana",
+      "status": "found",
+      "contactEmail": "info@kabi.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.kabi.lv/kontakti/"
+      ],
+      "notes": "Kabi trailer-rental chain — a single inbox serves every branch."
+    },
+    {
+      "slug": "virsi-rezekne",
+      "name": "Virši-A DUS Rēzekne — piekabju noma",
+      "country": "LV",
+      "city": "Rēzekne",
+      "status": "found",
+      "contactEmail": "info@virsi.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.virsi.lv/lv/biznesam/veikals/auto/piekabju-noma"
+      ],
+      "notes": "Virsi forecourt chain — one inbox for all trailer-renting stations. Also published on the same site: atbalsts@virsi.lv, birojs@virsi.lv, datuaizsardziba@virsi.lv, gramatvediba@virsi.lv."
+    },
+    {
+      "slug": "ask-storage-riga",
+      "name": "Ask Storage",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "found",
+      "contactEmail": "info@askstorage.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://askstorage.lv/privacy-policy/"
+      ],
+      "notes": ""
+    },
+    {
+      "slug": "boxstorage-antenas",
+      "name": "BOX STORAGE — Antenas",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "found",
+      "contactEmail": "antenas@boxstorage.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://boxstorage.lv/kontakti/antenas-4"
+      ],
+      "notes": "Box Storage chain, Antenas iela 4 branch inbox."
+    },
+    {
+      "slug": "boxstorage-bergi",
+      "name": "BOX STORAGE — Berģi",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "found",
+      "contactEmail": "siguldas@boxstorage.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://boxstorage.lv/kontakti/bergi"
+      ],
+      "notes": "Box Storage chain, Bergi branch (address is on Siguldas soseja, hence the mailbox name)."
+    },
+    {
+      "slug": "boxstorage-daugavgrivas",
+      "name": "BOX STORAGE — Daugavgrīvas",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "found",
+      "contactEmail": "daugavas@boxstorage.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://boxstorage.lv/kontakti/daugavgrivas"
+      ],
+      "notes": "Box Storage chain: each Riga branch publishes its own inbox. Daugavgrivas iela branch."
+    },
+    {
+      "slug": "boxstorage-gunara-astras",
+      "name": "BOX STORAGE — Gunāra Astras",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "found",
+      "contactEmail": "astras@boxstorage.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://boxstorage.lv/kontakti/gunara-astras"
+      ],
+      "notes": "Box Storage chain, Gunara Astras iela branch inbox."
+    },
+    {
+      "slug": "bus4rent-riga",
+      "name": "Bus4rent — kravas busu noma",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "found",
+      "contactEmail": "info@bus4rent.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.kravasbusunoma.lv/"
+      ],
+      "notes": ""
+    },
+    {
+      "slug": "cleaning-riga-riga",
+      "name": "SIA \"Cleaning Riga\"",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "found",
+      "contactEmail": "info@cleaningriga.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.cleaningriga.lv/"
+      ],
+      "notes": ""
+    },
+    {
+      "slug": "dzeni-serviss-riga",
+      "name": "SIA DZEŅI Serviss",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "https://dzeniserviss.lv/"
+      ],
+      "notes": "Site reachable but publishes no e-mail address — contact form and/or phone only. Checked 1 page(s) including the contact/about/privacy routes."
+    },
+    {
+      "slug": "easy-movers-parcelies-riga",
+      "name": "SIA Easy Movers (parcelies.lv)",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "https://www.parcelies.lv/par-mums/kontakti/"
+      ],
+      "notes": "Their kontakti page offers only 'Piezvaniet man / Atrakstiet man uz epastu / Atrakstiet man iszina' callback widgets and a booking form — no address is rendered anywhere on the site."
+    },
+    {
+      "slug": "easystorage-prusu-riga",
+      "name": "EASYSTORAGE — Mežciems",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "found",
+      "contactEmail": "siaeasystorage@gmail.com",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.easy-storage.lv/kontakti"
+      ],
+      "notes": "Read on their kontakti page. The privacy page also links info@dvi.gov.lv — that is the Latvian data-protection regulator, not the company."
+    },
+    {
+      "slug": "gerkors-riga",
+      "name": "Gerkors, IK",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "found",
+      "contactEmail": "koris@livas.lv",
+      "mxOk": true,
+      "emailKind": "named",
+      "confidence": "medium",
+      "sources": [
+        "https://www.gerkors.lv/contacts.html"
+      ],
+      "notes": "IK GERKORS (reg. 50002091561). Their own contacts page gives exactly one mailto and invites cargo enquiries by e-mail, but the mailbox is on an unrelated domain (livas.lv) — likely a legacy/personal account. Verify on first contact."
+    },
+    {
+      "slug": "house-clean-express-riga",
+      "name": "House Clean Express SIA",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "https://housecleanexpress.lv/"
+      ],
+      "notes": "Site reachable but publishes no e-mail address — contact form and/or phone only. Checked 1 page(s) including the contact/about/privacy routes."
+    },
+    {
+      "slug": "interbus-riga",
+      "name": "INTERBUS SIA",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "found",
+      "contactEmail": "info@interbus.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.interbus.lv/lv/kontakti"
+      ],
+      "notes": "i.k.balance@inbox.lv on the same page is their bookkeeping address — do not use. Also published on the same site: i.k.balance@inbox.lv."
+    },
+    {
+      "slug": "kabi-riga-dignajas",
+      "name": "KABI piekabju noma — Dignājas iela, Rīga",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "found",
+      "contactEmail": "info@kabi.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.kabi.lv/kontakti/"
+      ],
+      "notes": "Kabi trailer-rental chain — a single inbox serves every branch."
+    },
+    {
+      "slug": "kabi-riga-finiera",
+      "name": "KABI piekabju noma — Finiera iela, Rīga",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "found",
+      "contactEmail": "info@kabi.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.kabi.lv/kontakti/"
+      ],
+      "notes": "Kabi trailer-rental chain — a single inbox serves every branch."
+    },
+    {
+      "slug": "kabi-riga-kleistu",
+      "name": "KABI piekabju noma — Kleistu iela, Rīga",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "found",
+      "contactEmail": "info@kabi.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.kabi.lv/kontakti/"
+      ],
+      "notes": "Kabi trailer-rental chain — a single inbox serves every branch."
+    },
+    {
+      "slug": "mantudepo-agenskalns",
+      "name": "Mantu Depo — Āgenskalns",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "https://mantudepo.lv/",
+        "https://mantudepo.lv/privacy"
+      ],
+      "notes": "Site reachable but publishes no e-mail address — contact form and/or phone only. Checked 2 page(s) including the contact/about/privacy routes."
+    },
+    {
+      "slug": "mantudepo-centrs-bukultu",
+      "name": "Mantu Depo — Centrs",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "https://mantudepo.lv/",
+        "https://mantudepo.lv/privacy"
+      ],
+      "notes": "Site reachable but publishes no e-mail address — contact form and/or phone only. Checked 2 page(s) including the contact/about/privacy routes."
+    },
+    {
+      "slug": "mantudepo-ilguciems",
+      "name": "Mantu Depo — Iļģuciems",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "https://mantudepo.lv/",
+        "https://mantudepo.lv/privacy"
+      ],
+      "notes": "Site reachable but publishes no e-mail address — contact form and/or phone only. Checked 2 page(s) including the contact/about/privacy routes."
+    },
+    {
+      "slug": "mantudepo-imanta",
+      "name": "Mantu Depo — Imanta",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "https://mantudepo.lv/",
+        "https://mantudepo.lv/privacy"
+      ],
+      "notes": "Site reachable but publishes no e-mail address — contact form and/or phone only. Checked 2 page(s) including the contact/about/privacy routes."
+    },
+    {
+      "slug": "mantudepo-plavnieki",
+      "name": "Mantu Depo — Pļavnieki",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "https://mantudepo.lv/",
+        "https://mantudepo.lv/privacy"
+      ],
+      "notes": "Site reachable but publishes no e-mail address — contact form and/or phone only. Checked 2 page(s) including the contact/about/privacy routes."
+    },
+    {
+      "slug": "mantudepo-purvciems",
+      "name": "Mantu Depo — Purvciems",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "https://mantudepo.lv/",
+        "https://mantudepo.lv/privacy"
+      ],
+      "notes": "Site reachable but publishes no e-mail address — contact form and/or phone only. Checked 2 page(s) including the contact/about/privacy routes."
+    },
+    {
+      "slug": "mantudepo-teika-unijas",
+      "name": "Mantu Depo — Teika",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "https://mantudepo.lv/",
+        "https://mantudepo.lv/privacy"
+      ],
+      "notes": "Site reachable but publishes no e-mail address — contact form and/or phone only. Checked 2 page(s) including the contact/about/privacy routes."
+    },
+    {
+      "slug": "paperseal-riga",
+      "name": "PaperSeal",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "found",
+      "contactEmail": "info@paperseal.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.paperseal.lv/"
+      ],
+      "notes": "riga@paperseal.lv is also published for the Riga site. Also published on the same site: riga@paperseal.lv."
+    },
+    {
+      "slug": "parvadajumi24-riga",
+      "name": "Pārvadājumi24.lv",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "found",
+      "contactEmail": "info@parvadajumi24.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://parvadajumi24.lv/"
+      ],
+      "notes": "Privacy page also links the regulator info@dvi.gov.lv — not the company."
+    },
+    {
+      "slug": "promove-riga",
+      "name": "ProMove (promove.lv)",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "https://promove.lv/"
+      ],
+      "notes": "Site reachable but publishes no e-mail address — contact form and/or phone only. Checked 1 page(s) including the contact/about/privacy routes."
+    },
+    {
+      "slug": "rix-freight-riga",
+      "name": "SIA RIX FREIGHT",
+      "country": "LV",
+      "city": "Rīga",
+      "status": "found",
+      "contactEmail": "info@rixfreight-group.com",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://rixfreight-group.com/"
+      ],
+      "notes": "Both info@rixfreight-group.com and info@rixfreight.lv are published on the homepage."
+    },
+    {
+      "slug": "eltoro-salaspils",
+      "name": "SIA Eltoro",
+      "country": "LV",
+      "city": "Salaspils",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "https://www.eltoro.lv/"
+      ],
+      "notes": "Site reachable but publishes no e-mail address — contact form and/or phone only. Checked 1 page(s) including the contact/about/privacy routes."
+    },
+    {
+      "slug": "kabi-rent-salaspils",
+      "name": "SIA KABI RENT, Salaspils nomas punkts",
+      "country": "LV",
+      "city": "Salaspils",
+      "status": "found",
+      "contactEmail": "info@kabi.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.kabi.lv/kontakti/"
+      ],
+      "notes": "Kabi trailer-rental chain — a single inbox serves every branch."
+    },
+    {
+      "slug": "wellman-logistics-salaspils",
+      "name": "SIA Wellman Logistics",
+      "country": "LV",
+      "city": "Salaspils",
+      "status": "found",
+      "contactEmail": "sales@wellman.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://wellman.lv/kontakti/"
+      ],
+      "notes": "Labelled 'Pardosana un klientu serviss' (sales and customer service) — the lead-handling desk. General company inbox wellman@wellman.lv is on the same page."
+    },
+    {
+      "slug": "kabi-rent-sigulda",
+      "name": "SIA KABI RENT, Siguldas nomas punkts",
+      "country": "LV",
+      "city": "Sigulda",
+      "status": "found",
+      "contactEmail": "info@kabi.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.kabi.lv/kontakti/"
+      ],
+      "notes": "Kabi trailer-rental chain — a single inbox serves every branch."
+    },
+    {
+      "slug": "talsu-autocentrs-talsi",
+      "name": "Talsu Autocentrs",
+      "country": "LV",
+      "city": "Talsi",
+      "status": "found",
+      "contactEmail": "karlina@autocentrs.lv",
+      "mxOk": true,
+      "emailKind": "named",
+      "confidence": "medium",
+      "sources": [
+        "https://www.talsuautocentrs.lv/privatuma-politika/"
+      ],
+      "notes": "Only address Talsu Autocentrs publishes (in its privacy policy, for data questions). Note the site's JSON-LD also exposes admin@autocentrs.redar.lv — that is a WordPress author artifact from their web agency, has no MX, and must NOT be used."
+    },
+    {
+      "slug": "fs-noma-tukums",
+      "name": "SIA FS Noma",
+      "country": "LV",
+      "city": "Tukums",
+      "status": "found",
+      "contactEmail": "info@fsnoma.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "http://fsnoma.lv/lv/contacts"
+      ],
+      "notes": ""
+    },
+    {
+      "slug": "rs-noma-tukums",
+      "name": "RS Noma — piekabju noma Tukumā",
+      "country": "LV",
+      "city": "Tukums",
+      "status": "found",
+      "contactEmail": "siarsnoma@gmail.com",
+      "mxOk": true,
+      "emailKind": "named",
+      "confidence": "high",
+      "sources": [
+        "https://www.rs-noma.lv/kontakti/"
+      ],
+      "notes": ""
+    },
+    {
+      "slug": "autonoma-valmiera",
+      "name": "Autonoma Valmiera (Nils Lielmanis)",
+      "country": "LV",
+      "city": "Valmiera",
+      "status": "found",
+      "contactEmail": "autonomavalmiera@gmail.com",
+      "mxOk": true,
+      "emailKind": "named",
+      "confidence": "high",
+      "sources": [
+        "https://www.autonomavalmiera.lv/kontakti/"
+      ],
+      "notes": ""
+    },
+    {
+      "slug": "eldor-valmiera",
+      "name": "SIA Eldor",
+      "country": "LV",
+      "city": "Valmiera",
+      "status": "found",
+      "contactEmail": "eldorpiekabes@gmail.com",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://eldor.lv/kontakti/"
+      ],
+      "notes": "Address shown next to the Valmiera trailer-rental phone and street address. Site's JSON-LD also carries info@eldor.lv for the parent business."
+    },
+    {
+      "slug": "all-overseas-ventspils",
+      "name": "All OverSeas SIA",
+      "country": "LV",
+      "city": "Ventspils",
+      "status": "no_email_found",
+      "contactEmail": null,
+      "mxOk": null,
+      "emailKind": null,
+      "confidence": "high",
+      "sources": [
+        "http://www.alloverseas.net",
+        "https://www.firmas.lv/lv/uznemumi/all-overseas/41203032743"
+      ],
+      "notes": "Site publishes no address. Registry check (SIA ALL OVERSEAS, reg. 41203032743, Ventspils) confirms the company is ACTIVE — status 'Aktivs', no insolvency, no liquidation, no reorganisation — and lists alloverseas.net as its website. Live business, phone-only reach. Worth a call: Ventspils has thin mover supply."
+    },
+    {
+      "slug": "kabi-ventspils",
+      "name": "KABI piekabju noma — Ventspils",
+      "country": "LV",
+      "city": "Ventspils",
+      "status": "found",
+      "contactEmail": "info@kabi.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.kabi.lv/kontakti/"
+      ],
+      "notes": "Kabi trailer-rental chain — a single inbox serves every branch."
+    },
+    {
+      "slug": "kabi-rent-adazi",
+      "name": "SIA KABI RENT, Ādažu nomas punkts",
+      "country": "LV",
+      "city": "Ādaži",
+      "status": "found",
+      "contactEmail": "info@kabi.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.kabi.lv/kontakti/"
+      ],
+      "notes": "Kabi trailer-rental chain — a single inbox serves every branch."
+    },
+    {
+      "slug": "kabi-rent-kekava",
+      "name": "SIA KABI RENT, Ķekavas nomas punkts",
+      "country": "LV",
+      "city": "Ķekava",
+      "status": "found",
+      "contactEmail": "info@kabi.lv",
+      "mxOk": true,
+      "emailKind": "general",
+      "confidence": "high",
+      "sources": [
+        "https://www.kabi.lv/kontakti/"
+      ],
+      "notes": "Kabi trailer-rental chain — a single inbox serves every branch."
+    }
+  ]
+}
