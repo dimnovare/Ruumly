@@ -1,4 +1,5 @@
 using Resend;
+using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Services.Implementations;
@@ -8,8 +9,10 @@ public class ResendEmailSender(
     IConfiguration config,
     ILogger<ResendEmailSender> logger) : IEmailSender
 {
-    private string From =>
-        $"{config["Email:FromName"] ?? "Ruumly"} <{config["Email:FromAddress"] ?? "noreply@ruumly.eu"}>";
+    // Helpers/EmailFrom is the single source of truth: the supplier-intro dry
+    // run previews the From line from there, and a preview that disagrees with
+    // the real sender is worse than no preview.
+    private string From => EmailFrom.Render(config);
 
     public Task SendAsync(string to, string subject, string textBody, string? htmlBody = null)
         => SendAsync(to, subject, textBody, htmlBody, replyTo: null);

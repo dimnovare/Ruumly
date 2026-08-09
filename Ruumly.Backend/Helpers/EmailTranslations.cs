@@ -163,6 +163,39 @@ public static class EmailTranslations
         // Label for the optional support phone line (PlatformSettings opsPhone).
         // The whole line is omitted when the setting is unset.
         string OutreachPhoneLabel,
+        // ── One-off supplier INTRODUCTION campaign (supplier_intro) ───────────
+        // Sent ONCE to every directory provider we added from public research,
+        // BEFORE an auto-fanout request ever lands in their inbox: a cold
+        // availability request from a name they have never seen reads as spam.
+        // Must stay under ~200 words — a small operator reads this on a phone.
+        string IntroSubject,
+        string IntroGreeting,
+        // One honest line: what Ruumly does, and explicitly that it is NOT a
+        // paid directory. This is the sentence that defuses the spam reaction.
+        string IntroWhoWeAre,
+        // "{company} is already listed — added from public information, free,
+        // no account, no obligation."
+        string IntroListedTpl,
+        // Sets the expectation the whole campaign exists to set: request emails
+        // may arrive, answering is free/non-binding/no account needed.
+        string IntroWhatToExpect,
+        // "Call or text {phone}, or just reply." Reply-To is the ops inbox, so
+        // a plain reply already reaches a human.
+        string IntroQuestionsTpl,
+        // Claim path. The real flow is the public partner page
+        // (/{lang}/partner/{slug}), which carries the "claim this profile"
+        // CTA — SupplierIntroComposer links straight to it.
+        string IntroClaimIntro,
+        string IntroClaimCta,
+        // Fallback for a supplier with no published partner page: no link
+        // exists, so claiming is a plain email to {email}.
+        string IntroClaimByEmailTpl,
+        // Opt-out. Legally required for B2B marketing mail in the EU
+        // (ePrivacy) and simply decent: one reply with {keyword}, or one click
+        // on the mailto link in the HTML body. Never a form.
+        string IntroOptOutTpl,
+        string IntroOptOutLinkLabel,
+        string IntroSignature,
         // Service-category labels missing from the legacy EmailType* trio.
         // CategoryPacking / CategoryInsurance are STILL REFERENCED and must not be
         // deleted: we stopped selling those two as consumer services in 2026-08, but
@@ -211,6 +244,23 @@ public static class EmailTranslations
         /// when the lead actually carries a near-term need date.</summary>
         public string OutreachUrgent(string date) =>
             OutreachUrgentTpl.Replace("{date}", date);
+
+        // ── Supplier introduction campaign ────────────────────────────────────
+
+        public string IntroListed(string company) =>
+            IntroListedTpl.Replace("{company}", company);
+
+        public string IntroQuestions(string phone) =>
+            IntroQuestionsTpl.Replace("{phone}", phone);
+
+        public string IntroClaimByEmail(string email) =>
+            IntroClaimByEmailTpl.Replace("{email}", email);
+
+        /// <summary>"Reply with REMOVE and we'll take you off." The keyword is
+        /// deliberately the same token in every language so one inbox filter
+        /// catches every opt-out.</summary>
+        public string IntroOptOut(string keyword) =>
+            IntroOptOutTpl.Replace("{keyword}", keyword);
     }
 
     private static readonly EmailStrings Et = new(
@@ -339,6 +389,18 @@ public static class EmailTranslations
         OutreachReplyAlternative:      "Või vastake lihtsalt sellele e-kirjale koos hinnaga — kiri jõuab otse meie meeskonnani.",
         OutreachSignature:             "Ruumly meeskond\ninfo@ruumly.eu",
         OutreachPhoneLabel:            "Tel",
+        IntroSubject:                  "Ruumly — kes me oleme, enne kui teile saabub kliendipäring",
+        IntroGreeting:                 "Tere,",
+        IntroWhoWeAre:                 "Ruumly kogub klientidelt kolimispäringuid ja edastab need kohalikele teenusepakkujatele. See ei ole tasuline kataloog.",
+        IntroListedTpl:                "{company} on juba meie nimekirjas. Lisasime teid avalikult kättesaadava info põhjal — tasuta, ilma kontota ja ilma igasuguse kohustuseta.",
+        IntroWhatToExpect:             "Seega võite meilt saada kirja päris kliendi päringuga: mida, kus ja millal. Vastamine on tasuta ja mittesiduv ning kontot pole vaja — saadate hinna või jätate vastamata.",
+        IntroQuestionsTpl:             "Küsimused? Helistage või saatke SMS numbrile {phone} või vastake lihtsalt sellele kirjale.",
+        IntroClaimIntro:               "Andmete parandamiseks või hindade lisamiseks avage oma profiil:",
+        IntroClaimCta:                 "Vaadake oma profiili",
+        IntroClaimByEmailTpl:          "Andmete parandamiseks või hindade lisamiseks kirjutage aadressile {email} ja me uuendame need.",
+        IntroOptOutTpl:                "Ei soovi nimekirjas olla? Vastake sõnaga {keyword} ja eemaldame teid — ilma lisaküsimusteta.",
+        IntroOptOutLinkLabel:          "Eemaldage minu profiil",
+        IntroSignature:                "Ruumly meeskond\ninfo@ruumly.eu",
         CategoryCleaning:              "Koristus",
         CategoryPacking:               "Pakkimine",
         CategoryVanRental:             "Kaubiku rent",
@@ -472,6 +534,18 @@ public static class EmailTranslations
         OutreachReplyAlternative:      "Or simply reply to this email with your price — it reaches our team directly.",
         OutreachSignature:             "The Ruumly team\ninfo@ruumly.eu",
         OutreachPhoneLabel:            "Phone",
+        IntroSubject:                  "Ruumly — who we are, before a customer request reaches you",
+        IntroGreeting:                 "Hello,",
+        IntroWhoWeAre:                 "Ruumly collects moving requests from customers and passes them on to local providers. It is not a paid directory.",
+        IntroListedTpl:                "{company} is already on our list. We added you from publicly available information — free of charge, with no account and no obligation.",
+        IntroWhatToExpect:             "So you may get an email from us with a real customer request: what, where and when. Answering is free and non-binding, and no account is needed — you send a price, or you ignore it.",
+        IntroQuestionsTpl:             "Questions? Call or text {phone}, or simply reply to this email.",
+        IntroClaimIntro:               "To correct your details or add prices, open your profile:",
+        IntroClaimCta:                 "See your profile",
+        IntroClaimByEmailTpl:          "To correct your details or add prices, write to {email} and we'll update them.",
+        IntroOptOutTpl:                "Don't want to be listed? Reply with {keyword} and we'll remove you — no questions asked.",
+        IntroOptOutLinkLabel:          "Remove my profile",
+        IntroSignature:                "The Ruumly team\ninfo@ruumly.eu",
         CategoryCleaning:              "Cleaning",
         CategoryPacking:               "Packing",
         CategoryVanRental:             "Van rental",
@@ -604,6 +678,18 @@ public static class EmailTranslations
         OutreachReplyAlternative:      "Или просто ответьте на это письмо, указав свою цену — оно придёт напрямую нашей команде.",
         OutreachSignature:             "Команда Ruumly\ninfo@ruumly.eu",
         OutreachPhoneLabel:            "Тел.",
+        IntroSubject:                  "Ruumly — кто мы, прежде чем к вам придёт запрос клиента",
+        IntroGreeting:                 "Здравствуйте,",
+        IntroWhoWeAre:                 "Ruumly собирает запросы клиентов на переезд и передаёт их местным исполнителям. Это не платный каталог.",
+        IntroListedTpl:                "{company} уже есть в нашем списке. Мы добавили вас на основе общедоступной информации — бесплатно, без аккаунта и без каких-либо обязательств.",
+        IntroWhatToExpect:             "Поэтому вы можете получить от нас письмо с запросом реального клиента: что, где и когда. Ответ бесплатный и ни к чему не обязывает, аккаунт не нужен — вы отправляете цену или просто не отвечаете.",
+        IntroQuestionsTpl:             "Вопросы? Позвоните или напишите SMS на номер {phone} либо просто ответьте на это письмо.",
+        IntroClaimIntro:               "Чтобы исправить данные или добавить цены, откройте свой профиль:",
+        IntroClaimCta:                 "Посмотреть свой профиль",
+        IntroClaimByEmailTpl:          "Чтобы исправить данные или добавить цены, напишите на {email}, и мы их обновим.",
+        IntroOptOutTpl:                "Не хотите быть в списке? Ответьте словом {keyword}, и мы вас удалим — без лишних вопросов.",
+        IntroOptOutLinkLabel:          "Удалить мой профиль",
+        IntroSignature:                "Команда Ruumly\ninfo@ruumly.eu",
         CategoryCleaning:              "Уборка",
         CategoryPacking:               "Упаковка",
         CategoryVanRental:             "Аренда фургона",
@@ -737,6 +823,18 @@ public static class EmailTranslations
         OutreachReplyAlternative:      "Vai vienkārši atbildiet uz šo e-pastu ar savu cenu — tas nonāks tieši pie mūsu komandas.",
         OutreachSignature:             "Ruumly komanda\ninfo@ruumly.eu",
         OutreachPhoneLabel:            "Tālr.",
+        IntroSubject:                  "Ruumly — kas mēs esam, pirms jūs sasniedz klienta pieprasījums",
+        IntroGreeting:                 "Sveiki,",
+        IntroWhoWeAre:                 "Ruumly apkopo klientu pārcelšanās pieprasījumus un nodod tos vietējiem pakalpojumu sniedzējiem. Tas nav maksas katalogs.",
+        IntroListedTpl:                "{company} jau ir mūsu sarakstā. Mēs jūs pievienojām, pamatojoties uz publiski pieejamu informāciju — bez maksas, bez konta un bez jebkādām saistībām.",
+        IntroWhatToExpect:             "Tāpēc jūs varat saņemt no mums e-pastu ar īsta klienta pieprasījumu: ko, kur un kad. Atbildēt ir bez maksas un bez saistībām, un konts nav vajadzīgs — jūs nosūtāt cenu vai vienkārši neatbildat.",
+        IntroQuestionsTpl:             "Jautājumi? Zvaniet vai sūtiet īsziņu uz {phone} vai vienkārši atbildiet uz šo e-pastu.",
+        IntroClaimIntro:               "Lai labotu savus datus vai pievienotu cenas, atveriet savu profilu:",
+        IntroClaimCta:                 "Apskatīt savu profilu",
+        IntroClaimByEmailTpl:          "Lai labotu savus datus vai pievienotu cenas, rakstiet uz {email}, un mēs tos atjaunināsim.",
+        IntroOptOutTpl:                "Nevēlaties būt sarakstā? Atbildiet ar vārdu {keyword}, un mēs jūs izņemsim — bez liekiem jautājumiem.",
+        IntroOptOutLinkLabel:          "Izņemt manu profilu",
+        IntroSignature:                "Ruumly komanda\ninfo@ruumly.eu",
         CategoryCleaning:              "Uzkopšana",
         CategoryPacking:               "Iepakošana",
         CategoryVanRental:             "Furgona noma",
@@ -870,6 +968,18 @@ public static class EmailTranslations
         OutreachReplyAlternative:      "Arba tiesiog atsakykite į šį laišką nurodydami savo kainą — jis pasieks mūsų komandą tiesiogiai.",
         OutreachSignature:             "Ruumly komanda\ninfo@ruumly.eu",
         OutreachPhoneLabel:            "Tel.",
+        IntroSubject:                  "Ruumly — kas mes esame, prieš jus pasiekiant kliento užklausai",
+        IntroGreeting:                 "Sveiki,",
+        IntroWhoWeAre:                 "Ruumly renka klientų persikraustymo užklausas ir perduoda jas vietos paslaugų teikėjams. Tai nėra mokamas katalogas.",
+        IntroListedTpl:                "{company} jau yra mūsų sąraše. Įtraukėme jus remdamiesi viešai prieinama informacija — nemokamai, be paskyros ir be jokių įsipareigojimų.",
+        IntroWhatToExpect:             "Todėl galite gauti iš mūsų laišką su tikro kliento užklausa: ką, kur ir kada. Atsakyti nemokama ir neįpareigoja, paskyros nereikia — atsiunčiate kainą arba tiesiog neatsakote.",
+        IntroQuestionsTpl:             "Klausimai? Skambinkite arba rašykite SMS numeriu {phone} arba tiesiog atsakykite į šį laišką.",
+        IntroClaimIntro:               "Norėdami pataisyti savo duomenis ar pridėti kainas, atidarykite savo profilį:",
+        IntroClaimCta:                 "Peržiūrėti savo profilį",
+        IntroClaimByEmailTpl:          "Norėdami pataisyti savo duomenis ar pridėti kainas, rašykite adresu {email}, ir mes juos atnaujinsime.",
+        IntroOptOutTpl:                "Nenorite būti sąraše? Atsakykite žodžiu {keyword}, ir mes jus pašalinsime — be jokių papildomų klausimų.",
+        IntroOptOutLinkLabel:          "Pašalinti mano profilį",
+        IntroSignature:                "Ruumly komanda\ninfo@ruumly.eu",
         CategoryCleaning:              "Valymas",
         CategoryPacking:               "Pakavimas",
         CategoryVanRental:             "Furgono nuoma",

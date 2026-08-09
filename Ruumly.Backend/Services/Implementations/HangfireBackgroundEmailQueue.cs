@@ -26,6 +26,29 @@ public class HangfireBackgroundEmailQueue(IBackgroundJobClient jobs) : IBackgrou
             service => service.SendWithReplyToAsync(to, subject, textBody, htmlBody, replyTo));
     }
 
+    // Hangfire persists delayed jobs in Postgres, so a redeploy or a worker
+    // restart mid-campaign resumes the schedule instead of losing (or
+    // re-sending) the tail of it.
+    public void EnqueueEmailAfter(
+        TimeSpan delay, string to, string subject, string textBody, string? htmlBody, string? replyTo)
+    {
+        if (delay <= TimeSpan.Zero)
+        {
+            EnqueueEmail(to, subject, textBody, htmlBody, replyTo);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(replyTo))
+        {
+            jobs.Schedule<BackgroundEmailService>(
+                service => service.SendAsync(to, subject, textBody, htmlBody), delay);
+            return;
+        }
+
+        jobs.Schedule<BackgroundEmailService>(
+            service => service.SendWithReplyToAsync(to, subject, textBody, htmlBody, replyTo), delay);
+    }
+
     public void EnqueueVerificationEmail(Guid userId)
     {
         jobs.Enqueue<BackgroundEmailService>(

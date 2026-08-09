@@ -103,6 +103,19 @@ public class Supplier
     /// </summary>
     public string? BankName { get; set; }
 
+    /// <summary>
+    /// When the one-off supplier INTRODUCTION email was sent to this row
+    /// ("who Ruumly is, you are listed, requests may arrive"). Non-null means
+    /// NEVER send it again.
+    ///
+    /// This column is the ONLY idempotency guard for a cold campaign to ~435
+    /// businesses that have never heard of us — a duplicate send is
+    /// unrecoverable reputational damage, so the state is persisted per
+    /// supplier and stamped inside the same transaction that claims the row.
+    /// Never replace it with an in-memory or per-request guard.
+    /// </summary>
+    public DateTime? IntroEmailSentAt { get; set; }
+
     public decimal Rating { get; set; }
     public int ReviewCount { get; set; }
 
