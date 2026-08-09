@@ -107,7 +107,11 @@ try {
     $seedCount = 0
     for ($page = 1; $page -le 30; $page++) {
         $resp  = Invoke-RestMethod -Uri "$ApiBase/admin/suppliers?page=$page&limit=100" -Headers $headers
-        $batch = @(if ($null -ne $resp.items) { $resp.items } else { $resp })
+        # $resp.items on a BARE ARRAY does member enumeration and returns an array of
+        # nulls - which is itself non-null, so a plain "$null -ne $resp.items" test
+        # passes and hands back nulls. That is why this seeded 0 while reporting
+        # success. Check the type first; this endpoint returns a bare array.
+        $batch = @(if ($resp -is [System.Array]) { $resp } elseif ($null -ne $resp.items) { $resp.items } else { $resp })
         if ($batch.Count -eq 0) { break }
         foreach ($s in $batch) {
             if (-not [string]::IsNullOrWhiteSpace($s.registryCode)) {
