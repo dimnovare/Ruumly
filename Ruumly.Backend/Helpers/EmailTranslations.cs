@@ -196,6 +196,22 @@ public static class EmailTranslations
         string IntroOptOutTpl,
         string IntroOptOutLinkLabel,
         string IntroSignature,
+        // ── "Claim your profile" magic link (supplier_claim) ──────────────────
+        // Sent ONLY to the ContactEmail already stored on the supplier row, and
+        // only when the visitor typed that same address. It carries the single
+        // credential for the claim session, so the copy has to make three things
+        // unmissable: what was asked for, that the link dies after one use, and
+        // what to do if the recipient did NOT ask.
+        string ClaimSubject,
+        string ClaimGreeting,
+        // "Someone asked to take over the Ruumly profile for {company}."
+        string ClaimBodyTpl,
+        string ClaimCta,
+        // "The link works once and expires in {hours} hours."
+        string ClaimExpiryTpl,
+        // "Didn't ask for this? Ignore this email — nothing changes. Concerned:
+        // write to {email}." A cold recipient must never be left wondering.
+        string ClaimIgnoreTpl,
         // Service-category labels missing from the legacy EmailType* trio.
         // CategoryPacking / CategoryInsurance are STILL REFERENCED and must not be
         // deleted: we stopped selling those two as consumer services in 2026-08, but
@@ -261,6 +277,17 @@ public static class EmailTranslations
         /// catches every opt-out.</summary>
         public string IntroOptOut(string keyword) =>
             IntroOptOutTpl.Replace("{keyword}", keyword);
+
+        // ── Claim-your-profile magic link ─────────────────────────────────────
+
+        public string ClaimBody(string company) =>
+            ClaimBodyTpl.Replace("{company}", company);
+
+        public string ClaimExpiry(int hours) =>
+            ClaimExpiryTpl.Replace("{hours}", hours.ToString());
+
+        public string ClaimIgnore(string email) =>
+            ClaimIgnoreTpl.Replace("{email}", email);
     }
 
     private static readonly EmailStrings Et = new(
@@ -394,13 +421,19 @@ public static class EmailTranslations
         IntroWhoWeAre:                 "Ruumly kogub klientidelt kolimispäringuid ja edastab need kohalikele teenusepakkujatele. See ei ole tasuline kataloog.",
         IntroListedTpl:                "{company} on juba meie nimekirjas. Lisasime teid avalikult kättesaadava info põhjal — tasuta, ilma kontota ja ilma igasuguse kohustuseta.",
         IntroWhatToExpect:             "Seega võite meilt saada kirja päris kliendi päringuga: mida, kus ja millal. Vastamine on tasuta ja mittesiduv ning kontot pole vaja — saadate hinna või jätate vastamata.",
-        IntroQuestionsTpl:             "Küsimused? Helistage või saatke SMS numbrile {phone} või vastake lihtsalt sellele kirjale.",
+        IntroQuestionsTpl:             "Küsimused? Helistage, saatke SMS või WhatsApp numbrile {phone} või vastake lihtsalt sellele kirjale.",
         IntroClaimIntro:               "Andmete parandamiseks või hindade lisamiseks avage oma profiil:",
-        IntroClaimCta:                 "Vaadake oma profiili",
+        IntroClaimCta:                 "Võtke oma profiil üle",
         IntroClaimByEmailTpl:          "Andmete parandamiseks või hindade lisamiseks kirjutage aadressile {email} ja me uuendame need.",
         IntroOptOutTpl:                "Ei soovi nimekirjas olla? Vastake sõnaga {keyword} ja eemaldame teid — ilma lisaküsimusteta.",
         IntroOptOutLinkLabel:          "Eemaldage minu profiil",
         IntroSignature:                "Ruumly meeskond\ninfo@ruumly.eu",
+        ClaimSubject:                  "Ruumly — kinnitage oma profiili ülevõtmine",
+        ClaimGreeting:                 "Tere,",
+        ClaimBodyTpl:                  "Keegi soovis üle võtta ettevõtte {company} Ruumly profiili. Kui see olite teie, kinnitage see allolevast nupust — seejärel saate oma andmeid ise parandada.",
+        ClaimCta:                      "Kinnitage ja muutke profiili",
+        ClaimExpiryTpl:                "Link töötab ühe korra ja aegub {hours} tunni pärast.",
+        ClaimIgnoreTpl:                "Kui teie seda ei küsinud, jätke see kiri tähelepanuta — midagi ei muutu. Küsimuste korral kirjutage aadressile {email}.",
         CategoryCleaning:              "Koristus",
         CategoryPacking:               "Pakkimine",
         CategoryVanRental:             "Kaubiku rent",
@@ -539,13 +572,19 @@ public static class EmailTranslations
         IntroWhoWeAre:                 "Ruumly collects moving requests from customers and passes them on to local providers. It is not a paid directory.",
         IntroListedTpl:                "{company} is already on our list. We added you from publicly available information — free of charge, with no account and no obligation.",
         IntroWhatToExpect:             "So you may get an email from us with a real customer request: what, where and when. Answering is free and non-binding, and no account is needed — you send a price, or you ignore it.",
-        IntroQuestionsTpl:             "Questions? Call or text {phone}, or simply reply to this email.",
+        IntroQuestionsTpl:             "Questions? Call, SMS or WhatsApp {phone}, or simply reply to this email.",
         IntroClaimIntro:               "To correct your details or add prices, open your profile:",
-        IntroClaimCta:                 "See your profile",
+        IntroClaimCta:                 "Claim your profile",
         IntroClaimByEmailTpl:          "To correct your details or add prices, write to {email} and we'll update them.",
         IntroOptOutTpl:                "Don't want to be listed? Reply with {keyword} and we'll remove you — no questions asked.",
         IntroOptOutLinkLabel:          "Remove my profile",
         IntroSignature:                "The Ruumly team\ninfo@ruumly.eu",
+        ClaimSubject:                  "Ruumly — confirm you're claiming your profile",
+        ClaimGreeting:                 "Hello,",
+        ClaimBodyTpl:                  "Someone asked to claim the Ruumly profile for {company}. If that was you, confirm with the button below — you can then correct your own details.",
+        ClaimCta:                      "Confirm and edit my profile",
+        ClaimExpiryTpl:                "The link works once and expires in {hours} hours.",
+        ClaimIgnoreTpl:                "If you didn't ask for this, ignore this email — nothing changes. Any concerns, write to {email}.",
         CategoryCleaning:              "Cleaning",
         CategoryPacking:               "Packing",
         CategoryVanRental:             "Van rental",
@@ -683,13 +722,19 @@ public static class EmailTranslations
         IntroWhoWeAre:                 "Ruumly собирает запросы клиентов на переезд и передаёт их местным исполнителям. Это не платный каталог.",
         IntroListedTpl:                "{company} уже есть в нашем списке. Мы добавили вас на основе общедоступной информации — бесплатно, без аккаунта и без каких-либо обязательств.",
         IntroWhatToExpect:             "Поэтому вы можете получить от нас письмо с запросом реального клиента: что, где и когда. Ответ бесплатный и ни к чему не обязывает, аккаунт не нужен — вы отправляете цену или просто не отвечаете.",
-        IntroQuestionsTpl:             "Вопросы? Позвоните или напишите SMS на номер {phone} либо просто ответьте на это письмо.",
+        IntroQuestionsTpl:             "Вопросы? Позвоните, напишите SMS или в WhatsApp на номер {phone} либо просто ответьте на это письмо.",
         IntroClaimIntro:               "Чтобы исправить данные или добавить цены, откройте свой профиль:",
-        IntroClaimCta:                 "Посмотреть свой профиль",
+        IntroClaimCta:                 "Забрать свой профиль",
         IntroClaimByEmailTpl:          "Чтобы исправить данные или добавить цены, напишите на {email}, и мы их обновим.",
         IntroOptOutTpl:                "Не хотите быть в списке? Ответьте словом {keyword}, и мы вас удалим — без лишних вопросов.",
         IntroOptOutLinkLabel:          "Удалить мой профиль",
         IntroSignature:                "Команда Ruumly\ninfo@ruumly.eu",
+        ClaimSubject:                  "Ruumly — подтвердите, что забираете свой профиль",
+        ClaimGreeting:                 "Здравствуйте,",
+        ClaimBodyTpl:                  "Кто-то запросил передачу профиля компании {company} в Ruumly. Если это были вы, подтвердите кнопкой ниже — после этого вы сможете сами исправить свои данные.",
+        ClaimCta:                      "Подтвердить и изменить профиль",
+        ClaimExpiryTpl:                "Ссылка одноразовая и действительна {hours} ч.",
+        ClaimIgnoreTpl:                "Если вы этого не запрашивали, просто проигнорируйте письмо — ничего не изменится. Если есть вопросы, напишите на {email}.",
         CategoryCleaning:              "Уборка",
         CategoryPacking:               "Упаковка",
         CategoryVanRental:             "Аренда фургона",
@@ -828,13 +873,19 @@ public static class EmailTranslations
         IntroWhoWeAre:                 "Ruumly apkopo klientu pārcelšanās pieprasījumus un nodod tos vietējiem pakalpojumu sniedzējiem. Tas nav maksas katalogs.",
         IntroListedTpl:                "{company} jau ir mūsu sarakstā. Mēs jūs pievienojām, pamatojoties uz publiski pieejamu informāciju — bez maksas, bez konta un bez jebkādām saistībām.",
         IntroWhatToExpect:             "Tāpēc jūs varat saņemt no mums e-pastu ar īsta klienta pieprasījumu: ko, kur un kad. Atbildēt ir bez maksas un bez saistībām, un konts nav vajadzīgs — jūs nosūtāt cenu vai vienkārši neatbildat.",
-        IntroQuestionsTpl:             "Jautājumi? Zvaniet vai sūtiet īsziņu uz {phone} vai vienkārši atbildiet uz šo e-pastu.",
+        IntroQuestionsTpl:             "Jautājumi? Zvaniet, sūtiet īsziņu vai WhatsApp uz {phone} vai vienkārši atbildiet uz šo e-pastu.",
         IntroClaimIntro:               "Lai labotu savus datus vai pievienotu cenas, atveriet savu profilu:",
-        IntroClaimCta:                 "Apskatīt savu profilu",
+        IntroClaimCta:                 "Pārņemiet savu profilu",
         IntroClaimByEmailTpl:          "Lai labotu savus datus vai pievienotu cenas, rakstiet uz {email}, un mēs tos atjaunināsim.",
         IntroOptOutTpl:                "Nevēlaties būt sarakstā? Atbildiet ar vārdu {keyword}, un mēs jūs izņemsim — bez liekiem jautājumiem.",
         IntroOptOutLinkLabel:          "Izņemt manu profilu",
         IntroSignature:                "Ruumly komanda\ninfo@ruumly.eu",
+        ClaimSubject:                  "Ruumly — apstipriniet sava profila pārņemšanu",
+        ClaimGreeting:                 "Sveiki,",
+        ClaimBodyTpl:                  "Kāds lūdza pārņemt uzņēmuma {company} Ruumly profilu. Ja tas bijāt jūs, apstipriniet to ar zemāk esošo pogu — pēc tam varēsiet pats labot savus datus.",
+        ClaimCta:                      "Apstiprināt un rediģēt manu profilu",
+        ClaimExpiryTpl:                "Saite darbojas vienu reizi un ir derīga {hours} stundas.",
+        ClaimIgnoreTpl:                "Ja jūs to nelūdzāt, vienkārši ignorējiet šo e-pastu — nekas nemainīsies. Ja rodas jautājumi, rakstiet uz {email}.",
         CategoryCleaning:              "Uzkopšana",
         CategoryPacking:               "Iepakošana",
         CategoryVanRental:             "Furgona noma",
@@ -973,13 +1024,19 @@ public static class EmailTranslations
         IntroWhoWeAre:                 "Ruumly renka klientų persikraustymo užklausas ir perduoda jas vietos paslaugų teikėjams. Tai nėra mokamas katalogas.",
         IntroListedTpl:                "{company} jau yra mūsų sąraše. Įtraukėme jus remdamiesi viešai prieinama informacija — nemokamai, be paskyros ir be jokių įsipareigojimų.",
         IntroWhatToExpect:             "Todėl galite gauti iš mūsų laišką su tikro kliento užklausa: ką, kur ir kada. Atsakyti nemokama ir neįpareigoja, paskyros nereikia — atsiunčiate kainą arba tiesiog neatsakote.",
-        IntroQuestionsTpl:             "Klausimai? Skambinkite arba rašykite SMS numeriu {phone} arba tiesiog atsakykite į šį laišką.",
+        IntroQuestionsTpl:             "Klausimai? Skambinkite, rašykite SMS arba WhatsApp numeriu {phone} arba tiesiog atsakykite į šį laišką.",
         IntroClaimIntro:               "Norėdami pataisyti savo duomenis ar pridėti kainas, atidarykite savo profilį:",
-        IntroClaimCta:                 "Peržiūrėti savo profilį",
+        IntroClaimCta:                 "Perimkite savo profilį",
         IntroClaimByEmailTpl:          "Norėdami pataisyti savo duomenis ar pridėti kainas, rašykite adresu {email}, ir mes juos atnaujinsime.",
         IntroOptOutTpl:                "Nenorite būti sąraše? Atsakykite žodžiu {keyword}, ir mes jus pašalinsime — be jokių papildomų klausimų.",
         IntroOptOutLinkLabel:          "Pašalinti mano profilį",
         IntroSignature:                "Ruumly komanda\ninfo@ruumly.eu",
+        ClaimSubject:                  "Ruumly — patvirtinkite savo profilio perėmimą",
+        ClaimGreeting:                 "Sveiki,",
+        ClaimBodyTpl:                  "Kažkas paprašė perimti įmonės {company} Ruumly profilį. Jei tai buvote jūs, patvirtinkite paspaudę mygtuką žemiau — tada galėsite patys pataisyti savo duomenis.",
+        ClaimCta:                      "Patvirtinti ir redaguoti mano profilį",
+        ClaimExpiryTpl:                "Nuoroda veikia vieną kartą ir galioja {hours} val.",
+        ClaimIgnoreTpl:                "Jei to neprašėte, tiesiog nepaisykite šio laiško — niekas nepasikeis. Jei kyla klausimų, rašykite adresu {email}.",
         CategoryCleaning:              "Valymas",
         CategoryPacking:               "Pakavimas",
         CategoryVanRental:             "Furgono nuoma",

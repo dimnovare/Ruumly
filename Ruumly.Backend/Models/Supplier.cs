@@ -116,6 +116,24 @@ public class Supplier
     /// </summary>
     public DateTime? IntroEmailSentAt { get; set; }
 
+    /// <summary>
+    /// When someone proved control of <see cref="ContactEmail"/> through the
+    /// public claim flow (/{lang}/claim/{slug}) and took ownership of this
+    /// directory profile. Null = still unclaimed.
+    ///
+    /// Stamped ONCE, at the first successful magic-link redemption, so it stays
+    /// an honest "when did this business first respond" figure for the campaign
+    /// uptake metric. A returning owner re-verifying does not reset it.
+    /// </summary>
+    public DateTime? ClaimedAt { get; set; }
+
+    /// <summary>
+    /// The verified address that most recently claimed this profile — always an
+    /// address that received a magic link, never one a visitor merely typed.
+    /// </summary>
+    [MaxLength(200)]
+    public string? ClaimedByEmail { get; set; }
+
     public decimal Rating { get; set; }
     public int ReviewCount { get; set; }
 

@@ -42,6 +42,7 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
     public DbSet<Offer>            Offers             => Set<Offer>();
     public DbSet<OfferOption>      OfferOptions       => Set<OfferOption>();
     public DbSet<ProviderOutreach> ProviderOutreaches => Set<ProviderOutreach>();
+    public DbSet<SupplierClaim>    SupplierClaims     => Set<SupplierClaim>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -464,6 +465,22 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
             e.HasOne(o => o.Supplier)
                 .WithMany()
                 .HasForeignKey(o => o.SupplierId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<SupplierClaim>(e =>
+        {
+            e.HasIndex(c => c.SupplierId);
+            // Both credentials are resolved by an indexed equality match on the
+            // stored HASH — the raw token never touches the database. Unique and
+            // nullable: Postgres treats NULLs as distinct, so the many no-match
+            // rows (which carry no token at all) coexist under the index, exactly
+            // like token-less legacy ProviderOutreach rows.
+            e.HasIndex(c => c.TokenHash).IsUnique();
+            e.HasIndex(c => c.SessionTokenHash).IsUnique();
+            e.HasOne(c => c.Supplier)
+                .WithMany()
+                .HasForeignKey(c => c.SupplierId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

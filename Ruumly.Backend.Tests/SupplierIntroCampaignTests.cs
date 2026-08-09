@@ -353,7 +353,7 @@ public class SupplierIntroCampaignTests
     public void EveryLanguage_ProducesSubjectTextAndHtml(string language)
     {
         var message = SupplierIntroComposer.ComposeInLanguage(
-            language, "Kolimisabi OÜ", "https://ruumly.eu/et/partner/kolimisabi-ou");
+            language, "Kolimisabi OÜ", "https://ruumly.eu/et/claim/kolimisabi-ou");
 
         message.Language.Should().Be(language);
         message.Subject.Should().NotBeNullOrWhiteSpace();
@@ -398,7 +398,7 @@ public class SupplierIntroCampaignTests
     {
         var t       = EmailTranslations.For(language);
         var message = SupplierIntroComposer.ComposeInLanguage(
-            language, "Kolimisabi OÜ", "https://ruumly.eu/et/partner/kolimisabi-ou");
+            language, "Kolimisabi OÜ", "https://ruumly.eu/et/claim/kolimisabi-ou");
 
         var optOut = t.IntroOptOut(SupplierIntroComposer.OptOutKeyword);
         optOut.Should().NotBeNullOrWhiteSpace();
@@ -458,29 +458,37 @@ public class SupplierIntroCampaignTests
     }
 
     [Fact]
-    public void ClaimLink_PointsAtThePartnerPageThatCarriesTheClaimCta()
+    public void ClaimLink_PointsAtTheRealClaimFlow()
     {
+        // Until 2026-08 this pointed at the partner page, whose only claim
+        // mechanism was a mailto — the campaign promised "correct your details
+        // and add prices" and the link could not deliver it. It now opens the
+        // verification flow (/{lang}/claim/{slug}).
         var supplier = Provider(slug: "kolimisabi-ou", published: true);
 
         var message = SupplierIntroComposer.Compose(supplier, "https://ruumly.eu");
 
-        const string url = "https://ruumly.eu/et/partner/kolimisabi-ou";
+        const string url = "https://ruumly.eu/et/claim/kolimisabi-ou";
         message.TextBody.Should().Contain(url);
         message.HtmlBody.Should().Contain($"href=\"{url}\"");
+        message.TextBody.Should().NotContain("/partner/kolimisabi-ou");
     }
 
     [Fact]
-    public void NoPublishedPartnerPage_FallsBackToAMailtoInsteadOfALinkThat404s()
+    public void NoClaimablePage_FallsBackToAMailtoInsteadOfALinkThat404s()
     {
         foreach (var supplier in new[]
                  {
                      Provider(slug: null),
                      Provider(slug: "unpublished", published: false),
+                     // The claim endpoint refuses non-directory rows, so the
+                     // guard here has to refuse them too.
+                     Provider(slug: "real-partner", directory: false),
                  })
         {
             var message = SupplierIntroComposer.Compose(supplier, "https://ruumly.eu");
 
-            message.TextBody.Should().NotContain("/partner/",
+            message.TextBody.Should().NotContain("/claim/",
                 "a cold email must never contain a link that 404s");
             message.TextBody.Should().Contain("info@ruumly.eu");
             message.HtmlBody.Should().Contain("mailto:info@ruumly.eu?subject=CLAIM");
@@ -504,7 +512,7 @@ public class SupplierIntroCampaignTests
         foreach (var language in AllLanguages)
         {
             var message = SupplierIntroComposer.ComposeInLanguage(
-                language, "Kolimisabi OÜ", "https://ruumly.eu/et/partner/kolimisabi-ou");
+                language, "Kolimisabi OÜ", "https://ruumly.eu/et/claim/kolimisabi-ou");
 
             var words = message.TextBody.Split(
                 [' ', '\n', '\r'], StringSplitOptions.RemoveEmptyEntries).Length;

@@ -52,18 +52,24 @@ public static class SupplierIntroComposer
         ProviderOutreachComposer.LanguageFor(supplier);
 
     /// <summary>
-    /// The claim destination for this supplier: its own public partner page,
-    /// which already carries the "claim this profile" CTA
-    /// (estonia-space-hub PartnerPage.tsx). Null when the supplier has no
-    /// published page — the caller then falls back to a plain mailto, because
-    /// a cold email must never contain a link that 404s.
+    /// The claim destination for this supplier: /{lang}/claim/{slug}, the real
+    /// verification flow (prove control of the stored contact email, then edit
+    /// your own row). Until 2026-08 this pointed at the public partner page,
+    /// whose only claim mechanism was a mailto — the campaign copy promised
+    /// "correct your details and add prices" and the link could not deliver it.
+    ///
+    /// The guard mirrors the claim endpoint's own eligibility EXACTLY (slug +
+    /// published + directory row): a cold email must never contain a link that
+    /// 404s, so if the API would refuse the claim the mail falls back to the
+    /// plain mailto instead.
     /// </summary>
-    public static string? PartnerPageUrl(Supplier supplier, string? appUrl, string language) =>
+    public static string? ClaimPageUrl(Supplier supplier, string? appUrl, string language) =>
         string.IsNullOrWhiteSpace(supplier.Slug)
         || !supplier.IsPartnerPagePublished
+        || !supplier.IsDirectoryListing
         || string.IsNullOrWhiteSpace(appUrl)
             ? null
-            : FrontendUrl.Localized(appUrl, language, $"partner/{supplier.Slug}");
+            : FrontendUrl.Localized(appUrl, language, $"claim/{supplier.Slug}");
 
     public static SupplierIntroMessage Compose(
         Supplier supplier,
@@ -75,7 +81,7 @@ public static class SupplierIntroComposer
         return ComposeInLanguage(
             language,
             supplier.Name,
-            PartnerPageUrl(supplier, appUrl, language),
+            ClaimPageUrl(supplier, appUrl, language),
             opsInbox,
             opsPhone);
     }
@@ -83,7 +89,7 @@ public static class SupplierIntroComposer
     internal static SupplierIntroMessage ComposeInLanguage(
         string language,
         string companyName,
-        string? partnerPageUrl,
+        string? claimPageUrl,
         string? opsInbox = null,
         string? opsPhone = null)
     {
@@ -98,10 +104,10 @@ public static class SupplierIntroComposer
             Listed:        t.IntroListed(company),
             WhatToExpect:  t.IntroWhatToExpect,
             Questions:     t.IntroQuestions(phone),
-            ClaimIntro:    partnerPageUrl is null ? null : t.IntroClaimIntro,
+            ClaimIntro:    claimPageUrl is null ? null : t.IntroClaimIntro,
             ClaimCta:      t.IntroClaimCta,
-            ClaimUrl:      partnerPageUrl,
-            ClaimByEmail:  partnerPageUrl is null ? t.IntroClaimByEmail(inbox) : null,
+            ClaimUrl:      claimPageUrl,
+            ClaimByEmail:  claimPageUrl is null ? t.IntroClaimByEmail(inbox) : null,
             ClaimMailto:   MailTo(inbox, ClaimKeyword, company),
             OptOut:        t.IntroOptOut(OptOutKeyword),
             OptOutLabel:   t.IntroOptOutLinkLabel,
@@ -155,9 +161,10 @@ public static class SupplierIntroComposer
             "",
         };
 
-        // Claim: the partner page when it exists, a plain email address when it
-        // does not. Never a raw mailto: URL in the text body — an operator
-        // reading in a plain-text client should see an address, not markup.
+        // Claim: the claim page when the supplier is eligible for one, a plain
+        // email address when it is not. Never a raw mailto: URL in the text
+        // body — an operator reading in a plain-text client should see an
+        // address, not markup.
         if (c.ClaimUrl is not null)
         {
             lines.Add(c.ClaimIntro!);
