@@ -50,4 +50,19 @@ public static class EmailValidation
 
         return true;
     }
+
+    /// <summary>
+    /// The domain part of an address, lower-cased, or null if the address is not
+    /// <see cref="IsValid">valid</see>. Callers that group addresses by domain (the
+    /// deliverability check does) must use this rather than splitting on '@'
+    /// themselves, so "what counts as a domain" has exactly one definition.
+    /// </summary>
+    public static string? DomainOf(string? email)
+    {
+        if (!IsValid(email))
+            return null;
+
+        var value = email!.Trim();
+        return value[(value.IndexOf('@') + 1)..].ToLowerInvariant();
+    }
 }

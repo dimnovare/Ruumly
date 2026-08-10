@@ -32,6 +32,7 @@ namespace Ruumly.Backend.Controllers;
 public class AdminSupplierIntroController(
     RuumlyDbContext db,
     IBackgroundEmailQueue emailQueue,
+    IMailDomainVerifier mailDomains,
     IConfiguration config,
     ILogger<AdminSupplierIntroController> logger) : AdminBaseController(db)
 {
@@ -59,6 +60,7 @@ public class AdminSupplierIntroController(
     private const string SkipNotDirectory  = "not_directory";
     private const string SkipNoEmail       = "no_email";
     private const string SkipInvalidEmail  = "invalid_email";
+    private const string SkipUndeliverable = "undeliverable_domain";
     private const string SkipDuplicate     = "duplicate_email";
     private const string SkipOverLimit     = "over_limit";
 
@@ -104,7 +106,15 @@ public class AdminSupplierIntroController(
                 transaction = await Db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
 
             var candidates = await LoadCandidatesAsync(request, country, ct);
-            var (eligible, skips) = Partition(candidates, request);
+
+            // Deliverability is resolved HERE, while the recipient list is being
+            // built, so a dead domain is reported as a skip in the preview the
+            // founder approves rather than discovered as a bounce afterwards.
+            // Only domains that survive the cheap checks are looked up.
+            var undeliverableDomains = await mailDomains.FindUndeliverableAsync(
+                DomainsToVerify(candidates, request), ct);
+
+            var (eligible, skips) = Partition(candidates, request, undeliverableDomains);
 
             var messages = eligible
                 .Select(s => (Supplier: s,
@@ -188,12 +198,40 @@ public class AdminSupplierIntroController(
     }
 
     /// <summary>
+    /// The distinct email domains worth a DNS lookup: those belonging to a
+    /// supplier who would otherwise be mailed. Mirrors the cheap checks in
+    /// <see cref="Partition"/> so an inactive or already-mailed supplier never
+    /// costs a resolver round-trip.
+    /// </summary>
+    private static List<string> DomainsToVerify(
+        IReadOnlyList<Supplier> candidates, SupplierIntroCampaignRequest request)
+    {
+        var domains = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var supplier in candidates)
+        {
+            if (supplier.IntroEmailSentAt is not null) continue;
+            if (!supplier.IsActive)                    continue;
+            if (!supplier.IsDirectoryListing && !request.IncludeNonDirectory) continue;
+
+            if (EmailValidation.DomainOf(supplier.ContactEmail) is { } domain)
+                domains.Add(domain);
+        }
+
+        return domains.ToList();
+    }
+
+    /// <summary>
     /// Splits candidates into who gets mail and why everyone else does not.
     /// Skip order is deliberate: <c>already_sent</c> is checked first so a
-    /// second run reports the true reason rather than an incidental one.
+    /// second run reports the true reason rather than an incidental one, and
+    /// <c>undeliverable_domain</c> precedes <c>duplicate_email</c> so two
+    /// suppliers sharing one dead domain both report the real problem.
     /// </summary>
     private static (List<Supplier> Eligible, Dictionary<string, int> Skips) Partition(
-        IReadOnlyList<Supplier> candidates, SupplierIntroCampaignRequest request)
+        IReadOnlyList<Supplier> candidates,
+        SupplierIntroCampaignRequest request,
+        IReadOnlySet<string> undeliverableDomains)
     {
         var eligible = new List<Supplier>();
         var skips    = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -222,6 +260,14 @@ public class AdminSupplierIntroController(
             var email = supplier.ContactEmail?.Trim() ?? "";
             if (email.Length == 0)                              { Skip(SkipNoEmail);      continue; }
             if (!EmailValidation.IsValid(email))                { Skip(SkipInvalidEmail); continue; }
+
+            // A syntactically perfect address on a domain with no mail exchanger
+            // bounces. Bounces cost sender reputation, and this campaign is the
+            // largest send this domain has ever made.
+            var domain = EmailValidation.DomainOf(email);
+            if (domain is null || undeliverableDomains.Contains(domain))
+                                                                { Skip(SkipUndeliverable); continue; }
+
             if (!seenEmails.Add(email))                         { Skip(SkipDuplicate);    continue; }
 
             if (request.Limit is { } limit && eligible.Count >= limit)

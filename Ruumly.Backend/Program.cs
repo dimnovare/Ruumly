@@ -404,6 +404,17 @@ builder.Services.AddScoped<ISupplierPollingService, SupplierPollingService>();
 builder.Services.AddScoped<IContractService, ContractService>();
 builder.Services.AddScoped<SupplierPollingDispatcherJob>();
 builder.Services.AddHttpClient();
+// MX deliverability checks for outbound supplier mail (DNS-over-HTTPS).
+// The SERVICE is a singleton so its domain-verdict cache survives between requests —
+// the intro campaign is dry-run repeatedly before it is ever sent. It takes the
+// factory rather than a typed HttpClient because a typed client is transient, and
+// holding one inside a singleton pins a handler forever (stale DNS).
+builder.Services.AddHttpClient(DnsMailDomainVerifier.HttpClientName, c =>
+{
+    c.Timeout = TimeSpan.FromSeconds(5);
+    c.DefaultRequestHeaders.UserAgent.ParseAdd("Ruumly/1.0");
+});
+builder.Services.AddSingleton<IMailDomainVerifier, DnsMailDomainVerifier>();
 // Dokobit — typed HttpClient; IsEnabled gated on Signing:Dokobit:AccessToken presence.
 // Dokobit requires its access token in the query string. Remove the framework HTTP
 // loggers for this client so request URLs cannot leak that credential into Railway logs.

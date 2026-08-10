@@ -56,9 +56,36 @@ public class SupplierIntroCampaignTests
             })
             .Build();
 
+    /// <summary>
+    /// Stands in for the DNS sweep. Default behaviour is "every domain can receive
+    /// mail", so the existing tests keep describing what they were written to
+    /// describe; the deliverability tests below pass the dead domains explicitly.
+    /// It also RECORDS what it was asked, which is how we assert that suppliers who
+    /// would never be mailed never cost a lookup.
+    /// </summary>
+    private sealed class FakeMailDomains(params string[] undeliverable) : IMailDomainVerifier
+    {
+        private readonly HashSet<string> dead = new(undeliverable, StringComparer.OrdinalIgnoreCase);
+
+        public List<string> Asked { get; } = [];
+
+        public Task<IReadOnlySet<string>> FindUndeliverableAsync(
+            IEnumerable<string> domains, CancellationToken ct = default)
+        {
+            var seen = domains.ToList();
+            Asked.AddRange(seen);
+            return Task.FromResult<IReadOnlySet<string>>(
+                new HashSet<string>(seen.Where(dead.Contains), StringComparer.OrdinalIgnoreCase));
+        }
+    }
+
     private static AdminSupplierIntroController Make(
-        RuumlyDbContext db, IBackgroundEmailQueue queue, IConfiguration? config = null) =>
-        new(db, queue, config ?? Config(), NullLogger<AdminSupplierIntroController>.Instance)
+        RuumlyDbContext db,
+        IBackgroundEmailQueue queue,
+        IConfiguration? config = null,
+        IMailDomainVerifier? mailDomains = null) =>
+        new(db, queue, mailDomains ?? new FakeMailDomains(),
+            config ?? Config(), NullLogger<AdminSupplierIntroController>.Instance)
         {
             ControllerContext = new ControllerContext
             {
@@ -222,6 +249,121 @@ public class SupplierIntroCampaignTests
 
         response.WouldSend.Should().Be(1);
         Reason(response, "duplicate_email").Should().Be(1);
+    }
+
+    // ─── Deliverability ───────────────────────────────────────────────────────
+    // A syntactically perfect address on a domain with no MX bounces, and bounces
+    // cost sender reputation. The 2026-08-09 audit found five such addresses live
+    // in the directory; this campaign is the largest send the domain has ever made.
+
+    [Fact]
+    public async Task AnAddressOnADomainWithNoMx_IsSkipped_NotMailed()
+    {
+        var db = await DbWith(
+            Provider("Dead Domain", email: "info@kapsel24.ee", slug: "kapsel-minilaod"),
+            Provider("Live Domain", email: "info@kolimisabi.ee", slug: "live"));
+
+        var response = Body(await Make(db, new CapturingEmailQueue(),
+            mailDomains: new FakeMailDomains("kapsel24.ee")).RunIntroCampaign(null, default));
+
+        response.WouldSend.Should().Be(1);
+        response.Samples.Should().ContainSingle().Which.To.Should().Be("info@kolimisabi.ee");
+        Reason(response, "undeliverable_domain").Should().Be(1);
+    }
+
+    [Fact]
+    public async Task UndeliverableIsReportedAheadOfDuplicate_SoTheRealProblemIsVisible()
+    {
+        // Two branches sharing one dead inbox must both report the dead domain.
+        // Reporting the second as `duplicate_email` would hide the actual defect.
+        var db = await DbWith(
+            Provider("Branch A", email: "info@t49.ee", slug: "branch-a"),
+            Provider("Branch B", email: "info@t49.ee", slug: "branch-b"));
+
+        var response = Body(await Make(db, new CapturingEmailQueue(),
+            mailDomains: new FakeMailDomains("t49.ee")).RunIntroCampaign(null, default));
+
+        response.WouldSend.Should().Be(0);
+        Reason(response, "undeliverable_domain").Should().Be(2);
+        Reason(response, "duplicate_email").Should().Be(0);
+    }
+
+    [Fact]
+    public async Task LiveSend_NeverQueuesMailToAnUndeliverableDomain()
+    {
+        var db    = await DbWith(
+            Provider("Dead", email: "esvo@esvo.ee",      slug: "esvo"),
+            Provider("Live", email: "hello@kolimine.ee", slug: "live"));
+        var queue = new CapturingEmailQueue();
+
+        var response = Body(await Make(db, queue, mailDomains: new FakeMailDomains("esvo.ee"))
+            .RunIntroCampaign(new SupplierIntroCampaignRequest(DryRun: false), default));
+
+        response.Sent.Should().Be(1);
+        queue.Emails.Should().ContainSingle().Which.To.Should().Be("hello@kolimine.ee");
+
+        // The skipped supplier must NOT be stamped — the address may be repaired
+        // later, and a stamp would permanently exclude it from the one campaign
+        // that ever runs.
+        var dead = await db.Suppliers.SingleAsync(s => s.Slug == "esvo");
+        dead.IntroEmailSentAt.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task OnlySuppliersThatWouldActuallyBeMailed_CostADnsLookup()
+    {
+        var db = await DbWith(
+            Provider("Mailable",  email: "a@good.ee",     slug: "mailable"),
+            Provider("Inactive",  email: "b@inactive.ee", slug: "inactive",  active: false),
+            Provider("NonDir",    email: "c@nondir.ee",   slug: "nondir",    directory: false),
+            Provider("Sent",      email: "d@sent.ee",     slug: "sent",      introSentAt: DateTime.UtcNow),
+            Provider("NoEmail",   email: null,            slug: "no-email"),
+            Provider("Junk",      email: "not-an-address", slug: "junk"));
+
+        var fake = new FakeMailDomains();
+        await Make(db, new CapturingEmailQueue(), mailDomains: fake).RunIntroCampaign(null, default);
+
+        fake.Asked.Should().BeEquivalentTo(["good.ee"],
+            "resolving domains for suppliers that are skipped anyway is wasted latency " +
+            "on every preview, against ~500 domains");
+    }
+
+    [Fact]
+    public async Task ADomainTheResolverCannotAnswerFor_IsStillMailed()
+    {
+        // Failing open is deliberate: an unreachable resolver is not evidence
+        // against a provider, and failing the other way would silently shrink the
+        // campaign whenever DNS hiccups.
+        var db = await DbWith(Provider(email: "info@unknown.ee", slug: "unknown"));
+
+        var response = Body(await Make(db, new CapturingEmailQueue(),
+            mailDomains: new FakeMailDomains()).RunIntroCampaign(null, default));
+
+        response.WouldSend.Should().Be(1);
+        Reason(response, "undeliverable_domain").Should().Be(0);
+    }
+
+    [Fact]
+    public async Task TheFiveAddressesTheAuditFound_WouldAllBeHeldBack()
+    {
+        // Regression guard tied to docs/research/partners-2026-08-08/email-mx-audit.json.
+        // These are cleared on the live directory now, but the campaign must refuse
+        // them on its own rather than relying on that cleanup having happened.
+        var db = await DbWith(
+            Provider("Kapsel Minilaod",  "EE", "info@kapsel24.ee",   slug: "kapsel-minilaod"),
+            Provider("Esvo Transport",   "EE", "esvo@esvo.ee",       slug: "esvo-transport-turi"),
+            Provider("Noortegija",       "EE", "info@noortegija.ee", slug: "noortegija"),
+            Provider("T49",              "EE", "info@t49.ee",        slug: "t49"),
+            Provider("Rekota",           "LT", "rekota@zebra.lt",    slug: "rekota-siauliai"),
+            Provider("Healthy",          "EE", "info@ramirent.ee",   slug: "healthy"));
+
+        var response = Body(await Make(db, new CapturingEmailQueue(),
+                mailDomains: new FakeMailDomains(
+                    "kapsel24.ee", "esvo.ee", "noortegija.ee", "t49.ee", "zebra.lt"))
+            .RunIntroCampaign(null, default));
+
+        response.WouldSend.Should().Be(1);
+        Reason(response, "undeliverable_domain").Should().Be(5);
     }
 
     // ─── Idempotency ──────────────────────────────────────────────────────────
