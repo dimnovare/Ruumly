@@ -595,8 +595,45 @@ public class SupplierIntroCampaignTests
         message.TextBody.Should().Contain("Kolimisabi OÜ",
             "the 'you are already listed' line names the actual business");
         message.TextBody.Should().Contain(t.IntroWhatToExpect);
-        message.TextBody.Should().Contain(SupplierIntroComposer.DefaultOpsPhone,
-            "the campaign promises a human on the phone — that number is not optional copy");
+        message.TextBody.Should().Contain(t.IntroQuestions("https://ruumly.eu/et/contact"),
+            "the campaign promises a human — reachable by reply or the contact page");
+    }
+
+    /// <summary>
+    /// The founder retired the support phone in 2026-08. The intro mail offers
+    /// exactly two channels — reply, or the contact page — in every language,
+    /// and invites a call in none of them.
+    /// </summary>
+    [Theory]
+    [InlineData("et")]
+    [InlineData("en")]
+    [InlineData("ru")]
+    [InlineData("lv")]
+    [InlineData("lt")]
+    public void QuestionsLine_OffersReplyAndContactPage_AndNeverAPhone(string language)
+    {
+        var t          = EmailTranslations.For(language);
+        var message    = SupplierIntroComposer.ComposeInLanguage(
+            language, "Kolimisabi OÜ", null, "https://ruumly.eu");
+        var contactUrl = $"https://ruumly.eu/{language}/contact";
+
+        message.TextBody.Should().Contain(t.IntroQuestions(contactUrl));
+        message.HtmlBody.Should().Contain($"href=\"{contactUrl}\"",
+            "most email clients do not auto-link a bare URL in an HTML body");
+
+        ProviderOutreachEmailTests.AssertNoPhoneAffordance(message.TextBody);
+        ProviderOutreachEmailTests.AssertNoPhoneAffordance(message.HtmlBody!);
+    }
+
+    /// <summary>No AppUrl configured must still yield an absolute link — a
+    /// relative "/et/contact" in an email body is a dead end.</summary>
+    [Fact]
+    public void ContactLink_IsAbsolute_EvenWithoutAnAppUrl()
+    {
+        var message = SupplierIntroComposer.Compose(Provider(name: "Kolimisabi OÜ"));
+
+        message.TextBody.Should().Contain("https://ruumly.eu/et/contact");
+        message.HtmlBody.Should().Contain("href=\"https://ruumly.eu/et/contact\"");
     }
 
     [Fact]

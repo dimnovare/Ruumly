@@ -2468,9 +2468,6 @@ public static class SeedData
             // (true / 6) apply when the rows are absent — seeding is Development-only.
             ["conciergeAutoOutreach"]    = ("true", "Automatically ask nearby providers for a price the moment a concierge request arrives"),
             ["conciergeAutoOutreachMax"] = ("6",    "How many providers one auto-fanout may email (clamped 1..12)"),
-            // Support phone printed under the signature of provider outreach.
-            // Leave empty to omit the phone line entirely — never ship a placeholder.
-            ["opsPhone"]                 = ("",     "Support phone shown in provider outreach emails (empty = omit the line)"),
             // ── Pricing config (read by IPricingConfigService) ──────────────
             ["defaultPartnerDiscount"]         = ("15",  "Default partner discount % shown to customer"),
             ["tier.starter.customerDiscount"]  = ("5",   "Starter tier: customer discount %"),

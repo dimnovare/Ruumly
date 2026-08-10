@@ -381,8 +381,6 @@ public class AdminOffersController(
                 .ToListAsync())
             .ToHashSet();
 
-        var opsPhone = await OpsPhone.ResolveAsync(Db);
-
         var recipients = new List<OutreachPreviewItemDto>(requestedIds.Count);
         foreach (var supplierId in requestedIds)
         {
@@ -397,7 +395,7 @@ public class AdminOffersController(
             // a sample "Submit your price" link. The real per-row token is minted
             // only at send time, so this preview token is ephemeral (never stored).
             var message = ProviderOutreachComposer.Compose(
-                lead, supplier, config["AppUrl"], OfferToken.Generate(), opsPhone);
+                lead, supplier, config["AppUrl"], OfferToken.Generate());
             var email = string.IsNullOrWhiteSpace(supplier.ContactEmail)
                 ? null
                 : supplier.ContactEmail.Trim();

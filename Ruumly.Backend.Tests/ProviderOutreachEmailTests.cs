@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using FluentAssertions;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
@@ -55,7 +56,7 @@ public class ProviderOutreachEmailTests
     public void EveryLanguage_ProducesSubjectTextAndHtml(string language)
     {
         var message = ProviderOutreachComposer.ComposeInLanguage(
-            language, Lead(), "https://ruumly.eu", OfferToken.Generate(), opsPhone: "+372 5555 0000");
+            language, Lead(), "https://ruumly.eu", OfferToken.Generate());
 
         message.Language.Should().Be(language);
         message.Subject.Should().NotBeNullOrWhiteSpace();
@@ -84,6 +85,7 @@ public class ProviderOutreachEmailTests
             t.OutreachUrgentBadge.Should().NotBe(en.OutreachUrgentBadge, because);
             t.OutreachUrgentTpl.Should().NotBe(en.OutreachUrgentTpl, because);
             t.OutreachReplyAlternative.Should().NotBe(en.OutreachReplyAlternative, because);
+            t.OutreachQuestionsTpl.Should().NotBe(en.OutreachQuestionsTpl, because);
             t.OutreachPackingAddOn.Should().NotBe(en.OutreachPackingAddOn, because);
             t.OutreachSubjectTpl.Should().NotBe(en.OutreachSubjectTpl, because);
         }
@@ -108,7 +110,7 @@ public class ProviderOutreachEmailTests
             t.OutreachPackingAddOn,
             t.OutreachUrgentBadge, t.OutreachUrgentTpl,
             t.OutreachQuoteCta, t.OutreachReplyAlternative,
-            t.OutreachSignature, t.OutreachPhoneLabel,
+            t.OutreachSignature, t.OutreachQuestionsTpl,
         }.Should().AllSatisfy(s => s.Should().NotBeNullOrWhiteSpace());
     }
 
@@ -132,7 +134,7 @@ public class ProviderOutreachEmailTests
     {
         var lead    = Lead(query: query);
         var message = ProviderOutreachComposer.Compose(
-            lead, Provider(), "https://ruumly.eu", OfferToken.Generate(), opsPhone: "+372 5555 0000");
+            lead, Provider(), "https://ruumly.eu", OfferToken.Generate());
 
         foreach (var secret in new[] { lead.Email, lead.Name!, lead.Phone! })
         {
@@ -306,24 +308,54 @@ public class ProviderOutreachEmailTests
             "a cold recipient has never heard of Ruumly — lead with the value proposition");
     }
 
-    // ─── Support phone (PlatformSettings opsPhone) ────────────────────────────
+    // ─── Contact channels: reply or the contact page, never a phone ───────────
 
-    [Fact]
-    public void PhoneLine_IsOmittedWhenUnset_AndRenderedWhenSet()
+    /// <summary>
+    /// The founder retired the support phone in 2026-08 — providers must reply
+    /// to the mail or use the contact page, and nothing may invite a call.
+    /// </summary>
+    [Theory]
+    [InlineData("et")]
+    [InlineData("en")]
+    [InlineData("ru")]
+    [InlineData("lv")]
+    [InlineData("lt")]
+    public void QuestionsLine_OffersReplyAndContactPage_AndNeverAPhone(string language)
     {
-        var t = EmailTranslations.For("et");
+        var t          = EmailTranslations.For(language);
+        var message    = ProviderOutreachComposer.ComposeInLanguage(
+            language, Lead(), "https://ruumly.eu", OfferToken.Generate());
+        var contactUrl = $"https://ruumly.eu/{language}/contact";
 
-        foreach (var unset in new[] { null, "", "   " })
-        {
-            var message = ProviderOutreachComposer.Compose(Lead(), Provider(), opsPhone: unset);
-            message.TextBody.Should().NotContain($"{t.OutreachPhoneLabel}:",
-                "an empty or placeholder phone must never be rendered");
-            message.HtmlBody.Should().NotContain($"{t.OutreachPhoneLabel}:");
-        }
+        message.TextBody.Should().Contain(t.OutreachQuestions(contactUrl));
+        message.HtmlBody.Should().Contain($"href=\"{contactUrl}\"",
+            "most email clients do not auto-link a bare URL in an HTML body");
+        message.TextBody.Should().Contain(t.OutreachReplyAlternative,
+            "replying is the other half of the offer");
 
-        var withPhone = ProviderOutreachComposer.Compose(
-            Lead(), Provider(), opsPhone: " +372 5555 0000 ");
-        withPhone.TextBody.Should().Contain($"{t.OutreachPhoneLabel}: +372 5555 0000");
-        withPhone.HtmlBody.Should().Contain("+372 5555 0000");
+        AssertNoPhoneAffordance(message.TextBody);
+        AssertNoPhoneAffordance(message.HtmlBody!);
+    }
+
+    /// <summary>
+    /// No AppUrl configured must still yield an absolute link: a relative
+    /// "/et/contact" in an email body is a dead end.
+    /// </summary>
+    [Fact]
+    public void ContactLink_IsAbsolute_EvenWithoutAnAppUrl()
+    {
+        var message = ProviderOutreachComposer.Compose(Lead(), Provider());
+
+        message.TextBody.Should().Contain("https://ruumly.eu/et/contact");
+        message.HtmlBody.Should().Contain("href=\"https://ruumly.eu/et/contact\"");
+    }
+
+    internal static void AssertNoPhoneAffordance(string body)
+    {
+        body.Should().NotContain("tel:");
+        body.Should().NotContain("5805 7795", "the founder's number was retired");
+        body.Should().NotContainEquivalentOf("whatsapp");
+        Regex.IsMatch(body, @"\+\d[\d\s()‑-]{6,}").Should().BeFalse(
+            "no phone number may appear in supplier-facing mail");
     }
 }

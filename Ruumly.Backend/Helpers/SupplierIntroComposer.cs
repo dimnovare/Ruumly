@@ -30,13 +30,6 @@ public static class SupplierIntroComposer
     /// <summary>Subject token for the claim mailto — same filtering rationale.</summary>
     public const string ClaimKeyword = "CLAIM";
 
-    /// <summary>
-    /// Support number printed in the "questions?" line. The campaign promises a
-    /// human on the other end, so unlike the outreach mail this line is never
-    /// omitted — PlatformSettings <c>opsPhone</c> overrides it when set.
-    /// </summary>
-    public const string DefaultOpsPhone = "+372 5805 7795";
-
     // Brand palette, kept in sync with ProviderOutreachComposer.
     private const string Teal      = "#00897B";
     private const string BodyText  = "#455A64";
@@ -74,36 +67,39 @@ public static class SupplierIntroComposer
     public static SupplierIntroMessage Compose(
         Supplier supplier,
         string? appUrl = null,
-        string? opsInbox = null,
-        string? opsPhone = null)
+        string? opsInbox = null)
     {
         var language = LanguageFor(supplier);
         return ComposeInLanguage(
             language,
             supplier.Name,
             ClaimPageUrl(supplier, appUrl, language),
-            opsInbox,
-            opsPhone);
+            appUrl,
+            opsInbox);
     }
 
     internal static SupplierIntroMessage ComposeInLanguage(
         string language,
         string companyName,
         string? claimPageUrl,
-        string? opsInbox = null,
-        string? opsPhone = null)
+        string? appUrl = null,
+        string? opsInbox = null)
     {
         var t       = EmailTranslations.For(language);
         var company = string.IsNullOrWhiteSpace(companyName) ? "" : companyName.Trim();
         var inbox   = string.IsNullOrWhiteSpace(opsInbox) ? OpsInbox.Fallback : opsInbox.Trim();
-        var phone   = string.IsNullOrWhiteSpace(opsPhone) ? DefaultOpsPhone : opsPhone.Trim();
+        // Reply or the contact page — the only two channels offered since the
+        // support phone was retired (2026-08). Falls back to the public origin
+        // when no AppUrl is configured, so the line can never go out relative.
+        var contact = FrontendUrl.Contact(appUrl, language);
 
         var copy = new IntroCopy(
             Greeting:      t.IntroGreeting,
             WhoWeAre:      t.IntroWhoWeAre,
             Listed:        t.IntroListed(company),
             WhatToExpect:  t.IntroWhatToExpect,
-            Questions:     t.IntroQuestions(phone),
+            Questions:     t.IntroQuestions(contact),
+            ContactUrl:    contact,
             ClaimIntro:    claimPageUrl is null ? null : t.IntroClaimIntro,
             ClaimCta:      t.IntroClaimCta,
             ClaimUrl:      claimPageUrl,
@@ -124,6 +120,7 @@ public static class SupplierIntroComposer
         string Listed,
         string WhatToExpect,
         string Questions,
+        string ContactUrl,
         string? ClaimIntro,
         string ClaimCta,
         string? ClaimUrl,
@@ -203,6 +200,18 @@ public static class SupplierIntroComposer
             .Replace("\"", "&quot;");
         static string Multiline(string value) => E(value).Replace("\n", "<br>");
 
+        // Same rationale as ProviderOutreachComposer: a bare URL in an HTML body
+        // is not auto-linked by most clients, and the contact page is one of only
+        // two channels this email offers. Anchor the URL inside the sentence.
+        static string Linkified(string sentence, string url)
+        {
+            var at = sentence.IndexOf(url, StringComparison.Ordinal);
+            if (at < 0) return E(sentence);
+            return E(sentence[..at])
+                 + $"""<a href="{E(url)}" style="color:{Teal};">{E(url)}</a>"""
+                 + E(sentence[(at + url.Length)..]);
+        }
+
         var claimHtml = c.ClaimUrl is not null
             ? $"""
                          <p style="margin:0 0 16px;color:{BodyText};font-size:15px;line-height:1.6;">{E(c.ClaimIntro!)}</p>
@@ -239,7 +248,7 @@ public static class SupplierIntroComposer
                         <p style="margin:0 0 16px;color:{BodyText};font-size:15px;line-height:1.6;">{E(c.WhoWeAre)}</p>
                         <p style="margin:0 0 16px;color:{BodyText};font-size:15px;line-height:1.6;">{E(c.Listed)}</p>
                         <p style="margin:0 0 16px;color:{BodyText};font-size:15px;line-height:1.6;">{E(c.WhatToExpect)}</p>
-                        <p style="margin:0 0 20px;color:{BodyText};font-size:15px;line-height:1.6;">{E(c.Questions)}</p>
+                        <p style="margin:0 0 20px;color:{BodyText};font-size:15px;line-height:1.6;">{Linkified(c.Questions, c.ContactUrl)}</p>
             {claimHtml}
                         <p style="margin:0 0 24px;color:{MutedText};font-size:14px;line-height:1.6;">
                           {E(c.OptOut)}<br>

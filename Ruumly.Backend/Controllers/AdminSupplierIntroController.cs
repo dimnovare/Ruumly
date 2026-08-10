@@ -93,7 +93,6 @@ public class AdminSupplierIntroController(
         var appUrl   = config["AppUrl"];
         var from     = EmailFrom.Render(config);
         var opsInbox = await OpsInbox.ResolveAsync(Db);
-        var opsPhone = await OpsPhone.ResolveAsync(Db, ct);
         var replyTo  = opsInbox;
 
         IDbContextTransaction? transaction = null;
@@ -118,7 +117,7 @@ public class AdminSupplierIntroController(
 
             var messages = eligible
                 .Select(s => (Supplier: s,
-                              Message: SupplierIntroComposer.Compose(s, appUrl, opsInbox, opsPhone)))
+                              Message: SupplierIntroComposer.Compose(s, appUrl, opsInbox)))
                 .ToList();
 
             var now    = DateTime.UtcNow;

@@ -56,11 +56,6 @@ public sealed class ConciergeOutreachService(
             .Where(s => requestedIds.Contains(s.Id))
             .ToDictionaryAsync(s => s.Id, ct);
 
-        // Read outside the transaction: the phone is decoration, and pulling
-        // PlatformSettings into the Serializable snapshot would widen the
-        // conflict surface for no reason.
-        var opsPhone = await OpsPhone.ResolveAsync(db, ct);
-
         var sent    = new List<OutreachSentRecipient>();
         var skipped = new List<OutreachSkippedRecipient>();
         var emails  = new List<(string To, string Subject, string TextBody, string? HtmlBody)>();
@@ -111,7 +106,7 @@ public sealed class ConciergeOutreachService(
                 // the email and the stored row always carry the same token.
                 var quoteToken = OfferToken.Generate();
                 var message = ProviderOutreachComposer.Compose(
-                    lead, supplier, config["AppUrl"], quoteToken, opsPhone);
+                    lead, supplier, config["AppUrl"], quoteToken);
                 emails.Add((to, message.Subject, message.TextBody, message.HtmlBody));
 
                 var row = new ProviderOutreach

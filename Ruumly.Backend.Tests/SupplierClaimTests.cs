@@ -529,23 +529,44 @@ public class SupplierClaimTests
             .TextBody.Should().NotContain("/claim/");
     }
 
+    /// <summary>
+    /// Golden copy of the two supplier-facing "questions?" lines. The founder
+    /// retired the support phone in 2026-08 and does not take provider calls:
+    /// the only channels are a reply and the contact page. Pinned verbatim in
+    /// all five languages so a well-meaning edit cannot quietly reintroduce a
+    /// number, a WhatsApp invitation or an untranslated English fallback.
+    /// </summary>
     [Fact]
-    public void OutreachAndIntroCopy_OfferWhatsAppInEveryLanguage()
+    public void IntroAndOutreachCopy_OfferOnlyReplyAndTheContactPage()
     {
-        // Baltic small operators live on WhatsApp; the founder's number is on it.
-        var expected = new Dictionary<string, string>
+        var intro = new Dictionary<string, string>
         {
-            ["et"] = "Küsimused? Helistage, saatke SMS või WhatsApp numbrile +372 5805 7795 või vastake lihtsalt sellele kirjale.",
-            ["en"] = "Questions? Call, SMS or WhatsApp +372 5805 7795, or simply reply to this email.",
-            ["ru"] = "Вопросы? Позвоните, напишите SMS или в WhatsApp на номер +372 5805 7795 либо просто ответьте на это письмо.",
-            ["lv"] = "Jautājumi? Zvaniet, sūtiet īsziņu vai WhatsApp uz +372 5805 7795 vai vienkārši atbildiet uz šo e-pastu.",
-            ["lt"] = "Klausimai? Skambinkite, rašykite SMS arba WhatsApp numeriu +372 5805 7795 arba tiesiog atsakykite į šį laišką.",
+            ["et"] = "Küsimused? Vastake lihtsalt sellele kirjale või kirjutage meile kontaktivormi kaudu: https://ruumly.eu/et/contact",
+            ["en"] = "Questions? Simply reply to this email, or write to us through our contact page: https://ruumly.eu/en/contact",
+            ["ru"] = "Вопросы? Просто ответьте на это письмо или напишите нам через форму на странице контактов: https://ruumly.eu/ru/contact",
+            ["lv"] = "Jautājumi? Vienkārši atbildiet uz šo e-pastu vai rakstiet mums, izmantojot kontaktu lapu: https://ruumly.eu/lv/contact",
+            ["lt"] = "Klausimai? Tiesiog atsakykite į šį laišką arba parašykite mums per kontaktų puslapį: https://ruumly.eu/lt/contact",
         };
 
-        foreach (var (lang, line) in expected)
+        var outreach = new Dictionary<string, string>
         {
-            EmailTranslations.For(lang)
-                .IntroQuestions(SupplierIntroComposer.DefaultOpsPhone).Should().Be(line);
+            ["et"] = "Küsimused? Vastake sellele kirjale või kirjutage meile kontaktivormi kaudu: https://ruumly.eu/et/contact",
+            ["en"] = "Questions? Reply to this email, or write to us through our contact page: https://ruumly.eu/en/contact",
+            ["ru"] = "Вопросы? Ответьте на это письмо или напишите нам через форму на странице контактов: https://ruumly.eu/ru/contact",
+            ["lv"] = "Jautājumi? Atbildiet uz šo e-pastu vai rakstiet mums, izmantojot kontaktu lapu: https://ruumly.eu/lv/contact",
+            ["lt"] = "Klausimai? Atsakykite į šį laišką arba parašykite mums per kontaktų puslapį: https://ruumly.eu/lt/contact",
+        };
+
+        foreach (var (lang, line) in intro)
+        {
+            var contact = FrontendUrl.Contact("https://ruumly.eu", lang);
+            EmailTranslations.For(lang).IntroQuestions(contact).Should().Be(line);
+        }
+
+        foreach (var (lang, line) in outreach)
+        {
+            var contact = FrontendUrl.Contact("https://ruumly.eu", lang);
+            EmailTranslations.For(lang).OutreachQuestions(contact).Should().Be(line);
         }
     }
 

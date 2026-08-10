@@ -29,18 +29,16 @@ public static class ProviderOutreachComposer
     /// as the explicit alternative, since Reply-To is the ops inbox. Never
     /// contains the customer's name/email/phone — the admin brokers the
     /// introduction.
+    ///
+    /// Since 2026-08 no support phone is printed: a provider with a question
+    /// replies to the mail or uses the contact page (<see cref="FrontendUrl.Contact"/>).
     /// </summary>
-    /// <param name="opsPhone">
-    /// Support phone from PlatformSettings (<c>opsPhone</c>). When null/blank the
-    /// phone line is omitted entirely — never render an empty or placeholder number.
-    /// </param>
     public static ProviderOutreachMessage Compose(
         DemandLead lead,
         Supplier supplier,
         string? appUrl = null,
-        string? quoteToken = null,
-        string? opsPhone = null)
-        => ComposeInLanguage(LanguageFor(supplier), lead, appUrl, quoteToken, opsPhone);
+        string? quoteToken = null)
+        => ComposeInLanguage(LanguageFor(supplier), lead, appUrl, quoteToken);
 
     /// <summary>
     /// Language of outbound provider mail — the supplier's own country, not the
@@ -60,8 +58,7 @@ public static class ProviderOutreachComposer
         string language,
         DemandLead lead,
         string? appUrl = null,
-        string? quoteToken = null,
-        string? opsPhone = null)
+        string? quoteToken = null)
     {
         var t = EmailTranslations.For(language);
         var route = string.IsNullOrWhiteSpace(lead.ToCity)
@@ -88,7 +85,7 @@ public static class ProviderOutreachComposer
         var quoteUrl = string.IsNullOrWhiteSpace(quoteToken)
             ? null
             : FrontendUrl.Localized(appUrl, language, $"quote/{quoteToken}");
-        var phone = string.IsNullOrWhiteSpace(opsPhone) ? null : opsPhone.Trim();
+        var questions = t.OutreachQuestions(FrontendUrl.Contact(appUrl, language));
 
         var facts = new List<(string Label, string Value)>
         {
@@ -113,8 +110,8 @@ public static class ProviderOutreachComposer
         return new(
             language,
             subject,
-            BuildText(t, facts, urgentLine, quoteUrl, phone),
-            BuildHtml(t, facts, urgentLine, quoteUrl, phone));
+            BuildText(t, facts, urgentLine, quoteUrl, questions),
+            BuildHtml(t, facts, urgentLine, quoteUrl, questions, FrontendUrl.Contact(appUrl, language)));
     }
 
     private static string BuildText(
@@ -122,7 +119,7 @@ public static class ProviderOutreachComposer
         IReadOnlyList<(string Label, string Value)> facts,
         string? urgentLine,
         string? quoteUrl,
-        string? phone)
+        string questions)
     {
         var lines = new List<string>
         {
@@ -153,9 +150,9 @@ public static class ProviderOutreachComposer
         lines.Add("");
         lines.Add(t.OutreachReplyAlternative);
         lines.Add("");
+        lines.Add(questions);
+        lines.Add("");
         lines.Add(t.OutreachSignature);
-        if (phone is not null)
-            lines.Add($"{t.OutreachPhoneLabel}: {phone}");
 
         return string.Join("\n", lines);
     }
@@ -171,7 +168,8 @@ public static class ProviderOutreachComposer
         IReadOnlyList<(string Label, string Value)> facts,
         string? urgentLine,
         string? quoteUrl,
-        string? phone)
+        string questions,
+        string contactUrl)
     {
         // Minimal escaper rather than WebUtility.HtmlEncode: that one turns every
         // non-ASCII character into a numeric entity, which would mangle õ/ä/ü/ų and
@@ -185,6 +183,19 @@ public static class ProviderOutreachComposer
             .Replace(">", "&gt;")
             .Replace("\"", "&quot;");
         static string Multiline(string value) => E(value).Replace("\n", "<br>");
+
+        // The contact page is now the only channel besides replying, so its URL
+        // has to be clickable: most clients do NOT auto-link a bare URL sitting
+        // in an HTML body. Split the rendered sentence on the URL that was just
+        // interpolated into it and wrap that one segment in an anchor.
+        static string Linkified(string sentence, string url)
+        {
+            var at = sentence.IndexOf(url, StringComparison.Ordinal);
+            if (at < 0) return E(sentence);
+            return E(sentence[..at])
+                 + $"""<a href="{E(url)}" style="color:{Teal};">{E(url)}</a>"""
+                 + E(sentence[(at + url.Length)..]);
+        }
 
         var urgentHtml = urgentLine is null
             ? ""
@@ -212,12 +223,6 @@ public static class ProviderOutreachComposer
                      <p style="margin:0 0 20px;color:{MutedText};font-size:13px;word-break:break-all;">{E(quoteUrl)}</p>
                """;
 
-        var phoneHtml = phone is null
-            ? ""
-            : $"""
-                     <p style="margin:4px 0 0;color:{MutedText};font-size:14px;">{E(t.OutreachPhoneLabel)}: {E(phone)}</p>
-               """;
-
         return $"""
             <!DOCTYPE html>
             <html>
@@ -242,9 +247,9 @@ public static class ProviderOutreachComposer
                         </table>
                         <p style="margin:0 0 20px;color:{BodyText};font-size:15px;line-height:1.6;">{E(t.OutreachAsk)}</p>
             {ctaHtml}
-                        <p style="margin:0 0 24px;color:{BodyText};font-size:15px;line-height:1.6;">{E(t.OutreachReplyAlternative)}</p>
+                        <p style="margin:0 0 20px;color:{BodyText};font-size:15px;line-height:1.6;">{E(t.OutreachReplyAlternative)}</p>
+                        <p style="margin:0 0 24px;color:{BodyText};font-size:15px;line-height:1.6;">{Linkified(questions, contactUrl)}</p>
                         <p style="margin:0;color:{MutedText};font-size:14px;line-height:1.6;">{Multiline(t.OutreachSignature)}</p>
-            {phoneHtml}
                       </td>
                     </tr>
                   </table>
