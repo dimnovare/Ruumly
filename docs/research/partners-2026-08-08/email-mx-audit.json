@@ -1,0 +1,4157 @@
+{
+  "generatedAt": "2026-08-09",
+  "summary": {
+    "suppliersWithEmail": 801,
+    "distinctDomains": 482,
+    "ok": 477,
+    "aRecordOnly": 3,
+    "noMx": 0,
+    "nxdomain": 2,
+    "suppliersAtRisk": 5
+  },
+  "domains": [
+    {
+      "domain": "esvo.ee",
+      "status": "nxdomain",
+      "supplierCount": 1,
+      "mx": []
+    },
+    {
+      "domain": "kapsel24.ee",
+      "status": "nxdomain",
+      "supplierCount": 1,
+      "mx": []
+    },
+    {
+      "domain": "noortegija.ee",
+      "status": "a_record_only",
+      "supplierCount": 1,
+      "mx": []
+    },
+    {
+      "domain": "zebra.lt",
+      "status": "a_record_only",
+      "supplierCount": 1,
+      "mx": []
+    },
+    {
+      "domain": "t49.ee",
+      "status": "a_record_only",
+      "supplierCount": 1,
+      "mx": []
+    },
+    {
+      "domain": "gmail.com",
+      "status": "ok",
+      "supplierCount": 86,
+      "mx": [
+        "5 gmail-smtp-in.l.google.com",
+        "10 alt1.gmail-smtp-in.l.google.com",
+        "20 alt2.gmail-smtp-in.l.google.com",
+        "30 alt3.gmail-smtp-in.l.google.com",
+        "40 alt4.gmail-smtp-in.l.google.com"
+      ]
+    },
+    {
+      "domain": "viada.lt",
+      "status": "ok",
+      "supplierCount": 35,
+      "mx": [
+        "0 viada-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "viadabaltija.lv",
+      "status": "ok",
+      "supplierCount": 27,
+      "mx": [
+        "10 mail.viadabaltija.lv"
+      ]
+    },
+    {
+      "domain": "balticpetroleum.lt",
+      "status": "ok",
+      "supplierCount": 25,
+      "mx": [
+        "100 mail.balticpetroleum.lt"
+      ]
+    },
+    {
+      "domain": "kabi.lv",
+      "status": "ok",
+      "supplierCount": 15,
+      "mx": [
+        "1 aspmx.l.google.com",
+        "5 alt1.aspmx.l.google.com",
+        "5 alt2.aspmx.l.google.com",
+        "10 alt3.aspmx.l.google.com",
+        "10 alt4.aspmx.l.google.com"
+      ]
+    },
+    {
+      "domain": "boxrent.lv",
+      "status": "ok",
+      "supplierCount": 13,
+      "mx": [
+        "5 mx1.hostinger.lv",
+        "10 mx2.hostinger.lv"
+      ]
+    },
+    {
+      "domain": "noliktava1.lv",
+      "status": "ok",
+      "supplierCount": 13,
+      "mx": [
+        "10 mail.noliktava1.lv",
+        "20 mx2.garmtech.com"
+      ]
+    },
+    {
+      "domain": "inbox.lv",
+      "status": "ok",
+      "supplierCount": 10,
+      "mx": [
+        "1 mx1.inbox.lv",
+        "1 mx2.inbox.lv"
+      ]
+    },
+    {
+      "domain": "saurida.lt",
+      "status": "ok",
+      "supplierCount": 10,
+      "mx": [
+        "10 sekvoja.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "boxrent.lt",
+      "status": "ok",
+      "supplierCount": 9,
+      "mx": [
+        "5 mx1.hostinger.com",
+        "10 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "ramirent.ee",
+      "status": "ok",
+      "supplierCount": 8,
+      "mx": [
+        "0 ramirent-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "virsi.lv",
+      "status": "ok",
+      "supplierCount": 7,
+      "mx": [
+        "1 virsi-lv.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "corpusa.lt",
+      "status": "ok",
+      "supplierCount": 6,
+      "mx": [
+        "0 corpusa-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "boxstorage.lv",
+      "status": "ok",
+      "supplierCount": 5,
+      "mx": [
+        "10 mail.boxstorage.lv"
+      ]
+    },
+    {
+      "domain": "safebox.lv",
+      "status": "ok",
+      "supplierCount": 5,
+      "mx": [
+        "10 mail.safebox.lv"
+      ]
+    },
+    {
+      "domain": "ainava.lt",
+      "status": "ok",
+      "supplierCount": 4,
+      "mx": [
+        "0 ainava-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "akvija.lt",
+      "status": "ok",
+      "supplierCount": 4,
+      "mx": [
+        "10 akvija.lt"
+      ]
+    },
+    {
+      "domain": "daiktams.lt",
+      "status": "ok",
+      "supplierCount": 4,
+      "mx": [
+        "10 mail.daiktams.lt"
+      ]
+    },
+    {
+      "domain": "espak.ee",
+      "status": "ok",
+      "supplierCount": 4,
+      "mx": [
+        "10 mh22.elkdata.ee",
+        "20 mh1.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "jozita.lt",
+      "status": "ok",
+      "supplierCount": 4,
+      "mx": [
+        "10 jozita-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "mail.ee",
+      "status": "ok",
+      "supplierCount": 4,
+      "mx": [
+        "10 mx-in.inbox.eu"
+      ]
+    },
+    {
+      "domain": "miil.ee",
+      "status": "ok",
+      "supplierCount": 4,
+      "mx": [
+        "10 smtp2.almic.ee"
+      ]
+    },
+    {
+      "domain": "sol.lt",
+      "status": "ok",
+      "supplierCount": 4,
+      "mx": [
+        "5 sol-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "cleansolutions.lt",
+      "status": "ok",
+      "supplierCount": 3,
+      "mx": [
+        "0 cleansolutions-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "hot.ee",
+      "status": "ok",
+      "supplierCount": 3,
+      "mx": [
+        "10 mx.dka.mailcore.net"
+      ]
+    },
+    {
+      "domain": "inbox.lt",
+      "status": "ok",
+      "supplierCount": 3,
+      "mx": [
+        "10 mx-in.inbox.eu"
+      ]
+    },
+    {
+      "domain": "latnet.lv",
+      "status": "ok",
+      "supplierCount": 3,
+      "mx": [
+        "10 mx.sigmanet.lv",
+        "20 mx2.sigmanet.lv"
+      ]
+    },
+    {
+      "domain": "talga.lt",
+      "status": "ok",
+      "supplierCount": 3,
+      "mx": [
+        "0 talga-lt.mail.protection.outlook.com",
+        "10 anakonda.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "valstapas.lt",
+      "status": "ok",
+      "supplierCount": 3,
+      "mx": [
+        "10 valstapas.lt"
+      ]
+    },
+    {
+      "domain": "vitaresta.lt",
+      "status": "ok",
+      "supplierCount": 3,
+      "mx": [
+        "10 vitaresta.lt"
+      ]
+    },
+    {
+      "domain": "ansvil.ee",
+      "status": "ok",
+      "supplierCount": 2,
+      "mx": [
+        "10 mail.ansvil.ee"
+      ]
+    },
+    {
+      "domain": "blackline.ee",
+      "status": "ok",
+      "supplierCount": 2,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "citystorage.lt",
+      "status": "ok",
+      "supplierCount": 2,
+      "mx": [
+        "10 mail.citystorage.lt"
+      ]
+    },
+    {
+      "domain": "depo.lv",
+      "status": "ok",
+      "supplierCount": 2,
+      "mx": [
+        "10 mx-gw-01.depo.lv",
+        "10 mx-gw-02.depo.lv",
+        "100 mx2.deac.lv"
+      ]
+    },
+    {
+      "domain": "deppo.lv",
+      "status": "ok",
+      "supplierCount": 2,
+      "mx": [
+        "0 mail.deppo.lv"
+      ]
+    },
+    {
+      "domain": "greenas.lt",
+      "status": "ok",
+      "supplierCount": 2,
+      "mx": [
+        "10 mx.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "haagiseabi.ee",
+      "status": "ok",
+      "supplierCount": 2,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "hepa.ee",
+      "status": "ok",
+      "supplierCount": 2,
+      "mx": [
+        "0 hepa-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "kaubavedu.ee",
+      "status": "ok",
+      "supplierCount": 2,
+      "mx": [
+        "0 mail.kaubavedu.ee"
+      ]
+    },
+    {
+      "domain": "konteinerladu.ee",
+      "status": "ok",
+      "supplierCount": 2,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "laverna.ee",
+      "status": "ok",
+      "supplierCount": 2,
+      "mx": [
+        "0 laverna.ee"
+      ]
+    },
+    {
+      "domain": "moving.lv",
+      "status": "ok",
+      "supplierCount": 2,
+      "mx": [
+        "10 mx.sigmanet.lv",
+        "20 mx2.sigmanet.lv"
+      ]
+    },
+    {
+      "domain": "next-storage.lv",
+      "status": "ok",
+      "supplierCount": 2,
+      "mx": [
+        "10 mail.hostings.lv"
+      ]
+    },
+    {
+      "domain": "pakendikeskus.ee",
+      "status": "ok",
+      "supplierCount": 2,
+      "mx": [
+        "0 pakendikeskus-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "pereezd.ee",
+      "status": "ok",
+      "supplierCount": 2,
+      "mx": [
+        "10 mta.toplink.ee"
+      ]
+    },
+    {
+      "domain": "radvyde.lt",
+      "status": "ok",
+      "supplierCount": 2,
+      "mx": [
+        "10 burnotis.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "svarossalis.lt",
+      "status": "ok",
+      "supplierCount": 2,
+      "mx": [
+        "10 svarossalis.lt"
+      ]
+    },
+    {
+      "domain": "zebracargo.com",
+      "status": "ok",
+      "supplierCount": 2,
+      "mx": [
+        "10 mx.latnet.lv",
+        "20 mx2.latnet.lv",
+        "30 mx3.latnet.lv"
+      ]
+    },
+    {
+      "domain": "topclean.lt",
+      "status": "ok",
+      "supplierCount": 2,
+      "mx": [
+        "10 topclean-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "transekspedicija.lt",
+      "status": "ok",
+      "supplierCount": 2,
+      "mx": [
+        "0 transekspedicija-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "via3l.eu",
+      "status": "ok",
+      "supplierCount": 2,
+      "mx": [
+        "0 via3l-eu.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "yahoo.com",
+      "status": "ok",
+      "supplierCount": 2,
+      "mx": [
+        "1 mta7.am0.yahoodns.net",
+        "1 mta6.am0.yahoodns.net",
+        "1 mta5.am0.yahoodns.net"
+      ]
+    },
+    {
+      "domain": "2draugaiveza.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 lydeka.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "3pl.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 3pl-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "3plservices.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.3plservices.lv",
+        "20 mx2.garmtech.com"
+      ]
+    },
+    {
+      "domain": "abcleaning.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh22.elkdata.ee",
+        "20 mh1.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "abcsvara.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 abcsvara.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "achtung.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "adduco.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "akm.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 akm.ee"
+      ]
+    },
+    {
+      "domain": "akrent.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.geenet.eu"
+      ]
+    },
+    {
+      "domain": "aktprojekt.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh27.elkdata.ee",
+        "20 mh2.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "alausa.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 alausa-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "albionmotors.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 albionmotors.ee"
+      ]
+    },
+    {
+      "domain": "aldosa.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 aldosa-lt.mail.protection.outlook.com",
+        "20 aldosa.lt"
+      ]
+    },
+    {
+      "domain": "alexela.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 alexela-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "alfa-valymas.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 aksolotlis.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "alfarent.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 mail.alfarent.ee"
+      ]
+    },
+    {
+      "domain": "alpi.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 alpi-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "alvicar.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 alvicar.lv"
+      ]
+    },
+    {
+      "domain": "ampartas.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.hostinger.com",
+        "10 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "amvista.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mustangas.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "anderman.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 mail.anderman.lv"
+      ]
+    },
+    {
+      "domain": "antalis.com",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 de-smtp-inbound-1.mimecast.com",
+        "10 de-smtp-inbound-2.mimecast.com"
+      ]
+    },
+    {
+      "domain": "apapra.com",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 gyslotis.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "apollo.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.online.lv"
+      ]
+    },
+    {
+      "domain": "aquacleanpro.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 aquacleanpro.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "arcovara.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 arcovara-ee.mail.eo.outlook.com"
+      ]
+    },
+    {
+      "domain": "arijus.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 arijus-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "armeka.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.oradomail.com"
+      ]
+    },
+    {
+      "domain": "armo.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 armo-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "arulaveod.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "asaura.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.hostinger.com",
+        "10 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "askstorage.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.hostinger.com",
+        "10 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "asvara.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 ASPMX.L.GOOGLE.COM",
+        "5 ALT1.ASPMX.L.GOOGLE.COM",
+        "5 ALT2.ASPMX.L.GOOGLE.COM",
+        "10 ALT3.ASPMX.L.GOOGLE.COM",
+        "10 ALT4.ASPMX.L.GOOGLE.COM"
+      ]
+    },
+    {
+      "domain": "atila.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 panda.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "atlante.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "atramant.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.atramant.lt"
+      ]
+    },
+    {
+      "domain": "atrent.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.nss.ee"
+      ]
+    },
+    {
+      "domain": "aukseba.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 srv2.liubit.lt",
+        "20 srv1.liubit.lt"
+      ]
+    },
+    {
+      "domain": "auksinebure.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 lipikas.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "auto4rent.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 auto4rent.lt"
+      ]
+    },
+    {
+      "domain": "autoalytus.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 strazdas.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "autobanga.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.autobanga.lt"
+      ]
+    },
+    {
+      "domain": "autocentrs.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx.online.lv"
+      ]
+    },
+    {
+      "domain": "autoluks.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "autonuoma123.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 autonuoma123.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "autorent.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx1.zone.eu",
+        "20 mx2.zone.eu"
+      ]
+    },
+    {
+      "domain": "autoverslas.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 autoverslas-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "autoverus.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 lapenis.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "ava.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mail.ava.ee"
+      ]
+    },
+    {
+      "domain": "avector.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.zohomail.com",
+        "20 mx2.zohomail.com"
+      ]
+    },
+    {
+      "domain": "balcia.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 balcia-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "balt-cargo.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.balt-cargo.lt"
+      ]
+    },
+    {
+      "domain": "baltama.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 plaukikas.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "balticclouds.eu",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.balticclouds.eu"
+      ]
+    },
+    {
+      "domain": "baltrevis.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx1.titan.email",
+        "20 mx2.titan.email"
+      ]
+    },
+    {
+      "domain": "baltroute.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 smtp.google.com"
+      ]
+    },
+    {
+      "domain": "bauhof.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 bauhof-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "bcm.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 pastas.balt.net"
+      ]
+    },
+    {
+      "domain": "bobino.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 bobino.lt"
+      ]
+    },
+    {
+      "domain": "bolivar.ltd",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "bolt.eu",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 aspmx.l.google.com",
+        "5 alt1.aspmx.l.google.com",
+        "5 alt2.aspmx.l.google.com",
+        "10 alt3.aspmx.l.google.com",
+        "10 alt4.aspmx.l.google.com"
+      ]
+    },
+    {
+      "domain": "boxin.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 boxin-lv.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "boxinn.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 ASPMX.L.GOOGLE.com",
+        "5 ALT1.ASPMX.L.GOOGLE.com",
+        "5 ALT2.ASPMX.L.GOOGLE.com",
+        "10 ALT4.ASPMX.L.GOOGLE.com",
+        "10 ALT3.ASPMX.L.GOOGLE.com"
+      ]
+    },
+    {
+      "domain": "boxo.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.boxo.ee",
+        "20 mx2.garmtech.com"
+      ]
+    },
+    {
+      "domain": "boxstorage.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.boxstorage.lt"
+      ]
+    },
+    {
+      "domain": "bssgrupe.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 bssgrupe-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "bta.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 bta-ee.mail.protection.outlook.com",
+        "10 mx1.bta.lv",
+        "20 mail.bta.lv"
+      ]
+    },
+    {
+      "domain": "bulvar.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "bumova.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 stulgys.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "bus.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 bus-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "bus4rent.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 sa.serveris.lv",
+        "20 sa2.serveris.lv"
+      ]
+    },
+    {
+      "domain": "busu-noma.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 busu-noma.lv"
+      ]
+    },
+    {
+      "domain": "cargis.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 gedutis.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "cargoriga.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 in.intech.lv"
+      ]
+    },
+    {
+      "domain": "citybee.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 citybee-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "citystock.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "cleanart.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 cleanart.lt"
+      ]
+    },
+    {
+      "domain": "cleaningriga.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "32 route3.mx.cloudflare.net",
+        "55 route1.mx.cloudflare.net",
+        "68 route2.mx.cloudflare.net"
+      ]
+    },
+    {
+      "domain": "cleanit.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 aspmx.l.google.com",
+        "5 alt1.aspmx.l.google.com",
+        "5 alt2.aspmx.l.google.com",
+        "10 alt3.aspmx.l.google.com",
+        "10 alt4.aspmx.l.google.com"
+      ]
+    },
+    {
+      "domain": "cleanland.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 cleanland.lv"
+      ]
+    },
+    {
+      "domain": "cleanteam.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 cleanteam.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "cleantrend.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh4.elkdata.ee",
+        "20 mh6.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "coralclean.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh26.elkdata.ee",
+        "20 mh1.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "cvn.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 smtp.google.com"
+      ]
+    },
+    {
+      "domain": "damtransa.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 damtransa.lt"
+      ]
+    },
+    {
+      "domain": "danstore.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 danstore-lv.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "dausta.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.dausta.lt"
+      ]
+    },
+    {
+      "domain": "deklarantai.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 deklarantai.lt"
+      ]
+    },
+    {
+      "domain": "dotbox.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "dragonetrent.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "dussmann.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 dussmann-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "ecobox.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 smtp2.almic.ee"
+      ]
+    },
+    {
+      "domain": "ecoservice.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 ecoservice-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "ecotrip.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 ecotrip-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "edovis.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 levanda.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "ekoplaneta.eu",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 ekoplaneta.eu"
+      ]
+    },
+    {
+      "domain": "ekovina.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 smiltinukas.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "ekspert.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 aspmx.l.google.com",
+        "5 alt1.aspmx.l.google.com",
+        "5 alt2.aspmx.l.google.com",
+        "10 aspmx3.googlemail.com",
+        "10 aspmx2.googlemail.com"
+      ]
+    },
+    {
+      "domain": "elgas.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 aspmx.l.google.com"
+      ]
+    },
+    {
+      "domain": "eliitserv.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "elkerija.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.elkerija.lt"
+      ]
+    },
+    {
+      "domain": "elpbaltics.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.hostinger.com",
+        "10 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "entrega.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.zoho.eu",
+        "20 mx2.zoho.eu",
+        "50 mx3.zoho.eu"
+      ]
+    },
+    {
+      "domain": "envio.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mta.toplink.ee"
+      ]
+    },
+    {
+      "domain": "ergo.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 ergo-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "erigoda.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.erigoda.lt"
+      ]
+    },
+    {
+      "domain": "espsvara.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.espsvara.lt"
+      ]
+    },
+    {
+      "domain": "estmetall.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "eugs.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 aspmx.l.google.com",
+        "5 alt1.aspmx.l.google.com",
+        "5 alt2.aspmx.l.google.com",
+        "10 alt3.aspmx.l.google.com",
+        "10 alt4.aspmx.l.google.com"
+      ]
+    },
+    {
+      "domain": "eurosiunta.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.hostinger.com",
+        "10 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "eurovalymas.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 eurovalymas-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "everaus.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 everaus-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "everesta.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 lynas.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "expertpuhastus.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.expertpuhastus.ee"
+      ]
+    },
+    {
+      "domain": "ferogama.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 ferogama-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "ferroterminal.eu",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 aspmx.l.google.com",
+        "5 alt2.aspmx.l.google.com",
+        "5 alt1.aspmx.l.google.com",
+        "10 alt4.aspmx.l.google.com",
+        "10 alt3.aspmx.l.google.com"
+      ]
+    },
+    {
+      "domain": "ffinternationalmovers.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx-01.deac.lv",
+        "100 mx2.deac.lv",
+        "200 mx3.deac.lv"
+      ]
+    },
+    {
+      "domain": "fidstrans.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh27.elkdata.ee",
+        "20 mh2.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "frekenbok.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 frekenbok.lt"
+      ]
+    },
+    {
+      "domain": "frigolita.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.frigolita.lt"
+      ]
+    },
+    {
+      "domain": "fsnoma.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx1.schedulebull.com"
+      ]
+    },
+    {
+      "domain": "gaisve.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 bambukas.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "gammasp.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.gammasp.lv",
+        "20 mx2.garmtech.com"
+      ]
+    },
+    {
+      "domain": "gby.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 gby-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "gcleaning.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.gcleaning.lv.cust.b.hostedemail.com"
+      ]
+    },
+    {
+      "domain": "gerasvalymas.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 gerasvalymas-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "gjensidige.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 gjensidige-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "gosselin-moving.com",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 gosselingroup-eu-1.fortimailcloud.com",
+        "20 gosselingroup-eu-2.fortimailcloud.com"
+      ]
+    },
+    {
+      "domain": "greenexpress.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 greenexpress.lt"
+      ]
+    },
+    {
+      "domain": "haagiserent.com",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.haagiserent.com"
+      ]
+    },
+    {
+      "domain": "haagisterent.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "hidrovalis.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.oradomail.com"
+      ]
+    },
+    {
+      "domain": "hiiuauto.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "hiku.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "100 us2.mx3.mailhostbox.com",
+        "100 us2.mx1.mailhostbox.com",
+        "100 us2.mx2.mailhostbox.com"
+      ]
+    },
+    {
+      "domain": "hippobox.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 mx.inbox.eu"
+      ]
+    },
+    {
+      "domain": "hoiuladu.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh16.elkdata.ee",
+        "20 mh18.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "holder.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 aspmx.l.google.com",
+        "5 alt1.aspmx.l.google.com",
+        "5 alt2.aspmx.l.google.com",
+        "10 alt3.aspmx.l.google.com",
+        "10 alt4.aspmx.l.google.com"
+      ]
+    },
+    {
+      "domain": "hoogmobility.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 smtp.google.com"
+      ]
+    },
+    {
+      "domain": "hoonegrupp.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.hoonegrupp.ee"
+      ]
+    },
+    {
+      "domain": "hotmail.com",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "2 hotmail-com.olc.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "iclean.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 iclean.lt"
+      ]
+    },
+    {
+      "domain": "if.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 if-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "igmeda.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "iizi.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 iizi-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "ilvesmotors.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "impuhastus.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "inoservice.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mustangas.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "interbus.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 sa.serveris.lv",
+        "20 sa2.serveris.lv"
+      ]
+    },
+    {
+      "domain": "is.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "iva5.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.sigmanet.lv",
+        "20 mx2.sigmanet.lv"
+      ]
+    },
+    {
+      "domain": "ivotar.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "ivpluss.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 ivpluss-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "jakulc.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 jakulc-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "jarvapuit.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh16.elkdata.ee",
+        "20 mh18.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "jarvarehvid.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh27.elkdata.ee",
+        "20 mh2.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "jaukraunam.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.hostinger.com",
+        "10 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "javicar.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "jonavosgrudai.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 jonavosgrudai-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "judisa.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 judisa-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "junoma.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 junoma.lt"
+      ]
+    },
+    {
+      "domain": "kagris.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.kagris.lt"
+      ]
+    },
+    {
+      "domain": "kaubik-rent.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 kaubik-rent.ee"
+      ]
+    },
+    {
+      "domain": "kaubikud.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "kaubikurentparnus.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "kaubikurenttartus.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh3.elkdata.ee",
+        "20 mh5.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "keepit.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.keepit.ee"
+      ]
+    },
+    {
+      "domain": "keepp.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.sigmanet.lv",
+        "20 mx2.sigmanet.lv"
+      ]
+    },
+    {
+      "domain": "keilahaldus.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "keliauk-bus.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 pastas.balt.net"
+      ]
+    },
+    {
+      "domain": "kelioniutiltas.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 sicista.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "kendra.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 mail.kendra.ee"
+      ]
+    },
+    {
+      "domain": "kesklog.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 cmx.telia.ee"
+      ]
+    },
+    {
+      "domain": "kirtimu47.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.kirtimu47.lt"
+      ]
+    },
+    {
+      "domain": "kitokiadiena.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 kitokiadiena.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "klg.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 aspmx.l.google.com",
+        "20 alt1.aspmx.l.google.com",
+        "30 alt2.aspmx.l.google.com",
+        "40 aspmx2.googlemail.com",
+        "50 aspmx3.googlemail.com"
+      ]
+    },
+    {
+      "domain": "klin.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.klin.ee"
+      ]
+    },
+    {
+      "domain": "klps.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 klps.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "koduheaks.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh4.elkdata.ee",
+        "20 mh6.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "kolimine.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "kolimisabi.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "kolimisabitallinnas.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 aspmx.l.google.com",
+        "5 alt1.aspmx.l.google.com",
+        "5 alt2.aspmx.l.google.com",
+        "10 alt3.aspmx.l.google.com",
+        "10 alt4.aspmx.l.google.com"
+      ]
+    },
+    {
+      "domain": "kolimisprofid.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh4.elkdata.ee",
+        "20 mh6.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "kolimisroom.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh9.elkdata.ee",
+        "20 mh11.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "kolimisteenistus.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "kolimisteenused.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.kolimisteenused.ee"
+      ]
+    },
+    {
+      "domain": "kolimisveod.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh24.elkdata.ee",
+        "20 mh2.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "komanda24.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.komanda24.lv",
+        "20 mx2.garmtech.com"
+      ]
+    },
+    {
+      "domain": "kookon.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "koristusteenused24.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.prism.ee"
+      ]
+    },
+    {
+      "domain": "kostus.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.kostus.lt"
+      ]
+    },
+    {
+      "domain": "kraunamvezam.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.hostinger.lt",
+        "10 mx2.hostinger.lt"
+      ]
+    },
+    {
+      "domain": "krausberg.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 krausberg-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "kraustina.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 krakmolas.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "kraustukai.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.hostinger.com",
+        "10 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "kraustymelis.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 kraustymelis.lt"
+      ]
+    },
+    {
+      "domain": "kraustymoguru.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.hostinger.com",
+        "10 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "kravu-mednieki.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 sa1.serveris.lv",
+        "20 sa2.serveris.lv"
+      ]
+    },
+    {
+      "domain": "krsnoma.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 krsnoma.lv"
+      ]
+    },
+    {
+      "domain": "kuressaareehitus.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "labakomanda.com",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx1.titan.email",
+        "20 mx2.titan.email"
+      ]
+    },
+    {
+      "domain": "ladu112.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "ladulinnas.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "lainepapp.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 aspmx.l.google.com",
+        "5 alt2.aspmx.l.google.com",
+        "5 alt1.aspmx.l.google.com",
+        "10 alt3.aspmx.l.google.com",
+        "10 alt4.aspmx.l.google.com"
+      ]
+    },
+    {
+      "domain": "langusvara.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 akacija.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "lappjamopp.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "laskana.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.laskana.lv"
+      ]
+    },
+    {
+      "domain": "latlog.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 latlog-lv.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "latstorage.com",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 latstorage.com"
+      ]
+    },
+    {
+      "domain": "lavidaclean.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "lavisa.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "lez-terminalas.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "lhv.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 lhv-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "liir.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 aspmx.l.google.com",
+        "20 alt1.aspmx.l.google.com",
+        "20 alt2.aspmx.l.google.com",
+        "30 aspmx3.googlemail.com",
+        "30 aspmx2.googlemail.com",
+        "30 aspmx4.googlemail.com",
+        "30 aspmx5.googlemail.com"
+      ]
+    },
+    {
+      "domain": "litkrausta.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.litkrausta.lt"
+      ]
+    },
+    {
+      "domain": "litperlas.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx1.hostinger.com",
+        "20 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "litviga.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 litviga.lt"
+      ]
+    },
+    {
+      "domain": "livas.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mail.livas.lv"
+      ]
+    },
+    {
+      "domain": "logikor.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.hostinger.com",
+        "10 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "logista.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 logista.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "lortransa.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 abrikosas.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "lsh.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 lsh-lv.mail.protection.outlook.com",
+        "32767 ms35007113.msv1.invalid"
+      ]
+    },
+    {
+      "domain": "lt.rhenus.com",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mxb-008e5201.gslb.pphosted.com",
+        "10 mxa-008e5201.gslb.pphosted.com"
+      ]
+    },
+    {
+      "domain": "luxpuhastus.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "mahub.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 mahub-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "majahaldus24.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh23.elkdata.ee",
+        "20 mh2.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "manfreds.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.zoho.com",
+        "20 mx2.zoho.com"
+      ]
+    },
+    {
+      "domain": "margyne.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 jurginas.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "markitransport.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "marteks.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "50 mx.inbox.eu"
+      ]
+    },
+    {
+      "domain": "megateip.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "meiker.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh20.elkdata.ee",
+        "20 mh2.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "meks.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 smtp.google.com"
+      ]
+    },
+    {
+      "domain": "merekonteiner.eu",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "mesjaucia.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.hostinger.com",
+        "10 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "miniladu24.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "minilaod.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh18.elkdata.ee",
+        "20 mh2.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "mobilisvara.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 briedis.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "moppi.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "movemaster.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "movepro.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.hostinger.com",
+        "10 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "moverleader.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 moverleader.lv"
+      ]
+    },
+    {
+      "domain": "movers.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 sa.serveris.lv",
+        "20 sa2.serveris.lv"
+      ]
+    },
+    {
+      "domain": "movesta.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.hostinger.com",
+        "10 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "moving.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 moving.ee"
+      ]
+    },
+    {
+      "domain": "moving24.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "movingcare.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx1.titan.email",
+        "20 mx2.titan.email"
+      ]
+    },
+    {
+      "domain": "movingexpert.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "mterminal.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 albatrosas.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "multipack.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 multipack-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "mystorage.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 s3142.fra1.stableserver.net"
+      ]
+    },
+    {
+      "domain": "namasirsodas.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 bastutis.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "namubites.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 gedutis.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "nestunvest.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 ASPMX.L.GOOGLE.COM",
+        "5 ALT1.ASPMX.L.GOOGLE.COM",
+        "5 ALT2.ASPMX.L.GOOGLE.COM",
+        "10 ALT3.ASPMX.L.GOOGLE.COM",
+        "10 ALT4.ASPMX.L.GOOGLE.COM"
+      ]
+    },
+    {
+      "domain": "niks.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "nordicministorages.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "nordnix.eu",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 nordnix-eu.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "normkoristus.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "norvid.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.hostinger.com",
+        "10 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "nuoma-auto.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.nuoma-auto.lt"
+      ]
+    },
+    {
+      "domain": "nuomis.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "nuvezam.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 liputis.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "officebee.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.officebee.lt"
+      ]
+    },
+    {
+      "domain": "olerex.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 olerex-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "olklinlv.com",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 smtp.google.com"
+      ]
+    },
+    {
+      "domain": "one.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 post.one.lt"
+      ]
+    },
+    {
+      "domain": "orgreita.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mulas.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "pakendi.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "pakendipood.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.pakendipood.ee"
+      ]
+    },
+    {
+      "domain": "pakkemeister.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "pakoshop.eu",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "panicom.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 panicom-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "panila.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh5.elkdata.ee",
+        "20 mh7.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "panpp.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 ricina.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "pansib.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "paperseal.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.paperseal.lv"
+      ]
+    },
+    {
+      "domain": "parcelsanas24.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 ASPMX.L.GOOGLE.COM",
+        "5 ALT2.ASPMX.L.GOOGLE.COM",
+        "5 ALT1.ASPMX.L.GOOGLE.COM",
+        "10 ALT4.ASPMX.L.GOOGLE.COM",
+        "10 ALT3.ASPMX.L.GOOGLE.COM"
+      ]
+    },
+    {
+      "domain": "pargilaod.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh22.elkdata.ee",
+        "20 mh24.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "parnasas.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 parnasas-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "parnuladu.eu",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.hostinger.com",
+        "10 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "parvadajumi24.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 smtp.google.com"
+      ]
+    },
+    {
+      "domain": "patatimber.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 patatimber-lv.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "peetriminiladu.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "pelikanai.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 jurginas.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "piche.eu",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 aspmx.l.google.com",
+        "10 alt1.aspmx.l.google.com",
+        "10 alt2.aspmx.l.google.com",
+        "20 alt3.aspmx.l.google.com",
+        "20 alt4.aspmx.l.google.com"
+      ]
+    },
+    {
+      "domain": "pointrent.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "poklis.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx1.titan.email",
+        "20 mx2.titan.email"
+      ]
+    },
+    {
+      "domain": "powerwash.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 aspmx.l.google.com",
+        "20 alt1.aspmx.l.google.com",
+        "30 alt2.aspmx.l.google.com",
+        "40 aspmx2.googlemail.com",
+        "50 aspmx3.googlemail.com"
+      ]
+    },
+    {
+      "domain": "premium7.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 premium7-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "presco.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 mail.presco.lv"
+      ]
+    },
+    {
+      "domain": "priekabosjums.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "priekabostau.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 priekabostau.lt"
+      ]
+    },
+    {
+      "domain": "priezavoti.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 mail.priezavoti.lv"
+      ]
+    },
+    {
+      "domain": "privalon.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "provalymas.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 provalymas.lt"
+      ]
+    },
+    {
+      "domain": "proventatransport.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 proventatransport.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "pssgroup.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 pssgroup-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "pzu.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 pzu-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "puhastuskuningad.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.puhastuskuningad.ee"
+      ]
+    },
+    {
+      "domain": "puhastustaht.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh7.elkdata.ee",
+        "20 mh9.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "puhtaks.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 puhtaks.ee"
+      ]
+    },
+    {
+      "domain": "puhver.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "qlin.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "raar.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "raja.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh27.elkdata.ee",
+        "20 mh2.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "rakvererent.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh23.elkdata.ee",
+        "20 mh2.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "rareminilaod.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "ratuotaprekyba.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "reinsaluauto.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "rendihaagis.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.rendihaagis.ee"
+      ]
+    },
+    {
+      "domain": "renneks.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "rentmotors.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 smtp.google.com"
+      ]
+    },
+    {
+      "domain": "reusemypack.com",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "reveko.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 reveko.lv"
+      ]
+    },
+    {
+      "domain": "rewico.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 rewico-lv.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "ritlogistika.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 sa.serveris.lv",
+        "20 sa2.serveris.lv"
+      ]
+    },
+    {
+      "domain": "rixfreight-group.com",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 rixfreightgroup-com02e.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "rokk.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "ronkaubaveod.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "rubus.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.rubus.lt"
+      ]
+    },
+    {
+      "domain": "saaretransport.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "sakuehitus.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh27.elkdata.ee",
+        "20 mh2.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "salva.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx-1.salva.ee",
+        "20 mx-2.salva.ee"
+      ]
+    },
+    {
+      "domain": "sandeliukai-klaipeda.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.hostinger.com",
+        "10 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "sandeliukai.com",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 nuodadantis.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "sandeliukucentras.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "sauliuta.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.sauliuta.lt"
+      ]
+    },
+    {
+      "domain": "seesam.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 seesam-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "seimaveza.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 seimaveza.lt"
+      ]
+    },
+    {
+      "domain": "selfstorage.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 imap.eunet.lv"
+      ]
+    },
+    {
+      "domain": "siauliusvara.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 citrinmedis.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "sienuva.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 sienuva.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "sigma.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 kedras.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "simsons.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "50 mx.inbox.eu"
+      ]
+    },
+    {
+      "domain": "sipelgasveod.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "sivita.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 sivita.lt"
+      ]
+    },
+    {
+      "domain": "skandibus.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.online.lv"
+      ]
+    },
+    {
+      "domain": "smartfleet.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "smartlyclean.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh3.elkdata.ee",
+        "20 mh5.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "solarhooldus.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "sorbus.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.sorbus.lv"
+      ]
+    },
+    {
+      "domain": "space24.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 aspmx.l.google.com",
+        "5 alt2.aspmx.l.google.com",
+        "5 alt1.aspmx.l.google.com",
+        "10 alt4.aspmx.l.google.com",
+        "10 alt3.aspmx.l.google.com"
+      ]
+    },
+    {
+      "domain": "spacehubstore.com",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.yandex.net"
+      ]
+    },
+    {
+      "domain": "spetsiaalne.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "spodre7.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.spodre7.lv.cust.b.hostedemail.com"
+      ]
+    },
+    {
+      "domain": "srauta.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 aspmx.l.google.com"
+      ]
+    },
+    {
+      "domain": "srautaservis.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 srautaservis.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "stb.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 stb.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "stork.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 stork.lt"
+      ]
+    },
+    {
+      "domain": "sunco.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "sutvarkom.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.hostinger.com",
+        "10 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "svaros.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 makropodas.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "svarosaleja.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.svarosaleja.lt"
+      ]
+    },
+    {
+      "domain": "svarosbiuras.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 mail.svarosbiuras.lt"
+      ]
+    },
+    {
+      "domain": "svarosdeive.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.svarosdeive.lt"
+      ]
+    },
+    {
+      "domain": "svarosdesantas.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 narcizas.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "svarosgarantas.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "svarosimperija.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.titan.email",
+        "10 mx2.titan.email"
+      ]
+    },
+    {
+      "domain": "svaroslaikas.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 tvertikas.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "svarosmisija.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "svarosprofesionalai.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.hostinger.com",
+        "15 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "svarosseses.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 figa.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "svarosuostas.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 ASPMX.L.GOOGLE.COM",
+        "5 ALT2.ASPMX.L.GOOGLE.COM",
+        "5 ALT1.ASPMX.L.GOOGLE.COM",
+        "10 ALT4.ASPMX.L.GOOGLE.COM",
+        "10 ALT3.ASPMX.L.GOOGLE.COM"
+      ]
+    },
+    {
+      "domain": "svarusvaru.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.oradomail.com"
+      ]
+    },
+    {
+      "domain": "swedbank.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail3.swedbank.ee",
+        "10 mail4.swedbank.ee"
+      ]
+    },
+    {
+      "domain": "zemuktechnika.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "takas.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "30 mail2.takas.lt"
+      ]
+    },
+    {
+      "domain": "tartukolimine.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh27.elkdata.ee",
+        "20 mh2.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "taskulaod.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "taunexauto.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "tavosandelis.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.hostinger.com",
+        "10 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "tavosvara.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 jaguaras.serveriai.lt",
+        "10 jaguaras.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "tebolar.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "50 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "teder.eu",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 teder.eu"
+      ]
+    },
+    {
+      "domain": "terminalenergia.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 terminalenergia-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "tervepuhastus.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 mail.tervepuhastus.ee"
+      ]
+    },
+    {
+      "domain": "tiki.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 tiki-ee.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "tkprojektai.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.tkprojektai.lt"
+      ]
+    },
+    {
+      "domain": "toostuspakend.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "topnuoma.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.hostinger.com",
+        "10 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "totaltransport.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 totaltransport-lv.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "transer.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "transneka.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 transneka.lt",
+        "100 backupmx.balticservers.com"
+      ]
+    },
+    {
+      "domain": "transnest.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 tuopa.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "transnita.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.transnita.lt"
+      ]
+    },
+    {
+      "domain": "transport.adrem.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 transport-adrem-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "transportira.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 smtp.google.com",
+        "1 aspmx.l.google.com",
+        "5 alt1.aspmx.l.google.com",
+        "5 alt2.aspmx.l.google.com",
+        "10 alt4.aspmx.l.google.com",
+        "10 alt3.aspmx.l.google.com"
+      ]
+    },
+    {
+      "domain": "trp.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 trp.lv"
+      ]
+    },
+    {
+      "domain": "tvarkingai.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 tvarkingai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "ubara.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 ubara.lt"
+      ]
+    },
+    {
+      "domain": "uhb.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 uhb-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "uksestukseni.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "ultima.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 sa1.serveris.lv",
+        "20 sa2.serveris.lv"
+      ]
+    },
+    {
+      "domain": "umbrina.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.umbrina.lt"
+      ]
+    },
+    {
+      "domain": "vagon.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.vagon.lt"
+      ]
+    },
+    {
+      "domain": "valau.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 skunkas.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "valmeco.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "valoresta.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 cukinija.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "valumina.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 valumina.lt"
+      ]
+    },
+    {
+      "domain": "valuna.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.valuna.lt"
+      ]
+    },
+    {
+      "domain": "valymaskaune.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.valymaskaune.lt"
+      ]
+    },
+    {
+      "domain": "valymasvisiems.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 valymasvisiems.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "valymopaslaugos24.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.hostinger.com",
+        "10 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "vanonsite.com",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 ASPMX.L.GOOGLE.com",
+        "5 ALT1.ASPMX.L.GOOGLE.com",
+        "5 ALT2.ASPMX.L.GOOGLE.com",
+        "10 ALT3.ASPMX.L.GOOGLE.com",
+        "10 ALT4.ASPMX.L.GOOGLE.com"
+      ]
+    },
+    {
+      "domain": "ventplac.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mx.latnet.lv",
+        "50 mx2.latnet.lv",
+        "100 mx3.latnet.lv"
+      ]
+    },
+    {
+      "domain": "veokolimisteenused.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.veokolimisteenused.ee"
+      ]
+    },
+    {
+      "domain": "veotakso.com",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.hostinger.com",
+        "10 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "veotransport.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "vestnest.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 aspmx.l.google.com",
+        "5 alt1.aspmx.l.google.com",
+        "5 alt2.aspmx.l.google.com",
+        "10 alt3.aspmx.l.google.com",
+        "10 alt4.aspmx.l.google.com"
+      ]
+    },
+    {
+      "domain": "viacargus.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 aksolotlis.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "vidaila.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.vidaila.lt"
+      ]
+    },
+    {
+      "domain": "viimsiarimaja.eu",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "viimsikoristus.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mh6.elkdata.ee",
+        "20 mh8.elkdata.ee"
+      ]
+    },
+    {
+      "domain": "vildega.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 ernis.serveriai.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "vingesterminalas.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 pastas.balt.net"
+      ]
+    },
+    {
+      "domain": "virveta.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 virveta-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "vistekel.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 zonemx.eu"
+      ]
+    },
+    {
+      "domain": "vivar.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 aspmx.l.google.com"
+      ]
+    },
+    {
+      "domain": "vlkravas.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 vlkravas.lv"
+      ]
+    },
+    {
+      "domain": "vml.ee",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 mail.vml.ee"
+      ]
+    },
+    {
+      "domain": "vollers.com",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 gw4189.fortimail.com"
+      ]
+    },
+    {
+      "domain": "vomada.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 vomada.lt"
+      ]
+    },
+    {
+      "domain": "vpcentras.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "10 vpcentras.lt",
+        "20 mx-backup.serveriai.lt"
+      ]
+    },
+    {
+      "domain": "vrautonoma.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "5 mx1.hostinger.com",
+        "10 mx2.hostinger.com"
+      ]
+    },
+    {
+      "domain": "vtranzitas.lt",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "0 vtranzitas-lt.mail.protection.outlook.com"
+      ]
+    },
+    {
+      "domain": "wellman.lv",
+      "status": "ok",
+      "supplierCount": 1,
+      "mx": [
+        "1 ASPMX.L.GOOGLE.COM",
+        "5 ALT2.ASPMX.L.GOOGLE.COM",
+        "5 ALT1.ASPMX.L.GOOGLE.COM",
+        "10 ASPMX2.GOOGLEMAIL.COM",
+        "10 ASPMX3.GOOGLEMAIL.COM"
+      ]
+    }
+  ],
+  "atRisk": [
+    {
+      "slug": "kapsel-minilaod",
+      "name": "Kapsel Minilaod",
+      "country": "EE",
+      "city": "Reola",
+      "email": "info@kapsel24.ee",
+      "domainStatus": "nxdomain"
+    },
+    {
+      "slug": "esvo-transport-turi",
+      "name": "Esvo Transport OÜ",
+      "country": "EE",
+      "city": "Türi",
+      "email": "esvo@esvo.ee",
+      "domainStatus": "nxdomain"
+    },
+    {
+      "slug": "noortegija",
+      "name": "Noortegija",
+      "country": "EE",
+      "city": "Tallinn",
+      "email": "info@noortegija.ee",
+      "domainStatus": "a_record_only"
+    },
+    {
+      "slug": "t49",
+      "name": "T49 Kolimisteenus",
+      "country": "EE",
+      "city": "Tallinn",
+      "email": "info@t49.ee",
+      "domainStatus": "a_record_only"
+    },
+    {
+      "slug": "rekota-siauliai",
+      "name": "Rekota, UAB",
+      "country": "LT",
+      "city": "Šiauliai",
+      "email": "rekota@zebra.lt",
+      "domainStatus": "a_record_only"
+    }
+  ]
+}
