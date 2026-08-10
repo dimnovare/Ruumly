@@ -125,6 +125,18 @@ if (string.IsNullOrWhiteSpace(montonioAccessKey) || string.IsNullOrWhiteSpace(mo
         "Set MONTONIO__ACCESSKEY and MONTONIO__SECRETKEY in Railway env vars.");
 }
 
+// ─── Resend webhook config validation ───
+// The bounce webhook (POST /api/webhooks/resend) authenticates callers by Svix
+// signature alone. Without the secret it fails closed (503) and every bounce is
+// lost again, so warn loudly at boot rather than discovering it in the logs.
+if (string.IsNullOrWhiteSpace(builder.Configuration["Resend:WebhookSecret"]))
+{
+    Console.WriteLine(
+        "[Ruumly] WARNING: Resend:WebhookSecret not configured. " +
+        "Bounce/complaint webhooks will be rejected with 503 and dead provider " +
+        "addresses will stay invisible. Set RESEND__WEBHOOKSECRET in Railway env vars.");
+}
+
 // ─── Distributed cache (Redis in prod, in-memory fallback for dev) ───
 var redisConn = Environment.GetEnvironmentVariable("REDIS_URL") ?? "";
 if (!string.IsNullOrEmpty(redisConn))
@@ -397,6 +409,7 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IFeaturedPartnersService, FeaturedPartnersService>();
 builder.Services.AddScoped<IConciergeOutreachService, ConciergeOutreachService>();
+builder.Services.AddScoped<IEmailDeliveryTracker, EmailDeliveryTracker>();
 builder.Services.AddScoped<ISupplierProfileService, SupplierProfileService>();
 builder.Services.AddScoped<IPaymentService, MontonioPaymentService>();
 builder.Services.AddScoped<IPlacesService, PlacesService>();

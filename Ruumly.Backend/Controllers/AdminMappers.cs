@@ -94,7 +94,12 @@ internal static class AdminMappers
         NextPollAt:               s.NextPollAt?.ToString("o"),
         LastPolledAt:             s.LastPolledAt?.ToString("o"),
         LastPollStatus:           s.LastPollStatus,
-        PollingEndpoint:          s.PollingEndpoint);
+        PollingEndpoint:          s.PollingEndpoint,
+        // Deliverability (Resend bounce webhook)
+        ContactEmailUnusable:     s.ContactEmailUnusable,
+        ContactEmailBouncedAt:    s.ContactEmailBouncedAt,
+        ContactEmailBounceType:   s.ContactEmailBounceType,
+        ContactEmailBounceReason: s.ContactEmailBounceReason);
 
     internal static IntegrationSettingsDto MapIntegrationSettings(Models.IntegrationSettings i) => new(
         Id:                  i.Id,

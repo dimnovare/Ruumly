@@ -63,5 +63,11 @@ public record SupplierDto(
     string?   NextPollAt,      // ISO-8601, null if not yet scheduled
     string?   LastPolledAt,    // ISO-8601, null if never polled
     string?   LastPollStatus,  // "ok" | "error" | null
-    string?   PollingEndpoint  // override URL; falls back to ApiEndpoint when null
+    string?   PollingEndpoint, // override URL; falls back to ApiEndpoint when null
+    // Email deliverability — written by the Resend bounce webhook. True means the
+    // address is dead: outreach skips this partner until an admin saves a new one.
+    bool      ContactEmailUnusable = false,
+    DateTime? ContactEmailBouncedAt = null,
+    string?   ContactEmailBounceType = null,    // "hard" | "soft" | "complaint"
+    string?   ContactEmailBounceReason = null
 );

@@ -179,6 +179,8 @@ public static class ProviderCandidateFinder
             primaryListing?.PriceUnit,
             lastOutreachAt is not null,
             lastOutreachAt,
+            supplier.ContactEmailUnusable,
+            supplier.ContactEmailBouncedAt,
             rankedLocations.Skip(1).Where(l => l.Id is not null).Select(l => new ProviderCandidateLocationDto(
                 l.Id!.Value,
                 l.Name,

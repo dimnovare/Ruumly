@@ -43,6 +43,7 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
     public DbSet<OfferOption>      OfferOptions       => Set<OfferOption>();
     public DbSet<ProviderOutreach> ProviderOutreaches => Set<ProviderOutreach>();
     public DbSet<SupplierClaim>    SupplierClaims     => Set<SupplierClaim>();
+    public DbSet<EmailDeliveryEvent> EmailDeliveryEvents => Set<EmailDeliveryEvent>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -124,6 +125,12 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
             .HasIndex(i => i.PaymentOrderId)
             .IsUnique()
             .HasFilter("\"PaymentOrderId\" IS NOT NULL");
+
+        // The Resend webhook is public and RETRIED — this unique index is the
+        // idempotency guard, not the app-code duplicate check in front of it.
+        model.Entity<EmailDeliveryEvent>()
+            .HasIndex(e => e.EventId)
+            .IsUnique();
 
         model.Entity<RefreshToken>()
             .HasIndex(e => e.TokenHash)

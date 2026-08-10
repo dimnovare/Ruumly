@@ -403,9 +403,14 @@ public class AdminOffersController(
                 : supplier.ContactEmail.Trim();
             var skipReason = email is null
                 ? "no_email"
-                : contactedSupplierIds.Contains(supplierId)
-                    ? "already_contacted"
-                    : null;
+                // Mirrors ConciergeOutreachService.SendAsync: a retired address
+                // is skipped there too, so the preview never promises a send
+                // that the batch will refuse.
+                : supplier.ContactEmailUnusable
+                    ? "email_bounced"
+                    : contactedSupplierIds.Contains(supplierId)
+                        ? "already_contacted"
+                        : null;
 
             recipients.Add(new(
                 supplier.Id,

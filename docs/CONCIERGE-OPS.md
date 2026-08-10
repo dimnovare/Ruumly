@@ -112,6 +112,28 @@ Pitch order: (1) here is a real customer/lead volume, (2) enquiries are free rig
   Settings: `conciergeAutoOutreach` ("true"/"false", default true),
   `conciergeAutoOutreachMax` (default 6, clamped 1..12), `opsPhone` (support phone in the
   provider email; empty = the phone line is omitted).
+- **Dead provider addresses (2026-08):** Resend posts every bounce and spam complaint to
+  `POST /api/webhooks/resend`. The endpoint is public (Resend cannot hold our JWT) and
+  authenticated by the **Svix signature alone** — a forged bounce would retire a live
+  provider's address, so verification is never skipped and it is idempotent on the
+  `svix-id` header (Resend retries).
+  - A **hard** bounce or a **spam complaint** sets `Supplier.ContactEmailUnusable`. Auto
+    fan-out then skips that provider and fills the slot with the next candidate, and the
+    admin batch refuses it with reason `email_bounced` (not overridable by `resend=true`).
+  - A **soft** bounce (full mailbox, greylisting) records the timestamp/reason but never
+    retires the address.
+  - Every still-open outreach row to a hard-bounced address flips `Sent → Bounced`
+    (or `Complained`), so the workspace stops claiming we contacted them. The bounce
+    reason is appended to the row's note. Every event is stored in `EmailDeliveryEvents`
+    and audited as `email.bounced` / `email.complained` (actor `resend-webhook`).
+  - **Ops fix:** the lead workspace badges the row *Email bounced* / *Phone only* and
+    offers an inline email field — saving a DIFFERENT address clears the bounce verdict,
+    so the provider is reachable again on the next fan-out. This is the path for the
+    ~127 providers whose address exists but is published nowhere: call, type, save.
+  - Setup: Resend dashboard → Webhooks → Add endpoint `https://api.ruumly.eu/api/webhooks/resend`,
+    events `email.bounced` + `email.complained`, then copy the `whsec_…` signing secret
+    into Railway as `RESEND__WEBHOOKSECRET`. Without it the endpoint fails closed (503)
+    and logs an error — it never silently discards a bounce.
 - Workspace endpoints (v2, backward-compatible — no migration):
   - Providers: `GET /api/admin/leads/{id}/provider-candidates?q=&scope=nearby|all&category=lead|any&radiusKm=25&limit=50`
     (unique suppliers, Haversine distance from the lead's city anchor, exact-city first;

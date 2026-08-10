@@ -90,6 +90,15 @@ public sealed class ConciergeOutreachService(
                     skipped.Add(new(supplierId, supplier.Name, "no_email"));
                     continue;
                 }
+                // A hard bounce / spam complaint retired this address (Resend
+                // webhook). Sending again cannot reach anyone and only damages
+                // our sending reputation — ops must fix the address first, which
+                // clears the flag. Not overridable by `resend`.
+                if (supplier.ContactEmailUnusable)
+                {
+                    skipped.Add(new(supplierId, supplier.Name, "email_bounced"));
+                    continue;
+                }
                 if (!resend && contactedSupplierIds.Contains(supplierId))
                 {
                     skipped.Add(new(supplierId, supplier.Name, "already_contacted"));
@@ -202,9 +211,16 @@ public sealed class ConciergeOutreachService(
             foreach (var candidate in matches.Items)
             {
                 if (candidates.Count >= max) break;
-                // The finder only returns active suppliers; an empty contact
-                // email is the remaining reason we cannot reach one.
-                if (string.IsNullOrWhiteSpace(candidate.ContactEmail)) { missingEmail++; continue; }
+                // The finder only returns active suppliers; an unreachable
+                // address is the remaining reason we cannot contact one —
+                // either never captured, or proven dead by a bounce. Both count
+                // as "no email" for the ops alert, and both make the fan-out
+                // move on to the next candidate instead of burning a slot.
+                if (string.IsNullOrWhiteSpace(candidate.ContactEmail) || candidate.ContactEmailUnusable)
+                {
+                    missingEmail++;
+                    continue;
+                }
                 candidates.Add(candidate.SupplierId);
             }
 
@@ -242,7 +258,7 @@ public sealed class ConciergeOutreachService(
 
         return new(
             names.Count,
-            noEmail + result.Skipped.Count(s => s.Reason == "no_email"),
+            noEmail + result.Skipped.Count(s => s.Reason is "no_email" or "email_bounced"),
             pickedRadiusKm,
             null,
             names);

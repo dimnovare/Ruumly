@@ -180,7 +180,27 @@ public class AdminSuppliersController(
         if (body.Name is not null)             supplier.Name = body.Name;
         if (body.RegistryCode is not null)     supplier.RegistryCode = body.RegistryCode;
         if (body.ContactName is not null)      supplier.ContactName = body.ContactName;
-        if (body.ContactEmail is not null)     supplier.ContactEmail = body.ContactEmail;
+        if (body.ContactEmail is not null)
+        {
+            // Feature 2: ops types in an address captured on a call. Validate it
+            // here — a typo saved silently would be a second invisible dead end.
+            var nextEmail = body.ContactEmail.Trim();
+            if (nextEmail.Length > 0 && !EmailValidation.IsValid(nextEmail))
+                return BadRequest(Error("Contact email is not a valid address."));
+
+            // A DIFFERENT address deserves a fresh attempt: clear the bounce
+            // verdict recorded against the old one, otherwise auto fan-out keeps
+            // skipping this provider forever.
+            if (!string.Equals(nextEmail, supplier.ContactEmail, StringComparison.OrdinalIgnoreCase))
+            {
+                supplier.ContactEmailUnusable     = false;
+                supplier.ContactEmailBouncedAt    = null;
+                supplier.ContactEmailBounceType   = null;
+                supplier.ContactEmailBounceReason = null;
+            }
+
+            supplier.ContactEmail = nextEmail;
+        }
         if (body.ContactPhone is not null)     supplier.ContactPhone = body.ContactPhone;
         if (body.BillingModel is not null &&
             Enum.TryParse<BillingModel>(body.BillingModel, true, out var bm2))

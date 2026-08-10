@@ -134,6 +134,33 @@ public class Supplier
     [MaxLength(200)]
     public string? ClaimedByEmail { get; set; }
 
+    // ── Email deliverability (2026-08, Resend webhook) ──────────────────────
+    // Before this, a bounce died inside Resend and the outreach row still read
+    // "sent" forever — a dead address was indistinguishable from a provider who
+    // read the mail and ignored it. The Resend webhook now writes the outcome
+    // back here, against the supplier whose address bounced.
+
+    /// <summary>
+    /// True when the last delivery attempt to <see cref="ContactEmail"/> HARD
+    /// bounced or drew a spam complaint: the address is dead, not merely
+    /// unanswered. Auto fan-out and the admin outreach batch both skip these
+    /// rows (reason "email_bounced") and pick the next candidate instead.
+    /// Cleared automatically when an admin saves a different ContactEmail —
+    /// a new address deserves a fresh attempt.
+    /// </summary>
+    public bool ContactEmailUnusable { get; set; } = false;
+
+    /// <summary>When the most recent bounce/complaint for this address arrived.</summary>
+    public DateTime? ContactEmailBouncedAt { get; set; }
+
+    /// <summary>"hard" | "soft" | "complaint" — soft never sets ContactEmailUnusable.</summary>
+    [MaxLength(20)]
+    public string? ContactEmailBounceType { get; set; }
+
+    /// <summary>Provider-supplied reason, verbatim from the bounce (truncated).</summary>
+    [MaxLength(500)]
+    public string? ContactEmailBounceReason { get; set; }
+
     public decimal Rating { get; set; }
     public int ReviewCount { get; set; }
 

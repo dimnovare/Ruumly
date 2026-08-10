@@ -31,6 +31,11 @@ public sealed record ProviderCandidateDto(
     string? PriceUnit,
     bool AlreadyContacted,
     DateTime? LastOutreachAt,
+    // ContactEmailUnusable: the address hard-bounced or drew a spam complaint
+    // (Resend webhook). Auto fan-out skips these, and the workspace badges the
+    // row "unreachable" so the gap is visible instead of buried.
+    bool ContactEmailUnusable,
+    DateTime? ContactEmailBouncedAt,
     IReadOnlyList<ProviderCandidateLocationDto> OtherLocations);
 
 public sealed record ProviderCandidateResponse(
