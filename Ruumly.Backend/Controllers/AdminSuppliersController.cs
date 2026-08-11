@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Npgsql;
+using Ruumly.Backend.Constants;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs;
 using Ruumly.Backend.DTOs.Requests;
@@ -109,10 +110,25 @@ public class AdminSuppliersController(
         if (!string.IsNullOrWhiteSpace(body.ApiEndpoint) && !OutboundEndpointValidator.IsAllowed(body.ApiEndpoint))
             return BadRequest(new { error = "Endpoint URL is not allowed (must be a public HTTPS host)." });
 
+        // A partner with no service types can never be returned as a candidate for
+        // any lead — ProviderCandidateFinder filters on ServiceTypesJson before it
+        // looks at location or radius — so refuse to create one at all.
+        //
+        // The plain { error } body matches the SSRF check above; AdminBaseController's
+        // Error() helper builds a 404-shaped payload and is wrong for a 400.
+        if (!ServiceCategories.TryNormalizeOfferable(
+                body.ServiceTypes, alreadyStored: null, out var serviceTypes, out var serviceTypesError))
+            return BadRequest(new { error = serviceTypesError });
+
+        if (!TryNormalizeCountry(body.Country, out var country, out var countryError))
+            return BadRequest(new { error = countryError });
+
         var supplier = new Supplier
         {
             Id                  = Guid.NewGuid(),
             Name                = body.Name,
+            ServiceTypesJson    = System.Text.Json.JsonSerializer.Serialize(serviceTypes),
+            Country             = country,
             RegistryCode        = string.IsNullOrWhiteSpace(body.RegistryCode) ? null : body.RegistryCode.Trim(),
             ContactName         = body.ContactName ?? "",
             ContactEmail        = body.ContactEmail ?? "",
@@ -176,6 +192,29 @@ public class AdminSuppliersController(
     {
         var supplier = await Db.Suppliers.FindAsync(id);
         if (supplier is null) return NotFound(Error("Supplier not found."));
+
+        // Marketplace visibility has its own endpoint. Accepting isActive here and
+        // ignoring it was a silent no-op that read as a successful write.
+        if (body.IsActive.HasValue)
+            return BadRequest(new { error =
+                "'isActive' is not settable here — use PATCH /api/admin/suppliers/{id}/status." });
+
+        if (body.ServiceTypes is not null)
+        {
+            if (!ServiceCategories.TryNormalizeOfferable(
+                    body.ServiceTypes,
+                    ServiceCategories.ParseServiceTypes(supplier.ServiceTypesJson),
+                    out var serviceTypes, out var serviceTypesError))
+                return BadRequest(new { error = serviceTypesError });
+            supplier.ServiceTypesJson = System.Text.Json.JsonSerializer.Serialize(serviceTypes);
+        }
+
+        if (body.Country is not null)
+        {
+            if (!TryNormalizeCountry(body.Country, out var country, out var countryError))
+                return BadRequest(new { error = countryError });
+            supplier.Country = country;
+        }
 
         if (body.Name is not null)             supplier.Name = body.Name;
         if (body.RegistryCode is not null)     supplier.RegistryCode = body.RegistryCode;
@@ -1253,6 +1292,26 @@ public class AdminSuppliersController(
         await Db.SaveChangesAsync();
 
         return NoContent();
+    }
+
+    /// <summary>
+    /// Supported markets for a supplier row. Country picks the provider-outreach
+    /// email language, so an unrecognised code must be refused rather than stored.
+    /// A null/blank value means "leave the model default (EE)".
+    /// </summary>
+    private static readonly string[] SupportedCountries = ["EE", "LV", "LT"];
+
+    private static bool TryNormalizeCountry(string? raw, out string country, out string? error)
+    {
+        error   = null;
+        country = "EE";
+        if (string.IsNullOrWhiteSpace(raw)) return true;
+
+        country = raw.Trim().ToUpperInvariant();
+        if (SupportedCountries.Contains(country)) return true;
+
+        error = $"Unknown country '{country}' (allowed: {string.Join("|", SupportedCountries)}).";
+        return false;
     }
 
     // Mirrors AdminPaidFeaturesController.ApplyCommerceCapability.

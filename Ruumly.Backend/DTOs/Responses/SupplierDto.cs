@@ -69,5 +69,8 @@ public record SupplierDto(
     bool      ContactEmailUnusable = false,
     DateTime? ContactEmailBouncedAt = null,
     string?   ContactEmailBounceType = null,    // "hard" | "soft" | "complaint"
-    string?   ContactEmailBounceReason = null
+    string?   ContactEmailBounceReason = null,
+    // What the partner sells. Empty means the partner can never be returned as a
+    // candidate for any lead — the admin list flags it for exactly that reason.
+    IReadOnlyList<string>? ServiceTypes = null
 );

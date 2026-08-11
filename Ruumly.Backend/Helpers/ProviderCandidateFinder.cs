@@ -199,10 +199,14 @@ public static class ProviderCandidateFinder
 
         var hasListing = supplier.Listings.Any(l => l.IsActive && MatchesListingCategory(l, lead.Category, false));
         var slug = ServiceCategories.SlugFor(lead.Category);
-        var hasDirectoryService = supplier.IsDirectoryListing
-            && ServiceCategories.ParseServiceTypes(supplier.ServiceTypesJson)
-                .Contains(slug, StringComparer.OrdinalIgnoreCase);
-        return hasListing || hasDirectoryService;
+        // ServiceTypesJson is a CAPABILITY declaration ("this partner does moving"),
+        // while IsDirectoryListing is only PROVENANCE (imported vs. hand-added) and
+        // decides how the public profile renders. Gating capability on provenance
+        // made every partner added through the admin form invisible to every lead,
+        // however complete the row looked. Declared services count either way.
+        var hasDeclaredService = ServiceCategories.ParseServiceTypes(supplier.ServiceTypesJson)
+            .Contains(slug, StringComparer.OrdinalIgnoreCase);
+        return hasListing || hasDeclaredService;
     }
 
     private static bool MatchesListingCategory(Listing listing, DemandLeadCategory category, bool allCategories) =>

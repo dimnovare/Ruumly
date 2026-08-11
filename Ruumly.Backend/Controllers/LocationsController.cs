@@ -20,6 +20,14 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
     private static object Error(string msg) => new { error = msg };
 
     /// <summary>
+    /// City is not cosmetic: ProviderCandidateFinder ranks exact-city matches ahead
+    /// of everything else, and the admin/public surfaces print it. A location saved
+    /// with a blank city is a partner that quietly ranks last and looks broken, so
+    /// blank is refused at the API rather than only in the form.
+    /// </summary>
+    private const string CityRequired = "city is required.";
+
+    /// <summary>
     /// Normalizes a public <c>?type=</c> filter to the slug we should actually
     /// serve. packing/insurance are no longer consumer-facing services, but their
     /// city hubs (/{lang}/search?type=insurance&amp;city=X and the service×city
@@ -294,6 +302,9 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
     [Authorize(Roles = "Admin,Provider")]
     public async Task<IActionResult> Create([FromBody] CreateLocationRequest body)
     {
+        if (string.IsNullOrWhiteSpace(body.City))
+            return BadRequest(Error(CityRequired));
+
         // Resolve supplierId: admin passes it explicitly, provider auto-resolves from their account
         Guid supplierId;
         if (body.SupplierId.HasValue && body.SupplierId.Value != Guid.Empty)
@@ -360,7 +371,14 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
 
         if (body.Name        is not null) location.Name        = body.Name;
         if (body.Address     is not null) location.Address     = body.Address;
-        if (body.City        is not null) location.City        = body.City;
+        if (body.City        is not null)
+        {
+            // Clearing the city is not an edit, it is a silent downgrade: exact-city
+            // ranking in ProviderCandidateFinder stops matching this partner and the
+            // admin/public UI renders a blank line where the town should be.
+            if (string.IsNullOrWhiteSpace(body.City)) return BadRequest(Error(CityRequired));
+            location.City = body.City;
+        }
         if (body.Lat.HasValue)            location.Lat         = body.Lat.Value;
         if (body.Lng.HasValue)            location.Lng         = body.Lng.Value;
         if (body.Notes       is not null) location.Notes       = body.Notes;
@@ -836,6 +854,8 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
             return BadRequest(Error("supplierId is required."));
         if (string.IsNullOrWhiteSpace(body.Name))
             return BadRequest(Error("name is required."));
+        if (string.IsNullOrWhiteSpace(body.City))
+            return BadRequest(Error(CityRequired));
 
         var supplier = await db.Suppliers.FindAsync(body.SupplierId.Value);
         if (supplier is null)

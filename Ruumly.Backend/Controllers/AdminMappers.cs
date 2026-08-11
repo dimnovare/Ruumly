@@ -99,7 +99,8 @@ internal static class AdminMappers
         ContactEmailUnusable:     s.ContactEmailUnusable,
         ContactEmailBouncedAt:    s.ContactEmailBouncedAt,
         ContactEmailBounceType:   s.ContactEmailBounceType,
-        ContactEmailBounceReason: s.ContactEmailBounceReason);
+        ContactEmailBounceReason: s.ContactEmailBounceReason,
+        ServiceTypes:             Constants.ServiceCategories.ParseServiceTypes(s.ServiceTypesJson));
 
     internal static IntegrationSettingsDto MapIntegrationSettings(Models.IntegrationSettings i) => new(
         Id:                  i.Id,

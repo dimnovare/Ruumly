@@ -163,6 +163,79 @@ public static class ServiceCategories
             .ToList();
 
     /// <summary>
+    /// Normalizes the service types an ADMIN is attaching to a supplier by hand,
+    /// and says why when the input is unusable.
+    ///
+    /// Distinct from <see cref="NormalizeAndValidate"/>, which silently drops junk:
+    /// a hand-typed partner is the one place where dropping input silently is the
+    /// whole bug. A supplier whose ServiceTypesJson ends up empty can never be
+    /// returned by ProviderCandidateFinder for any category — it looks perfectly
+    /// fine in admin and is simply invisible — so a bad list must be refused loudly
+    /// instead of persisted as [].
+    ///
+    /// Rules:
+    ///   • unknown slug                → refused, naming it
+    ///   • packing / insurance         → refused as a NEW choice (see
+    ///     <see cref="RetainedNotSoldSlugs"/>), but PRESERVED when the supplier
+    ///     already carries it, so editing a mover that also packs never silently
+    ///     strips its packing tag and the admin never has to re-send it
+    ///   • no consumer slug left       → refused (an empty list is the dead end)
+    /// </summary>
+    /// <param name="raw">Slugs supplied by the caller.</param>
+    /// <param name="alreadyStored">Slugs currently on the supplier (parsed from ServiceTypesJson).</param>
+    public static bool TryNormalizeOfferable(
+        IEnumerable<string>? raw,
+        IEnumerable<string>? alreadyStored,
+        out List<string> normalized,
+        out string? error)
+    {
+        normalized = [];
+        error      = null;
+
+        var stored = new HashSet<string>(
+            (alreadyStored ?? []).Select(s => s?.Trim().ToLowerInvariant() ?? ""),
+            StringComparer.Ordinal);
+
+        var offered = new List<string>();
+        foreach (var slug in (raw ?? []).Select(t => t?.Trim().ToLowerInvariant() ?? "")
+                                        .Where(t => t.Length > 0)
+                                        .Distinct())
+        {
+            if (!BySlug.ContainsKey(slug))
+            {
+                error = $"Unknown service type '{slug}' (allowed: {string.Join("|", ConsumerSlugs)}).";
+                return false;
+            }
+            if (RetainedNotSoldSlugs.Contains(slug))
+            {
+                // Kept below via the preserved set — but only if it was already there.
+                if (!stored.Contains(slug))
+                {
+                    error = $"Service type '{slug}' is retained for existing data only and " +
+                            $"cannot be added (allowed: {string.Join("|", ConsumerSlugs)}).";
+                    return false;
+                }
+                continue;
+            }
+            offered.Add(slug);
+        }
+
+        if (offered.Count == 0)
+        {
+            error = $"At least one service type is required " +
+                    $"(allowed: {string.Join("|", ConsumerSlugs)}).";
+            return false;
+        }
+
+        // Retained-not-sold slugs already on the row survive the write untouched.
+        normalized = offered
+            .Concat(stored.Where(RetainedNotSoldSlugs.Contains))
+            .Distinct()
+            .ToList();
+        return true;
+    }
+
+    /// <summary>
     /// Tolerant parse of a Supplier.ServiceTypesJson value (JSON array of slugs).
     /// Null, empty, or malformed input yields an empty list — directory rows must
     /// never fail a request because one imported record carries bad JSON.

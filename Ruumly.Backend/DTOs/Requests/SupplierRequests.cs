@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Ruumly.Backend.DTOs.Requests;
 
 public record CreateSupplierRequest(
@@ -21,8 +23,23 @@ public record CreateSupplierRequest(
     bool? BookingEnabled,
     bool? ContractSigningEnabled,
     bool? DirectPaymentEnabled,
-    bool? RuumlyPaymentEnabled);
+    bool? RuumlyPaymentEnabled,
+    // What the partner actually SELLS. Required: ProviderCandidateFinder filters on
+    // Supplier.ServiceTypesJson before location or radius, so a partner created
+    // without any is invisible to every lead while looking complete in admin.
+    List<string>? ServiceTypes = null,
+    string? Country = null);
 
+/// <summary>
+/// PATCH /api/admin/suppliers/{id}.
+///
+/// <see cref="JsonUnmappedMemberHandling.Disallow"/> is deliberate: this endpoint
+/// used to accept <c>serviceTypes</c>, <c>country</c> and <c>isActive</c>, answer
+/// 200, and persist none of them. An endpoint that swallows a field it does not
+/// write is worse than one that rejects it, because the caller believes the write
+/// landed. Anything unmapped is now a 400 naming the property.
+/// </summary>
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public record UpdateSupplierRequest(
     // Core operational fields
     string? Name = null,
@@ -65,7 +82,16 @@ public record UpdateSupplierRequest(
     // Polling fields
     bool?    PollingEnabled = null,
     int?     PollingIntervalMinutes = null,
-    string?  PollingEndpoint = null);
+    string?  PollingEndpoint = null,
+    // What the partner sells. null = leave unchanged; an explicit list REPLACES the
+    // consumer-facing slugs (stored packing/insurance metadata is preserved).
+    List<string>? ServiceTypes = null,
+    // Picks the provider-outreach language. The admin profile form has always sent
+    // this — it was bound to nothing and silently dropped until now.
+    string?  Country = null,
+    // Accepted only so the endpoint can REFUSE it by name: marketplace visibility
+    // belongs to PATCH /admin/suppliers/{id}/status, whose behaviour is unchanged.
+    bool?    IsActive = null);
 
 public record UpdateSupplierIntegrationRequest(
     // Core integration (mirrors existing UpdateSupplierRequest fields)
