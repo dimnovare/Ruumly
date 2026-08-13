@@ -47,6 +47,8 @@ public partial class ClaimController(
     IBackgroundEmailQueue emailQueue,
     IConfiguration config,
     IDistributedCache cache,
+    IAuthService authService,
+    IWebHostEnvironment env,
     ILogger<ClaimController> logger) : ControllerBase
 {
     /// <summary>Header carrying the claim session token on the edit endpoints.</summary>
@@ -436,6 +438,153 @@ public partial class ClaimController(
     /// this business". Collapsing them would leave a provider whose session
     /// expired staring at a permissions error.
     /// </summary>
+    /// <summary>
+    /// Turns a verified claim into a real provider login, so the business can
+    /// come back later and manage prices, services and their own page instead of
+    /// getting one throwaway edit session.
+    ///
+    /// Deliberately OPTIONAL. The introduction letter tells 754 businesses there
+    /// is "no account to create", and that stays true: claiming without ever
+    /// touching this endpoint keeps working exactly as before. The account is
+    /// what a provider gets for engaging, not a toll on the way in.
+    ///
+    /// Why this needs no admin approval: the magic link was delivered to the
+    /// address already on file, and redeeming it proved control of that mailbox.
+    /// That is strictly more evidence than a signup form gathers, so making an
+    /// admin re-approve it would add delay and no safety.
+    ///
+    /// Three rules keep it honest:
+    /// <list type="number">
+    /// <item>The login is bound to <c>SupplierClaim.RequestedEmail</c> — the
+    /// address the link actually went to. NEVER to Supplier.ContactEmail, which
+    /// this same session may have rewritten a moment ago, and never to anything
+    /// in the request body.</item>
+    /// <item>A supplier already linked to a user is refused, so a second claimant
+    /// cannot quietly take over a live account.</item>
+    /// <item>An address that already has a Ruumly user is refused rather than
+    /// silently adopted. Proving control of a mailbox is grounds for a session,
+    /// not for seizing an existing account that may hold bookings and bank
+    /// details.</item>
+    /// </list>
+    /// </summary>
+    [HttpPost("{slug}/account")]
+    [EnableRateLimiting("auth")]
+    [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> CreateAccount(
+        string slug, [FromBody] ClaimCreateAccountRequest? body, CancellationToken ct)
+    {
+        var (supplier, claim, failure) = await ResolveSessionWithClaimAsync(slug, ct);
+        if (failure is not null) return failure;
+
+        var password = body?.Password ?? "";
+        if (password.Length < MinPasswordLength)
+            return BadRequest(new { error = $"Password must be at least {MinPasswordLength} characters." });
+
+        // The proof this whole endpoint rests on. EmailMatched is false when the
+        // visitor typed an address that did not match the stored one — in that
+        // case no link was ever sent, so no mailbox was proved.
+        if (!claim!.EmailMatched || string.IsNullOrWhiteSpace(claim.RequestedEmail))
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { error = "This claim did not verify an email address." });
+
+        var email = claim.RequestedEmail.Trim().ToLowerInvariant();
+
+        if (await db.Users.AnyAsync(u => u.SupplierId == supplier!.Id, ct))
+            return Conflict(new
+            {
+                error   = "This profile already has an account.",
+                message = "Sign in with it, or use the password reset if you have lost access.",
+            });
+
+        if (await db.Users.AnyAsync(u => u.Email.ToLower() == email, ct))
+            return Conflict(new
+            {
+                error   = "An account already exists for this email address.",
+                message = "Sign in with it — we will link it to this profile once you are signed in.",
+            });
+
+        var now  = DateTime.UtcNow;
+        var user = new User
+        {
+            Id            = Guid.NewGuid(),
+            Name          = supplier!.Name,
+            Email         = email,
+            PasswordHash  = BCrypt.Net.BCrypt.HashPassword(password),
+            Role          = Models.Enums.UserRole.Provider,
+            SupplierId    = supplier.Id,
+            // Not a shortcut: the magic link went to this address and was
+            // redeemed, which is exactly what the verification mail proves.
+            EmailVerified = true,
+            Status        = Models.Enums.UserStatus.Active,
+            Language      = claim.Language,
+            RegisteredAt  = now,
+        };
+        db.Users.Add(user);
+        await db.SaveChangesAsync(ct);
+
+        logger.LogInformation(
+            "Provider account created from claim for supplier {SupplierId} ({Slug}).",
+            supplier.Id, supplier.Slug);
+
+        // Log them straight in — a provider who just set a password should not be
+        // asked for it again on the next screen.
+        var auth = await authService.LoginAsync(new LoginRequest(email, password));
+        SetRefreshCookie(auth.RefreshToken);
+        return StatusCode(StatusCodes.Status201Created, auth);
+    }
+
+    /// <summary>
+    /// Mirrors AuthController's cookie exactly — same name, path and flags — so
+    /// the session issued here refreshes through the ordinary /api/auth flow and
+    /// is indistinguishable from one obtained by signing in.
+    /// </summary>
+    private void SetRefreshCookie(string refreshToken)
+    {
+        var isDev = env.IsDevelopment();
+        var days  = int.TryParse(config["Jwt:RefreshTokenExpiryDays"], out var d) ? d : 7;
+        Response.Cookies.Append("ruumly-refresh", refreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure   = !isDev,
+            SameSite = isDev ? SameSiteMode.Lax : SameSiteMode.None,
+            Path     = "/api/auth",
+            MaxAge   = TimeSpan.FromDays(days),
+        });
+    }
+
+    /// <summary>
+    /// Same as AuthService enforces on registration and password reset. Kept in
+    /// step deliberately: a weaker rule here would be a side door into the same
+    /// account system.
+    /// </summary>
+    private const int MinPasswordLength = 8;
+
+    /// <summary>
+    /// Same guard as <see cref="ResolveSessionAsync"/>, but also hands back the
+    /// claim row — needed wherever the VERIFIED address matters rather than the
+    /// supplier's current one. Account creation is the case: the session may
+    /// legitimately have rewritten Supplier.ContactEmail seconds earlier, and
+    /// binding a login to that value would tie it to an unproved mailbox.
+    /// </summary>
+    private async Task<(Supplier? Supplier, SupplierClaim? Claim, IActionResult? Failure)>
+        ResolveSessionWithClaimAsync(string slug, CancellationToken ct)
+    {
+        var raw = Request.Headers[SessionHeader].ToString().Trim();
+        if (string.IsNullOrEmpty(raw))
+            return (null, null, Unauthorized(new { error = "Your claim session has expired. Request a new link." }));
+
+        var hash = ClaimToken.Hash(raw);
+        var claim = await db.SupplierClaims.FirstOrDefaultAsync(c => c.SessionTokenHash == hash, ct);
+        if (claim?.SessionExpiresAt is null || claim.SessionExpiresAt <= DateTime.UtcNow)
+            return (null, null, Unauthorized(new { error = "Your claim session has expired. Request a new link." }));
+
+        var (supplier, failure) = await ResolveSessionAsync(slug, ct);
+        return failure is not null ? (null, null, failure) : (supplier, claim, null);
+    }
+
     private async Task<(Supplier? Supplier, IActionResult? Failure)> ResolveSessionAsync(
         string slug, CancellationToken ct)
     {

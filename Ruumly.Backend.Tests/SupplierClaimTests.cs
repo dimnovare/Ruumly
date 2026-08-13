@@ -1,7 +1,9 @@
 using System.Text.Json;
 using FluentAssertions;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging.Abstractions;
 using Ruumly.Backend.Controllers;
@@ -46,8 +48,53 @@ public class SupplierClaimTests
         public Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token = default) => Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Stands in for the real auth service on the account-creation path. Only
+    /// LoginAsync is ever reached (after the controller has already written the
+    /// user), so the rest throws loudly rather than silently returning nulls
+    /// that would make a broken flow look like a passing test.
+    /// </summary>
+    private sealed class StubAuthService : IAuthService
+    {
+        public List<string> LoggedIn { get; } = [];
+
+        public Task<AuthResponse> LoginAsync(LoginRequest request)
+        {
+            LoggedIn.Add(request.Email);
+            return Task.FromResult(new AuthResponse(
+                new UserDto(Guid.NewGuid(), "Test", request.Email,
+                            Models.Enums.UserRole.Provider, Models.Enums.UserStatus.Active,
+                            null, null, null, DateTime.UtcNow, null, 0, false, null),
+                "access-token", "refresh-token", "csrf-token"));
+        }
+
+        public Task<AuthResponse> RegisterAsync(RegisterRequest r) => throw new NotSupportedException();
+        public Task<AuthResponse> RefreshAsync(string t)           => throw new NotSupportedException();
+        public Task<UserDto> GetMeAsync(Guid id)                   => throw new NotSupportedException();
+        public Task<bool> ResetPasswordAsync(string t, string p)   => throw new NotSupportedException();
+        public Task<AuthResponse> GoogleLoginAsync(string c)       => throw new NotSupportedException();
+        public Task<bool> VerifyEmailAsync(string token)           => throw new NotSupportedException();
+        public Task LogoutAsync(string refreshToken)               => throw new NotSupportedException();
+        public Task RequestPasswordResetAsync(string email)        => throw new NotSupportedException();
+        public Task ChangePasswordAsync(Guid id, ChangePasswordRequest r) => throw new NotSupportedException();
+        public Task UpdateLanguageAsync(Guid id, string lang)      => throw new NotSupportedException();
+        public Task ResendVerificationEmailAsync(Guid id)          => throw new NotSupportedException();
+        public string ComputeCsrfToken(string refreshToken)        => "csrf-token";
+    }
+
+    private sealed class TestEnv : IWebHostEnvironment
+    {
+        public string EnvironmentName { get; set; } = "Development";
+        public string ApplicationName { get; set; } = "Tests";
+        public string WebRootPath { get; set; } = "";
+        public IFileProvider WebRootFileProvider { get; set; } = new NullFileProvider();
+        public string ContentRootPath { get; set; } = "";
+        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
+    }
+
     private static ClaimController MakeController(
-        RuumlyDbContext db, IBackgroundEmailQueue queue, string? sessionToken = null)
+        RuumlyDbContext db, IBackgroundEmailQueue queue, string? sessionToken = null,
+        IAuthService? auth = null)
     {
         var http = new DefaultHttpContext();
         if (sessionToken is not null)
@@ -55,6 +102,7 @@ public class SupplierClaimTests
 
         return new ClaimController(
             db, queue, TestServices.Config(), new NoOpCache(),
+            auth ?? new StubAuthService(), new TestEnv(),
             NullLogger<ClaimController>.Instance)
         {
             ControllerContext = new ControllerContext { HttpContext = http },
@@ -358,6 +406,153 @@ public class SupplierClaimTests
         // The uptake metric measures FIRST response — a returning owner must not
         // reset it.
         db.Suppliers.Single(s => s.Id == supplier.Id).ClaimedAt.Should().Be(firstClaimedAt);
+    }
+
+    // ─── Claim → provider account ─────────────────────────────────────────────
+    //
+    // The claim proves control of ONE mailbox: the address already on file, which
+    // is where the magic link was sent. Everything here defends that boundary,
+    // because the endpoint mints a real login with a role and a supplier on it.
+
+    [Fact]
+    public async Task CreateAccount_BindsToTheVerifiedAddress_NotTheOneJustEditedIn()
+    {
+        // THE attack this endpoint has to survive. The same session that proves
+        // control of info@kolimisabi.ee is allowed to rewrite ContactEmail, so a
+        // claimant could point the row at a mailbox they do not own and then ask
+        // for an account. The login must follow the proof, not the field.
+        var db       = TestDbContext.Create();
+        var supplier = MakeDirectorySupplier(db, contactEmail: "info@kolimisabi.ee");
+        var queue    = new CapturingEmailQueue();
+        var session  = await ClaimAsync(db, supplier, queue);
+
+        await MakeController(db, queue, session).UpdateProfile(
+            supplier.Slug!,
+            new ClaimUpdateProfileRequest("Kolimisabi OÜ", "+372 1", "victim@somebodyelse.ee",
+                                          null, "Vana tee 1", ["moving"], null),
+            default);
+        db.Suppliers.Single(s => s.Id == supplier.Id).ContactEmail.Should().Be("victim@somebodyelse.ee");
+
+        var auth = new StubAuthService();
+        var result = await MakeController(db, queue, session, auth)
+            .CreateAccount(supplier.Slug!, new ClaimCreateAccountRequest("hunter2hunter2"), default);
+
+        result.Should().BeOfType<ObjectResult>().Which.StatusCode.Should().Be(StatusCodes.Status201Created);
+        var user = db.Users.Single(u => u.SupplierId == supplier.Id);
+        user.Email.Should().Be("info@kolimisabi.ee", "the login follows the mailbox that was proved");
+        user.Email.Should().NotBe("victim@somebodyelse.ee");
+        auth.LoggedIn.Should().ContainSingle().Which.Should().Be("info@kolimisabi.ee");
+    }
+
+    [Fact]
+    public async Task CreateAccount_MakesAProviderLinkedToThatSupplier_AlreadyVerified()
+    {
+        var db       = TestDbContext.Create();
+        var supplier = MakeDirectorySupplier(db, contactEmail: "info@kolimisabi.ee");
+        var queue    = new CapturingEmailQueue();
+        var session  = await ClaimAsync(db, supplier, queue);
+
+        await MakeController(db, queue, session)
+            .CreateAccount(supplier.Slug!, new ClaimCreateAccountRequest("hunter2hunter2"), default);
+
+        var user = db.Users.Single();
+        user.Role.Should().Be(Models.Enums.UserRole.Provider);
+        user.SupplierId.Should().Be(supplier.Id);
+        user.EmailVerified.Should().BeTrue("redeeming the magic link proved the address");
+        user.PasswordHash.Should().NotBeNullOrWhiteSpace().And.NotBe("hunter2hunter2");
+    }
+
+    [Fact]
+    public async Task CreateAccount_RefusesWhenTheProfileAlreadyHasAnAccount()
+    {
+        // Otherwise a second claimant — or the same one twice — could attach a
+        // fresh login to a supplier that already has an owner.
+        var db       = TestDbContext.Create();
+        var supplier = MakeDirectorySupplier(db, contactEmail: "info@kolimisabi.ee");
+        var queue    = new CapturingEmailQueue();
+        db.Users.Add(new User
+        {
+            Id = Guid.NewGuid(), Name = "Owner", Email = "owner@kolimisabi.ee",
+            PasswordHash = "x", Role = Models.Enums.UserRole.Provider, SupplierId = supplier.Id,
+        });
+        await db.SaveChangesAsync();
+
+        var session = await ClaimAsync(db, supplier, queue);
+        var result  = await MakeController(db, queue, session)
+            .CreateAccount(supplier.Slug!, new ClaimCreateAccountRequest("hunter2hunter2"), default);
+
+        result.Should().BeOfType<ConflictObjectResult>();
+        db.Users.Count().Should().Be(1);
+    }
+
+    [Fact]
+    public async Task CreateAccount_RefusesToAdoptAnExistingRuumlyAccount()
+    {
+        // Proving control of a mailbox is grounds for a session, not for seizing
+        // an account that may already hold bookings, payouts and bank details.
+        var db       = TestDbContext.Create();
+        var supplier = MakeDirectorySupplier(db, contactEmail: "info@kolimisabi.ee");
+        var queue    = new CapturingEmailQueue();
+        db.Users.Add(new User
+        {
+            Id = Guid.NewGuid(), Name = "Existing", Email = "info@kolimisabi.ee",
+            PasswordHash = "x", Role = Models.Enums.UserRole.Customer,
+        });
+        await db.SaveChangesAsync();
+
+        var session = await ClaimAsync(db, supplier, queue);
+        var result  = await MakeController(db, queue, session)
+            .CreateAccount(supplier.Slug!, new ClaimCreateAccountRequest("hunter2hunter2"), default);
+
+        result.Should().BeOfType<ConflictObjectResult>();
+        db.Users.Single().Role.Should().Be(Models.Enums.UserRole.Customer, "the existing account is untouched");
+        db.Users.Single().SupplierId.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task CreateAccount_EnforcesTheSamePasswordFloorAsRegistration()
+    {
+        // A weaker rule here would be a side door into the same account system.
+        var db       = TestDbContext.Create();
+        var supplier = MakeDirectorySupplier(db);
+        var queue    = new CapturingEmailQueue();
+        var session  = await ClaimAsync(db, supplier, queue);
+
+        var result = await MakeController(db, queue, session)
+            .CreateAccount(supplier.Slug!, new ClaimCreateAccountRequest("short"), default);
+
+        result.Should().BeOfType<BadRequestObjectResult>();
+        db.Users.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task CreateAccount_RejectsAMissingSession()
+    {
+        var db       = TestDbContext.Create();
+        var supplier = MakeDirectorySupplier(db);
+        var queue    = new CapturingEmailQueue();
+
+        var result = await MakeController(db, queue)
+            .CreateAccount(supplier.Slug!, new ClaimCreateAccountRequest("hunter2hunter2"), default);
+
+        result.Should().BeOfType<UnauthorizedObjectResult>();
+        db.Users.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task CreateAccount_CannotBeUsedAgainstAnotherSupplier()
+    {
+        var db    = TestDbContext.Create();
+        var queue = new CapturingEmailQueue();
+        var a = MakeDirectorySupplier(db, "Alpha OÜ", "alpha-oy", "a@alpha.ee");
+        var b = MakeDirectorySupplier(db, "Beta OÜ", "beta-oy", "b@beta.ee");
+        var sessionA = await ClaimAsync(db, a, queue);
+
+        var result = await MakeController(db, queue, sessionA)
+            .CreateAccount(b.Slug!, new ClaimCreateAccountRequest("hunter2hunter2"), default);
+
+        result.Should().BeOfType<ObjectResult>().Which.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
+        db.Users.Should().BeEmpty();
     }
 
     // ─── Scoping: a session can only ever touch its own supplier ──────────────
