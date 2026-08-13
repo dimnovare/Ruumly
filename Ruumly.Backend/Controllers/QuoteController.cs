@@ -256,6 +256,16 @@ public class QuoteController(
         //    the quote can never overwrite an admin-authored option for the same
         //    supplier — if one exists, this adds a separate option beside it.
         var title = Clamp($"{supplierName} — {lead.City}", 200)!;
+
+        // The provider typed their unit in THEIR language; this option is read by
+        // the CUSTOMER. A Latvian yard answering an English-speaking customer
+        // submits "/diena", and without this the offer says "60 € /diena" to
+        // someone who cannot read it — which is exactly what the first real quote
+        // did (Rīga, 2026-08-13) before it was fixed by hand. Only the customer's
+        // copy is translated: outreach.QuotedUnit above keeps the provider's own
+        // words, so ops can always see what they actually wrote.
+        var customerUnit = PriceUnitNormalizer.ToCustomerLanguage(unit, offer.Language);
+
         var existingOption = offer.Options.FirstOrDefault(o => o.CreatedFromOutreachId == outreach.Id);
         if (existingOption is null)
         {
@@ -267,7 +277,7 @@ public class QuoteController(
                 CreatedFromOutreachId = outreach.Id,
                 Title                 = title,
                 PriceAmount           = amount,
-                PriceUnit             = unit,
+                PriceUnit             = customerUnit,
                 Notes                 = note,
                 SortOrder             = offer.Options.Count,   // appended
             };
@@ -284,7 +294,7 @@ public class QuoteController(
         {
             existingOption.Title       = title;
             existingOption.PriceAmount = amount;
-            existingOption.PriceUnit   = unit;
+            existingOption.PriceUnit   = customerUnit;
             // A blank note must not wipe the note submitted earlier.
             if (note is not null) existingOption.Notes = note;
         }
