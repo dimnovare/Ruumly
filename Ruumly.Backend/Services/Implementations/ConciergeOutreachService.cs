@@ -2,7 +2,9 @@ using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
+using Ruumly.Backend.Constants;
 using Ruumly.Backend.Data;
+using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
@@ -178,11 +180,21 @@ public sealed class ConciergeOutreachService(
     public async Task<AutoOutreachSummary> AutoFanOutAsync(
         DemandLead lead, CancellationToken ct = default)
     {
-        // Category "any" means the visitor picked zero or several services. We
-        // have nothing specific to ask a provider to price, and a vague blast
-        // burns the one cold-contact we get with each of them — alert the admin
-        // instead and let them route it by hand.
-        if (lead.Category == DemandLeadCategory.Any)
+        // What we will ask providers to price. Category "any" used to end the
+        // fan-out here, because it conflates two very different requests: one we
+        // cannot describe, and one that simply names more services than a single
+        // Category column can hold. The intake's own copy invites the second
+        // ("pick everything you need"), so the customers who followed our
+        // instructions were exactly the ones nobody was contacted for.
+        var searchCategories = ResolveSearchCategories(lead);
+
+        // Nothing concrete survived — zero routable services (an insurance-only
+        // ask, say). The original reasoning stands for this case and only this
+        // case: ProviderCandidateFinder matches EVERY supplier for an Any lead, so
+        // searching now would blast the whole directory and burn the one cold
+        // contact we get with each of them, for a request we cannot even state.
+        // Alert the admin and let them route it by hand.
+        if (searchCategories.Count == 0)
             return AutoOutreachSummary.Skipped("category_any");
 
         if (!await GetBoolSettingAsync("conciergeAutoOutreach", DefaultAutoOutreach, ct))
@@ -203,16 +215,25 @@ public sealed class ConciergeOutreachService(
         foreach (var candidateRadius in AutoRadiiKm)
         {
             searchedKm = candidateRadius;
-            var matches = await ProviderCandidateFinder.SearchAsync(
-                db, lead,
-                new ProviderCandidateSearch(
-                    Query: null, AllEstonia: false, AllCategories: false,
-                    RadiusKm: candidateRadius, Limit: 50),
-                ct);
+            var ranked = new List<IReadOnlyList<ProviderCandidateDto>>();
+            foreach (var category in searchCategories)
+            {
+                var matches = await ProviderCandidateFinder.SearchAsync(
+                    // Searched one service at a time, never as the Any wildcard:
+                    // the finder treats Any as "every supplier matches", which is
+                    // the blast itself. Each provider we pick therefore actually
+                    // does one of the services the customer asked for.
+                    db, AsCategory(lead, category),
+                    new ProviderCandidateSearch(
+                        Query: null, AllEstonia: false, AllCategories: false,
+                        RadiusKm: candidateRadius, Limit: 50),
+                    ct);
+                ranked.Add(matches.Items);
+            }
 
             var candidates   = new List<Guid>();
             var missingEmail = 0;
-            foreach (var candidate in matches.Items)
+            foreach (var candidate in MergeByService(ranked))
             {
                 if (candidates.Count >= max) break;
                 // The finder only returns active suppliers; an unreachable
@@ -266,6 +287,68 @@ public sealed class ConciergeOutreachService(
             pickedRadiusKm,
             null,
             names);
+    }
+
+    // ─── Which services a lead is fanned out on ───────────────────────────────
+
+    /// <summary>
+    /// The services to look for providers of. A concrete category speaks for
+    /// itself; an Any lead is a concierge request whose selection did not fit the
+    /// single Category column, so the pick is recovered from the Query machine
+    /// summary the intake wrote (see <see cref="ServiceCategories.SelectedSlugs"/>).
+    ///
+    /// Recovered rather than stored in a new column on purpose: the intake already
+    /// persists the full selection there, so nothing about this needs a migration
+    /// or a backfill — the leads sitting un-contacted in production today can be
+    /// worked by the same code path.
+    ///
+    /// Empty means the request named nothing we can route, which is the one case
+    /// that must NOT fan out.
+    /// </summary>
+    private static List<DemandLeadCategory> ResolveSearchCategories(DemandLead lead) =>
+        lead.Category != DemandLeadCategory.Any
+            ? [lead.Category]
+            : ServiceCategories.SelectedSlugs(lead.Query)
+                .Select(slug => ServiceCategories.BySlug[slug])
+                .ToList();
+
+    /// <summary>
+    /// The lead as the finder should see it for ONE service. A detached copy, not
+    /// a mutation: `lead` is tracked by the same DbContext the outreach then saves
+    /// through, so steering a search by assigning its Category would persist the
+    /// wrong category on the customer's request. Carries only what the finder
+    /// reads — the id (its already-contacted map), the city, and the category.
+    /// </summary>
+    private static DemandLead AsCategory(DemandLead lead, DemandLeadCategory category) =>
+        new() { Id = lead.Id, City = lead.City, Category = category };
+
+    /// <summary>
+    /// Flattens the per-service candidate lists into one, taking the best
+    /// remaining provider from each service in turn.
+    ///
+    /// Round-robin rather than concatenation because the quota is shared: a
+    /// "moving + warehouse" request whose six slots all went to the movers the
+    /// first search returned would leave the storage half of that customer's move
+    /// unquoted, which is the same silent failure as not fanning out at all. A
+    /// provider offering two of the requested services is emailed once — the
+    /// dedupe here is what keeps that from costing them two cold contacts.
+    /// </summary>
+    private static IEnumerable<ProviderCandidateDto> MergeByService(
+        IReadOnlyList<IReadOnlyList<ProviderCandidateDto>> perService)
+    {
+        var seen  = new HashSet<Guid>();
+        var depth = perService.Count == 0 ? 0 : perService.Max(list => list.Count);
+
+        for (var rank = 0; rank < depth; rank++)
+        {
+            foreach (var list in perService)
+            {
+                if (rank >= list.Count) continue;
+                var candidate = list[rank];
+                if (seen.Add(candidate.SupplierId))
+                    yield return candidate;
+            }
+        }
     }
 
     // ─── PlatformSettings (key/value table — no migration for new keys) ───────
