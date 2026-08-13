@@ -324,6 +324,39 @@ public class OfferLoopTests
     }
 
     [Fact]
+    public async Task UpdateOffer_EchoedIds_KeepTheirRows_WhileDroppedOnesGo()
+    {
+        var db    = TestDbContext.Create();
+        var lead  = MakeLead(db);
+        var admin = MakeAdmin(db, new CapturingEmailQueue());
+
+        var created = await admin.CreateOffer(lead.Id, new CreateOfferRequest(
+            Options: [new OfferOptionInput("Keep me"), new OfferOptionInput("Drop me")]));
+        var offerId = (Guid)Prop(created.Should().BeOfType<OkObjectResult>().Subject.Value!, "id")!;
+        var keptId  = db.OfferOptions.Single(o => o.Title == "Keep me").Id;
+        var goneId  = db.OfferOptions.Single(o => o.Title == "Drop me").Id;
+
+        (await admin.UpdateOffer(offerId, new UpdateOfferRequest(Options:
+        [
+            // Edited in place — same option, new price.
+            new OfferOptionInput("Keep me", PriceAmount: 120m, Id: keptId),
+            // No id: a brand-new option the admin just typed.
+            new OfferOptionInput("Fresh"),
+            // An id from nowhere is not an error the admin can act on — it is
+            // simply a new option, and it must never reach across offers.
+            new OfferOptionInput("Stranger", Id: Guid.NewGuid()),
+        ]))).Should().BeOfType<OkObjectResult>();
+
+        var options = db.OfferOptions.Where(o => o.OfferId == offerId).ToList();
+        options.Should().HaveCount(3);
+        options.Single(o => o.Title == "Keep me").Id.Should().Be(keptId,
+            "an option the payload still carries keeps its row — provenance lives there");
+        options.Single(o => o.Title == "Keep me").PriceAmount.Should().Be(120m);
+        options.Should().NotContain(o => o.Id == goneId, "membership is still replace-set");
+        options.Select(o => o.Id).Should().OnlyHaveUniqueItems();
+    }
+
+    [Fact]
     public async Task UpdateOffer_ExplicitSortOrders_InclZero_DriveOrdering_AdminAndPublic()
     {
         var db    = TestDbContext.Create();

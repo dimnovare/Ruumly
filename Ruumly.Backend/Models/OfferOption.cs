@@ -5,8 +5,9 @@ namespace Ruumly.Backend.Models;
 /// <summary>
 /// One selectable option inside an <see cref="Offer"/>. Supplier linkage is
 /// optional so the admin can add free-form options (a provider not yet in the
-/// system, a manual quote, etc.). PATCH uses replace-set semantics: options
-/// are always rewritten as a whole set, never edited row by row.
+/// system, a manual quote, etc.). PATCH sends the whole set at once, but the
+/// rows are matched on Id and updated in place — an admin's edit must not cost
+/// an option its identity, because provenance lives on the row.
 /// </summary>
 public class OfferOption
 {

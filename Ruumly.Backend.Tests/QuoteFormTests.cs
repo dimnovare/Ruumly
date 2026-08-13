@@ -427,6 +427,69 @@ public class QuoteFormTests
     }
 
     [Fact]
+    public async Task SubmitQuote_AfterAnAdminEdit_CorrectsItsOwnOption_InsteadOfShowingTheProviderTwice()
+    {
+        var db       = TestDbContext.Create();
+        var lead     = MakeLead(db);
+        var supplier = MakeSupplier(db, "Big Movers OÜ", "big@movers.ee");
+        var token    = await SendOutreachAndGetToken(db, lead, supplier);
+        var admin    = MakeAdmin(db, new CapturingEmailQueue());
+
+        (await MakePublic(db, new CapturingEmailQueue())
+                .SubmitQuote(token, new SubmitQuoteRequest(250m, "onetime", "next week", "2 movers")))
+            .Should().BeOfType<OkObjectResult>();
+
+        // The admin opens the seeded draft and saves an edit — a customer note
+        // and a placeholder of their own. The workspace PATCHes the WHOLE option
+        // set every time, so this save is where the quote's option used to be
+        // deleted and silently reborn as an anonymous row.
+        var draft   = ReadList(await admin.GetLeadOffers(lead.Id)).Should().ContainSingle().Subject;
+        var offerId = (Guid)Prop(draft, "id")!;
+        var seeded  = ((System.Collections.IEnumerable)Prop(draft, "options")!)
+            .Cast<object>().Should().ContainSingle().Subject;
+
+        (await admin.UpdateOffer(offerId, new UpdateOfferRequest(
+            CustomerNote: "Two quotes so far — a third is coming.",
+            Options:
+            [
+                new OfferOptionInput(
+                    Title:       (string)Prop(seeded, "title")!,
+                    SupplierId:  (Guid?)Prop(seeded, "supplierId"),
+                    PriceAmount: (decimal?)Prop(seeded, "priceAmount"),
+                    PriceUnit:   (string?)Prop(seeded, "priceUnit"),
+                    Notes:       (string?)Prop(seeded, "notes"),
+                    Id:          (Guid?)Prop(seeded, "id")),
+                new OfferOptionInput("Placeholder — waiting on Kiirkolimine", PriceAmount: 400m),
+            ],
+            Version: (int?)Prop(draft, "version")))).Should().BeOfType<OkObjectResult>();
+
+        var outreachId = db.ProviderOutreaches.Single(o => o.SupplierId == supplier.Id).Id;
+        db.OfferOptions.Where(o => o.CreatedFromOutreachId == outreachId).Should().ContainSingle(
+            "an admin's edit must not cost the option the link to the quote that seeded it");
+
+        // The provider comes back with a corrected price.
+        (await MakePublic(db, new CapturingEmailQueue())
+                .SubmitQuote(token, new SubmitQuoteRequest(199m, "onetime")))
+            .Should().BeOfType<OkObjectResult>();
+
+        var options = db.OfferOptions.Where(o => o.OfferId == offerId).ToList();
+        options.Where(o => o.SupplierId == supplier.Id).Should().ContainSingle(
+            "the correction updates the provider's own option — the customer must never be " +
+            "shown one company twice at two different prices");
+        var quoted = options.Single(o => o.SupplierId == supplier.Id);
+        quoted.PriceAmount.Should().Be(199m, "the corrected price is the one that counts");
+        quoted.CreatedFromOutreachId.Should().Be(outreachId);
+        options.Should().HaveCount(2, "the admin's placeholder is still there beside it");
+        options.Single(o => o.CreatedFromOutreachId == null).PriceAmount.Should().Be(400m);
+
+        // And the admin can still tell a real quote from their own guess.
+        var reloaded = ReadList(await admin.GetLeadOffers(lead.Id)).Should().ContainSingle().Subject;
+        ((System.Collections.IEnumerable)Prop(reloaded, "options")!).Cast<object>()
+            .Where(o => (bool)Prop(o, "fromProviderQuote")!).Should().ContainSingle(
+                "the badge survives the edit that used to erase it");
+    }
+
+    [Fact]
     public async Task SubmitQuote_BlankNoteOnResubmit_KeepsThePreviousNote()
     {
         var db       = TestDbContext.Create();

@@ -233,20 +233,13 @@ public class AdminOffersController(
             offer.Status = parsed;
         }
 
-        // Replace-set: a non-null Options list rewrites the whole option set.
+        // Replace-set: a non-null Options list rewrites the whole option set —
+        // but by identity, so an option that survives the admin's edit survives
+        // as the same row. See ApplyOptions for what rides on that.
         if (body.Options is not null)
         {
-            var (options, error) = BuildOptions(offer.Id, body.Options);
+            var error = ApplyOptions(offer, body.Options);
             if (error is not null) return BadRequest(Error(error));
-            Db.OfferOptions.RemoveRange(offer.Options.ToList());
-            offer.Options.Clear();
-            // AddRange through the DbSet: the new options carry pre-generated
-            // Guids, so nav-fixup discovery would track them as Modified (key
-            // set ⇒ "existing"), not Added — and the update would then target
-            // rows that don't exist. Relationship fixup puts them into
-            // offer.Options for us (OfferId matches the tracked parent) —
-            // adding them to the nav manually as well would duplicate them.
-            Db.OfferOptions.AddRange(options!);
         }
 
         // Any accepted edit invalidates versions held by other readers.
@@ -619,33 +612,107 @@ public class AdminOffersController(
         quotedAt           = o.QuotedAt,
     };
 
+    /// <summary>
+    /// Vets the whole payload before a single row is touched — a rejected save
+    /// must leave the offer exactly as the admin last left it, not half-applied.
+    /// </summary>
+    private static string? ValidateOptions(List<OfferOptionInput> inputs)
+    {
+        foreach (var input in inputs)
+            if (string.IsNullOrEmpty(input.Title?.Trim()))
+                return "Every option needs a title.";
+        return null;
+    }
+
+    /// <summary>
+    /// Copies the fields the client owns onto an option row.
+    /// CreatedFromOutreachId is pointedly not among them: provenance is a fact
+    /// the quote endpoint records, never something a payload gets to claim.
+    /// </summary>
+    private static void CopyInto(OfferOption target, OfferOptionInput input, int index)
+    {
+        var title = input.Title.Trim();
+        target.SupplierId         = input.SupplierId;
+        target.SupplierLocationId = input.SupplierLocationId;
+        target.Title              = title.Length > 200 ? title[..200] : title;
+        target.PriceAmount        = input.PriceAmount;
+        target.PriceUnit          = Clamp(input.PriceUnit, 40);
+        target.Notes              = Clamp(input.Notes, 2000);
+        // Explicit sort orders win (including an explicit 0);
+        // otherwise keep the payload order.
+        target.SortOrder          = input.SortOrder ?? index;
+    }
+
     private static (List<OfferOption>? Options, string? Error) BuildOptions(
         Guid offerId, List<OfferOptionInput> inputs)
     {
+        if (ValidateOptions(inputs) is { } error) return (null, error);
+
         var options = new List<OfferOption>();
         for (var i = 0; i < inputs.Count; i++)
         {
-            var input = inputs[i];
-            var title = input.Title?.Trim();
-            if (string.IsNullOrEmpty(title))
-                return (null, "Every option needs a title.");
-
-            options.Add(new OfferOption
-            {
-                Id                 = Guid.NewGuid(),
-                OfferId            = offerId,
-                SupplierId         = input.SupplierId,
-                SupplierLocationId = input.SupplierLocationId,
-                Title              = title.Length > 200 ? title[..200] : title,
-                PriceAmount        = input.PriceAmount,
-                PriceUnit          = Clamp(input.PriceUnit, 40),
-                Notes              = Clamp(input.Notes, 2000),
-                // Explicit sort orders win (including an explicit 0);
-                // otherwise keep the payload order.
-                SortOrder          = input.SortOrder ?? i,
-            });
+            // Any Id on the input is ignored: the offer is being created, so
+            // there is no row to preserve, and letting a caller choose the key
+            // would let a payload land on top of someone else's option.
+            var option = new OfferOption { Id = Guid.NewGuid(), OfferId = offerId };
+            CopyInto(option, inputs[i], i);
+            options.Add(option);
         }
         return (options, null);
+    }
+
+    /// <summary>
+    /// Applies a replace-set option payload to a tracked offer, matched on the
+    /// ids the client read back with it. Membership is still replace-set — an
+    /// option the payload drops is deleted — but an option the payload keeps
+    /// keeps its ROW, and with it CreatedFromOutreachId.
+    ///
+    /// Rebuilding every row on every save severed that link, and it is the only
+    /// thing tying an option to the provider quote that seeded it. A provider
+    /// correcting their price then matched nothing and was appended as a SECOND
+    /// option — the same company twice, at two prices, on the page the customer
+    /// reads. It also erased the "from provider quote" badge on the very screen
+    /// where the admin decides which numbers are real quotes and which are their
+    /// own placeholders, and blinded the auto-send rule, which counts
+    /// quote-seeded options to decide whether an offer is ready to go out.
+    /// </summary>
+    private string? ApplyOptions(Offer offer, List<OfferOptionInput> inputs)
+    {
+        if (ValidateOptions(inputs) is { } error) return error;
+
+        // Snapshot BEFORE anything is added: relationship fixup drops newly
+        // added options straight into offer.Options, and a row that was never
+        // in the payload's "before" picture must not be read as one it dropped.
+        var existing = offer.Options.ToDictionary(option => option.Id);
+        var kept     = new HashSet<Guid>();
+
+        for (var i = 0; i < inputs.Count; i++)
+        {
+            var input = inputs[i];
+            // An id only claims a row if the row is on THIS offer and no earlier
+            // input claimed it already. Everything else — no id, a foreign id, a
+            // repeat — is just a new option; there is nothing here worth failing
+            // an admin's save over.
+            if (input.Id is { } id && existing.TryGetValue(id, out var option) && kept.Add(id))
+            {
+                CopyInto(option, input, i);
+                continue;
+            }
+
+            var added = new OfferOption { Id = Guid.NewGuid(), OfferId = offer.Id };
+            CopyInto(added, input, i);
+            // Add through the DbSet, NOT offer.Options: the row carries a
+            // pre-generated Guid, so nav-fixup discovery would track it as
+            // Modified (key set ⇒ "existing") and UPDATE a row that isn't there.
+            // Relationship fixup still puts it into offer.Options for us.
+            Db.OfferOptions.Add(added);
+        }
+
+        var dropped = existing.Values.Where(option => !kept.Contains(option.Id)).ToList();
+        Db.OfferOptions.RemoveRange(dropped);
+        foreach (var option in dropped) offer.Options.Remove(option);
+
+        return null;
     }
 
     private static string? NormalizeLanguage(string? lang)
