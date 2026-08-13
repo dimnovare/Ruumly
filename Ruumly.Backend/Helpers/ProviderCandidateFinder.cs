@@ -270,9 +270,23 @@ public static class ProviderCandidateFinder
         && lng is >= -180 and <= 180
         && (lat != 0 || lng != 0);
 
+    /// <summary>
+    /// Whether a provider row sits in the city the customer asked about.
+    ///
+    /// This is the hinge of the whole fan-out, not a cosmetic comparison: the
+    /// geographic anchor is built ONLY from rows that pass it, and with no
+    /// anchor the nearby search keeps nothing, so a miss here means the
+    /// automatic outreach mails nobody and the 25 → 50 → 100 km widening cannot
+    /// help — each pass re-derives the same null anchor.
+    ///
+    /// It was OrdinalIgnoreCase equality until 2026-08-13, which forgave case
+    /// and nothing else. Against production that silently returned zero
+    /// providers for "Таллинн" (Ruumly's own Russian intake placeholder),
+    /// "Harjumaa" (the region its own hint text invites) and "Riga" without the
+    /// macron. See <see cref="CityMatcher"/>.
+    /// </summary>
     private static bool IsExactCity(string? city, string leadCity) =>
-        !string.IsNullOrWhiteSpace(leadCity)
-        && string.Equals(city?.Trim(), leadCity.Trim(), StringComparison.OrdinalIgnoreCase);
+        CityMatcher.IsSameCity(city, leadCity);
 
     private sealed record CandidateRow(ProviderCandidateDto Item, IReadOnlyList<CandidateLocation> Locations);
 
