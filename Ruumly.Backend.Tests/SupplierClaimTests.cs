@@ -539,13 +539,17 @@ public class SupplierClaimTests
     [Fact]
     public void IntroAndOutreachCopy_OfferOnlyReplyAndTheContactPage()
     {
+        // Shortened in the 2026-08 intro rewrite. What this test actually guards is
+        // unchanged and is the reason it pins whole strings: the only two channels
+        // ever offered are a reply and the contact page. No phone number, no form,
+        // no third route. The wording may move; that invariant may not.
         var intro = new Dictionary<string, string>
         {
-            ["et"] = "Küsimused? Vastake lihtsalt sellele kirjale või kirjutage meile kontaktivormi kaudu: https://ruumly.eu/et/contact",
-            ["en"] = "Questions? Simply reply to this email, or write to us through our contact page: https://ruumly.eu/en/contact",
-            ["ru"] = "Вопросы? Просто ответьте на это письмо или напишите нам через форму на странице контактов: https://ruumly.eu/ru/contact",
-            ["lv"] = "Jautājumi? Vienkārši atbildiet uz šo e-pastu vai rakstiet mums, izmantojot kontaktu lapu: https://ruumly.eu/lv/contact",
-            ["lt"] = "Klausimai? Tiesiog atsakykite į šį laišką arba parašykite mums per kontaktų puslapį: https://ruumly.eu/lt/contact",
+            ["et"] = "Kui teil tekib küsimusi Ruumly, koostöö või päringute kohta, vastake lihtsalt sellele kirjale või kirjutage siit: https://ruumly.eu/et/contact",
+            ["en"] = "Questions about Ruumly, working together or the requests? Reply to this email, or write to us here: https://ruumly.eu/en/contact",
+            ["ru"] = "Если возникнут вопросы о Ruumly, сотрудничестве или заявках, просто ответьте на это письмо или напишите нам здесь: https://ruumly.eu/ru/contact",
+            ["lv"] = "Ja rodas jautājumi par Ruumly, sadarbību vai pieprasījumiem, vienkārši atbildiet uz šo vēstuli vai rakstiet mums šeit: https://ruumly.eu/lv/contact",
+            ["lt"] = "Jei kiltų klausimų apie Ruumly, bendradarbiavimą ar užklausas, tiesiog atsakykite į šį laišką arba parašykite mums čia: https://ruumly.eu/lt/contact",
         };
 
         var outreach = new Dictionary<string, string>

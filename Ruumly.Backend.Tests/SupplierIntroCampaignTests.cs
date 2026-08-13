@@ -517,10 +517,13 @@ public class SupplierIntroCampaignTests
             var t = EmailTranslations.For(language);
             var because = $"'{language}' intro copy must be translated, not left on the English fallback";
 
-            t.IntroSubject.Should().NotBe(en.IntroSubject, because);
+            t.IntroSubjectTpl.Should().NotBe(en.IntroSubjectTpl, because);
+            t.IntroOpening.Should().NotBe(en.IntroOpening, because);
             t.IntroWhoWeAre.Should().NotBe(en.IntroWhoWeAre, because);
-            t.IntroListedTpl.Should().NotBe(en.IntroListedTpl, because);
-            t.IntroWhatToExpect.Should().NotBe(en.IntroWhatToExpect, because);
+            t.IntroProfileListedTpl.Should().NotBe(en.IntroProfileListedTpl, because);
+            t.IntroWhyBody.Should().NotBe(en.IntroWhyBody, because);
+            t.IntroVolume.Should().NotBe(en.IntroVolume, because);
+            t.IntroFinalAsk.Should().NotBe(en.IntroFinalAsk, because);
             t.IntroQuestionsTpl.Should().NotBe(en.IntroQuestionsTpl, because);
             t.IntroClaimIntro.Should().NotBe(en.IntroClaimIntro, because);
             t.IntroClaimCta.Should().NotBe(en.IntroClaimCta, because);
@@ -566,8 +569,13 @@ public class SupplierIntroCampaignTests
 
         new[]
         {
-            t.IntroSubject, t.IntroGreeting, t.IntroWhoWeAre, t.IntroListedTpl,
-            t.IntroWhatToExpect, t.IntroQuestionsTpl, t.IntroClaimIntro, t.IntroClaimCta,
+            t.IntroSubjectTpl, t.IntroGreeting, t.IntroOpening, t.IntroWhoWeAre,
+            t.IntroForwarding, t.IntroNotTestRequests, t.IntroExpectHeading, t.IntroExpectIntro,
+            t.IntroExpectBullet1, t.IntroExpectBullet2, t.IntroExpectBullet3,
+            t.IntroNoAccount, t.IntroIfNotSuitable, t.IntroWhyHeading, t.IntroWhyBody,
+            t.IntroGoal, t.IntroVolume, t.IntroProfileHeading, t.IntroProfileListedTpl,
+            t.IntroPriceList, t.IntroVisibilityLater, t.IntroFinalAsk,
+            t.IntroQuestionsTpl, t.IntroClaimIntro, t.IntroClaimCta,
             t.IntroClaimByEmailTpl, t.IntroOptOutTpl, t.IntroOptOutLinkLabel, t.IntroSignature,
         }.Should().AllSatisfy(s => s.Should().NotBeNullOrWhiteSpace());
     }
@@ -594,7 +602,7 @@ public class SupplierIntroCampaignTests
         message.TextBody.Should().Contain(t.IntroWhoWeAre);
         message.TextBody.Should().Contain("Kolimisabi OÜ",
             "the 'you are already listed' line names the actual business");
-        message.TextBody.Should().Contain(t.IntroWhatToExpect);
+        message.TextBody.Should().Contain(t.IntroForwarding);
         message.TextBody.Should().Contain(t.IntroQuestions("https://ruumly.eu/et/contact"),
             "the campaign promises a human — reachable by reply or the contact page");
     }
@@ -688,6 +696,27 @@ public class SupplierIntroCampaignTests
     [Fact]
     public void StaysShortEnoughToBeReadOnAPhone()
     {
+        // 200 -> 400 -> 480, both raises in 2026-08. Recording the history because
+        // a ceiling that only ever goes up is not a ceiling, and the next person to
+        // hit this should know what it cost.
+        //
+        // 200 was right for the original note, which said only "you are listed,
+        // requests may arrive". That version failed in the field: providers who run
+        // their own booking system answered a request by pushing the customer to
+        // their own website, and the customer — who came to Ruumly precisely to
+        // avoid visiting ten websites — dropped out.
+        //
+        // 400 covered the rewrite that added the ask and the reasons.
+        //
+        // 480 covers the founder's own draft, which is a sectioned letter with
+        // headings and a bullet list rather than a short note, plus three things
+        // added on top of it: the ePrivacy opt-out, the claim link, and the paid-
+        // promotion paragraph. The founder's draft alone is ~360 words in Estonian.
+        //
+        // The ceiling stays because the failure mode is real — a cold email to a
+        // small operator on a phone. If a future edit needs more room than 480, cut
+        // copy instead of raising this again. The paid-promotion paragraph is the
+        // least load-bearing thing in the mail and should go first.
         foreach (var language in AllLanguages)
         {
             var message = SupplierIntroComposer.ComposeInLanguage(
@@ -695,8 +724,65 @@ public class SupplierIntroCampaignTests
 
             var words = message.TextBody.Split(
                 [' ', '\n', '\r'], StringSplitOptions.RemoveEmptyEntries).Length;
-            words.Should().BeLessThan(200,
-                $"'{language}' runs {words} words — past ~200 a small operator stops reading");
+            words.Should().BeLessThan(480,
+                $"'{language}' runs {words} words — past ~480 a small operator stops reading");
+        }
+    }
+
+    [Fact]
+    public void CarriesEveryLoadBearingSectionInEveryLanguage()
+    {
+        // The mail is organised as three answered questions. Each of these
+        // sentences is doing a job no other sentence does, and losing one in a
+        // translation would not fail anything else:
+        //
+        //   NotTestRequests — the line that stops it reading as a marketing blast
+        //   WhyBody         — the whole point: a bare link to your website cannot
+        //                     be shown to the customer, so we lose you the job
+        //   Volume          — honest sizing, so nobody feels misled in month two
+        //   FinalAsk        — the one instruction to remember: answer the requests
+        //   VisibilityLater — the only mention of paid promotion, and it must stay
+        //                     framed as optional and later
+        foreach (var language in AllLanguages)
+        {
+            var t = EmailTranslations.For(language);
+            var message = SupplierIntroComposer.ComposeInLanguage(
+                language, "Kolimisabi OÜ", "https://ruumly.eu/et/claim/kolimisabi-ou");
+
+            foreach (var body in new[] { message.TextBody, message.HtmlBody })
+            {
+                body.Should().Contain(t.IntroNotTestRequests,
+                    $"'{language}' must say these are not test requests");
+                body.Should().Contain(t.IntroWhyBody,
+                    $"'{language}' must explain why a bare website link loses the job");
+                body.Should().Contain(t.IntroVolume,
+                    $"'{language}' must state honestly that we promise no volume");
+                body.Should().Contain(t.IntroFinalAsk,
+                    $"'{language}' must close on the one ask that matters");
+                body.Should().Contain(t.IntroVisibilityLater,
+                    $"'{language}' must keep paid promotion optional and later");
+            }
+
+            // The three bullets are what a useful reply contains. A provider who
+            // reads only this list should still be able to answer correctly.
+            foreach (var bullet in new[]
+                     { t.IntroExpectBullet1, t.IntroExpectBullet2, t.IntroExpectBullet3 })
+                message.TextBody.Should().Contain(bullet);
+        }
+    }
+
+    [Fact]
+    public void SubjectCarriesTheRecipientsOwnCompanyName()
+    {
+        // The strongest single signal that this is not a bulk blast, and the
+        // reason the subject is a template rather than a constant.
+        foreach (var language in AllLanguages)
+        {
+            var message = SupplierIntroComposer.ComposeInLanguage(
+                language, "Kolimisabi OÜ", "https://ruumly.eu/et/claim/kolimisabi-ou");
+
+            message.Subject.Should().Contain("Kolimisabi OÜ");
+            message.Subject.Should().NotContain("{company}");
         }
     }
 

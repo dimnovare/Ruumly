@@ -169,18 +169,77 @@ public static class EmailTranslations
         // Sent ONCE to every directory provider we added from public research,
         // BEFORE an auto-fanout request ever lands in their inbox: a cold
         // availability request from a name they have never seen reads as spam.
-        // Must stay under ~200 words — a small operator reads this on a phone.
-        string IntroSubject,
+        //
+        // Structure is the founder's own 2026-08 draft: three answered questions
+        // (what we want from you / why answering matters / what your profile is)
+        // instead of a feature list. Keep it under ~450 words — a small operator
+        // reads this on a phone.
+        string IntroSubjectTpl,
         string IntroGreeting,
-        // One honest line: what Ruumly does, and explicitly that it is NOT a
-        // paid directory. This is the sentence that defuses the spam reaction.
+        // Why this email exists, in one line, addressed to them and not to us:
+        // "we are writing because your company offers something our customers
+        // are looking for."
+        string IntroOpening,
+        // What Ruumly is, described by what the customer does, not by what we
+        // are. Lists the service categories a provider might recognise.
         string IntroWhoWeAre,
-        // "{company} is already listed — added from public information, free,
-        // no account, no obligation."
-        string IntroListedTpl,
-        // Sets the expectation the whole campaign exists to set: request emails
-        // may arrive, answering is free/non-binding/no account needed.
-        string IntroWhatToExpect,
+        // "If a request matches your service and your area, we forward it."
+        string IntroForwarding,
+        // The sentence that defuses the spam reaction: these are not test
+        // requests and not a marketing list — a real person, needing it now.
+        string IntroNotTestRequests,
+        // ── Section 1: what we want from you ─────────────────────────────────
+        string IntroExpectHeading,
+        string IntroExpectIntro,
+        // The three things a useful reply contains. Kept as separate fields so
+        // the HTML can render a real <ul> and the text body a "- " list.
+        string IntroExpectBullet1,
+        string IntroExpectBullet2,
+        string IntroExpectBullet3,
+        // "No account, no joining fee, no separate system to learn."
+        string IntroNoAccount,
+        // Lowers the cost of the ask to almost nothing: "not possible" is a
+        // perfectly good answer. A provider who believes silence is the only
+        // alternative to a full quote will choose silence.
+        string IntroIfNotSuitable,
+        // ── Section 2: why answering matters ─────────────────────────────────
+        // THE behavioural target of the whole campaign. Providers who run their
+        // own booking system reply to a request with a link to their website,
+        // and the customer — who came to Ruumly precisely to avoid visiting ten
+        // websites — drops out. Says plainly that a bare link cannot be put in
+        // front of the customer alongside the other options.
+        string IntroWhyHeading,
+        string IntroWhyBody,
+        // "Our goal is simple: bring you a suitable customer, and make reaching
+        // you easy for them."
+        string IntroGoal,
+        // Honest sizing, kept in EVERY language and placed before the profile
+        // ask. We promise no request count and no monthly flow — but every
+        // request that does go out is tied to a real customer, place, time and
+        // need. An inflated promise here is discovered the first month.
+        string IntroVolume,
+        // ── Section 3: your profile ──────────────────────────────────────────
+        string IntroProfileHeading,
+        // "{company}: we built a first profile from public information."
+        string IntroProfileListedTpl,
+        // Invitation to send a price list / standard rates / rules of thumb, so
+        // we can route better-matched requests. NOT a claim-form field: the
+        // claim endpoint cannot store prices (see IntroClaimIntro).
+        string IntroPriceList,
+        // The only place paid promotion is mentioned, and only as something that
+        // opens up LATER, once the profile is correct. Ruumly earns by serving
+        // the customer across the whole move, so a provider looking good is in
+        // our own interest.
+        //
+        // Only three visibility products have enforcing code (ListingService):
+        // featured_search EUR29, service_area_boost EUR29, pickup_location_boost EUR24
+        // — hence "24-29 a month". city_pages is seeded at EUR39 and does NOTHING, so it
+        // must never appear here. Mechanics stated once and honestly: requested from
+        // us, switched on by us, bank transfer, never an automatic charge, listing free.
+        string IntroVisibilityLater,
+        // The one thing to remember if they remember nothing else: answer the
+        // requests that fit. Rendered as a highlighted block in the HTML.
+        string IntroFinalAsk,
         // "Just reply, or write to us through our contact page: {url}."
         // Reply-To is the ops inbox, so a plain reply already reaches a human.
         // Same two-channel rule as OutreachQuestionsTpl: no phone number.
@@ -272,8 +331,13 @@ public static class EmailTranslations
 
         // ── Supplier introduction campaign ────────────────────────────────────
 
-        public string IntroListed(string company) =>
-            IntroListedTpl.Replace("{company}", company);
+        /// <summary>Subject line carrying the recipient's own company name — the
+        /// single strongest signal that this is not a bulk blast.</summary>
+        public string IntroSubject(string company) =>
+            IntroSubjectTpl.Replace("{company}", company);
+
+        public string IntroProfileListed(string company) =>
+            IntroProfileListedTpl.Replace("{company}", company);
 
         public string IntroQuestions(string contactUrl) =>
             IntroQuestionsTpl.Replace("{url}", contactUrl);
@@ -425,18 +489,35 @@ public static class EmailTranslations
         OutreachReplyAlternative:      "Või vastake lihtsalt sellele e-kirjale koos hinnaga — kiri jõuab otse meie meeskonnani.",
         OutreachSignature:             "Ruumly meeskond\ninfo@ruumly.eu",
         OutreachQuestionsTpl:          "Küsimused? Vastake sellele kirjale või kirjutage meile kontaktivormi kaudu: {url}",
-        IntroSubject:                  "Ruumly — kes me oleme, enne kui teile saabub kliendipäring",
-        IntroGreeting:                 "Tere,",
-        IntroWhoWeAre:                 "Ruumly kogub klientidelt kolimispäringuid ja edastab need kohalikele teenusepakkujatele. See ei ole tasuline kataloog.",
-        IntroListedTpl:                "{company} on juba meie nimekirjas. Lisasime teid avalikult kättesaadava info põhjal — tasuta, ilma kontota ja ilma igasuguse kohustuseta.",
-        IntroWhatToExpect:             "Seega võite meilt saada kirja päris kliendi päringuga: mida, kus ja millal. Vastamine on tasuta ja mittesiduv ning kontot pole vaja — saadate hinna või jätate vastamata.",
-        IntroQuestionsTpl:             "Küsimused? Vastake lihtsalt sellele kirjale või kirjutage meile kontaktivormi kaudu: {url}",
-        IntroClaimIntro:               "Andmete parandamiseks või hindade lisamiseks avage oma profiil:",
+        IntroSubjectTpl:               "Kliendipäringud Ruumlyst — {company}",
+        IntroGreeting:                 "Tere!",
+        IntroOpening:                  "Kirjutame Ruumlyst, sest teie ettevõte pakub teenust, mida meie kliendid otsivad.",
+        IntroWhoWeAre:                 "Ruumly aitab inimestel leida sobivaid kohalikke teenusepakkujaid üle Eesti. Meieni jõuavad inimesed, kellel on konkreetne vajadus – näiteks ladu, kolimine, kaubiku või haagise rent, koristus või pakkimine.",
+        IntroForwarding:               "Kui päring sobib teie teenuse ja piirkonnaga, saadame selle teile edasi.",
+        IntroNotTestRequests:          "Need ei ole testpäringud ega turundusnimekirjad. Iga Ruumly päring tuleb päris inimeselt, kes otsib teenust päriselt praegu.",
+        IntroExpectHeading:            "Mida me teilt ootame?",
+        IntroExpectIntro:              "Kui saate klienti aidata, vastake meie päringukirjale võimalikult lihtsalt:",
+        IntroExpectBullet1:            "kas teil on soovitud ajal võimalus;",
+        IntroExpectBullet2:            "mis oleks ligikaudne või lõplik hind;",
+        IntroExpectBullet3:            "vajadusel mõni oluline tingimus või täpsustav küsimus.",
+        IntroNoAccount:                "Kontot ei ole vaja luua, liitumistasu ei ole ja eraldi süsteemi kasutama ei pea.",
+        IntroIfNotSuitable:            "Kui päring teile ei sobi, piisab ka lühikesest vastusest „ei ole võimalik“.",
+        IntroWhyHeading:               "Miks on oluline pakkumisele vastata?",
+        IntroWhyBody:                  "Klient tuli Ruumlysse selleks, et ta ei peaks ise kümneid ettevõtteid läbi helistama ja veebilehti võrdlema. Kui saame teilt hinna ja saadavuse, saame teie pakkumise kliendile konkreetselt edasi anda. Kui vastuseks tuleb ainult link kodulehele või me vastust ei saa, ei ole meil kahjuks võimalik teie pakkumist teiste võimaluste kõrval kliendile esitada.",
+        IntroGoal:                     "Meie eesmärk on lihtne: tuua teile sobiv klient ja teha kliendil teieni jõudmine võimalikult lihtsaks.",
+        IntroVolume:                   "Me ei luba kindlat päringute arvu ega igakuist tellimuste voogu. Ruumly on alles kasvamas. Kuid iga päring, mille saadame, on seotud konkreetse kliendi, asukoha, aja ja vajadusega.",
+        IntroProfileHeading:           "Teie ettevõtte profiil Ruumlys",
+        IntroProfileListedTpl:         "Oleme loonud paljudele Eesti teenusepakkujatele esmase profiili avalikult kättesaadava info põhjal. Ka {company} on meil juba kirjas.",
+        IntroPriceList:                "Kui teil on olemas hinnakiri, tüüphinnad või lihtsad reeglid, mille järgi pakkumisi teete, võite need meile samuti saata. See aitab meil tulevikus teile ainult sobivamaid päringuid edastada.",
+        IntroVisibilityLater:          "Kui profiil on korras, saab hiljem soovi korral oma kirjet ka tasu eest esile tõsta – eelisasetus otsingus ja teie piirkonna linnalehtedel, 24–29 € kuus. See on täiesti vabatahtlik: küsite meilt, lülitame sisse, maksate ülekandega. Automaatselt ei võeta kunagi midagi ja nimekirjas olemine on ja jääb tasuta.",
+        IntroFinalAsk:                 "Kõige olulisem palve on aga lihtne: kui saate Ruumlylt päringu, mis teie teenusega sobib, palun vastake sellele. Selle kirja taga on päris klient, kes ootab lahendust.",
+        IntroQuestionsTpl:             "Kui teil tekib küsimusi Ruumly, koostöö või päringute kohta, vastake lihtsalt sellele kirjale või kirjutage siit: {url}",
+        IntroClaimIntro:               "Soovi korral saate oma profiili üle võtta ning kontaktid, teenused ja kirjelduse ise üle vaadata. See ei ole vajalik selleks, et meie kliendipäringutele vastata.",
         IntroClaimCta:                 "Võtke oma profiil üle",
-        IntroClaimByEmailTpl:          "Andmete parandamiseks või hindade lisamiseks kirjutage aadressile {email} ja me uuendame need.",
-        IntroOptOutTpl:                "Ei soovi nimekirjas olla? Vastake sõnaga {keyword} ja eemaldame teid — ilma lisaküsimusteta.",
-        IntroOptOutLinkLabel:          "Eemaldage minu profiil",
-        IntroSignature:                "Ruumly meeskond\ninfo@ruumly.eu",
+        IntroClaimByEmailTpl:          "Kui soovite oma profiili andmeid parandada, kirjutage aadressile {email} ja me uuendame need.",
+        IntroOptOutTpl:                "Kui te ei soovi Ruumlylt päringuid ega kirju saada, vastake sõnaga {keyword} ja eemaldame teie ettevõtte nimekirjast.",
+        IntroOptOutLinkLabel:          "Eemaldage minu ettevõte",
+        IntroSignature:                "Parimate soovidega\nRuumly meeskond\ninfo@ruumly.eu\nhttps://ruumly.eu",
         ClaimSubject:                  "Ruumly — kinnitage oma profiili ülevõtmine",
         ClaimGreeting:                 "Tere,",
         ClaimBodyTpl:                  "Keegi soovis üle võtta ettevõtte {company} Ruumly profiili. Kui see olite teie, kinnitage see allolevast nupust — seejärel saate oma andmeid ise parandada.",
@@ -576,18 +657,35 @@ public static class EmailTranslations
         OutreachReplyAlternative:      "Or simply reply to this email with your price — it reaches our team directly.",
         OutreachSignature:             "The Ruumly team\ninfo@ruumly.eu",
         OutreachQuestionsTpl:          "Questions? Reply to this email, or write to us through our contact page: {url}",
-        IntroSubject:                  "Ruumly — who we are, before a customer request reaches you",
+        IntroSubjectTpl:               "Customer requests from Ruumly — {company}",
         IntroGreeting:                 "Hello,",
-        IntroWhoWeAre:                 "Ruumly collects moving requests from customers and passes them on to local providers. It is not a paid directory.",
-        IntroListedTpl:                "{company} is already on our list. We added you from publicly available information — free of charge, with no account and no obligation.",
-        IntroWhatToExpect:             "So you may get an email from us with a real customer request: what, where and when. Answering is free and non-binding, and no account is needed — you send a price, or you ignore it.",
-        IntroQuestionsTpl:             "Questions? Simply reply to this email, or write to us through our contact page: {url}",
-        IntroClaimIntro:               "To correct your details or add prices, open your profile:",
+        IntroOpening:                  "We are writing from Ruumly because your company offers a service our customers are looking for.",
+        IntroWhoWeAre:                 "Ruumly helps people find the right local providers. The people who reach us have a specific need — storage, moving, van or trailer hire, cleaning or packing.",
+        IntroForwarding:               "When a request matches your service and your area, we forward it to you.",
+        IntroNotTestRequests:          "These are not test requests and this is not a marketing list. Every Ruumly request comes from a real person looking for the service right now.",
+        IntroExpectHeading:            "What we ask of you",
+        IntroExpectIntro:              "If you can help the customer, reply to our request email as simply as you like:",
+        IntroExpectBullet1:            "whether you have availability at the time they want;",
+        IntroExpectBullet2:            "what the approximate or final price would be;",
+        IntroExpectBullet3:            "any important condition or question, if you have one.",
+        IntroNoAccount:                "There is no account to create, no joining fee, and no separate system to use.",
+        IntroIfNotSuitable:            "If a request does not suit you, a short \"not possible\" is a perfectly good answer.",
+        IntroWhyHeading:               "Why answering matters",
+        IntroWhyBody:                  "The customer came to Ruumly so they would not have to ring dozens of companies themselves. If we have your price and availability, we can put your offer in front of them. If the reply is only a link to your website, or none comes, we cannot show your offer alongside the others.",
+        IntroGoal:                     "Our goal is simple: bring you a suitable customer, and make reaching you easy.",
+        IntroVolume:                   "We do not promise a fixed number of requests or a monthly flow of orders. Ruumly is still growing. But every request we send is tied to a specific customer, place, time and need.",
+        IntroProfileHeading:           "Your company profile on Ruumly",
+        IntroProfileListedTpl:         "We have created first profiles for many providers from publicly available information. {company} is already listed too.",
+        IntroPriceList:                "If you have a price list, standard rates or simple rules you quote by, send those too. It helps us forward only the requests that actually fit.",
+        IntroVisibilityLater:          "Once the profile is correct, you can later promote your listing if you want — featured placement in search and on the city pages for your area, €24–29 a month. Entirely optional: you ask, we switch it on, you pay by bank transfer. Nothing is ever charged automatically, and being listed stays free.",
+        IntroFinalAsk:                 "The most important ask is simple: if you get a Ruumly request that fits your service, please answer it. There is a real customer behind that email, waiting.",
+        IntroQuestionsTpl:             "Questions about Ruumly, working together or the requests? Reply to this email, or write to us here: {url}",
+        IntroClaimIntro:               "If you wish, you can claim your profile and review the contact details, services and description yourself. This is not required to answer our requests.",
         IntroClaimCta:                 "Claim your profile",
-        IntroClaimByEmailTpl:          "To correct your details or add prices, write to {email} and we'll update them.",
-        IntroOptOutTpl:                "Don't want to be listed? Reply with {keyword} and we'll remove you — no questions asked.",
-        IntroOptOutLinkLabel:          "Remove my profile",
-        IntroSignature:                "The Ruumly team\ninfo@ruumly.eu",
+        IntroClaimByEmailTpl:          "If you would like to correct your profile details, write to {email} and we will update them.",
+        IntroOptOutTpl:                "If you do not wish to receive requests or emails from Ruumly, reply with {keyword} and we will remove your company from the list.",
+        IntroOptOutLinkLabel:          "Remove my company",
+        IntroSignature:                "Best regards\nThe Ruumly team\ninfo@ruumly.eu\nhttps://ruumly.eu",
         ClaimSubject:                  "Ruumly — confirm you're claiming your profile",
         ClaimGreeting:                 "Hello,",
         ClaimBodyTpl:                  "Someone asked to claim the Ruumly profile for {company}. If that was you, confirm with the button below — you can then correct your own details.",
@@ -726,18 +824,35 @@ public static class EmailTranslations
         OutreachReplyAlternative:      "Или просто ответьте на это письмо, указав свою цену — оно придёт напрямую нашей команде.",
         OutreachSignature:             "Команда Ruumly\ninfo@ruumly.eu",
         OutreachQuestionsTpl:          "Вопросы? Ответьте на это письмо или напишите нам через форму на странице контактов: {url}",
-        IntroSubject:                  "Ruumly — кто мы, прежде чем к вам придёт запрос клиента",
-        IntroGreeting:                 "Здравствуйте,",
-        IntroWhoWeAre:                 "Ruumly собирает запросы клиентов на переезд и передаёт их местным исполнителям. Это не платный каталог.",
-        IntroListedTpl:                "{company} уже есть в нашем списке. Мы добавили вас на основе общедоступной информации — бесплатно, без аккаунта и без каких-либо обязательств.",
-        IntroWhatToExpect:             "Поэтому вы можете получить от нас письмо с запросом реального клиента: что, где и когда. Ответ бесплатный и ни к чему не обязывает, аккаунт не нужен — вы отправляете цену или просто не отвечаете.",
-        IntroQuestionsTpl:             "Вопросы? Просто ответьте на это письмо или напишите нам через форму на странице контактов: {url}",
-        IntroClaimIntro:               "Чтобы исправить данные или добавить цены, откройте свой профиль:",
+        IntroSubjectTpl:               "Заявки клиентов от Ruumly — {company}",
+        IntroGreeting:                 "Здравствуйте!",
+        IntroOpening:                  "Пишем вам из Ruumly, потому что ваша компания оказывает услугу, которую ищут наши клиенты.",
+        IntroWhoWeAre:                 "Ruumly помогает людям находить подходящих местных исполнителей. К нам приходят люди с конкретной задачей — склад, переезд, аренда микроавтобуса или прицепа, уборка или упаковка.",
+        IntroForwarding:               "Если заявка подходит вашей услуге и вашему региону, мы передаём её вам.",
+        IntroNotTestRequests:          "Это не тестовые заявки и не маркетинговая рассылка. Каждая заявка Ruumly приходит от реального человека, которому услуга нужна прямо сейчас.",
+        IntroExpectHeading:            "Что мы ждём от вас?",
+        IntroExpectIntro:              "Если вы можете помочь клиенту, ответьте на наше письмо с заявкой как можно проще:",
+        IntroExpectBullet1:            "есть ли у вас возможность в нужное время;",
+        IntroExpectBullet2:            "какой будет ориентировочная или окончательная цена;",
+        IntroExpectBullet3:            "при необходимости — важное условие или уточняющий вопрос.",
+        IntroNoAccount:                "Создавать аккаунт не нужно, платы за участие нет, отдельной системой пользоваться не придётся.",
+        IntroIfNotSuitable:            "Если заявка вам не подходит, достаточно короткого ответа «не получится».",
+        IntroWhyHeading:               "Почему важно ответить на заявку?",
+        IntroWhyBody:                  "Клиент пришёл в Ruumly именно затем, чтобы самому не обзванивать десятки компаний и не сравнивать сайты. Если мы получаем от вас цену и наличие, мы можем представить клиенту ваше предложение конкретно. Если в ответ приходит только ссылка на сайт или ответа нет вовсе, мы, к сожалению, не можем показать ваше предложение наряду с остальными вариантами.",
+        IntroGoal:                     "Наша цель проста: привести вам подходящего клиента и сделать так, чтобы ему было максимально легко до вас дойти.",
+        IntroVolume:                   "Мы не обещаем определённого количества заявок или ежемесячного потока заказов. Ruumly ещё растёт. Но каждая заявка, которую мы отправляем, связана с конкретным клиентом, местом, временем и потребностью.",
+        IntroProfileHeading:           "Профиль вашей компании в Ruumly",
+        IntroProfileListedTpl:         "Для многих исполнителей мы создали первичный профиль на основе общедоступной информации. {company} у нас тоже уже есть.",
+        IntroPriceList:                "Если у вас есть прайс-лист, типовые цены или простые правила, по которым вы считаете предложения, их тоже можно прислать нам. Это поможет в дальнейшем передавать вам только более подходящие заявки.",
+        IntroVisibilityLater:          "Когда профиль в порядке, при желании можно позже выделить свою карточку платно — приоритетное место в поиске и на страницах городов вашего региона, 24–29 € в месяц. Это полностью добровольно: вы просите, мы подключаем, оплата банковским переводом. Автоматически никогда ничего не списывается, а само размещение было и остаётся бесплатным.",
+        IntroFinalAsk:                 "Но самая важная просьба простая: если вы получили от Ruumly заявку, которая подходит вашей услуге, пожалуйста, ответьте на неё. За этим письмом стоит реальный клиент, который ждёт решения.",
+        IntroQuestionsTpl:             "Если возникнут вопросы о Ruumly, сотрудничестве или заявках, просто ответьте на это письмо или напишите нам здесь: {url}",
+        IntroClaimIntro:               "При желании вы можете забрать свой профиль и сами проверить контакты, услуги и описание. Для ответа на наши заявки это не требуется.",
         IntroClaimCta:                 "Забрать свой профиль",
-        IntroClaimByEmailTpl:          "Чтобы исправить данные или добавить цены, напишите на {email}, и мы их обновим.",
-        IntroOptOutTpl:                "Не хотите быть в списке? Ответьте словом {keyword}, и мы вас удалим — без лишних вопросов.",
-        IntroOptOutLinkLabel:          "Удалить мой профиль",
-        IntroSignature:                "Команда Ruumly\ninfo@ruumly.eu",
+        IntroClaimByEmailTpl:          "Если хотите исправить данные профиля, напишите на {email}, и мы их обновим.",
+        IntroOptOutTpl:                "Если вы не хотите получать от Ruumly заявки и письма, ответьте словом {keyword}, и мы уберём вашу компанию из списка.",
+        IntroOptOutLinkLabel:          "Удалить мою компанию",
+        IntroSignature:                "С наилучшими пожеланиями\nКоманда Ruumly\ninfo@ruumly.eu\nhttps://ruumly.eu",
         ClaimSubject:                  "Ruumly — подтвердите, что забираете свой профиль",
         ClaimGreeting:                 "Здравствуйте,",
         ClaimBodyTpl:                  "Кто-то запросил передачу профиля компании {company} в Ruumly. Если это были вы, подтвердите кнопкой ниже — после этого вы сможете сами исправить свои данные.",
@@ -877,18 +992,35 @@ public static class EmailTranslations
         OutreachReplyAlternative:      "Vai vienkārši atbildiet uz šo e-pastu ar savu cenu — tas nonāks tieši pie mūsu komandas.",
         OutreachSignature:             "Ruumly komanda\ninfo@ruumly.eu",
         OutreachQuestionsTpl:          "Jautājumi? Atbildiet uz šo e-pastu vai rakstiet mums, izmantojot kontaktu lapu: {url}",
-        IntroSubject:                  "Ruumly — kas mēs esam, pirms jūs sasniedz klienta pieprasījums",
-        IntroGreeting:                 "Sveiki,",
-        IntroWhoWeAre:                 "Ruumly apkopo klientu pārcelšanās pieprasījumus un nodod tos vietējiem pakalpojumu sniedzējiem. Tas nav maksas katalogs.",
-        IntroListedTpl:                "{company} jau ir mūsu sarakstā. Mēs jūs pievienojām, pamatojoties uz publiski pieejamu informāciju — bez maksas, bez konta un bez jebkādām saistībām.",
-        IntroWhatToExpect:             "Tāpēc jūs varat saņemt no mums e-pastu ar īsta klienta pieprasījumu: ko, kur un kad. Atbildēt ir bez maksas un bez saistībām, un konts nav vajadzīgs — jūs nosūtāt cenu vai vienkārši neatbildat.",
-        IntroQuestionsTpl:             "Jautājumi? Vienkārši atbildiet uz šo e-pastu vai rakstiet mums, izmantojot kontaktu lapu: {url}",
-        IntroClaimIntro:               "Lai labotu savus datus vai pievienotu cenas, atveriet savu profilu:",
+        IntroSubjectTpl:               "Jūsu uzņēmums Ruumly katalogā — {company}",
+        IntroGreeting:                 "Sveiki!",
+        IntroOpening:                  "Rakstām no Ruumly, jo jūsu uzņēmums sniedz pakalpojumu, ko meklē mūsu klienti.",
+        IntroWhoWeAre:                 "Ruumly palīdz cilvēkiem atrast piemērotus vietējos pakalpojumu sniedzējus. Pie mums nonāk cilvēki ar konkrētu vajadzību — noliktava, pārvākšanās, kravas busiņa vai piekabes noma, uzkopšana vai iepakošana.",
+        IntroForwarding:               "Ja pieprasījums atbilst jūsu pakalpojumam un reģionam, mēs to nododam jums.",
+        IntroNotTestRequests:          "Tie nav testa pieprasījumi un tas nav mārketinga saraksts. Katrs Ruumly pieprasījums nāk no īsta cilvēka, kuram pakalpojums vajadzīgs tieši tagad.",
+        IntroExpectHeading:            "Ko mēs no jums gaidām?",
+        IntroExpectIntro:              "Ja varat klientam palīdzēt, atbildiet uz mūsu pieprasījuma vēstuli pēc iespējas vienkāršāk:",
+        IntroExpectBullet1:            "vai jums ir iespēja vēlamajā laikā;",
+        IntroExpectBullet2:            "kāda būtu aptuvenā vai galīgā cena;",
+        IntroExpectBullet3:            "ja nepieciešams — kāds svarīgs nosacījums vai precizējošs jautājums.",
+        IntroNoAccount:                "Konts nav jāveido, dalības maksas nav, un atsevišķa sistēma nav jālieto.",
+        IntroIfNotSuitable:            "Ja pieprasījums jums neder, pietiek ar īsu atbildi „nav iespējams“.",
+        IntroWhyHeading:               "Kāpēc ir svarīgi atbildēt uz pieprasījumu?",
+        IntroWhyBody:                  "Klients atnāca uz Ruumly tāpēc, lai pašam nebūtu jāapzvana desmitiem uzņēmumu un jāsalīdzina mājaslapas. Ja saņemam no jums cenu un pieejamību, varam jūsu piedāvājumu klientam nodot konkrēti. Ja atbildē ir tikai saite uz mājaslapu vai atbildes nav vispār, mēs diemžēl nevaram jūsu piedāvājumu parādīt līdzās pārējām iespējām.",
+        IntroGoal:                     "Mūsu mērķis ir vienkāršs: atvest jums piemērotu klientu un padarīt nokļūšanu pie jums pēc iespējas vieglāku.",
+        IntroVolume:                   "Mēs nesolām noteiktu pieprasījumu skaitu vai ikmēneša pasūtījumu plūsmu. Ruumly vēl aug. Pieprasījumu daļa pagaidām darbojas Igaunijā; Latvijā jūs jau šodien bez maksas esat redzams mūsu katalogā un savas pilsētas lapā, un, kad pieprasījumus atvērsim arī šeit, vispirms vērsīsimies pie tiem, kuru kontakti un cenas jau ir pie mums.",
+        IntroProfileHeading:           "Jūsu uzņēmuma profils Ruumly",
+        IntroProfileListedTpl:         "Daudziem pakalpojumu sniedzējiem esam izveidojuši sākotnējo profilu no publiski pieejamas informācijas. Arī {company} mums jau ir sarakstā.",
+        IntroPriceList:                "Ja jums ir cenu lapa, tipveida cenas vai vienkārši principi, pēc kuriem veidojat piedāvājumus, tos arī varat mums atsūtīt. Tas palīdzēs turpmāk nodot jums tikai piemērotākos pieprasījumus.",
+        IntroVisibilityLater:          "Kad profils ir kārtībā, vēlāk pēc vēlēšanās savu ierakstu var arī izcelt par maksu — priekšroka meklēšanas rezultātos un jūsu reģiona pilsētu lapās, 24–29 € mēnesī. Tas ir pilnīgi brīvprātīgi: jūs palūdzat, mēs ieslēdzam, maksājat ar pārskaitījumu. Automātiski nekad nekas netiek norakstīts, un atrašanās sarakstā ir un paliek bez maksas.",
+        IntroFinalAsk:                 "Bet vissvarīgākais lūgums ir vienkāršs: ja saņemat no Ruumly pieprasījumu, kas atbilst jūsu pakalpojumam, lūdzu, atbildiet uz to. Aiz tās vēstules ir īsts klients, kurš gaida risinājumu.",
+        IntroQuestionsTpl:             "Ja rodas jautājumi par Ruumly, sadarbību vai pieprasījumiem, vienkārši atbildiet uz šo vēstuli vai rakstiet mums šeit: {url}",
+        IntroClaimIntro:               "Ja vēlaties, varat pārņemt savu profilu un pats pārskatīt kontaktus, pakalpojumus un aprakstu. Lai atbildētu uz mūsu klientu pieprasījumiem, tas nav nepieciešams.",
         IntroClaimCta:                 "Pārņemiet savu profilu",
-        IntroClaimByEmailTpl:          "Lai labotu savus datus vai pievienotu cenas, rakstiet uz {email}, un mēs tos atjaunināsim.",
-        IntroOptOutTpl:                "Nevēlaties būt sarakstā? Atbildiet ar vārdu {keyword}, un mēs jūs izņemsim — bez liekiem jautājumiem.",
-        IntroOptOutLinkLabel:          "Izņemt manu profilu",
-        IntroSignature:                "Ruumly komanda\ninfo@ruumly.eu",
+        IntroClaimByEmailTpl:          "Ja vēlaties labot sava profila datus, rakstiet uz {email}, un mēs tos atjaunināsim.",
+        IntroOptOutTpl:                "Ja nevēlaties no Ruumly saņemt pieprasījumus un vēstules, atbildiet ar vārdu {keyword}, un mēs izņemsim jūsu uzņēmumu no saraksta.",
+        IntroOptOutLinkLabel:          "Izņemt manu uzņēmumu",
+        IntroSignature:                "Ar cieņu\nRuumly komanda\ninfo@ruumly.eu\nhttps://ruumly.eu",
         ClaimSubject:                  "Ruumly — apstipriniet sava profila pārņemšanu",
         ClaimGreeting:                 "Sveiki,",
         ClaimBodyTpl:                  "Kāds lūdza pārņemt uzņēmuma {company} Ruumly profilu. Ja tas bijāt jūs, apstipriniet to ar zemāk esošo pogu — pēc tam varēsiet pats labot savus datus.",
@@ -1028,18 +1160,35 @@ public static class EmailTranslations
         OutreachReplyAlternative:      "Arba tiesiog atsakykite į šį laišką nurodydami savo kainą — jis pasieks mūsų komandą tiesiogiai.",
         OutreachSignature:             "Ruumly komanda\ninfo@ruumly.eu",
         OutreachQuestionsTpl:          "Klausimai? Atsakykite į šį laišką arba parašykite mums per kontaktų puslapį: {url}",
-        IntroSubject:                  "Ruumly — kas mes esame, prieš jus pasiekiant kliento užklausai",
-        IntroGreeting:                 "Sveiki,",
-        IntroWhoWeAre:                 "Ruumly renka klientų persikraustymo užklausas ir perduoda jas vietos paslaugų teikėjams. Tai nėra mokamas katalogas.",
-        IntroListedTpl:                "{company} jau yra mūsų sąraše. Įtraukėme jus remdamiesi viešai prieinama informacija — nemokamai, be paskyros ir be jokių įsipareigojimų.",
-        IntroWhatToExpect:             "Todėl galite gauti iš mūsų laišką su tikro kliento užklausa: ką, kur ir kada. Atsakyti nemokama ir neįpareigoja, paskyros nereikia — atsiunčiate kainą arba tiesiog neatsakote.",
-        IntroQuestionsTpl:             "Klausimai? Tiesiog atsakykite į šį laišką arba parašykite mums per kontaktų puslapį: {url}",
-        IntroClaimIntro:               "Norėdami pataisyti savo duomenis ar pridėti kainas, atidarykite savo profilį:",
+        IntroSubjectTpl:               "Jūsų įmonė Ruumly kataloge — {company}",
+        IntroGreeting:                 "Sveiki!",
+        IntroOpening:                  "Rašome iš Ruumly, nes jūsų įmonė teikia paslaugą, kurios ieško mūsų klientai.",
+        IntroWhoWeAre:                 "Ruumly padeda žmonėms rasti tinkamus vietos paslaugų teikėjus. Pas mus ateina žmonės su konkrečiu poreikiu — sandėlis, perkraustymas, mikroautobuso ar priekabos nuoma, valymas arba pakavimas.",
+        IntroForwarding:               "Jei užklausa atitinka jūsų paslaugą ir regioną, ją persiunčiame jums.",
+        IntroNotTestRequests:          "Tai nėra bandomosios užklausos ir tai nėra rinkodaros sąrašas. Kiekviena Ruumly užklausa ateina iš tikro žmogaus, kuriam paslauga reikalinga būtent dabar.",
+        IntroExpectHeading:            "Ko iš jūsų tikimės?",
+        IntroExpectIntro:              "Jei galite klientui padėti, į mūsų užklausos laišką atsakykite kuo paprasčiau:",
+        IntroExpectBullet1:            "ar turite galimybę norimu laiku;",
+        IntroExpectBullet2:            "kokia būtų apytikslė ar galutinė kaina;",
+        IntroExpectBullet3:            "jei reikia — svarbi sąlyga ar tikslinamasis klausimas.",
+        IntroNoAccount:                "Paskyros kurti nereikia, stojimo mokesčio nėra, atskira sistema naudotis nereikės.",
+        IntroIfNotSuitable:            "Jei užklausa jums netinka, pakanka trumpo atsakymo „negalime“.",
+        IntroWhyHeading:               "Kodėl svarbu atsakyti į užklausą?",
+        IntroWhyBody:                  "Klientas atėjo į Ruumly tam, kad pačiam nereikėtų apskambinti dešimčių įmonių ir lyginti svetainių. Jei gauname iš jūsų kainą ir laisvą laiką, galime jūsų pasiūlymą pateikti klientui konkrečiai. Jei atsakyme yra tik nuoroda į svetainę arba atsakymo negauname, jūsų pasiūlymo, deja, negalime parodyti šalia kitų variantų.",
+        IntroGoal:                     "Mūsų tikslas paprastas: atvesti jums tinkamą klientą ir padaryti taip, kad jam būtų kuo lengviau jus pasiekti.",
+        IntroVolume:                   "Mes nežadame konkretaus užklausų skaičiaus ar mėnesinio užsakymų srauto. Ruumly dar auga. Užklausų paslauga kol kas veikia Estijoje; Lietuvoje jūs jau šiandien nemokamai matomi mūsų kataloge ir savo miesto puslapyje, o kai užklausas paleisime ir čia, pirmiausia kreipsimės į tuos, kurių kontaktai ir kainos jau bus pas mus.",
+        IntroProfileHeading:           "Jūsų įmonės profilis Ruumly",
+        IntroProfileListedTpl:         "Daugeliui paslaugų teikėjų pirminį profilį sukūrėme iš viešai prieinamos informacijos. {company} pas mus taip pat jau yra.",
+        IntroPriceList:                "Jei turite kainoraštį, tipines kainas ar paprastas taisykles, pagal kurias skaičiuojate pasiūlymus, juos taip pat galite mums atsiųsti. Tai padės ateityje persiųsti jums tik tinkamesnes užklausas.",
+        IntroVisibilityLater:          "Kai profilis tvarkingas, vėliau panorėję savo įrašą galite ir išskirti už mokestį — pirmenybė paieškoje ir jūsų regiono miestų puslapiuose, 24–29 € per mėnesį. Tai visiškai savanoriška: jūs paprašote, mes įjungiame, sumokate bankiniu pavedimu. Automatiškai niekada nieko nenuskaitoma, o būti sąraše buvo ir lieka nemokama.",
+        IntroFinalAsk:                 "Bet svarbiausias prašymas paprastas: jei gavote iš Ruumly užklausą, kuri tinka jūsų paslaugai, prašome į ją atsakyti. Už to laiško stovi tikras klientas, laukiantis sprendimo.",
+        IntroQuestionsTpl:             "Jei kiltų klausimų apie Ruumly, bendradarbiavimą ar užklausas, tiesiog atsakykite į šį laišką arba parašykite mums čia: {url}",
+        IntroClaimIntro:               "Panorėję galite perimti savo profilį ir patys peržiūrėti kontaktus, paslaugas bei aprašymą. Atsakyti į mūsų klientų užklausas dėl to nebūtina.",
         IntroClaimCta:                 "Perimkite savo profilį",
-        IntroClaimByEmailTpl:          "Norėdami pataisyti savo duomenis ar pridėti kainas, rašykite adresu {email}, ir mes juos atnaujinsime.",
-        IntroOptOutTpl:                "Nenorite būti sąraše? Atsakykite žodžiu {keyword}, ir mes jus pašalinsime — be jokių papildomų klausimų.",
-        IntroOptOutLinkLabel:          "Pašalinti mano profilį",
-        IntroSignature:                "Ruumly komanda\ninfo@ruumly.eu",
+        IntroClaimByEmailTpl:          "Jei norite pataisyti savo profilio duomenis, rašykite adresu {email}, ir mes juos atnaujinsime.",
+        IntroOptOutTpl:                "Jei nenorite iš Ruumly gauti užklausų ir laiškų, atsakykite žodžiu {keyword}, ir mes išbrauksime jūsų įmonę iš sąrašo.",
+        IntroOptOutLinkLabel:          "Išbraukti mano įmonę",
+        IntroSignature:                "Su geriausiais linkėjimais\nRuumly komanda\ninfo@ruumly.eu\nhttps://ruumly.eu",
         ClaimSubject:                  "Ruumly — patvirtinkite savo profilio perėmimą",
         ClaimGreeting:                 "Sveiki,",
         ClaimBodyTpl:                  "Kažkas paprašė perimti įmonės {company} Ruumly profilį. Jei tai buvote jūs, patvirtinkite paspaudę mygtuką žemiau — tada galėsite patys pataisyti savo duomenis.",
