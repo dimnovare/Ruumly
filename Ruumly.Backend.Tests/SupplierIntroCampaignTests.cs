@@ -126,12 +126,165 @@ public class SupplierIntroCampaignTests
     private static SupplierIntroCampaignResponse Body(IActionResult result) =>
         (SupplierIntroCampaignResponse)((OkObjectResult)result).Value!;
 
+    private static SupplierIntroResetResponse ResetBody(IActionResult result) =>
+        (SupplierIntroResetResponse)((OkObjectResult)result).Value!;
+
     private static async Task<RuumlyDbContext> DbWith(params Supplier[] suppliers)
     {
         var db = TestDbContext.Create();
         db.Suppliers.AddRange(suppliers);
         await db.SaveChangesAsync();
         return db;
+    }
+
+    // ─── Reset: recovering a run the sending provider cut short ───────────────
+    //
+    // On 2026-08-13 a 754-recipient run stamped all 754 and Resend accepted the
+    // first 200. The other 554 were marked as contacted having heard nothing,
+    // and the campaign's own one-shot guard made them permanently unmailable.
+    // These tests pin the way back — and, more importantly, pin the guards that
+    // stop the way back from re-mailing everyone.
+
+    private static Supplier Stamped(string name, string email, DateTime sentAt, string country = "EE") =>
+        Provider(name: name, email: email, country: country,
+                 slug: name.ToLowerInvariant().Replace(' ', '-'), introSentAt: sentAt);
+
+    [Fact]
+    public async Task Reset_DryRunIsTheDefault_AndClearsNothing()
+    {
+        var sentAt = new DateTime(2026, 8, 13, 9, 28, 17, DateTimeKind.Utc);
+        var db = await DbWith(
+            Stamped("Aaa OÜ", "a@x.ee", sentAt),
+            Stamped("Bbb OÜ", "b@x.ee", sentAt));
+
+        var response = ResetBody(await Make(db, new CapturingEmailQueue())
+            .ResetIntroCampaign(new SupplierIntroResetRequest(
+                SentAtFrom: sentAt, KeepFirst: 1), default));
+
+        response.DryRun.Should().BeTrue("omitting dryRun must never mean 'clear it'");
+        response.Cleared.Should().Be(0);
+        response.WouldClear.Should().Be(1);
+        db.Suppliers.Count(s => s.IntroEmailSentAt == null)
+          .Should().Be(0, "a dry run must not touch a single stamp");
+    }
+
+    [Fact]
+    public async Task Reset_RefusesWithoutAFloor()
+    {
+        // Without sentAtFrom this would un-stamp every supplier ever introduced
+        // and re-mail the entire directory on the next run.
+        var db = await DbWith(Stamped("Aaa OÜ", "a@x.ee", DateTime.UtcNow));
+
+        var result = await Make(db, new CapturingEmailQueue())
+            .ResetIntroCampaign(new SupplierIntroResetRequest(DryRun: false, KeepFirst: 0), default);
+
+        result.Should().BeOfType<BadRequestObjectResult>();
+        db.Suppliers.Count(s => s.IntroEmailSentAt != null).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Reset_RequiresKeepFirst_SoAMissingCountCannotMeanClearEverything()
+    {
+        var sentAt = DateTime.UtcNow;
+        var db = await DbWith(Stamped("Aaa OÜ", "a@x.ee", sentAt));
+
+        var result = await Make(db, new CapturingEmailQueue())
+            .ResetIntroCampaign(new SupplierIntroResetRequest(DryRun: false, SentAtFrom: sentAt), default);
+
+        result.Should().BeOfType<BadRequestObjectResult>();
+        db.Suppliers.Count(s => s.IntroEmailSentAt != null).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Reset_KeepsTheDeliveredPrefix_AndFreesTheRest()
+    {
+        var sentAt = new DateTime(2026, 8, 13, 9, 28, 17, DateTimeKind.Utc);
+        var db = await DbWith(
+            Stamped("Aaa OÜ", "a@x.ee", sentAt),
+            Stamped("Bbb OÜ", "b@x.ee", sentAt),
+            Stamped("Ccc OÜ", "c@x.lv", sentAt, country: "LV"),
+            Stamped("Ddd OÜ", "d@x.lt", sentAt, country: "LT"));
+
+        var response = ResetBody(await Make(db, new CapturingEmailQueue())
+            .ResetIntroCampaign(new SupplierIntroResetRequest(
+                DryRun: false, SentAtFrom: sentAt, KeepFirst: 2), default));
+
+        response.Matched.Should().Be(4);
+        response.Kept.Should().Be(2);
+        response.Cleared.Should().Be(2);
+        response.ByCountry.Should().BeEquivalentTo(
+            new Dictionary<string, int> { ["LV"] = 1, ["LT"] = 1 });
+
+        db.Suppliers.Single(s => s.Name == "Aaa OÜ").IntroEmailSentAt.Should().NotBeNull();
+        db.Suppliers.Single(s => s.Name == "Bbb OÜ").IntroEmailSentAt.Should().NotBeNull();
+        db.Suppliers.Single(s => s.Name == "Ccc OÜ").IntroEmailSentAt.Should().BeNull();
+        db.Suppliers.Single(s => s.Name == "Ddd OÜ").IntroEmailSentAt.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Reset_EchoesTheBoundary_SoAWrongCountIsVisibleBeforeItIsCommitted()
+    {
+        // The whole safety of this operation rests on keepFirst being the number
+        // the provider actually accepted. The preview shows the rows either side
+        // of the cut so the last KEPT address can be compared against the
+        // provider's own log before anything is cleared.
+        var sentAt = new DateTime(2026, 8, 13, 9, 28, 17, DateTimeKind.Utc);
+        var db = await DbWith(
+            Stamped("Aaa OÜ", "a@x.ee", sentAt),
+            Stamped("Bbb OÜ", "b@x.ee", sentAt),
+            Stamped("Ccc OÜ", "c@x.ee", sentAt),
+            Stamped("Ddd OÜ", "d@x.ee", sentAt));
+
+        var response = ResetBody(await Make(db, new CapturingEmailQueue())
+            .ResetIntroCampaign(new SupplierIntroResetRequest(
+                SentAtFrom: sentAt, KeepFirst: 2), default));
+
+        var lastKept = response.Boundary.Last(b => b.Keeps);
+        lastKept.Position.Should().Be(2);
+        lastKept.Email.Should().Be("b@x.ee");
+        response.Boundary.First(b => !b.Keeps).Email.Should().Be("c@x.ee");
+    }
+
+    [Fact]
+    public async Task Reset_LeavesEarlierCampaignsAlone()
+    {
+        // A supplier introduced in an earlier, fully delivered run must not be
+        // dragged into the recovery of a later one and mailed twice.
+        var older = new DateTime(2026, 8, 9, 12, 0, 0, DateTimeKind.Utc);
+        var sentAt = new DateTime(2026, 8, 13, 9, 28, 17, DateTimeKind.Utc);
+        var db = await DbWith(
+            Stamped("Aaa OÜ", "a@x.ee", older),
+            Stamped("Bbb OÜ", "b@x.ee", sentAt));
+
+        var response = ResetBody(await Make(db, new CapturingEmailQueue())
+            .ResetIntroCampaign(new SupplierIntroResetRequest(
+                DryRun: false, SentAtFrom: sentAt, KeepFirst: 0), default));
+
+        response.Matched.Should().Be(1, "only the run being recovered is in scope");
+        db.Suppliers.Single(s => s.Name == "Aaa OÜ").IntroEmailSentAt.Should().Be(older);
+        db.Suppliers.Single(s => s.Name == "Bbb OÜ").IntroEmailSentAt.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Reset_MakesTheClearedSuppliersMailableAgain()
+    {
+        // The point of the whole exercise: a cleared supplier is picked up by the
+        // next campaign run, and a kept one is still reported already_sent.
+        var sentAt = new DateTime(2026, 8, 13, 9, 28, 17, DateTimeKind.Utc);
+        var db = await DbWith(
+            Stamped("Aaa OÜ", "a@x.ee", sentAt),
+            Stamped("Bbb OÜ", "b@x.ee", sentAt));
+        var queue = new CapturingEmailQueue();
+
+        await Make(db, queue).ResetIntroCampaign(new SupplierIntroResetRequest(
+            DryRun: false, SentAtFrom: sentAt, KeepFirst: 1), default);
+
+        var campaign = Body(await Make(db, queue).RunIntroCampaign(
+            new SupplierIntroCampaignRequest(DryRun: false), default));
+
+        campaign.Sent.Should().Be(1);
+        campaign.Skipped.Should().Contain(s => s.Reason == "already_sent" && s.Count == 1);
+        queue.Emails.Should().ContainSingle().Which.To.Should().Be("b@x.ee");
     }
 
     // ─── Dry run is the default, and it sends nothing ─────────────────────────

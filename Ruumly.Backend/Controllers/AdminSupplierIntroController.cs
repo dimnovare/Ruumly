@@ -172,6 +172,112 @@ public class AdminSupplierIntroController(
         }
     }
 
+    /// <summary>
+    /// Un-stamps <c>IntroEmailSentAt</c> for a run's recipients whose mail was
+    /// never actually delivered, so the campaign can pick them up again.
+    ///
+    /// The campaign deliberately stamps and commits BEFORE queueing, because
+    /// mail going out with nothing recording it is unrecoverable while
+    /// stamped-but-unsent is merely stuck. This is the way out of stuck. It is
+    /// needed whenever the sending provider accepts fewer messages than were
+    /// queued — a daily cap, a suspended account, an outage — since Hangfire
+    /// retries three times over ~16 minutes, parks the job in Failed, and the
+    /// prod dashboard is Development-only.
+    ///
+    /// Ordering is reproduced with the SAME query the send used, so the cut
+    /// point is decided by the database collation that ordered the original run
+    /// rather than by a client's guess at it.
+    /// </summary>
+    [HttpPost("suppliers/intro-campaign/reset")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ResetIntroCampaign(
+        [FromBody] SupplierIntroResetRequest? body, CancellationToken ct)
+    {
+        var request = body ?? new SupplierIntroResetRequest();
+        var dryRun  = request.IsDryRun;
+
+        var explicitIds = request.SupplierIds is { Count: > 0 }
+            ? request.SupplierIds.Distinct().ToList()
+            : null;
+
+        // Without a floor this would un-stamp every supplier ever introduced and
+        // re-mail the whole directory on the next run.
+        if (explicitIds is null && request.SentAtFrom is null)
+            return BadRequest(Error(
+                "sentAtFrom is required (or pass supplierIds) — refusing to clear every intro stamp."));
+
+        if (explicitIds is null && request.KeepFirst is not { } k0)
+            return BadRequest(Error("keepFirst is required when resetting by sentAtFrom."));
+        if (request.KeepFirst is { } keep && keep < 0)
+            return BadRequest(Error("keepFirst must be zero or greater."));
+
+        List<Supplier> run;
+        if (explicitIds is not null)
+        {
+            run = await Db.Suppliers
+                .Where(s => explicitIds.Contains(s.Id) && s.IntroEmailSentAt != null)
+                .OrderBy(s => s.Name).ThenBy(s => s.Id)
+                .ToListAsync(ct);
+        }
+        else
+        {
+            var from = DateTime.SpecifyKind(request.SentAtFrom!.Value, DateTimeKind.Utc);
+            // Same ORDER BY as LoadCandidatesAsync, so position N here is the Nth
+            // message the campaign handed to the queue.
+            run = await Db.Suppliers
+                .Where(s => s.IntroEmailSentAt != null && s.IntroEmailSentAt >= from)
+                .OrderBy(s => s.Name).ThenBy(s => s.Id)
+                .ToListAsync(ct);
+        }
+
+        var keepCount = explicitIds is not null ? 0 : request.KeepFirst!.Value;
+        var toClear   = run.Skip(keepCount).ToList();
+
+        // The rows either side of the cut. The last KEPT row should match the
+        // last address the provider accepted; if it does not, the count is wrong
+        // and the dry run has just said so before anything changed.
+        var boundary = run
+            .Select((s, i) => (Supplier: s, Position: i + 1))
+            .Where(x => x.Position >= keepCount - 2 && x.Position <= keepCount + 3)
+            .Select(x => new SupplierIntroBoundaryDto(
+                x.Position, x.Supplier.Id, x.Supplier.Name,
+                x.Supplier.Country ?? "", x.Supplier.ContactEmail?.Trim() ?? "",
+                Keeps: x.Position <= keepCount))
+            .ToList();
+
+        var byCountry = toClear
+            .GroupBy(s => string.IsNullOrWhiteSpace(s.Country) ? "??" : s.Country.ToUpperInvariant())
+            .OrderBy(g => g.Key, StringComparer.Ordinal)
+            .ToDictionary(g => g.Key, g => g.Count(), StringComparer.Ordinal);
+
+        if (dryRun)
+        {
+            return Ok(new SupplierIntroResetResponse(
+                DryRun: true, Matched: run.Count, Kept: run.Count - toClear.Count,
+                WouldClear: toClear.Count, Cleared: 0, byCountry, boundary));
+        }
+
+        foreach (var supplier in toClear)
+            supplier.IntroEmailSentAt = null;
+
+        Audit("supplier.intro_campaign_reset", User.GetUserEmail() ?? "admin",
+            $"{toClear.Count} suppliers",
+            $"Cleared IntroEmailSentAt for {toClear.Count} of {run.Count} in the run " +
+            $"(kept first {keepCount}). By country: " +
+            $"{string.Join(", ", byCountry.Select(kv => $"{kv.Key}={kv.Value}"))}. " +
+            $"These were stamped but never delivered, and are mailable again.");
+
+        await Db.SaveChangesAsync(ct);
+
+        logger.LogWarning(
+            "Supplier intro reset: cleared {Cleared} of {Total} stamps (kept first {Kept}).",
+            toClear.Count, run.Count, keepCount);
+
+        return Ok(new SupplierIntroResetResponse(
+            DryRun: false, Matched: run.Count, Kept: run.Count - toClear.Count,
+            WouldClear: toClear.Count, Cleared: toClear.Count, byCountry, boundary));
+    }
+
     // ─── Selection ────────────────────────────────────────────────────────────
 
     private async Task<List<Supplier>> LoadCandidatesAsync(
