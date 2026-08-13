@@ -117,6 +117,32 @@ public class Supplier
     public DateTime? IntroEmailSentAt { get; set; }
 
     /// <summary>
+    /// When this business asked us to stop contacting it — the REMOVE reply the
+    /// introduction email promises to honour, or any equivalent request by phone
+    /// or in person. Non-null means SEND NOTHING, ever: no intro campaign, no
+    /// concierge fan-out, and never a candidate for a customer request.
+    ///
+    /// Separate from <see cref="IsActive"/> on purpose. Deactivating hides a row
+    /// from the directory, but it is a routine operational state that a re-import,
+    /// a bulk fix or a well-meaning cleanup can flip back on — and the business
+    /// would silently start receiving mail again. This flag is the durable record
+    /// of a decision the business made, and nothing but an explicit
+    /// re-subscription clears it.
+    ///
+    /// First exercised 2026-08-13, within hours of the first campaign: a Kaunas
+    /// cleaning company replied REMOVE. It was honoured by hand because this
+    /// column did not exist yet.
+    /// </summary>
+    public DateTime? MarketingOptOutAt { get; set; }
+
+    /// <summary>
+    /// Free text for how the opt-out arrived ("REMOVE reply 2026-08-13",
+    /// "asked on the phone"), so a later reader can tell a real request from a
+    /// mistaken bulk edit. Never shown publicly.
+    /// </summary>
+    public string? MarketingOptOutReason { get; set; }
+
+    /// <summary>
     /// When someone proved control of <see cref="ContactEmail"/> through the
     /// public claim flow (/{lang}/claim/{slug}) and took ownership of this
     /// directory profile. Null = still unclaimed.

@@ -137,6 +137,104 @@ public class SupplierIntroCampaignTests
         return db;
     }
 
+    // ─── Opt-out: the REMOVE reply the letter promises to honour ──────────────
+
+    [Fact]
+    public async Task OptedOutSupplier_IsNeverMailed_EvenIfNeverIntroducedBefore()
+    {
+        var db = await DbWith(
+            Provider(name: "Aaa OÜ", email: "a@x.ee"),
+            new Supplier
+            {
+                Id = Guid.NewGuid(), Name = "Bbb OÜ", ContactEmail = "b@x.ee",
+                Country = "EE", IsActive = true, IsDirectoryListing = true,
+                Slug = "bbb-ou", IsPartnerPagePublished = true,
+                MarketingOptOutAt = new DateTime(2026, 8, 13, 10, 0, 0, DateTimeKind.Utc),
+            });
+        var queue = new CapturingEmailQueue();
+
+        var response = Body(await Make(db, queue).RunIntroCampaign(
+            new SupplierIntroCampaignRequest(DryRun: false), default));
+
+        response.Sent.Should().Be(1);
+        response.Skipped.Should().Contain(s => s.Reason == "opted_out" && s.Count == 1);
+        queue.Emails.Should().ContainSingle().Which.To.Should().Be("a@x.ee");
+    }
+
+    [Fact]
+    public async Task OptOut_StopsTheMailAndHidesTheListing_InOneCall()
+    {
+        var supplier = Provider(name: "Absoliutus švaros lyderis, UAB", email: "z@x.lt", country: "LT");
+        var db = await DbWith(supplier);
+
+        var result = await Make(db, new CapturingEmailQueue())
+            .SetMarketingOptOut(supplier.Id,
+                new SupplierOptOutRequest(Reason: "REMOVE reply 2026-08-13"), default);
+
+        result.Should().BeOfType<OkObjectResult>();
+        var after = db.Suppliers.Single(s => s.Id == supplier.Id);
+        after.MarketingOptOutAt.Should().NotBeNull();
+        after.MarketingOptOutReason.Should().Be("REMOVE reply 2026-08-13");
+        after.IsActive.Should().BeFalse("removed from the list is what the letter promises");
+    }
+
+    [Fact]
+    public async Task OptOut_SurvivesTheListingBeingReactivated()
+    {
+        // The whole reason this is a separate column. A re-import or a bulk fix
+        // flips IsActive back on; the business must still not be mailed.
+        var supplier = Provider(name: "Aaa OÜ", email: "a@x.ee");
+        var db = await DbWith(supplier);
+        await Make(db, new CapturingEmailQueue())
+            .SetMarketingOptOut(supplier.Id, new SupplierOptOutRequest(), default);
+
+        db.Suppliers.Single(s => s.Id == supplier.Id).IsActive = true;   // the careless cleanup
+        await db.SaveChangesAsync();
+
+        var queue = new CapturingEmailQueue();
+        var response = Body(await Make(db, queue).RunIntroCampaign(
+            new SupplierIntroCampaignRequest(DryRun: false), default));
+
+        response.Sent.Should().Be(0);
+        response.Skipped.Should().Contain(s => s.Reason == "opted_out");
+        queue.Emails.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task OptOut_DoesNotMoveTheDateWhenAskedTwice()
+    {
+        // The stamp records WHEN they first asked. A second REMOVE is a complaint
+        // that we did not listen, not a new decision.
+        var supplier = Provider(name: "Aaa OÜ", email: "a@x.ee");
+        var db = await DbWith(supplier);
+        var controller = Make(db, new CapturingEmailQueue());
+
+        await controller.SetMarketingOptOut(supplier.Id, new SupplierOptOutRequest(), default);
+        var first = db.Suppliers.Single(s => s.Id == supplier.Id).MarketingOptOutAt;
+
+        await controller.SetMarketingOptOut(supplier.Id,
+            new SupplierOptOutRequest(Reason: "asked again, crossly"), default);
+
+        db.Suppliers.Single(s => s.Id == supplier.Id).MarketingOptOutAt.Should().Be(first);
+    }
+
+    [Fact]
+    public async Task OptOut_IsOnlyUndoneByAnExplicitReactivation()
+    {
+        var supplier = Provider(name: "Aaa OÜ", email: "a@x.ee");
+        var db = await DbWith(supplier);
+        var controller = Make(db, new CapturingEmailQueue());
+        await controller.SetMarketingOptOut(supplier.Id, new SupplierOptOutRequest(), default);
+
+        await controller.SetMarketingOptOut(supplier.Id,
+            new SupplierOptOutRequest(Reason: "they asked to come back", Reactivate: true), default);
+
+        var after = db.Suppliers.Single(s => s.Id == supplier.Id);
+        after.MarketingOptOutAt.Should().BeNull();
+        after.MarketingOptOutReason.Should().BeNull();
+        after.IsActive.Should().BeTrue();
+    }
+
     // ─── Reset: recovering a run the sending provider cut short ───────────────
     //
     // On 2026-08-13 a 754-recipient run stamped all 754 and Resend accepted the

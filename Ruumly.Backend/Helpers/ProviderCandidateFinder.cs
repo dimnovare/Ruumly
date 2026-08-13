@@ -24,9 +24,14 @@ public static class ProviderCandidateFinder
         ProviderCandidateSearch search,
         CancellationToken ct = default)
     {
+        // A business that asked us to stop contacting it is not a candidate for a
+        // customer request. Filtered HERE, at the source, rather than at the send:
+        // if it can still be picked it will eventually be shown to an admin as a
+        // suggested match and mailed by hand, which breaks the promise just as
+        // thoroughly as an automatic send would.
         var suppliers = await db.Suppliers
             .AsNoTracking()
-            .Where(s => s.IsActive)
+            .Where(s => s.IsActive && s.MarketingOptOutAt == null)
             .Include(s => s.Listings.Where(l => l.IsActive))
             .ToListAsync(ct);
 

@@ -80,6 +80,15 @@ public sealed class ConciergeOutreachService(
                     skipped.Add(new(supplierId, null, "not_found"));
                     continue;
                 }
+                // Checked before everything else: this one is a promise we made in
+                // writing, not an operational condition. The finder already
+                // excludes opted-out suppliers, so reaching here means an admin
+                // asked for this supplier explicitly — and the answer is still no.
+                if (supplier.MarketingOptOutAt is not null)
+                {
+                    skipped.Add(new(supplierId, supplier.Name, "opted_out"));
+                    continue;
+                }
                 if (string.IsNullOrWhiteSpace(supplier.ContactEmail))
                 {
                     skipped.Add(new(supplierId, supplier.Name, "no_email"));

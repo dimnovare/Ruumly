@@ -13,6 +13,32 @@ namespace Ruumly.Backend.Tests;
 public class ProviderCandidateTests
 {
     [Fact]
+    public async Task OptedOutSupplier_IsNeverSuggestedAsACandidate()
+    {
+        // A business that replied REMOVE must not surface as a match at all.
+        // Filtering only at the send is not enough: a suggested match gets mailed
+        // by hand from the admin workspace, which breaks the same promise.
+        var (db, lead, expectedIds) = await CandidateFixture.CreateTartuAsync();
+        var optedOut = db.Suppliers.Single(s => s.Id == expectedIds[0]);
+        optedOut.MarketingOptOutAt     = DateTime.UtcNow;
+        optedOut.MarketingOptOutReason = "REMOVE reply";
+        await db.SaveChangesAsync();
+
+        var result = await MakeAdminLeads(db).GetProviderCandidates(
+            lead.Id, q: null, scope: "nearby", category: "lead", radiusKm: 25, limit: 50);
+
+        var items = ReadItems(result.Should().BeOfType<OkObjectResult>().Subject.Value!);
+        // Set, not sequence: the city anchor is derived from the matching
+        // suppliers, so dropping one shifts it and can reorder two neighbours a
+        // few hundred metres apart. That is pre-existing behaviour of the finder,
+        // not something this filter changed, and pinning the order here would
+        // make the test fail for the wrong reason.
+        items.Select(x => Read<Guid>(x, "supplierId"))
+             .Should().NotContain(optedOut.Id, "they asked us to stop contacting them")
+             .And.BeEquivalentTo(expectedIds.Skip(1), "everyone else is still returned");
+    }
+
+    [Fact]
     public async Task Nearby_ReturnsSevenUniqueSuppliers_OrderedByDistance()
     {
         var (db, lead, expectedIds) = await CandidateFixture.CreateTartuAsync();

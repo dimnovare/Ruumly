@@ -55,6 +55,7 @@ public class AdminSupplierIntroController(
 
     // Skip reasons, as returned in the breakdown.
     private const string SkipNotFound      = "not_found";
+    private const string SkipOptedOut      = "opted_out";
     private const string SkipAlreadySent   = "already_sent";
     private const string SkipInactive      = "inactive";
     private const string SkipNotDirectory  = "not_directory";
@@ -170,6 +171,66 @@ public class AdminSupplierIntroController(
             if (transaction is not null)
                 await transaction.DisposeAsync();
         }
+    }
+
+    /// <summary>
+    /// Records that a business asked us to stop contacting it — the REMOVE reply
+    /// the introduction email promises to honour — and takes it off the public
+    /// directory in the same call.
+    ///
+    /// Both halves matter and they are not the same thing. Deactivating hides the
+    /// row; the opt-out stamp is what survives a re-import or a bulk fix flipping
+    /// IsActive back on. Without the stamp, honouring a REMOVE is a manual act
+    /// that any later cleanup can silently undo, and the business starts
+    /// receiving mail again having asked twice.
+    ///
+    /// Pass <c>reactivate: true</c> only when the business itself asks to come
+    /// back. Nothing else clears the flag.
+    /// </summary>
+    [HttpPost("suppliers/{id:guid}/opt-out")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> SetMarketingOptOut(
+        Guid id, [FromBody] SupplierOptOutRequest? body, CancellationToken ct)
+    {
+        var request  = body ?? new SupplierOptOutRequest();
+        var supplier = await Db.Suppliers.FirstOrDefaultAsync(s => s.Id == id, ct);
+        if (supplier is null) return NotFound(Error("Supplier not found."));
+
+        if (request.Reactivate)
+        {
+            supplier.MarketingOptOutAt     = null;
+            supplier.MarketingOptOutReason = null;
+            supplier.IsActive              = true;
+
+            Audit("supplier.marketing_opt_in", User.GetUserEmail() ?? "admin", supplier.Name,
+                $"Opt-out cleared and listing restored at the business's own request. " +
+                $"Reason given: {request.Reason ?? "(none)"}.");
+        }
+        else
+        {
+            // Stamped once. A second REMOVE from a business already opted out must
+            // not move the date — it is the record of when they first asked.
+            supplier.MarketingOptOutAt   ??= DateTime.UtcNow;
+            supplier.MarketingOptOutReason = request.Reason?.Trim() is { Length: > 0 } r
+                ? r : supplier.MarketingOptOutReason ?? "REMOVE reply";
+            supplier.IsActive              = false;
+
+            Audit("supplier.marketing_opt_out", User.GetUserEmail() ?? "admin", supplier.Name,
+                $"Asked to be removed. No intro campaign, no concierge fan-out, and never " +
+                $"a candidate for a customer request. Reason: {supplier.MarketingOptOutReason}.");
+        }
+
+        supplier.UpdatedAt = DateTime.UtcNow;
+        await Db.SaveChangesAsync(ct);
+
+        return Ok(new
+        {
+            supplier.Id,
+            supplier.Name,
+            supplier.IsActive,
+            supplier.MarketingOptOutAt,
+            supplier.MarketingOptOutReason,
+        });
     }
 
     /// <summary>
@@ -315,6 +376,7 @@ public class AdminSupplierIntroController(
 
         foreach (var supplier in candidates)
         {
+            if (supplier.MarketingOptOutAt is not null) continue;
             if (supplier.IntroEmailSentAt is not null) continue;
             if (!supplier.IsActive)                    continue;
             if (!supplier.IsDirectoryListing && !request.IncludeNonDirectory) continue;
@@ -357,6 +419,10 @@ public class AdminSupplierIntroController(
 
         foreach (var supplier in candidates)
         {
+            // FIRST, ahead of already_sent: a business that asked to be left alone
+            // must report the reason it actually wants reported, and must stay
+            // excluded even if some later fix clears its other flags.
+            if (supplier.MarketingOptOutAt is not null)         { Skip(SkipOptedOut);     continue; }
             if (supplier.IntroEmailSentAt is not null)          { Skip(SkipAlreadySent);  continue; }
             if (!supplier.IsActive)                             { Skip(SkipInactive);     continue; }
             if (!supplier.IsDirectoryListing && !request.IncludeNonDirectory)
