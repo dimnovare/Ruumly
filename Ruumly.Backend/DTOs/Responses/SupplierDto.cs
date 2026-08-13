@@ -47,6 +47,14 @@ public record SupplierDto(
     // Partner page fields
     string?   Slug,
     bool      IsPartnerPagePublished,
+    /// <summary>
+    /// True for a row Ruumly created from public research rather than a partner
+    /// who signed up. The provider dashboard reads this to decide what to show:
+    /// a claimed directory listing has no bookings, payouts, contracts or
+    /// calendar, so surfacing those sections gives them a control panel for a
+    /// business relationship that does not exist.
+    /// </summary>
+    bool      IsDirectoryListing,
     string?   Tagline,
     string?   LongDescriptionEt,
     string?   LongDescriptionEn,

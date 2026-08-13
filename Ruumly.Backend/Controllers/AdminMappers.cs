@@ -78,6 +78,7 @@ internal static class AdminMappers
         // Partner page fields
         Slug:                     s.Slug,
         IsPartnerPagePublished:   s.IsPartnerPagePublished,
+        IsDirectoryListing:       s.IsDirectoryListing,
         Tagline:                  s.Tagline,
         LongDescriptionEt:        ParseLang(s.LongDescriptionTranslationsJson, "et"),
         LongDescriptionEn:        ParseLang(s.LongDescriptionTranslationsJson, "en"),
