@@ -409,6 +409,7 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IFeaturedPartnersService, FeaturedPartnersService>();
 builder.Services.AddScoped<IConciergeOutreachService, ConciergeOutreachService>();
+builder.Services.AddScoped<IOfferAutoSendService, OfferAutoSendService>();
 builder.Services.AddScoped<IEmailDeliveryTracker, EmailDeliveryTracker>();
 builder.Services.AddScoped<ISupplierProfileService, SupplierProfileService>();
 builder.Services.AddScoped<IPaymentService, MontonioPaymentService>();

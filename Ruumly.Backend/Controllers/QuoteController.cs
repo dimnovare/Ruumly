@@ -30,7 +30,9 @@ namespace Ruumly.Backend.Controllers;
 [Route("api/quote")]
 public class QuoteController(
     RuumlyDbContext db,
-    IBackgroundEmailQueue emailQueue) : ControllerBase
+    IBackgroundEmailQueue emailQueue,
+    IOfferAutoSendService autoSend,
+    ILogger<QuoteController> logger) : ControllerBase
 {
     /// <summary>Upper bound for a submitted price — keeps numeric(18,4) from overflowing into a 500.</summary>
     private const decimal MaxPriceAmount = 1_000_000m;
@@ -139,8 +141,9 @@ public class QuoteController(
             if (outreach is null)
                 return NotFound(new { error = "Quote not found." });
             var lead = await db.DemandLeads.FirstOrDefaultAsync(d => d.Id == outreach.DemandLeadId);
-            var (result, email) = await ApplyQuoteAsync(outreach, lead, req);
+            var (result, email, offerId) = await ApplyQuoteAsync(outreach, lead, req);
             EnqueueOps(email);
+            await TryAutoSendAsync(offerId);
             return result;
         }
 
@@ -168,9 +171,14 @@ public class QuoteController(
                         $"""SELECT * FROM "DemandLeads" WHERE "Id" = {outreach.DemandLeadId} FOR UPDATE""")
                     .SingleOrDefaultAsync();
 
-                var (result, email) = await ApplyQuoteAsync(outreach, lead, req);
+                var (result, email, offerId) = await ApplyQuoteAsync(outreach, lead, req);
                 await transaction.CommitAsync();
                 EnqueueOps(email);
+                // Strictly after the commit: auto-send reads the offer back on
+                // its own, and inside the serializable transaction it would
+                // either deadlock against these locks or act on rows that a
+                // retry is about to roll back.
+                await TryAutoSendAsync(offerId);
                 return result;
             }
             catch (Exception ex) when (IsSerializationFailure(ex) && attempt < 2)
@@ -190,11 +198,11 @@ public class QuoteController(
     /// newest Draft offer (creating that draft if none exists). Returns the
     /// thank-you result plus the ops-alert email to enqueue AFTER commit.
     /// </summary>
-    private async Task<(IActionResult Result, (string To, string Subject, string Body)? Email)> ApplyQuoteAsync(
+    private async Task<(IActionResult Result, (string To, string Subject, string Body)? Email, Guid? OfferId)> ApplyQuoteAsync(
         ProviderOutreach outreach, DemandLead? lead, SubmitQuoteRequest req)
     {
         if (lead is null)
-            return (NotFound(new { error = "Quote not found." }), null);
+            return (NotFound(new { error = "Quote not found." }), null, null);
 
         // A closed request takes no new quotes: seeding a fresh Draft onto a
         // Converted/Dismissed/Unmatched lead would resurrect dead work in the
@@ -205,7 +213,7 @@ public class QuoteController(
             {
                 error  = "This request is already closed.",
                 reason = "lead_closed",
-            }), null);
+            }), null, null);
         }
 
         var amount = req.PriceAmount;
@@ -318,13 +326,41 @@ public class QuoteController(
             $"Note: {note ?? "—"}\n\n" +
             $"The quote seeded the lead's draft offer — review it in the admin CRM → Leads and send it.");
 
-        return (Ok(new QuoteSubmittedDto(true, amount, unit, availability, note)), email);
+        return (Ok(new QuoteSubmittedDto(true, amount, unit, availability, note)), email, offer.Id);
     }
 
     private void EnqueueOps((string To, string Subject, string Body)? email)
     {
         if (email is { } e)
             emailQueue.EnqueueEmail(e.To, e.Subject, e.Body);
+    }
+
+    /// <summary>
+    /// Offers the seeded draft to the auto-send rule, AFTER the provider's quote
+    /// is safely committed.
+    ///
+    /// Wrapped so it can never fail the provider's submit. From the provider's
+    /// side the job was done the moment their price was stored; whether we then
+    /// chose to release the offer is Ruumly's problem, and turning that into a
+    /// 500 would tell them their quote was lost when it was not.
+    ///
+    /// Does nothing at all unless the founder has switched offerAutoSend on.
+    /// </summary>
+    private async Task TryAutoSendAsync(Guid? offerId)
+    {
+        if (offerId is not { } id) return;
+        try
+        {
+            var result = await autoSend.TrySendAsync(id);
+            if (result.WasSent)
+                logger.LogInformation("Provider quote released offer {OfferId} automatically.", id);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex,
+                "Auto-send failed for offer {OfferId}; the quote itself is stored and the " +
+                "draft is still in the admin workspace.", id);
+        }
     }
 
     private static string? Clamp(string? s, int max)

@@ -37,7 +37,16 @@ public class QuoteSubmitNpgsqlTests(PostgresIntegrationFixture pg)
     }
 
     private static QuoteController MakePublic(RuumlyDbContext db, IBackgroundEmailQueue queue) =>
-        new(db, queue)
+        // The REAL auto-send service, with no offerAutoSend setting row in this
+        // database — so every existing expectation in this file now also proves
+        // that a provider quote does not email the customer by default.
+        new(db, queue,
+            new Ruumly.Backend.Services.Implementations.OfferAutoSendService(
+                db, queue,
+                new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(),
+                Microsoft.Extensions.Logging.Abstractions.NullLogger<
+                    Ruumly.Backend.Services.Implementations.OfferAutoSendService>.Instance),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<QuoteController>.Instance)
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },
         };
