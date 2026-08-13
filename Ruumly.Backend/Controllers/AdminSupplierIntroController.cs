@@ -417,13 +417,34 @@ public class AdminSupplierIntroController(
             if (missing > 0) skips[SkipNotFound] = missing;
         }
 
+        // Reserving an address costs nothing when the row is skipped anyway, and
+        // it is the difference between deduping ROWS and deduping INBOXES.
+        void Reserve(Supplier s)
+        {
+            if (s.ContactEmail?.Trim() is { Length: > 0 } e) seenEmails.Add(e);
+        }
+
         foreach (var supplier in candidates)
         {
             // FIRST, ahead of already_sent: a business that asked to be left alone
             // must report the reason it actually wants reported, and must stay
             // excluded even if some later fix clears its other flags.
-            if (supplier.MarketingOptOutAt is not null)         { Skip(SkipOptedOut);     continue; }
-            if (supplier.IntroEmailSentAt is not null)          { Skip(SkipAlreadySent);  continue; }
+            //
+            // Both of these RESERVE the address on their way out. Skipping without
+            // reserving deduped the supplier row but not the mailbox behind it: a
+            // sibling sharing one info@ would inherit the freed slot and deliver a
+            // second copy to an inbox that had already received the letter — or, in
+            // the opted-out case, to one that had asked us to stop. Found on the
+            // 2026-08-13 recovery run, where clearing 554 stamps silently promoted
+            // 12 such siblings from duplicate_email to eligible.
+            if (supplier.MarketingOptOutAt is not null)
+            {
+                Reserve(supplier); Skip(SkipOptedOut); continue;
+            }
+            if (supplier.IntroEmailSentAt is not null)
+            {
+                Reserve(supplier); Skip(SkipAlreadySent); continue;
+            }
             if (!supplier.IsActive)                             { Skip(SkipInactive);     continue; }
             if (!supplier.IsDirectoryListing && !request.IncludeNonDirectory)
                                                                 { Skip(SkipNotDirectory); continue; }

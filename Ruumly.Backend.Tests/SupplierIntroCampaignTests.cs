@@ -235,6 +235,51 @@ public class SupplierIntroCampaignTests
         after.IsActive.Should().BeTrue();
     }
 
+    [Fact]
+    public async Task AnAlreadyMailedAddress_IsNotReusedByASiblingSharingIt()
+    {
+        // Franchises and chains share one info@ across several rows. Skipping the
+        // already-mailed row without reserving its address would hand the freed
+        // slot to a sibling and deliver a SECOND copy to the same inbox — which is
+        // exactly what the dedupe exists to prevent. Surfaced on the 2026-08-13
+        // recovery, where clearing 554 stamps promoted 12 such siblings.
+        var db = await DbWith(
+            Provider(name: "Aaa Chain OÜ", email: "info@chain.ee",
+                     slug: "aaa-chain", introSentAt: new DateTime(2026, 8, 13, 9, 28, 0, DateTimeKind.Utc)),
+            Provider(name: "Bbb Chain OÜ", email: "info@chain.ee", slug: "bbb-chain"));
+        var queue = new CapturingEmailQueue();
+
+        var response = Body(await Make(db, queue).RunIntroCampaign(
+            new SupplierIntroCampaignRequest(DryRun: false), default));
+
+        response.Sent.Should().Be(0, "that inbox already has the letter");
+        response.Skipped.Should().Contain(s => s.Reason == "duplicate_email" && s.Count == 1);
+        queue.Emails.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task AnOptedOutAddress_IsNotReachedThroughASiblingSharingIt()
+    {
+        // The worse half of the same bug: the inbox asked us to stop, and a
+        // sibling row sharing the address would have written to it anyway.
+        var db = await DbWith(
+            new Supplier
+            {
+                Id = Guid.NewGuid(), Name = "Aaa Chain OÜ", ContactEmail = "info@chain.ee",
+                Country = "EE", IsActive = true, IsDirectoryListing = true,
+                Slug = "aaa-chain", IsPartnerPagePublished = true,
+                MarketingOptOutAt = new DateTime(2026, 8, 13, 10, 0, 0, DateTimeKind.Utc),
+            },
+            Provider(name: "Bbb Chain OÜ", email: "info@chain.ee", slug: "bbb-chain"));
+        var queue = new CapturingEmailQueue();
+
+        var response = Body(await Make(db, queue).RunIntroCampaign(
+            new SupplierIntroCampaignRequest(DryRun: false), default));
+
+        response.Sent.Should().Be(0, "that inbox asked us to stop");
+        queue.Emails.Should().BeEmpty();
+    }
+
     // ─── Reset: recovering a run the sending provider cut short ───────────────
     //
     // On 2026-08-13 a 754-recipient run stamped all 754 and Resend accepted the
