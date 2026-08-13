@@ -13,7 +13,13 @@ public record OfferOptionInput(
     string? Notes = null,
     // Nullable so an EXPLICIT 0 is distinguishable from "not provided"
     // (omitted → the payload index is used).
-    int? SortOrder = null
+    int? SortOrder = null,
+    // Which option this input IS — the id the client read back with the offer.
+    // PATCH is replace-set, so without it every save deleted the row and minted
+    // a new one, throwing away the provenance stored on it (see
+    // OfferOption.CreatedFromOutreachId). Omitted, unknown, or belonging to
+    // another offer all mean the same, harmless thing: a new option.
+    Guid? Id = null
 );
 
 /// <summary>POST /api/admin/leads/{id}/offers — create a draft offer.</summary>
@@ -26,6 +32,8 @@ public record CreateOfferRequest(
 /// <summary>
 /// PATCH /api/admin/offers/{id}. Null field = leave unchanged; a non-null
 /// Options list REPLACES the whole option set (replace-set semantics, [] clears).
+/// Replace-set is about membership, not identity: an option the payload still
+/// carries by <see cref="OfferOptionInput.Id"/> keeps its row.
 ///
 /// <paramref name="Version"/> is the optimistic-concurrency guard: echo back the
 /// version read with the offer and a stale write 409s instead of silently
