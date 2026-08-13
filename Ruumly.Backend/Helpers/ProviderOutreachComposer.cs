@@ -1,6 +1,7 @@
 using Ruumly.Backend.Constants;
 using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Models;
+using Ruumly.Backend.Models.Enums;
 
 namespace Ruumly.Backend.Helpers;
 
@@ -64,7 +65,7 @@ public static class ProviderOutreachComposer
         var route = string.IsNullOrWhiteSpace(lead.ToCity)
             ? lead.City
             : $"{lead.City} → {lead.ToCity}";
-        var category = t.CategoryLabel(lead.Category);
+        var category = ServiceLine(t, lead);
 
         // "—" tells a provider nothing and reads as a broken template. An absent
         // date/details becomes a real instruction instead ("as soon as possible —
@@ -112,6 +113,30 @@ public static class ProviderOutreachComposer
             subject,
             BuildText(t, facts, urgentLine, quoteUrl, questions),
             BuildHtml(t, facts, urgentLine, quoteUrl, questions, FrontendUrl.Contact(appUrl, language)));
+    }
+
+    /// <summary>
+    /// What this provider is being asked to price, in their own language.
+    ///
+    /// A concierge request naming several services does not fit the lead's single
+    /// Category column and lands on Any, whose label is a deliberately generic
+    /// "Service" — which in a cold email says nothing at all and reads like a
+    /// broken template. The visitor's actual pick survives in the Query machine
+    /// summary, so name the services instead, the same way the packing add-on
+    /// above is recovered and rendered LOCALIZED rather than travelling as English
+    /// prose inside Details. Falls back to the generic label when nothing is
+    /// recoverable, which is the pre-existing behaviour for such leads.
+    /// </summary>
+    private static string ServiceLine(EmailTranslations.EmailStrings t, DemandLead lead)
+    {
+        if (lead.Category != DemandLeadCategory.Any)
+            return t.CategoryLabel(lead.Category);
+
+        var selected = ServiceCategories.SelectedSlugs(lead.Query);
+        return selected.Count == 0
+            ? t.CategoryLabel(lead.Category)
+            : string.Join(" + ", selected.Select(
+                slug => t.CategoryLabel(ServiceCategories.BySlug[slug])));
     }
 
     private static string BuildText(

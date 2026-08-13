@@ -144,6 +144,41 @@ public static class ServiceCategories
     }
 
     /// <summary>
+    /// The consumer services the visitor actually selected, recovered from the
+    /// Query machine summary in the order the intake wrote them.
+    ///
+    /// A lead carries ONE Category column, so a visitor who picks several services
+    /// — which the intake copy explicitly invites them to do — collapses to Any and
+    /// the column stops describing the request. This leading segment is then the
+    /// only surviving record of the ask, and reading it back is what lets a
+    /// "moving + warehouse" request still reach movers AND storage providers
+    /// instead of nobody.
+    ///
+    /// As strict as <see cref="HasPackingAddOn"/> and for the same reason: only a
+    /// Query carrying the concierge prefix qualifies, and only the segment before
+    /// the first " | " is read — everything after it interpolates the customer's
+    /// own city, so no visitor can type a service list into a free-text field and
+    /// choose who gets emailed. Keeping only consumer slugs also drops the "any"
+    /// placeholder and the +packing-addon / +insurance-asked markers.
+    /// </summary>
+    public static List<string> SelectedSlugs(string? query)
+    {
+        if (string.IsNullOrEmpty(query) ||
+            !query.StartsWith(ConciergeQueryPrefix, StringComparison.Ordinal))
+            return [];
+
+        var head      = query[ConciergeQueryPrefix.Length..];
+        var separator = head.IndexOf(" | ", StringComparison.Ordinal);
+        if (separator >= 0) head = head[..separator];
+
+        return head
+            .Split('+', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(token => IsConsumerSlug(token))
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+    }
+
+    /// <summary>
     /// Normalizes a raw list of service-type slugs (trim + lowercase + dedupe)
     /// and keeps only the ones that are valid <see cref="BySlug"/> categories.
     /// Unknown slugs are silently dropped so a self-serve applicant's free-form

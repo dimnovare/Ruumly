@@ -50,11 +50,12 @@ public sealed record AutoOutreachSummary(
     {
         "disabled" =>
             "Auto-outreach: OFF (conciergeAutoOutreach=false) — contact providers manually.",
-        // Category "any" means the visitor picked zero or several services: we
-        // literally do not know what to ask a provider to price.
+        // Reached only when NOTHING routable was asked for (an insurance-only
+        // request, say). A visitor who picked several services still fans out —
+        // on each of them — so this line no longer means "more than one".
         "category_any" =>
-            "Auto-outreach: skipped — the request has no single category, so there is nothing "
-            + "specific to ask for. Pick the providers manually.",
+            "Auto-outreach: skipped — the request names no service we can route, so there is "
+            + "nothing specific to ask for. Pick the providers manually.",
         "no_candidates" =>
             $"Auto-outreach: no reachable provider within {RadiusKm:0} km"
             + NoEmailSuffix() + " — contact providers manually.",
@@ -98,6 +99,11 @@ public interface IConciergeOutreachService
     /// providers and sends them the availability request immediately. Called on
     /// concierge lead creation — the customer's request must never wait for an
     /// admin to open the workspace.
+    ///
+    /// A request naming several services is searched once per service and the
+    /// shared quota is spread across them, so each of the things the customer
+    /// asked for gets somebody who actually does it. Only a request that names
+    /// nothing routable is left for the admin.
     /// </summary>
     Task<AutoOutreachSummary> AutoFanOutAsync(DemandLead lead, CancellationToken ct = default);
 }

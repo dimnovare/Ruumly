@@ -274,6 +274,171 @@ public class ConciergeLeadTests
         }
     }
 
+    // ─── Multi-service requests reach providers (2026-08-13) ─────────────────
+    // Step 1 of the intake says "pick everything you need", and until now doing
+    // exactly that was the one thing guaranteed to reach NOBODY: two services do
+    // not fit one Category column, the lead landed on Any, and the fan-out bailed
+    // out and waited for someone to open the workspace. At roughly five qualified
+    // requests a month, the customers who followed our own instructions were the
+    // ones left uncontacted.
+    //
+    // The selection is recovered from the Query machine summary the intake
+    // already writes, and each service is searched on its own — the Any wildcard
+    // is never handed to the finder, which treats it as "every supplier matches".
+
+    [Fact]
+    public async Task RequestConcierge_MultiService_ContactsProvidersOfEachServiceAsked()
+    {
+        var db    = TestDbContext.Create();
+        var queue = new CapturingEmailQueue();
+
+        var mover   = SeedMovingProvider(db, "Tallinn Movers", "mover@x.ee");
+        var storage = SeedWarehouseProvider(db, "Tallinn Storage", "storage@x.ee");
+        // The control: a perfectly good provider of something nobody asked for.
+        var cleaner = SeedServiceProvider(db, "Tallinn Cleaners", "cleaner@x.ee", ["cleaning"]);
+        await db.SaveChangesAsync();
+
+        var result = await MakeSupport(db, queue).RequestConcierge(new ConciergeRequest(
+            Email: "cust@x.ee", City: "Tallinn", Categories: ["moving", "warehouse"],
+            Details: "2-room flat plus some pallets"));
+
+        result.Should().BeOfType<OkObjectResult>();
+
+        var contacted = db.ProviderOutreaches.Select(o => o.SupplierId).ToList();
+        contacted.Should().Contain(mover.Id, "they asked to be moved");
+        contacted.Should().Contain(storage.Id, "and they asked for storage too");
+        contacted.Should().NotContain(cleaner.Id,
+            "fanning out on the wildcard would blast the whole directory — the exact "
+            + "cold-contact burn the old skip existed to prevent");
+
+        ProviderEmails(queue).Select(e => e.To)
+            .Should().BeEquivalentTo(["mover@x.ee", "storage@x.ee"]);
+    }
+
+    [Fact]
+    public async Task RequestConcierge_MultiService_LeavesTheLeadOnAny()
+    {
+        // The fan-out steers the provider search per service with a DETACHED copy
+        // of the lead. Assigning the tracked entity's Category to search would
+        // persist one arbitrary service onto the customer's request and quietly
+        // rewrite what they asked for.
+        var db = TestDbContext.Create();
+        SeedMovingProvider(db, "Tallinn Movers", "mover@x.ee");
+        SeedWarehouseProvider(db, "Tallinn Storage", "storage@x.ee");
+        await db.SaveChangesAsync();
+
+        await MakeSupport(db, new CapturingEmailQueue()).RequestConcierge(new ConciergeRequest(
+            Email: "cust@x.ee", City: "Tallinn", Categories: ["moving", "warehouse"]));
+
+        db.DemandLeads.Single().Category.Should().Be(DemandLeadCategory.Any,
+            "the lead still describes a request for several services");
+    }
+
+    [Fact]
+    public async Task RequestConcierge_MultiService_SpreadsTheQuotaAcrossServices()
+    {
+        // The cap is shared, so a service with more supply must not eat it. Three
+        // movers and one storage provider with room for two contacts has to reach
+        // one of each: spending both slots on movers would leave the storage half
+        // of the customer's move unquoted, which is the same silent failure.
+        var db    = TestDbContext.Create();
+        var queue = new CapturingEmailQueue();
+
+        SeedMovingProvider(db, "Movers A", "a@x.ee");
+        SeedMovingProvider(db, "Movers B", "b@x.ee");
+        SeedMovingProvider(db, "Movers C", "c@x.ee");
+        var storage = SeedWarehouseProvider(db, "Tallinn Storage", "storage@x.ee");
+        SetSetting(db, "conciergeAutoOutreachMax", "2");
+        await db.SaveChangesAsync();
+
+        await MakeSupport(db, queue).RequestConcierge(new ConciergeRequest(
+            Email: "cust@x.ee", City: "Tallinn", Categories: ["moving", "warehouse"]));
+
+        var contacted = db.ProviderOutreaches.Select(o => o.SupplierId).ToList();
+        contacted.Should().HaveCount(2, "the quota is a total, not per service");
+        contacted.Should().Contain(storage.Id, "the scarcer service must still get its slot");
+    }
+
+    [Fact]
+    public async Task RequestConcierge_MultiService_ContactsADualServiceProviderOnce()
+    {
+        // A mover that also rents storage matches both searches. Two emails about
+        // one job spends two of their cold contacts and reads as a mistake.
+        var db    = TestDbContext.Create();
+        var queue = new CapturingEmailQueue();
+
+        var both = SeedServiceProvider(db, "Movers & Storage", "both@x.ee", ["moving", "warehouse"]);
+        await db.SaveChangesAsync();
+
+        await MakeSupport(db, queue).RequestConcierge(new ConciergeRequest(
+            Email: "cust@x.ee", City: "Tallinn", Categories: ["moving", "warehouse"]));
+
+        db.ProviderOutreaches.Should().ContainSingle().Which.SupplierId.Should().Be(both.Id);
+        ProviderEmails(queue).Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task RequestConcierge_NoRoutableService_StillWaitsForAnAdmin()
+    {
+        // The deliberate skip survives for the case it was written for: nothing
+        // routable was asked, so there is no specific question to put to anyone.
+        var db    = TestDbContext.Create();
+        var queue = new CapturingEmailQueue();
+
+        SeedMovingProvider(db, "Tallinn Movers", "mover@x.ee");
+        SeedWarehouseProvider(db, "Tallinn Storage", "storage@x.ee");
+        await db.SaveChangesAsync();
+
+        await MakeSupport(db, queue).RequestConcierge(new ConciergeRequest(
+            Email: "cust@x.ee", City: "Tallinn", Categories: ["insurance"]));
+
+        db.ProviderOutreaches.Should().BeEmpty();
+        ProviderEmails(queue).Should().BeEmpty("there is nothing specific to ask for");
+        queue.Emails.Single(e => e.To == "info@ruumly.eu").TextBody
+            .Should().Contain("names no service we can route",
+                "the ops alert must say the lead still needs hand-work");
+    }
+
+    [Fact]
+    public async Task RequestConcierge_MultiServicePlusPacking_TreatsTheMarkerAsAnAddOn()
+    {
+        // "warehouse"+"packing" resolves to warehouse+moving and the intake also
+        // stamps a +packing-addon marker into the same Query segment the fan-out
+        // now reads. The marker is an add-on note, never a service to go shopping
+        // for — and it must not stop the two real ones from being contacted.
+        var db    = TestDbContext.Create();
+        var queue = new CapturingEmailQueue();
+
+        var mover   = SeedMovingProvider(db, "Tallinn Movers", "mover@x.ee");
+        var storage = SeedWarehouseProvider(db, "Tallinn Storage", "storage@x.ee");
+        await db.SaveChangesAsync();
+
+        await MakeSupport(db, queue).RequestConcierge(new ConciergeRequest(
+            Email: "cust@x.ee", City: "Tallinn", Categories: ["warehouse", "packing"]));
+
+        db.DemandLeads.Single().Query.Should().Contain("+packing-addon");
+        db.ProviderOutreaches.Select(o => o.SupplierId)
+            .Should().BeEquivalentTo([storage.Id, mover.Id]);
+    }
+
+    [Fact]
+    public async Task RequestConcierge_MultiService_TellsOpsWhoWasContacted()
+    {
+        var db    = TestDbContext.Create();
+        var queue = new CapturingEmailQueue();
+
+        SeedMovingProvider(db, "Tallinn Movers", "mover@x.ee");
+        SeedWarehouseProvider(db, "Tallinn Storage", "storage@x.ee");
+        await db.SaveChangesAsync();
+
+        await MakeSupport(db, queue).RequestConcierge(new ConciergeRequest(
+            Email: "cust@x.ee", City: "Tallinn", Categories: ["moving", "warehouse"]));
+
+        var alert = queue.Emails.Single(e => e.To == "info@ruumly.eu").TextBody;
+        alert.Should().Contain("Auto-contacted: 2 provider(s)");
+        alert.Should().Contain("Tallinn Movers").And.Contain("Tallinn Storage");
+    }
+
     [Fact]
     public async Task RequestConcierge_MissingEmailOrCity_400_NoLead()
     {
@@ -369,6 +534,49 @@ public class ConciergeLeadTests
         return supplier;
     }
 
+    private static Supplier SeedWarehouseProvider(
+        RuumlyDbContext db, string name, string? contactEmail, string city = "Tallinn")
+    {
+        var supplier = new Supplier
+        {
+            Id = Guid.NewGuid(), Name = name, ContactName = "C",
+            ContactEmail = contactEmail ?? "", ContactPhone = "1", IsActive = true,
+        };
+        db.Suppliers.Add(supplier);
+        db.Listings.Add(new Listing
+        {
+            Id = Guid.NewGuid(), SupplierId = supplier.Id, Supplier = supplier,
+            Type = ListingType.Warehouse, Title = $"Storage — {name}", City = city,
+            IsActive = true, PriceFrom = 40m, PriceUnit = "month", UpdatedAt = DateTime.UtcNow,
+        });
+        return supplier;
+    }
+
+    /// <summary>
+    /// A provider whose capability is DECLARED rather than listed — cleaning and
+    /// van rental have no ListingType, so ServiceTypesJson plus a location is the
+    /// only way they are ever matched (see ProviderCandidateFinder.MatchesCategory).
+    /// </summary>
+    private static Supplier SeedServiceProvider(
+        RuumlyDbContext db, string name, string? contactEmail, string[] serviceTypes,
+        string city = "Tallinn")
+    {
+        var supplier = new Supplier
+        {
+            Id = Guid.NewGuid(), Name = name, ContactName = "C",
+            ContactEmail = contactEmail ?? "", ContactPhone = "1", IsActive = true,
+            ServiceTypesJson = System.Text.Json.JsonSerializer.Serialize(serviceTypes),
+        };
+        db.Suppliers.Add(supplier);
+        db.SupplierLocations.Add(new SupplierLocation
+        {
+            Id = Guid.NewGuid(), SupplierId = supplier.Id, Supplier = supplier,
+            Name = name, Address = city, City = city, Lat = 59.437, Lng = 24.753,
+            IsActive = true,
+        });
+        return supplier;
+    }
+
     private static void SetSetting(RuumlyDbContext db, string key, string value) =>
         db.PlatformSettings.Add(new PlatformSetting { Key = key, Value = value });
 
@@ -453,25 +661,41 @@ public class ConciergeLeadTests
                 "ops must be told the lead needs hand-work");
     }
 
-    [Fact]
-    public async Task RequestConcierge_CategoryAny_NeverFansOut()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("I need a hand moving next week")]
+    [InlineData("concierge: any | Tallinn")]
+    public async Task AutoFanOut_AnyLeadNamingNoService_NeverBlastsTheDirectory(string? query)
     {
+        // Superseded RequestConcierge_CategoryAny_NeverFansOut, which asserted that
+        // a "moving"+"warehouse" pick reaches nobody — the defect, written down as
+        // a test. What must still hold is the case the skip was actually written
+        // for: an Any lead we cannot describe. ProviderCandidateFinder matches
+        // EVERY supplier for such a lead, so a search here is a blast.
+        //
+        // Driven through the service rather than the intake because the intake
+        // always writes a machine summary; these are legacy rows, other lead
+        // sources, and raw customer text that must never steer who gets emailed.
         var db    = TestDbContext.Create();
         var queue = new CapturingEmailQueue();
 
         SeedMovingProvider(db, "Tallinn Movers", "m@x.ee");
+        SeedWarehouseProvider(db, "Tallinn Storage", "s@x.ee");
+        var lead = new DemandLead
+        {
+            Id = Guid.NewGuid(), Email = "cust@x.ee", City = "Tallinn",
+            Category = DemandLeadCategory.Any, Query = query, Language = "et",
+            Source = "concierge", Status = DemandLeadStatus.New, CreatedAt = DateTime.UtcNow,
+        };
+        db.DemandLeads.Add(lead);
         await db.SaveChangesAsync();
 
-        // Two categories → Category.Any: we don't know what to ask a provider to price.
-        var result = await MakeSupport(db, queue).RequestConcierge(new ConciergeRequest(
-            Email: "cust@x.ee", City: "Tallinn", Categories: ["moving", "warehouse"]));
+        var summary = await TestServices.Outreach(db, queue).AutoFanOutAsync(lead);
 
-        result.Should().BeOfType<OkObjectResult>();
-        db.DemandLeads.Single().Category.Should().Be(DemandLeadCategory.Any);
-        ProviderEmails(queue).Should().BeEmpty("a category-less request must not blast providers");
+        summary.Emailed.Should().Be(0);
+        summary.SkipReason.Should().Be("category_any");
+        queue.Emails.Should().BeEmpty("a request we cannot state must not cost anyone a cold contact");
         db.ProviderOutreaches.Should().BeEmpty();
-        queue.Emails.Single(e => e.To == "info@ruumly.eu").TextBody
-            .Should().Contain("Auto-outreach: skipped");
     }
 
     [Fact]

@@ -20,7 +20,8 @@ public class ProviderOutreachEmailTests
         string? details = "2-room flat, 3rd floor, no lift",
         string city = "Tallinn",
         string? toCity = "Tartu",
-        string? query = null) => new()
+        string? query = null,
+        DemandLeadCategory category = DemandLeadCategory.Moving) => new()
     {
         Id = Guid.NewGuid(),
         Email = "mari.maasikas@example.com",
@@ -28,7 +29,7 @@ public class ProviderOutreachEmailTests
         Phone = "+372 5555 1234",
         City = city,
         ToCity = toCity,
-        Category = DemandLeadCategory.Moving,
+        Category = category,
         NeedDate = needDate,
         Details = details,
         Query = query,
@@ -255,6 +256,79 @@ public class ProviderOutreachEmailTests
         {
             ProviderOutreachComposer.Compose(Lead(query: forged), Provider())
                 .TextBody.Should().NotContain(PackingEstonian, $"'{forged}' is customer-controlled text");
+        }
+    }
+
+    // ─── Multi-service requests ───────────────────────────────────────────────
+    // The intake invites the visitor to pick everything they need, and two
+    // services do not fit one Category column — the lead lands on Any, whose
+    // label is a deliberately generic "Teenus"/"Service". Sending that to a cold
+    // provider asks them to price nothing at all. The selection survives in the
+    // Query machine summary, so the ask is recovered and named, exactly like the
+    // packing add-on above.
+
+    // What the intake writes for a "moving"+"warehouse" pick.
+    private const string MultiServiceQuery = "concierge: moving+warehouse | Tallinn→Tartu | 2026-08-15";
+
+    [Fact]
+    public void MultiServiceLead_NamesEveryServiceAsked_InTheProvidersLanguage()
+    {
+        var message = ProviderOutreachComposer.Compose(
+            Lead(category: DemandLeadCategory.Any, query: MultiServiceQuery), Provider("EE"));
+
+        // Hardcoded rather than read from EmailTranslations: asserting against the
+        // table would pass just as happily if a language fell back to English.
+        foreach (var body in new[] { message.TextBody, message.HtmlBody })
+        {
+            body.Should().Contain("Kolimine", "the mover must see the moving half of the job");
+            body.Should().Contain("Laopind", "and the storage half they were also asked about");
+        }
+
+        message.Subject.Should().Contain("Kolimine").And.Contain("Laopind");
+        message.Subject.Should().NotContain("Teenus",
+            "'Service: Service' is what made an Any lead unanswerable");
+    }
+
+    [Fact]
+    public void MultiServiceLead_InLatvian_UsesLatvianServiceNames()
+    {
+        var message = ProviderOutreachComposer.Compose(
+            Lead(category: DemandLeadCategory.Any, query: MultiServiceQuery), Provider("LV"));
+
+        message.TextBody.Should().Contain("Pārvākšanās").And.Contain("Noliktavas telpa");
+        message.TextBody.Should().NotContain("Kolimine",
+            "the provider's own country picks the language, not the customer's");
+    }
+
+    [Fact]
+    public void AnyLead_WithNothingRecoverable_KeepsTheGenericLabel()
+    {
+        // An insurance-only ask, or any older row without a machine summary: there
+        // is genuinely nothing to name, and the generic label is the honest answer.
+        foreach (var query in new[] { null, "concierge: any +insurance-asked | Tallinn" })
+        {
+            ProviderOutreachComposer.Compose(
+                    Lead(category: DemandLeadCategory.Any, query: query), Provider("EE"))
+                .TextBody.Should().Contain("Teenus", $"'{query ?? "no query"}' names no service");
+        }
+    }
+
+    [Fact]
+    public void ServiceNames_AreOnlyReadFromTheMachineWrittenPartOfQuery()
+    {
+        // Same contract as the packing marker: Query is raw customer text on
+        // routed leads and interpolates the customer's city on concierge ones, so
+        // typing a service list into a free-text field must not rewrite the ask.
+        foreach (var forged in new[]
+                 {
+                     "moving+warehouse",
+                     "I need moving+warehouse help",
+                     "concierge: any | Tallinn moving+warehouse",
+                 })
+        {
+            ProviderOutreachComposer.Compose(
+                    Lead(category: DemandLeadCategory.Any, query: forged), Provider("EE"))
+                .TextBody.Should().Contain("Teenus", $"'{forged}' is customer-controlled text");
         }
     }
 
