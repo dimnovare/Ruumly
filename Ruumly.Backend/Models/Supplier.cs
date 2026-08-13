@@ -117,6 +117,34 @@ public class Supplier
     public DateTime? IntroEmailSentAt { get; set; }
 
     /// <summary>
+    /// The headline "from" price this provider quotes, and the unit it is quoted
+    /// in ("/h", "/24h", "/m³ kuus"). Deliberately a single figure on the
+    /// SUPPLIER rather than a catalogue of <see cref="Listing"/> rows.
+    ///
+    /// Listing.PriceFrom is the real per-unit price, but reaching it needs a user
+    /// account, a provider dashboard and a unit catalogue — and the introduction
+    /// campaign sells "no account to create" as a feature, which it should. So a
+    /// business that claimed its profile had no way at all to tell us a price,
+    /// while that same letter asked them for one. This closes that.
+    ///
+    /// It is what the concierge actually needs: enough to put a number in front
+    /// of a customer within minutes instead of relaying a question and losing
+    /// them. A provider who later wants real inventory still gets Listings.
+    /// </summary>
+    public decimal? PriceFrom { get; set; }
+
+    /// <summary>Unit for <see cref="PriceFrom"/>, in the provider's own words.</summary>
+    public string? PriceUnit { get; set; }
+
+    /// <summary>
+    /// Everything a single figure cannot carry: what the price includes, VAT
+    /// treatment, deposits, surcharges ("piano +80 €"), minimum hours. Free text
+    /// because a mover, a trailer yard and a storage site price nothing alike,
+    /// and a schema that fits all three fits none of them well.
+    /// </summary>
+    public string? PriceNote { get; set; }
+
+    /// <summary>
     /// When this business asked us to stop contacting it — the REMOVE reply the
     /// introduction email promises to honour, or any equivalent request by phone
     /// or in person. Non-null means SEND NOTHING, ever: no intro campaign, no

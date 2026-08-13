@@ -30,4 +30,11 @@ public record ClaimUpdateProfileRequest(
     string? WebsiteUrl,
     string? Address,
     List<string>? ServiceTypes,
-    string? Description);
+    string? Description,
+    // The whole reason the claim form is worth filling in. Everything above this
+    // line the provider could have left to us; a price is the one thing only they
+    // can give, and it is what lets us answer a customer instead of relaying a
+    // question. Null = leave unchanged; an empty string clears the field.
+    decimal? PriceFrom = null,
+    string? PriceUnit = null,
+    string? PriceNote = null);

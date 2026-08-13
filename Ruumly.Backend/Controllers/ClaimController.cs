@@ -58,6 +58,15 @@ public partial class ClaimController(
     private const int MaxAddressLength     = 200;
     private const int MaxDescriptionLength = 160;
     private const int MaxServiceTypes      = 8;
+    private const int MaxPriceUnitLength   = 40;
+    private const int MaxPriceNoteLength   = 500;
+
+    /// <summary>
+    /// Upper bound on a claimed "from" price. Not a business rule — a typo guard.
+    /// A provider meaning 45 EUR/h who types 45000 would otherwise publish it, and
+    /// the figure goes straight in front of customers.
+    /// </summary>
+    private const decimal MaxPriceFrom = 100_000m;
 
     [GeneratedRegex("^[a-z0-9-]{2,80}$")]
     private static partial Regex SlugShape();
@@ -364,6 +373,23 @@ public partial class ClaimController(
         if (unknown.Count > 0)
             return BadRequest(new { error = $"Unknown services: {string.Join(", ", unknown)}." });
 
+        // Price. The one field on this form only the provider can fill in, so it
+        // gets the same anti-markup and length treatment as the rest, plus a
+        // sanity bound: this number is shown to customers verbatim.
+        var priceUnit = Clean(body.PriceUnit);
+        var priceNote = Clean(body.PriceNote);
+        if (body.PriceFrom is { } price && (price < 0 || price > MaxPriceFrom))
+            return BadRequest(new { error = $"Price must be between 0 and {MaxPriceFrom:N0}." });
+        if (priceUnit is { Length: > MaxPriceUnitLength })
+            return BadRequest(new { error = $"Price unit must be at most {MaxPriceUnitLength} characters." });
+        if (priceNote is { Length: > MaxPriceNoteLength })
+            return BadRequest(new { error = $"Price details must be at most {MaxPriceNoteLength} characters." });
+        foreach (var (label, value) in new[] { ("Price unit", priceUnit), ("Price details", priceNote) })
+        {
+            if (value is not null && (value.Contains('<') || value.Contains('>')))
+                return BadRequest(new { error = $"{label} must not contain '<' or '>'." });
+        }
+
         var now = DateTime.UtcNow;
         supplier!.Name             = name;
         supplier.ContactPhone      = contactPhone ?? "";
@@ -371,6 +397,12 @@ public partial class ClaimController(
         supplier.WebsiteUrl        = websiteUrl;
         supplier.Tagline           = description;
         supplier.ServiceTypesJson  = JsonSerializer.Serialize(serviceTypes);
+        // Only touched when the field is present in the payload, so a client that
+        // does not render the price inputs cannot silently wipe a price the
+        // provider already gave us. An explicit empty string still clears.
+        if (body.PriceFrom is not null) supplier.PriceFrom = body.PriceFrom;
+        if (body.PriceUnit is not null) supplier.PriceUnit = priceUnit;
+        if (body.PriceNote is not null) supplier.PriceNote = priceNote;
         supplier.UpdatedAt         = now;
         // Everything NOT listed above is deliberately untouched: tier, verified
         // badge, publish state, slug, commerce flags, rating, discounts. A claim
@@ -473,6 +505,9 @@ public partial class ClaimController(
             Country:      s.Country,
             ServiceTypes: ParseServiceTypes(s.ServiceTypesJson),
             Description:  s.Tagline,
+            PriceFrom:    s.PriceFrom,
+            PriceUnit:    NullIfBlank(s.PriceUnit),
+            PriceNote:    NullIfBlank(s.PriceNote),
             ClaimedAt:    s.ClaimedAt);
     }
 

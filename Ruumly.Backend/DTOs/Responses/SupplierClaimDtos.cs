@@ -36,6 +36,9 @@ public record ClaimEditableProfileDto(
     string Country,
     List<string> ServiceTypes,
     string? Description,
+    decimal? PriceFrom,
+    string? PriceUnit,
+    string? PriceNote,
     DateTime? ClaimedAt);
 
 /// <summary>Result of redeeming a magic link: the scoped session and the form's initial values.</summary>

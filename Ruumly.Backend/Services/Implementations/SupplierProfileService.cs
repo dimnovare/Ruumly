@@ -101,7 +101,10 @@ public class SupplierProfileService(RuumlyDbContext db, IDistributedCache cache)
             Locations:        locations,
             HasGoogleReviews: !string.IsNullOrEmpty(supplier.GooglePlaceId),
             IsDirectory:      supplier.IsDirectoryListing,
-            ServiceTypes:     ParseServiceTypes(supplier.ServiceTypesJson));
+            ServiceTypes:     ParseServiceTypes(supplier.ServiceTypesJson),
+            PriceFrom:        supplier.PriceFrom,
+            PriceUnit:        supplier.PriceUnit,
+            PriceNote:        supplier.PriceNote);
 
         await cache.SetStringAsync(
             cacheKey,
