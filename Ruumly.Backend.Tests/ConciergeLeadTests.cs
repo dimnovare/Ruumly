@@ -374,7 +374,22 @@ public class ConciergeLeadTests
 
     private static List<(string To, string Subject, string TextBody, string? HtmlBody, string? ReplyTo)>
         ProviderEmails(CapturingEmailQueue queue) =>
-        queue.Emails.Where(e => e.To != "info@ruumly.eu").ToList();
+        // "Everything not addressed to ops" stopped meaning "a provider" on
+        // 2026-08-13, when the intake started sending the CUSTOMER their own
+        // acknowledgement. Excluding the customer's own address keeps this
+        // helper meaning what its name says — and keeps the identity-leak test
+        // below honest, since that mail is allowed to contain their name and
+        // number precisely because it is addressed to them.
+        queue.Emails
+             .Where(e => e.To != "info@ruumly.eu")
+             .Where(e => !CustomerAddresses.Contains(e.To))
+             .ToList();
+
+    /// <summary>Addresses these tests submit requests from — never providers.</summary>
+    private static readonly HashSet<string> CustomerAddresses = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "cust@x.ee", "new@x.ee", "mari.maasikas@example.com",
+    };
 
     [Fact]
     public async Task RequestConcierge_AutoFanout_EmailsAtMostTheConfiguredMax()

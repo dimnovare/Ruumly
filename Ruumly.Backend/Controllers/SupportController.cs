@@ -353,6 +353,41 @@ public class SupportController(
                 "Ops alert enqueue failed for concierge lead {LeadId} — lead saved but UNANNOUNCED.", lead.Id);
         }
 
+        // The customer's own receipt. Until 2026-08-13 nothing at all was sent to
+        // them here: the first mail they ever got from Ruumly was the offer, days
+        // later, from an address they had never corresponded with — while the
+        // success screen had already promised "2-3 offers, usually within 24
+        // hours". No proof it arrived, and no thread to reply to when the date
+        // moved. Their address was the only channel back from them and it was
+        // never once exercised.
+        //
+        // Same shape as the ops alert above and for the same reason: the lead is
+        // already saved, so a mail failure must never turn into a 500 that tells
+        // the customer their request was lost when it was not.
+        try
+        {
+            var ack = CustomerRequestAckComposer.Compose(
+                lead,
+                EmailTranslations.For(lead.Language).CategoryLabel(lead.Category),
+                FrontendUrl.Contact(appUrl, lead.Language));
+
+            emailQueue.EnqueueEmail(
+                to:       lead.Email.Trim(),
+                subject:  ack.Subject,
+                textBody: ack.TextBody,
+                htmlBody: null,
+                // Reply-To ops, not noreply@: the mail explicitly invites the
+                // customer to answer with a changed date or an extra detail, and
+                // those replies have to land somewhere a human reads.
+                replyTo:  await OpsInbox.ResolveAsync(db));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex,
+                "Customer acknowledgement enqueue failed for lead {LeadId} — lead saved, " +
+                "customer NOT acknowledged.", lead.Id);
+        }
+
         return Ok(new { ok = true });
     }
 }

@@ -165,6 +165,32 @@ public static class EmailTranslations
         // support phone was retired in 2026-08 (the founder does not take
         // provider calls), so no number is printed anywhere in outbound mail.
         string OutreachQuestionsTpl,
+        // ── Customer request acknowledgement (concierge_ack) ──────────────────
+        // Sent the instant a request is submitted. Before this existed the
+        // customer heard nothing until an offer arrived days later, from an
+        // address they had never corresponded with.
+        //
+        // Says NOTHING about timing. Some requests reach no provider
+        // automatically — a multi-service ask is routed by hand — and repeating
+        // the "24 hours" from the success screen in the one message that proves
+        // we received the request would turn an honest wait into a broken
+        // promise.
+        string AckSubject,
+        string AckGreetingTpl,
+        string AckGreetingNoName,
+        string AckReceived,
+        string AckSummaryHeading,
+        string AckLabelService,
+        string AckLabelCity,
+        string AckLabelDate,
+        string AckLabelDetails,
+        string AckDateAsap,
+        string AckWhatNext,
+        // The point of the whole mail: a thread they can answer. This address is
+        // the only channel back from a customer and it was never exercised.
+        string AckReply,
+        string AckContactTpl,
+        string AckSignature,
         // ── One-off supplier INTRODUCTION campaign (supplier_intro) ───────────
         // Sent ONCE to every directory provider we added from public research,
         // BEFORE an auto-fanout request ever lands in their inbox: a cold
@@ -331,6 +357,12 @@ public static class EmailTranslations
 
         // ── Supplier introduction campaign ────────────────────────────────────
 
+        public string AckGreeting(string name) =>
+            AckGreetingTpl.Replace("{name}", name);
+
+        public string AckContact(string url) =>
+            AckContactTpl.Replace("{url}", url);
+
         /// <summary>Subject line carrying the recipient's own company name — the
         /// single strongest signal that this is not a bulk blast.</summary>
         public string IntroSubject(string company) =>
@@ -489,6 +521,20 @@ public static class EmailTranslations
         OutreachReplyAlternative:      "Või vastake lihtsalt sellele e-kirjale koos hinnaga — kiri jõuab otse meie meeskonnani.",
         OutreachSignature:             "Ruumly meeskond\ninfo@ruumly.eu",
         OutreachQuestionsTpl:          "Küsimused? Vastake sellele kirjale või kirjutage meile kontaktivormi kaudu: {url}",
+        AckSubject:                    "Sinu päring on meil käes — Ruumly",
+        AckGreetingTpl:                "Tere, {name}!",
+        AckGreetingNoName:             "Tere!",
+        AckReceived:                   "Sinu päring jõudis meile kohale. Vaatame selle üle ja küsime teenusepakkujatelt hinnad.",
+        AckSummaryHeading:             "Mida sa küsisid:",
+        AckLabelService:               "Teenus",
+        AckLabelCity:                  "Asukoht",
+        AckLabelDate:                  "Soovitud aeg",
+        AckLabelDetails:               "Täpsustused",
+        AckDateAsap:                   "esimesel võimalusel",
+        AckWhatNext:                   "Mis edasi saab: võtame ühendust piirkonna pakkujatega ja saadame sulle koondatud pakkumised. Kui midagi jääb segaseks, küsime sinult üle.",
+        AckReply:                      "Kui midagi muutub — kuupäev, kogus, aadress — vasta lihtsalt sellele kirjale. Nii jõuab info otse meieni.",
+        AckContactTpl:                 "Võid kirjutada ka siit: {url}",
+        AckSignature:                  "Parimate soovidega\nRuumly meeskond\ninfo@ruumly.eu",
         IntroSubjectTpl:               "Kliendipäringud Ruumlyst — {company}",
         IntroGreeting:                 "Tere!",
         IntroOpening:                  "Kirjutame Ruumlyst, sest teie ettevõte pakub teenust, mida meie kliendid otsivad.",
@@ -657,6 +703,20 @@ public static class EmailTranslations
         OutreachReplyAlternative:      "Or simply reply to this email with your price — it reaches our team directly.",
         OutreachSignature:             "The Ruumly team\ninfo@ruumly.eu",
         OutreachQuestionsTpl:          "Questions? Reply to this email, or write to us through our contact page: {url}",
+        AckSubject:                    "We have your request — Ruumly",
+        AckGreetingTpl:                "Hi {name},",
+        AckGreetingNoName:             "Hello,",
+        AckReceived:                   "Your request has reached us. We will go through it and ask providers for prices.",
+        AckSummaryHeading:             "What you asked for:",
+        AckLabelService:               "Service",
+        AckLabelCity:                  "Location",
+        AckLabelDate:                  "When",
+        AckLabelDetails:               "Details",
+        AckDateAsap:                   "as soon as possible",
+        AckWhatNext:                   "What happens next: we contact providers in your area and send you their offers together. If anything is unclear, we will ask you first.",
+        AckReply:                      "If anything changes — the date, the amount, the address — just reply to this email. It comes straight to us.",
+        AckContactTpl:                 "You can also write to us here: {url}",
+        AckSignature:                  "Best regards\nThe Ruumly team\ninfo@ruumly.eu",
         IntroSubjectTpl:               "Customer requests from Ruumly — {company}",
         IntroGreeting:                 "Hello,",
         IntroOpening:                  "We are writing from Ruumly because your company offers a service our customers are looking for.",
@@ -824,6 +884,20 @@ public static class EmailTranslations
         OutreachReplyAlternative:      "Или просто ответьте на это письмо, указав свою цену — оно придёт напрямую нашей команде.",
         OutreachSignature:             "Команда Ruumly\ninfo@ruumly.eu",
         OutreachQuestionsTpl:          "Вопросы? Ответьте на это письмо или напишите нам через форму на странице контактов: {url}",
+        AckSubject:                    "Ваш запрос у нас — Ruumly",
+        AckGreetingTpl:                "Здравствуйте, {name}!",
+        AckGreetingNoName:             "Здравствуйте!",
+        AckReceived:                   "Ваш запрос дошёл до нас. Мы его рассмотрим и запросим цены у исполнителей.",
+        AckSummaryHeading:             "Что вы запросили:",
+        AckLabelService:               "Услуга",
+        AckLabelCity:                  "Место",
+        AckLabelDate:                  "Когда",
+        AckLabelDetails:               "Уточнения",
+        AckDateAsap:                   "как можно скорее",
+        AckWhatNext:                   "Что дальше: мы свяжемся с исполнителями в вашем районе и пришлём вам их предложения вместе. Если что-то будет неясно, мы спросим у вас.",
+        AckReply:                      "Если что-то изменится — дата, объём, адрес — просто ответьте на это письмо. Оно придёт прямо к нам.",
+        AckContactTpl:                 "Также можно написать нам здесь: {url}",
+        AckSignature:                  "С наилучшими пожеланиями\nКоманда Ruumly\ninfo@ruumly.eu",
         IntroSubjectTpl:               "Заявки клиентов от Ruumly — {company}",
         IntroGreeting:                 "Здравствуйте!",
         IntroOpening:                  "Пишем вам из Ruumly, потому что ваша компания оказывает услугу, которую ищут наши клиенты.",
@@ -992,6 +1066,20 @@ public static class EmailTranslations
         OutreachReplyAlternative:      "Vai vienkārši atbildiet uz šo e-pastu ar savu cenu — tas nonāks tieši pie mūsu komandas.",
         OutreachSignature:             "Ruumly komanda\ninfo@ruumly.eu",
         OutreachQuestionsTpl:          "Jautājumi? Atbildiet uz šo e-pastu vai rakstiet mums, izmantojot kontaktu lapu: {url}",
+        AckSubject:                    "Jūsu pieprasījums ir saņemts — Ruumly",
+        AckGreetingTpl:                "Sveiki, {name}!",
+        AckGreetingNoName:             "Sveiki!",
+        AckReceived:                   "Jūsu pieprasījums ir nonācis pie mums. Mēs to izskatīsim un prasīsim cenas pakalpojumu sniedzējiem.",
+        AckSummaryHeading:             "Ko jūs pieprasījāt:",
+        AckLabelService:               "Pakalpojums",
+        AckLabelCity:                  "Vieta",
+        AckLabelDate:                  "Kad",
+        AckLabelDetails:               "Precizējumi",
+        AckDateAsap:                   "pēc iespējas drīzāk",
+        AckWhatNext:                   "Kas notiks tālāk: sazināsimies ar pakalpojumu sniedzējiem jūsu apkaimē un nosūtīsim jūsu piedāvājumus kopā. Ja kaut kas būs neskaidrs, vispirms pajautāsim jums.",
+        AckReply:                      "Ja kaut kas mainās — datums, apjoms, adrese — vienkārši atbildiet uz šo vēstuli. Tā nonāk tieši pie mums.",
+        AckContactTpl:                 "Varat rakstīt mums arī šeit: {url}",
+        AckSignature:                  "Ar cieņu\nRuumly komanda\ninfo@ruumly.eu",
         IntroSubjectTpl:               "Klientu pieprasījumi no Ruumly — {company}",
         IntroGreeting:                 "Sveiki!",
         IntroOpening:                  "Rakstām no Ruumly, jo jūsu uzņēmums sniedz pakalpojumu, ko meklē mūsu klienti.",
@@ -1160,6 +1248,20 @@ public static class EmailTranslations
         OutreachReplyAlternative:      "Arba tiesiog atsakykite į šį laišką nurodydami savo kainą — jis pasieks mūsų komandą tiesiogiai.",
         OutreachSignature:             "Ruumly komanda\ninfo@ruumly.eu",
         OutreachQuestionsTpl:          "Klausimai? Atsakykite į šį laišką arba parašykite mums per kontaktų puslapį: {url}",
+        AckSubject:                    "Jūsų užklausa gauta — Ruumly",
+        AckGreetingTpl:                "Sveiki, {name}!",
+        AckGreetingNoName:             "Sveiki!",
+        AckReceived:                   "Jūsų užklausa mus pasiekė. Jà peržiūrėsime ir paprašysime kainų iš paslaugų teikėjų.",
+        AckSummaryHeading:             "Ko užsakėte:",
+        AckLabelService:               "Paslauga",
+        AckLabelCity:                  "Vieta",
+        AckLabelDate:                  "Kada",
+        AckLabelDetails:               "Patikslinimai",
+        AckDateAsap:                   "kuo greičiau",
+        AckWhatNext:                   "Kas toliau: susisieksime su jūsų rajono paslaugų teikėjais ir atsiųsime jūsų pasiūlymus kartu. Jei kas nors bus neaišku, pirmiausia paklausime jūsų.",
+        AckReply:                      "Jei kas nors pasikeis — data, kiekis, adresas — tiesiog atsakykite į šį laišką. Jis ateis tiesiai pas mus.",
+        AckContactTpl:                 "Taip pat galite parašyti mums čia: {url}",
+        AckSignature:                  "Su geriausiais linkėjimais\nRuumly komanda\ninfo@ruumly.eu",
         IntroSubjectTpl:               "Klientų užklausos iš Ruumly — {company}",
         IntroGreeting:                 "Sveiki!",
         IntroOpening:                  "Rašome iš Ruumly, nes jūsų įmonė teikia paslaugą, kurios ieško mūsų klientai.",
