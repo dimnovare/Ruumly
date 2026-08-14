@@ -85,12 +85,28 @@ request searches 15 km for the storage and 25 km for the movers at the same wide
 
 ---
 
-## Phase 6 — Acquisition readiness (P1/P2, separate projects)
+## Phase 6 — Acquisition readiness — **DONE except one line**
 
-- Pre-rendered `<head>` per route (the ~0% CTR cause). Large; own project.
-- `/request` sitemap priority.
-- Customer ack as branded HTML.
-- Accessibility upgrades on the selection grids (`radiogroup` semantics, arrow keys).
+- ✅ Pre-rendered `<head>` per route — 240 heads, deployed and verified in prod.
+- ✅ Customer ack as branded HTML, with escaping that preserves õ/ä/ü/ų and Cyrillic.
+- ✅ `radiogroup` semantics + roving tabindex + arrow keys on the single-choice chips.
+- ✅ Touch targets: the funnel's entry points raised to 44px.
+- ⬜ `/request` sitemap priority (0.9 → above the service×city hubs).
+
+---
+
+## What is left, in priority order (2026-08-14)
+
+1. **`Email__FromAddress=info@ruumly.eu` on Railway.** Not code — `EmailFrom.cs` already
+   centralises it. Cold outreach still says `From: noreply@`, which is the first thing a
+   provider's spam test sees, on the one email whose entire purpose is a reply.
+2. **VAT/KMKR number for Diip Solutions OÜ.** Invoice templates print a VAT line and the
+   number on record belongs to the previous entity.
+3. **`bankTransfer.*` PlatformSettings** — IBAN `EE517700771013151864` must be set in
+   admin → Settings; it is data, not config, so no deploy carries it.
+4. Footer navigation touch targets (32px). Deliberately deferred: raising them roughly
+   doubles the mobile footer for the page's lowest-intent links.
+5. `/request` sitemap priority.
 
 ---
 
