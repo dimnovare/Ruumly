@@ -362,6 +362,34 @@ public class OfferLoopTests
     }
 
     [Fact]
+    public async Task UpdateOffer_RefusesASentOffer_SoTheCustomersPageCannotChangeUnderThem()
+    {
+        var db    = TestDbContext.Create();
+        var lead  = MakeLead(db);
+        var admin = MakeAdmin(db, new CapturingEmailQueue());
+
+        var created = await admin.CreateOffer(lead.Id, new CreateOfferRequest(
+            Options: [new OfferOptionInput("Original")]));
+        var offerId = (Guid)Prop(created.Should().BeOfType<OkObjectResult>().Subject.Value!, "id")!;
+
+        var offer = db.Offers.Single();
+        offer.Status = OfferStatus.Sent;
+        offer.SentAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        // Until now only Chosen was frozen, so a Sent offer stayed editable and
+        // the version check was the only thing between an admin Save and the
+        // page a customer is reading — with the emailed list left disagreeing
+        // with it. A late option belongs in a new draft, not in this one.
+        (await admin.UpdateOffer(offerId, new UpdateOfferRequest(CustomerNote: "second thoughts")))
+            .Should().BeOfType<ConflictObjectResult>();
+
+        db.OfferOptions.Where(o => o.OfferId == offerId).Should().ContainSingle()
+            .Which.Title.Should().Be("Original");
+        db.Offers.Single().CustomerNote.Should().NotBe("second thoughts");
+    }
+
+    [Fact]
     public async Task UpdateOffer_EchoedIds_KeepTheirRows_WhileDroppedOnesGo()
     {
         var db    = TestDbContext.Create();

@@ -197,6 +197,14 @@ public class AdminOffersController(
         if (offer is null) return NotFound(Error("Offer not found."));
         if (offer.Status == OfferStatus.Chosen)
             return Conflict(Error("The customer already chose an option — this offer can no longer be edited."));
+        // Once sent, the customer holds a link to this exact set of options and
+        // an email listing them. Editing it here would rewrite the page under
+        // someone who may be reading it, and leave the mail disagreeing with
+        // what they see. A provider who quotes after a send opens a new draft
+        // (QuoteController) — that, not an edit in place, is how a late option
+        // reaches the customer.
+        if (offer.Status == OfferStatus.Sent)
+            return Conflict(Error("This offer was already sent — start a new draft instead of editing it."));
 
         // Optimistic concurrency. Options are replace-set, so a payload built
         // before a provider quote seeded an option would silently delete it on
