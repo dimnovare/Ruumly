@@ -589,8 +589,47 @@ class AppendToHead {
   }
 }
 
+/**
+ * Point the canonical at this route, whether or not the origin already declared
+ * one.
+ *
+ * Since 2026-08-14 the Vite build prerenders a real `<head>` per indexed route
+ * (`estonia-space-hub/scripts/prerender-seo.mjs`), so the shell DOES now ship a
+ * canonical — and blindly appending a second one left two `<link
+ * rel="canonical">` tags in the document. They happen to agree today, but Google
+ * is entitled to ignore both when a page declares more than one, which would
+ * throw away the signal this worker exists to provide.
+ *
+ * So: rewrite the href of an existing canonical, and only append one when the
+ * origin shipped none. `onEndTag` is what makes that decision possible —
+ * HTMLRewriter streams, and the head's end tag is the first moment we know
+ * whether a canonical went past.
+ */
+class CanonicalLink {
+  private seen = false;
+  constructor(private readonly url: string) {}
+
+  /** Handler for an existing `link[rel="canonical"]` in the origin's head. */
+  existing = {
+    element: (el: Element) => {
+      this.seen = true;
+      el.setAttribute("href", this.url);
+    },
+  };
+
+  /** Handler for the `head` element itself. */
+  element(el: Element) {
+    el.onEndTag(async (end) => {
+      if (!this.seen) {
+        end.before(`<link rel="canonical" href="${escAttr(this.url)}">`, { html: true });
+      }
+    });
+  }
+}
+
 function rewriteHead(response: Response, og: OgData): Response {
   const title = withSiteName(og.title);
+  const canonical = new CanonicalLink(og.canonicalUrl);
   return new HTMLRewriter()
     .on("title", new SetText(title))
     .on('meta[name="description"]',        new SetAttr("content", og.description))
@@ -601,11 +640,11 @@ function rewriteHead(response: Response, og: OgData): Response {
     .on('meta[name="twitter:title"]',       new SetAttr("content", title))
     .on('meta[name="twitter:description"]', new SetAttr("content", og.description))
     .on('meta[name="twitter:image"]',       new SetAttr("content", og.image))
-    // The Vite shell has no canonical of its own — the SPA injects one at
-    // runtime, which is exactly what Google may never see.
-    .on("head", new AppendToHead(
-      `<link rel="canonical" href="${escAttr(og.canonicalUrl)}">`,
-    ))
+    // Canonical: rewrite the prerendered one when it exists, append when it
+    // does not. Two canonicals in one document is a signal Google may discard
+    // entirely — see CanonicalLink.
+    .on('link[rel="canonical"]', canonical.existing)
+    .on("head", canonical)
     .transform(response);
 }
 
