@@ -735,6 +735,43 @@ public class OfferLoopTests
     }
 
     [Fact]
+    public async Task PreviewOutreach_ReportsOptedOutProviders_AheadOfTheOperationalReasons()
+    {
+        // The opt-out is a promise we made in writing, not an operational state, so
+        // the batch refuses it before anything else and no `resend` overrides it. A
+        // preview that renders subject and body for an opted-out provider therefore
+        // promises a send that will never happen, and the admin only learns that
+        // after pressing send.
+        var db      = TestDbContext.Create();
+        var queue   = new CapturingEmailQueue();
+        var lead    = MakeLead(db);
+        var quiet   = MakeSupplier(db, "Quiet OÜ", "quiet@x.ee");
+        var left    = MakeSupplier(db, "Mailed Then Left OÜ", "left@x.ee");
+        var admin   = MakeAdmin(db, queue);
+
+        // Written to first, opted out afterwards: the promise outranks "we already
+        // wrote to them", so that is the reason the admin must read.
+        await admin.SendOutreach(lead.Id, new OutreachRequest([left.Id]));
+        quiet.MarketingOptOutAt = DateTime.UtcNow;
+        left.MarketingOptOutAt  = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        var result = await admin.PreviewOutreach(
+            lead.Id, new OutreachPreviewRequest([quiet.Id, left.Id]));
+        var recipients = result.Should().BeOfType<OkObjectResult>().Subject.Value
+            .Should().BeOfType<OutreachPreviewResponse>().Subject.Recipients;
+
+        recipients.Single(r => r.SupplierId == quiet.Id).SkipReason.Should().Be("opted_out");
+        recipients.Single(r => r.SupplierId == left.Id).SkipReason.Should().Be("opted_out",
+            "an opt-out outranks already_contacted — one is a promise, the other a schedule");
+
+        // And the batch agrees, resend ticked or not: nothing new leaves for either.
+        await admin.SendOutreach(
+            lead.Id, new OutreachRequest([quiet.Id, left.Id], Resend: true));
+        queue.Emails.Should().ContainSingle("the only letter is the one sent before the opt-out");
+    }
+
+    [Fact]
     public async Task SendOutreach_DuplicateSkipsUnlessResendIsExplicit()
     {
         var db       = TestDbContext.Create();
