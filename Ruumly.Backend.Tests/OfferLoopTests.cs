@@ -290,6 +290,44 @@ public class OfferLoopTests
             "failed sends must not touch the lead lifecycle"));
     }
 
+    [Theory]
+    // A stored unit arrives in whatever shape the surface that wrote it uses: the
+    // provider quote form and PriceUnitNormalizer both emit the "/kuu" shape, and
+    // an option prefilled from a listing can carry the currency as well. The
+    // email printed the value straight after its own separator, so the customer
+    // read "60 € / /kuu" while the offer page the same email links to said
+    // "60 € / kuu" — the page strips the separator the unit already carries, and
+    // now both do.
+    [InlineData("/kuu", "60 € / kuu")]
+    [InlineData("kuu", "60 € / kuu")]
+    [InlineData("€/kuu", "60 € / kuu")]
+    [InlineData("€ / kuu", "60 € / kuu")]
+    // A one-time fee: no separator of its own, and none is invented for it.
+    [InlineData("ühekordne", "60 € / ühekordne")]
+    [InlineData("", "60 €")]
+    [InlineData("   ", "60 €")]
+    [InlineData(null, "60 €")]
+    public void OfferEmail_PrintsThePriceWithExactlyOneSeparator(string? storedUnit, string expected)
+    {
+        var offer = new Offer
+        {
+            Id = Guid.NewGuid(), Token = OfferToken.Generate(), Language = "et",
+            Options =
+            {
+                new OfferOption
+                {
+                    Id = Guid.NewGuid(), Title = "Kiirkolimine OÜ",
+                    PriceAmount = 60m, PriceUnit = storedUnit,
+                },
+            },
+        };
+
+        var email = OfferDeliveryComposer.ComposeEmail(offer, "https://ruumly.eu/et/offer/x");
+
+        email.TextBody.Should().Contain($"1. Kiirkolimine OÜ — {expected}");
+        email.TextBody.Should().NotContain("/ /");
+    }
+
     // ─── PATCH (replace-set) ──────────────────────────────────────────────────
 
     [Fact]
@@ -729,6 +767,53 @@ public class OfferLoopTests
         // Lead facts yes — customer identity never.
         email.TextBody.Should().Contain("Tallinn").And.Contain("2026-08-15");
         email.TextBody.Should().NotContain("cust@x.ee").And.NotContain("Mari Maasikas").And.NotContain("+372 5555 1234");
+    }
+
+    [Fact]
+    public async Task SendOutreach_TwoBranchesOfOneCompany_ReceiveOneLetterBetweenThem()
+    {
+        // The directory is imported one row per branch, so a company with two
+        // depots is two supplier rows behind one head-office inbox. Each letter
+        // carries its own quote token, so mailing both rows lets one business
+        // answer one request with two competing prices.
+        var db     = TestDbContext.Create();
+        var queue  = new CapturingEmailQueue();
+        var lead   = MakeLead(db);
+        var depot  = MakeSupplier(db, "Kiirkolimine Kesklinn", "info@kiirkolimine.ee");
+        var branch = MakeSupplier(db, "Kiirkolimine Mustamäe", "INFO@Kiirkolimine.EE");
+        var admin  = MakeAdmin(db, queue);
+
+        var result = await admin.SendOutreach(lead.Id, new OutreachRequest([depot.Id, branch.Id]));
+        var body   = result.Should().BeOfType<OkObjectResult>().Subject.Value!;
+
+        var sent    = ((System.Collections.IEnumerable)Prop(body, "sent")!).Cast<object>().ToList();
+        var skipped = ((System.Collections.IEnumerable)Prop(body, "skipped")!).Cast<object>().ToList();
+
+        sent.Should().ContainSingle("one inbox, one letter, one quote token");
+        Prop(sent[0], "sentTo").Should().Be("info@kiirkolimine.ee");
+        Prop(skipped.Should().ContainSingle().Subject, "reason").Should().Be("duplicate_email",
+            "the address matches case-insensitively — mailboxes are not case-sensitive");
+        queue.Emails.Should().ContainSingle();
+        db.ProviderOutreaches.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task PreviewOutreach_NamesTheBranchThatWillBeSkippedAsADuplicate()
+    {
+        // The preview's whole job is to not promise a send the batch will refuse,
+        // so an admin ticking both branch rows must see which one is written to.
+        var db     = TestDbContext.Create();
+        var lead   = MakeLead(db);
+        var depot  = MakeSupplier(db, "Kiirkolimine Kesklinn", "info@kiirkolimine.ee");
+        var branch = MakeSupplier(db, "Kiirkolimine Mustamäe", "INFO@Kiirkolimine.EE");
+
+        var result = await MakeAdmin(db, new CapturingEmailQueue())
+            .PreviewOutreach(lead.Id, new OutreachPreviewRequest([depot.Id, branch.Id]));
+        var recipients = result.Should().BeOfType<OkObjectResult>().Subject.Value
+            .Should().BeOfType<OutreachPreviewResponse>().Subject.Recipients;
+
+        recipients.Single(r => r.SupplierId == depot.Id).SkipReason.Should().BeNull();
+        recipients.Single(r => r.SupplierId == branch.Id).SkipReason.Should().Be("duplicate_email");
     }
 
     [Fact]

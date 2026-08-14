@@ -229,7 +229,11 @@ public class QuoteFormTests
         options.Should().ContainSingle();
         options[0].SupplierId.Should().Be(supplier.Id);
         options[0].PriceAmount.Should().Be(250m);
-        options[0].PriceUnit.Should().Be("onetime");
+        // The customer's copy is written in the customer's language: "onetime" is
+        // the raw value the form and our own listings store, not words anybody
+        // reads. The provider's own wording survives untouched on QuotedUnit
+        // above, which is the half ops needs to see.
+        options[0].PriceUnit.Should().Be("one-time", "the lead is English");
         options[0].Title.Should().Contain("Big Movers OÜ").And.Contain("Tallinn");
 
         // Ops is alerted; the customer is NOT emailed, and no commerce records exist.

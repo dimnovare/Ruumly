@@ -640,6 +640,37 @@ public class ConciergeLeadTests
     }
 
     [Fact]
+    public async Task RequestConcierge_AutoFanout_SpendsEachSlotOnADifferentCompany()
+    {
+        // The directory is imported one row per branch (the import dedupes on
+        // slug), so a mover with two depots is two supplier rows behind one
+        // info@. Spending two of the six slots on that one inbox sends the same
+        // business two cold letters carrying two different quote tokens — it can
+        // answer one request with two prices — while a competitor is never asked.
+        //
+        // Candidate ranking falls through exact-city and distance to supplier
+        // name, so the two branches are the two the fan-out reaches for first.
+        var db    = TestDbContext.Create();
+        var queue = new CapturingEmailQueue();
+
+        SeedMovingProvider(db, "Kiirkolimine Kesklinn", "info@kiirkolimine.ee");
+        SeedMovingProvider(db, "Kiirkolimine Mustamäe", "INFO@Kiirkolimine.EE");
+        SeedMovingProvider(db, "Tallinna Kolija", "info@tallinnakolija.ee");
+        SetSetting(db, "conciergeAutoOutreachMax", "2");
+        await db.SaveChangesAsync();
+
+        await MakeSupport(db, queue).RequestConcierge(new ConciergeRequest(
+            Email: "cust@x.ee", City: "Tallinn", Categories: ["moving"]));
+
+        ProviderEmails(queue).Select(e => e.To).Should().BeEquivalentTo(
+            ["info@kiirkolimine.ee", "info@tallinnakolija.ee"],
+            "the branch's slot passes to the next distinct company instead of "
+          + "shrinking the fan-out or landing in the same inbox twice");
+        db.ProviderOutreaches.Should().HaveCount(2);
+        db.ProviderOutreaches.Select(o => o.QuoteToken).Should().OnlyHaveUniqueItems();
+    }
+
+    [Fact]
     public async Task RequestConcierge_AutoFanout_DisabledBySetting_EmailsNobody()
     {
         var db    = TestDbContext.Create();
