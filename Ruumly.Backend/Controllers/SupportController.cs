@@ -526,7 +526,11 @@ public class SupportController(
                 to:       lead.Email.Trim(),
                 subject:  ack.Subject,
                 textBody: ack.TextBody,
-                htmlBody: null,
+                // Branded HTML with the text above as fallback. It was text-only
+                // while the COLD email we send to strangers was branded HTML, so
+                // the customer's sole proof of receipt looked less legitimate
+                // than unsolicited mail.
+                htmlBody: ack.HtmlBody,
                 // Reply-To ops, not noreply@: the mail explicitly invites the
                 // customer to answer with a changed date or an extra detail, and
                 // those replies have to land somewhere a human reads.
