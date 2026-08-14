@@ -66,11 +66,15 @@ public class MessageService(
         // Notify the other party
         if (senderEnum == MessageSender.Customer)
         {
-            // Prefer SupplierId-based lookup; fall back to contact email
+            // Prefer SupplierId-based lookup; fall back to contact email. The two
+            // columns are filled by different hands — the login is stored canonical,
+            // the supplier row keeps its imported casing — so the fallback compares
+            // case-insensitively or it silently notifies nobody.
+            var supplierEmail = EmailValidation.Normalize(booking.Supplier.ContactEmail);
             var providerUser = await db.Users
                 .FirstOrDefaultAsync(u => u.SupplierId == booking.SupplierId && u.Role == UserRole.Provider)
                 ?? await db.Users
-                    .FirstOrDefaultAsync(u => u.Email == booking.Supplier.ContactEmail);
+                    .FirstOrDefaultAsync(u => u.Email.ToLower() == supplierEmail);
 
             if (providerUser is not null)
             {
@@ -185,12 +189,20 @@ public class MessageService(
             return;
         }
 
-        // Provider: verify via SupplierId FK, falling back to email match for legacy users
+        // Provider: verify via SupplierId FK, falling back to email match for legacy
+        // users. Case-insensitive: one mailbox is one identity however it was typed,
+        // and a provider whose supplier row was imported "Info@Yard.ee" must not lose
+        // their own bookings the moment their login is stored canonically.
+        //
+        // The blank-address check is load-bearing: imported directory rows store
+        // ContactEmail as "" when the source had none, so an empty address on this
+        // side would match them all and hand out someone else's booking.
         var user = await db.Users.FindAsync(userId);
+        var userEmail = EmailValidation.Normalize(user?.Email);
         var supplier = user?.SupplierId.HasValue == true
             ? await db.Suppliers.FindAsync(user.SupplierId.Value)
-            : user is not null
-                ? await db.Suppliers.FirstOrDefaultAsync(s => s.ContactEmail == user.Email)
+            : userEmail.Length > 0
+                ? await db.Suppliers.FirstOrDefaultAsync(s => s.ContactEmail.ToLower() == userEmail)
                 : null;
 
         if (supplier is null || booking.SupplierId != supplier.Id)

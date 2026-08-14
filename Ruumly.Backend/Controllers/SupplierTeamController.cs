@@ -95,8 +95,13 @@ public class SupplierTeamController(
         if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length > 200)
             return BadRequest(new { message = "A name (max 200 characters) is required." });
 
-        // Find or create the invited user
-        var existing = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+        // Find or create the invited user, keyed on the canonical form of the address.
+        // An invite typed with different capitalisation than the member's existing
+        // account used to miss them here and mint a SECOND row for the same mailbox —
+        // which then made the login they were sent a reset link for ambiguous.
+        var email = EmailValidation.Normalize(request.Email);
+
+        var existing = await db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email);
         if (existing is not null)
         {
             if (existing.SupplierId == supplierId)
@@ -114,7 +119,7 @@ public class SupplierTeamController(
             {
                 Id           = Guid.NewGuid(),
                 Name         = request.Name,
-                Email        = request.Email,
+                Email        = email,
                 PasswordHash = BC.HashPassword(Guid.NewGuid().ToString(), workFactor: 4),
                 Role         = UserRole.Provider,
                 SupplierId   = supplierId,
@@ -126,7 +131,7 @@ public class SupplierTeamController(
         await db.SaveChangesAsync();
 
         // Send password-reset email so the invited user can set their password
-        await authService.RequestPasswordResetAsync(request.Email);
+        await authService.RequestPasswordResetAsync(email);
 
         return Ok(new { message = "Invitation sent." });
     }

@@ -389,14 +389,23 @@ public class AuthController(
 
         var lang = request.Language ?? "et";
 
+        // Both guards below and the User row itself key off the SAME canonical form.
+        // Matching the address as typed let "Info@Yard.ee" walk straight past a dedupe
+        // holding "info@yard.ee" — one mailbox, two suppliers, two logins.
+        var contactEmail = EmailValidation.Normalize(request.ContactEmail);
+
         // Idempotency guard: deduplicate by ContactEmail BEFORE creating any rows.
         // If a Supplier already exists for this contact email (or one was just created),
         // return the same success response WITHOUT inserting new User/Supplier rows or
         // re-queuing the verification email. Stops row-spam and email-bombing of a
         // third-party address by anyone replaying the form. Legit first submissions are
         // unaffected because no matching supplier exists yet.
+        //
+        // Compared case-insensitively rather than against a normalized column: the
+        // directory rows were imported with whatever casing the source used, so only
+        // the comparison can protect them.
         var existingApplication = await db.Suppliers
-            .Where(s => s.ContactEmail == request.ContactEmail)
+            .Where(s => s.ContactEmail.ToLower() == contactEmail)
             .Select(s => new { s.Id })
             .FirstOrDefaultAsync();
         if (existingApplication is not null)
@@ -408,7 +417,7 @@ public class AuthController(
             // Check if user with ContactEmail already exists
             var existingUser = await db.Users
                 .Include(u => u.Supplier)
-                .FirstOrDefaultAsync(u => u.Email == request.ContactEmail);
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == contactEmail);
 
             Guid supplierId;
             Guid userId;
@@ -440,7 +449,7 @@ public class AuthController(
                 {
                     Id            = Guid.NewGuid(),
                     Name          = request.ContactName,
-                    Email         = request.ContactEmail,
+                    Email         = contactEmail,
                     PasswordHash  = BC.HashPassword(Guid.NewGuid().ToString(), workFactor: 4),
                     Role          = UserRole.Customer,
                     Status        = UserStatus.Active,

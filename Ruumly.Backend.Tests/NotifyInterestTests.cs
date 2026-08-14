@@ -214,6 +214,90 @@ public class NotifyInterestTests
     }
 
     [Fact]
+    public async Task ApplyProviderPublic_StoresTheLoginAddressLowercased()
+    {
+        var db         = CreateDb();
+        var controller = MakeController(db);
+
+        var result = await controller.ApplyProviderPublic(new SupplierApplicationRequest
+        {
+            CompanyName  = "Yard OÜ",
+            RegistryCode = "11223344",
+            ContactName  = "Yard Owner",
+            ContactEmail = "  Info@Yard.ee ",
+            ContactPhone = "+3725551111",
+            Language     = "en",
+        });
+
+        result.Should().BeOfType<OkObjectResult>();
+        db.Users.Single().Email.Should().Be("info@yard.ee",
+            "Users.Email is the login identity and its unique index is on the raw column — "
+            + "storing it as typed lets one mailbox own two accounts");
+    }
+
+    [Fact]
+    public async Task ApplyProviderPublic_ReplayedWithDifferentCapitalisation_IsTheSameApplication()
+    {
+        // The dedupe used to compare the address as typed, so re-submitting the
+        // form with the shift key held minted a second Supplier and a second
+        // User for one mailbox — a duplicate junk row in the admin match queue.
+        var db         = CreateDb();
+        var controller = MakeController(db);
+
+        static SupplierApplicationRequest Application(string email) => new()
+        {
+            CompanyName  = "Yard OÜ",
+            RegistryCode = "11223344",
+            ContactName  = "Yard Owner",
+            ContactEmail = email,
+            ContactPhone = "+3725551111",
+            Language     = "en",
+        };
+
+        await controller.ApplyProviderPublic(Application("info@yard.ee"));
+        var replay = await controller.ApplyProviderPublic(Application("Info@Yard.EE"));
+
+        replay.Should().BeOfType<OkObjectResult>();
+        db.Suppliers.Should().ContainSingle();
+        db.Users.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task ApplyProviderPublic_ExistingAccountInDifferentCapitalisation_IsFoundNotDuplicated()
+    {
+        // A customer who registered before applying already has a User row. Missing
+        // it on casing created a SECOND row for the same address, which then made
+        // login ambiguous (the lookup lowercases both sides but has no ORDER BY)
+        // and left a stray account in the way of the claim → account flow.
+        var db = CreateDb();
+        db.Users.Add(new User
+        {
+            Id           = Guid.NewGuid(),
+            Name         = "Yard Owner",
+            Email        = "Info@Yard.ee",
+            PasswordHash = "x",
+            Role         = UserRole.Customer,
+            Status       = UserStatus.Active,
+            Language     = "et",
+            RegisteredAt = DateTime.UtcNow,
+        });
+        await db.SaveChangesAsync();
+
+        var result = await MakeController(db).ApplyProviderPublic(new SupplierApplicationRequest
+        {
+            CompanyName  = "Yard OÜ",
+            RegistryCode = "11223344",
+            ContactName  = "Yard Owner",
+            ContactEmail = "info@yard.ee",
+            ContactPhone = "+3725551111",
+            Language     = "en",
+        });
+
+        result.Should().BeOfType<OkObjectResult>();
+        db.Users.Should().ContainSingle("one mailbox is one account, however it was capitalised");
+    }
+
+    [Fact]
     public async Task NotifyInterest_DuplicateWithin7Days_IsSilentlyIgnored()
     {
         var db = CreateDb();
