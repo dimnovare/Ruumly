@@ -424,6 +424,68 @@ public class ProviderOutreachEmailTests
         message.HtmlBody.Should().Contain("href=\"https://ruumly.eu/et/contact\"");
     }
 
+    // ─── Lead reference (routing a provider's REPLY back to a request) ────────
+
+    /// <summary>
+    /// Replying is the primary action this email asks for, and Reply-To is one
+    /// shared ops inbox. Without a reference the subject is only
+    /// "{service}, {city → city}", so two live Tallinn → Tartu moving requests
+    /// produce byte-identical subjects and an answer arrives with nothing on it
+    /// saying which customer it is about.
+    /// </summary>
+    [Fact]
+    public void Subject_CarriesTheLeadReference()
+    {
+        var lead    = Lead();
+        var message = ProviderOutreachComposer.Compose(lead, Provider());
+
+        message.Subject.Should().Contain(ProviderOutreachComposer.Reference(lead.Id));
+    }
+
+    [Fact]
+    public void LeadReference_IsStableAndDistinguishesTwoIdenticalRequests()
+    {
+        var first  = Lead();
+        var second = Lead();
+
+        var a = ProviderOutreachComposer.Compose(first,  Provider()).Subject;
+        var b = ProviderOutreachComposer.Compose(second, Provider()).Subject;
+
+        a.Should().NotBe(b, "identical asks from two customers must be tellable apart");
+        ProviderOutreachComposer.Reference(first.Id)
+            .Should().Be(ProviderOutreachComposer.Reference(first.Id), "the reference is derived, not random");
+    }
+
+    [Theory]
+    [InlineData("et")] [InlineData("en")] [InlineData("ru")]
+    [InlineData("lv")] [InlineData("lt")]
+    public void LeadReference_SurvivesEveryLanguageAndTheUrgentBadge(string language)
+    {
+        var lead = Lead(needDate: DateTime.UtcNow.Date.AddDays(1));
+        var message = ProviderOutreachComposer.ComposeInLanguage(
+            language, lead, "https://ruumly.eu", OfferToken.Generate());
+
+        message.Subject.Should().Contain(ProviderOutreachComposer.Reference(lead.Id));
+        message.Subject.Should().StartWith(EmailTranslations.For(language).OutreachUrgentBadge,
+            "urgency still has to be the first thing a skimming provider sees");
+    }
+
+    /// <summary>
+    /// The reference is a LOOKUP KEY, not a credential. It grants nothing on its
+    /// own — unlike the per-recipient quote token, which is the actual bearer
+    /// secret and must never appear beside it in a place the reference does.
+    /// </summary>
+    [Fact]
+    public void LeadReference_IsNotDerivedFromTheQuoteToken()
+    {
+        var lead  = Lead();
+        var token = OfferToken.Generate();
+        var message = ProviderOutreachComposer.Compose(lead, Provider(), "https://ruumly.eu", token);
+
+        message.Subject.Should().NotContain(token);
+        ProviderOutreachComposer.Reference(lead.Id).Should().HaveLength(8);
+    }
+
     internal static void AssertNoPhoneAffordance(string body)
     {
         body.Should().NotContain("tel:");

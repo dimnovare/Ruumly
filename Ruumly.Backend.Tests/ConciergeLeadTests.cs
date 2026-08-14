@@ -79,13 +79,18 @@ public class ConciergeLeadTests
         var db    = TestDbContext.Create();
         var queue = new CapturingEmailQueue();
 
+        // Relative, not a literal date: the intake now rejects need dates in the
+        // past, so a hard-coded one turns this test into a time bomb that passes
+        // until the day it silently stops testing anything but the rejection.
+        var wanted = DateTime.UtcNow.Date.AddDays(30);
+
         var result = await MakeSupport(db, queue).RequestConcierge(new ConciergeRequest(
             Email: "cust@x.ee", City: "Tallinn", Name: "Cust", Phone: "+372 5",
             Categories: ["Moving", "warehouse"], ToCity: "Tartu",
             // Deliberately Kind=Unspecified — exactly what System.Text.Json produces for a
-            // bare "2026-08-15" body value; the controller must normalize to UTC, otherwise
+            // bare "yyyy-MM-dd" body value; the controller must normalize to UTC, otherwise
             // Npgsql rejects the write to the timestamptz column in production.
-            NeedDate: new DateTime(2026, 8, 15, 0, 0, 0, DateTimeKind.Unspecified),
+            NeedDate: DateTime.SpecifyKind(wanted, DateTimeKind.Unspecified),
             Details: "2-room flat plus some pallets", Language: "en"));
 
         result.Should().BeOfType<OkObjectResult>();
@@ -106,7 +111,7 @@ public class ConciergeLeadTests
         lead.Query.Should().Contain("moving");
         lead.Query.Should().Contain("warehouse");
         lead.Query.Should().Contain("Tallinn");
-        lead.Query.Should().Contain("2026-08-15");
+        lead.Query.Should().Contain(wanted.ToString("yyyy-MM-dd"));
 
         queue.Emails.Should().ContainSingle(e => e.To == "info@ruumly.eu",
             "an unrouted concierge lead alerts the unified ops inbox (opsInbox, default info@)");

@@ -98,6 +98,9 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
                 d.NeedDate,
                 d.Details,
                 d.Source,
+                // Which campaign/post/search produced this request. Source says
+                // which form; this says what it cost to get someone to it.
+                d.Attribution,
                 d.ContactedAt,
                 // Routing + quote (null for generic demand-capture leads)
                 d.SupplierId,
