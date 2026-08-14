@@ -38,4 +38,26 @@ public class DemandLead
     [MaxLength(2000)] public string? Details { get; set; }
     [MaxLength(40)]   public string? Source { get; set; }
     public DateTime? ContactedAt { get; set; }
+
+    /// <summary>
+    /// Marketing attribution as the browser saw it on the visitor's FIRST touch:
+    /// utm_source/medium/campaign/term/content, gclid/fbclid, the external
+    /// referrer, and the landing path — flattened into one opaque string.
+    ///
+    /// <see cref="Source"/> already records which FORM produced the lead
+    /// ("concierge" vs "routed"); it cannot say which ad, post or search brought
+    /// the person to that form. Without this, "cost per qualified request" — a
+    /// north-star metric — is not computable, so paid tests cannot be judged and
+    /// the demand channels that actually work cannot be told from the ones that
+    /// merely look busy.
+    ///
+    /// Deliberately ONE free-text column rather than five typed ones: nothing
+    /// branches on it, it is read by a human (and by exports) and never matched
+    /// on, and one nullable column is a far smaller commitment than a schema that
+    /// pretends to know which attribution fields matter before any campaign has
+    /// run. Never contains personal data — see the frontend collector, which
+    /// keeps an allow-list of known marketing parameters rather than copying the
+    /// query string.
+    /// </summary>
+    [MaxLength(300)]  public string? Attribution { get; set; }
 }

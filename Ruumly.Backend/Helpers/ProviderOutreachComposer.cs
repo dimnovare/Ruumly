@@ -65,7 +65,7 @@ public static class ProviderOutreachComposer
         var route = string.IsNullOrWhiteSpace(lead.ToCity)
             ? lead.City
             : $"{lead.City} → {lead.ToCity}";
-        var category = ServiceLine(t, lead);
+        var category = LeadServiceLabel.For(t, lead);
 
         // "—" tells a provider nothing and reads as a broken template. An absent
         // date/details becomes a real instruction instead ("as soon as possible —
@@ -80,7 +80,21 @@ public static class ProviderOutreachComposer
                       && needDate.Date <= DateTime.UtcNow.Date.AddDays(UrgentWithinDays);
         var urgentLine = isUrgent ? t.OutreachUrgent(date!) : null;
 
-        var subject = t.OutreachSubject(category, route);
+        // The lead reference is what makes a provider's REPLY usable.
+        //
+        // Reply-To is one shared ops inbox and the subject is otherwise just
+        // "{service}, {city → city}", so two live Tallinn → Tartu moving requests
+        // produce byte-identical subjects. Replying is the primary action this
+        // email asks for, and until now an answer arrived with nothing on it that
+        // said which customer it was about — ops had to guess, or ask, on the one
+        // interaction where speed is the entire product.
+        //
+        // Deliberately the smallest thing that works: eight hex characters of the
+        // lead's own id, appended AFTER the localized subject (so no translation
+        // carries a placeholder), language-neutral, and preserved by every mail
+        // client's "Re:" prefixing. It is a lookup key, not a credential — it
+        // grants nothing on its own, unlike the per-recipient quote token.
+        var subject = $"{t.OutreachSubject(category, route)} [{Reference(lead.Id)}]";
         if (isUrgent) subject = $"{t.OutreachUrgentBadge}: {subject}";
 
         var quoteUrl = string.IsNullOrWhiteSpace(quoteToken)
@@ -116,28 +130,12 @@ public static class ProviderOutreachComposer
     }
 
     /// <summary>
-    /// What this provider is being asked to price, in their own language.
-    ///
-    /// A concierge request naming several services does not fit the lead's single
-    /// Category column and lands on Any, whose label is a deliberately generic
-    /// "Service" — which in a cold email says nothing at all and reads like a
-    /// broken template. The visitor's actual pick survives in the Query machine
-    /// summary, so name the services instead, the same way the packing add-on
-    /// above is recovered and rendered LOCALIZED rather than travelling as English
-    /// prose inside Details. Falls back to the generic label when nothing is
-    /// recoverable, which is the pre-existing behaviour for such leads.
+    /// The short, human-quotable handle for a lead that goes in the subject line.
+    /// Uppercase hex so it survives being read down a phone and typed into the
+    /// admin search box.
     /// </summary>
-    private static string ServiceLine(EmailTranslations.EmailStrings t, DemandLead lead)
-    {
-        if (lead.Category != DemandLeadCategory.Any)
-            return t.CategoryLabel(lead.Category);
-
-        var selected = ServiceCategories.SelectedSlugs(lead.Query);
-        return selected.Count == 0
-            ? t.CategoryLabel(lead.Category)
-            : string.Join(" + ", selected.Select(
-                slug => t.CategoryLabel(ServiceCategories.BySlug[slug])));
-    }
+    public static string Reference(Guid leadId) =>
+        leadId.ToString("N")[..8].ToUpperInvariant();
 
     private static string BuildText(
         EmailTranslations.EmailStrings t,

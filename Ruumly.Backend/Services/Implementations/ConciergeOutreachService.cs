@@ -35,9 +35,41 @@ public sealed class ConciergeOutreachService(
     /// <summary>Audit actor for machine-initiated fan-out (a human admin's id is used otherwise).</summary>
     public const string AutoActor = "auto-outreach";
 
-    // Start tight, widen only if we cannot fill the fan-out quota. Tallinn/
-    // Harjumaa first: 25 km is the same default the admin workspace uses.
-    private static readonly double[] AutoRadiiKm = [25d, 50d, 100d];
+    // ─── How far to look, per service ─────────────────────────────────────────
+    //
+    // One 25 → 50 → 100 km ladder used to serve every category, which cannot be
+    // right for all of them, because the two halves of the catalogue have
+    // OPPOSITE geography:
+    //
+    //   • Storage is a fixed place the CUSTOMER drives to. Nobody drives 100 km
+    //     to visit their own boxes, so a wide search there is not a wider net —
+    //     it is a wrong answer that also burns a cold contact with a provider who
+    //     was never a real candidate.
+    //   • Movers, van and trailer rental TRAVEL TO the customer, and intercity
+    //     work is normal, so the wide ladder is right for them.
+    //   • Cleaning crews work a metro area rather than a country: wider than
+    //     storage, tighter than a mover.
+    //
+    // Founder decision, 2026-08-14. Every ladder still starts tight and widens
+    // only when the quota is unfilled — the change is what "tight" and "wide"
+    // mean for each service, not the widening behaviour.
+    //
+    // Three steps in every ladder so the widening loop stays a simple index; see
+    // RadiusFor.
+    private const int AutoRadiusSteps = 3;
+
+    private static readonly double[] StorageRadiiKm  = [15d, 25d,  40d];
+    private static readonly double[] TravelRadiiKm   = [25d, 50d, 100d];
+    private static readonly double[] CleaningRadiiKm = [20d, 35d,  50d];
+
+    /// <summary>How far to search for this service at widening step <paramref name="step"/>.</summary>
+    private static double RadiusFor(DemandLeadCategory category, int step) =>
+        (category switch
+        {
+            DemandLeadCategory.Warehouse => StorageRadiiKm,
+            DemandLeadCategory.Cleaning  => CleaningRadiiKm,
+            _                            => TravelRadiiKm,
+        })[step];
 
     private const bool DefaultAutoOutreach    = true;
     private const int  DefaultAutoOutreachMax = 6;
@@ -233,29 +265,38 @@ public sealed class ConciergeOutreachService(
             "conciergeAutoOutreachMax", DefaultAutoOutreachMax,
             MinAutoOutreachMax, MaxAutoOutreachMax, ct);
 
+        // One search per (service × place). A move has TWO places — see
+        // ResolveSearchAnchors.
+        var anchors = ResolveSearchAnchors(lead, searchCategories);
+
         var picked         = new List<Guid>();
         var noEmail        = 0;
-        var pickedRadiusKm = AutoRadiiKm[0];
-        var searchedKm     = AutoRadiiKm[0];
+        var pickedRadiusKm = MaxRadiusAt(anchors, 0);
+        var searchedKm     = pickedRadiusKm;
 
         // Widen only as far as needed to fill the quota: a Tallinn provider is a
         // better answer than a Tartu one, and the finder already ranks
         // exact-city first, then by distance.
-        foreach (var candidateRadius in AutoRadiiKm)
+        //
+        // The loop walks a widening STEP rather than a shared kilometre value,
+        // because each service now has its own ladder: step 0 of a storage +
+        // moving request searches 15 km for the storage and 25 km for the
+        // movers, simultaneously and correctly.
+        for (var step = 0; step < AutoRadiusSteps; step++)
         {
-            searchedKm = candidateRadius;
+            searchedKm = MaxRadiusAt(anchors, step);
             var ranked = new List<IReadOnlyList<ProviderCandidateDto>>();
-            foreach (var category in searchCategories)
+            foreach (var anchor in anchors)
             {
                 var matches = await ProviderCandidateFinder.SearchAsync(
                     // Searched one service at a time, never as the Any wildcard:
                     // the finder treats Any as "every supplier matches", which is
                     // the blast itself. Each provider we pick therefore actually
                     // does one of the services the customer asked for.
-                    db, AsCategory(lead, category),
+                    db, AsSearch(lead, anchor),
                     new ProviderCandidateSearch(
                         Query: null, AllEstonia: false, AllCategories: false,
-                        RadiusKm: candidateRadius, Limit: 50),
+                        RadiusKm: RadiusFor(anchor.Category, step), Limit: 50),
                     ct);
                 ranked.Add(matches.Items);
             }
@@ -297,7 +338,7 @@ public sealed class ConciergeOutreachService(
             {
                 picked         = candidates;
                 noEmail        = missingEmail;
-                pickedRadiusKm = candidateRadius;
+                pickedRadiusKm = searchedKm;
             }
 
             if (picked.Count >= max) break;
@@ -353,26 +394,86 @@ public sealed class ConciergeOutreachService(
                 .Select(slug => ServiceCategories.BySlug[slug])
                 .ToList();
 
-    /// <summary>
-    /// The lead as the finder should see it for ONE service. A detached copy, not
-    /// a mutation: `lead` is tracked by the same DbContext the outreach then saves
-    /// through, so steering a search by assigning its Category would persist the
-    /// wrong category on the customer's request. Carries only what the finder
-    /// reads — the id (its already-contacted map), the city, and the category.
-    /// </summary>
-    private static DemandLead AsCategory(DemandLead lead, DemandLeadCategory category) =>
-        new() { Id = lead.Id, City = lead.City, Category = category };
+    /// <summary>One search: a service, looked for around one city.</summary>
+    private sealed record SearchAnchor(DemandLeadCategory Category, string City);
 
     /// <summary>
-    /// Flattens the per-service candidate lists into one, taking the best
-    /// remaining provider from each service in turn.
+    /// Every (service × place) the fan-out should search.
+    ///
+    /// A move has TWO relevant places and only the origin was ever searched, so a
+    /// Tallinn → Tartu request never reached a single Tartu mover — often the
+    /// cheaper half of that market, and the half most motivated to take a job
+    /// that ends at their own door. The destination lived on the lead the whole
+    /// time (<see cref="DemandLead.ToCity"/>); the search simply dropped it.
+    ///
+    /// Only MOVING gains the second anchor. Storage, cleaning, van and trailer
+    /// rental are all consumed at the origin — a customer moving to Tartu still
+    /// picks up the van in Tallinn — so searching the destination for those would
+    /// cold-email businesses that cannot serve the request at all.
+    ///
+    /// Deduped case-insensitively: "Tallinn → tallinn" is one place, and
+    /// searching it twice would let one city's providers take both halves of a
+    /// quota meant to be shared.
+    /// </summary>
+    private static List<SearchAnchor> ResolveSearchAnchors(
+        DemandLead lead, IReadOnlyList<DemandLeadCategory> categories)
+    {
+        var anchors = new List<SearchAnchor>();
+        var seen    = new HashSet<(DemandLeadCategory, string)>();
+
+        void Add(DemandLeadCategory category, string? city)
+        {
+            if (string.IsNullOrWhiteSpace(city)) return;
+            var trimmed = city.Trim();
+            if (seen.Add((category, trimmed.ToLowerInvariant())))
+                anchors.Add(new SearchAnchor(category, trimmed));
+        }
+
+        foreach (var category in categories)
+        {
+            Add(category, lead.City);
+            if (category == DemandLeadCategory.Moving)
+                Add(category, lead.ToCity);
+        }
+
+        return anchors;
+    }
+
+    /// <summary>
+    /// The widest radius any anchor searches at this widening step — what the ops
+    /// alert reports, so "no reachable provider within N km" names the furthest we
+    /// actually looked rather than the tightest ladder in the mix.
+    /// </summary>
+    private static double MaxRadiusAt(IReadOnlyList<SearchAnchor> anchors, int step) =>
+        anchors.Count == 0 ? 0 : anchors.Max(a => RadiusFor(a.Category, step));
+
+    /// <summary>
+    /// The lead as the finder should see it for ONE anchor. A detached copy, not
+    /// a mutation: `lead` is tracked by the same DbContext the outreach then saves
+    /// through, so steering a search by assigning its Category or City would
+    /// persist the wrong request on the customer's own row — and for the
+    /// destination anchor that would silently rewrite where they said they live.
+    /// Carries only what the finder reads: the id (its already-contacted map),
+    /// the city being searched, and the category.
+    /// </summary>
+    private static DemandLead AsSearch(DemandLead lead, SearchAnchor anchor) =>
+        new() { Id = lead.Id, City = anchor.City, Category = anchor.Category };
+
+    /// <summary>
+    /// Flattens the per-anchor candidate lists into one, taking the best
+    /// remaining provider from each anchor in turn.
     ///
     /// Round-robin rather than concatenation because the quota is shared: a
     /// "moving + warehouse" request whose six slots all went to the movers the
     /// first search returned would leave the storage half of that customer's move
-    /// unquoted, which is the same silent failure as not fanning out at all. A
-    /// provider offering two of the requested services is emailed once — the
-    /// dedupe here is what keeps that from costing them two cold contacts.
+    /// unquoted, which is the same silent failure as not fanning out at all. The
+    /// same reasoning now covers the two ENDS of a move: without round-robin the
+    /// origin city would take every slot and the destination movers we just
+    /// started searching for would never actually be mailed.
+    ///
+    /// A provider offering two of the requested services — or sitting in both
+    /// cities' catchments — is emailed once; the dedupe here is what keeps that
+    /// from costing them two cold contacts.
     /// </summary>
     private static IEnumerable<ProviderCandidateDto> MergeByService(
         IReadOnlyList<IReadOnlyList<ProviderCandidateDto>> perService)

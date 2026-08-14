@@ -24,6 +24,47 @@ public class SupportController(
     ILogger<SupportController> logger) : ControllerBase
 {
     /// <summary>
+    /// A need date further out than this is a typo, not a plan (usually a
+    /// mistyped year). Rejected rather than clamped so the visitor sees it.
+    /// </summary>
+    private const int MaxNeedDateYearsAhead = 2;
+
+    /// <summary>
+    /// How long an identical concierge request is treated as a repeat of the
+    /// first one rather than a new request. See <see cref="RequestConcierge"/>.
+    /// </summary>
+    private static readonly TimeSpan DuplicateRequestWindow = TimeSpan.FromMinutes(10);
+
+    // ─── Automation signals ──────────────────────────────────────────────────
+    //
+    // WHAT IS ACTUALLY AT RISK. Since auto fan-out shipped, one POST to this
+    // anonymous endpoint sends up to six emails to real third-party businesses.
+    // That turns ordinary form spam into outbound-email amplification aimed at
+    // the supply base — the thing a 754-address campaign was spent building — and
+    // at Ruumly's own sending reputation. Rate limiting alone (5 per 10 min per
+    // IP) does not bound that.
+    //
+    // WHAT THIS DOES, AND WHAT IT DELIBERATELY DOES NOT. A suspected bot's lead
+    // is still SAVED, in full, with status New. Only the automatic fan-out is
+    // withheld, and the ops alert says exactly why, so an operator reviews it and
+    // contacts providers by hand if it is real. Silently dropping a submission
+    // would mean a real customer gets a success screen and Ruumly gets nothing —
+    // strictly worse than the spam we are guarding against.
+    //
+    // No CAPTCHA: it taxes every real customer on a funnel whose entire value
+    // proposition is that it is short. These signals cost a human nothing.
+
+    /// <summary>Minimum plausible time to complete the three-step funnel.</summary>
+    private const int MinFormSeconds = 4;
+
+    /// <summary>
+    /// How many concierge requests one email address may auto-fan-out in a day.
+    /// The signal that needs no client cooperation, and therefore the only one a
+    /// determined attacker cannot simply omit from a hand-rolled POST.
+    /// </summary>
+    private const int MaxAutoFanOutPerEmailPerDay = 5;
+
+    /// <summary>
     /// Public contact form. Emails the team the visitor's message.
     /// Delivery is queued so transient provider failures are retried without
     /// delaying or failing the visitor's request.
@@ -35,6 +76,12 @@ public class SupportController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Contact([FromBody] ContactRequest req)
     {
+        // Validated for the same reason the lead intakes validate it: the address
+        // is printed into the ops mail as the ONLY way back to this person. A
+        // typo'd one turns a real question into an unanswerable note.
+        if (!EmailValidation.IsValid(req.Email))
+            return BadRequest(new { error = "Invalid email." });
+
         // Resolve the team inbox from PlatformSettings; fall back to the
         // public contact address used elsewhere in the app.
         var teamEmail = await db.PlatformSettings
@@ -160,6 +207,22 @@ public class SupportController(
         if (string.IsNullOrWhiteSpace(req.City))
             return BadRequest(new { error = "City is required." });
 
+        // A date in the past is never a real request, and it is not harmless:
+        // ProviderOutreachComposer flags anything within three days (past
+        // included) as URGENT, in the subject line and in a coloured banner. So a
+        // visitor who mistypes the year sends a red-flagged cold email to real
+        // businesses about a job that already happened — spending the one cold
+        // contact we get with each of them on a request nobody can take. The far
+        // bound catches the other direction of the same typo.
+        if (req.NeedDate is { } requested)
+        {
+            var day = requested.Date;
+            if (day < DateTime.UtcNow.Date)
+                return BadRequest(new { error = "Need date cannot be in the past." });
+            if (day > DateTime.UtcNow.Date.AddYears(MaxNeedDateYearsAhead))
+                return BadRequest(new { error = "Need date is too far in the future." });
+        }
+
         static string? Clamp(string? s, int max)
         {
             var trimmed = s?.Trim();
@@ -226,8 +289,11 @@ public class SupportController(
             categorySummary,
             toCity is not null ? $"{city}→{toCity}" : city,
         };
-        if (req.NeedDate is { } needDate)
-            parts.Add(needDate.ToString("yyyy-MM-dd"));
+        // JSON binds a bare "yyyy-MM-dd" to Kind=Unspecified, which Npgsql rejects
+        // for timestamptz — normalize to UTC midnight (calendar-date semantics).
+        var needDate = req.NeedDate is { } nd ? DateTime.SpecifyKind(nd.Date, DateTimeKind.Utc) : (DateTime?)null;
+        if (needDate is { } stamped)
+            parts.Add(stamped.ToString("yyyy-MM-dd"));
         var query = $"{ServiceCategories.ConciergeQueryPrefix}{string.Join(" | ", parts)}";
 
         // Details stays the CUSTOMER'S OWN WORDS and nothing else. It is the one
@@ -240,26 +306,97 @@ public class SupportController(
         // Insurance never reaches a provider at all — "no consumer product; route
         // by hand" is an instruction to us, not to a mover.
         var details = Clamp(req.Details, 2000);
+        var email   = req.Email.Trim();
+
+        // ── Duplicate submit ─────────────────────────────────────────────────
+        // The submit button disables itself while the mutation is in flight, but
+        // that is a client-side courtesy and the network is where this actually
+        // happens: a double-tap on a slow phone, a retried POST, a visitor who
+        // sees no immediate confirmation and presses again. Each extra lead is
+        // not a harmless duplicate row — it triggers its OWN auto fan-out, so the
+        // same providers are cold-emailed twice about one customer, each copy
+        // carrying its own quote token, and one business can answer one request
+        // with two competing prices. That is the exact failure the inbox-level
+        // dedupe inside ConciergeOutreachService exists to prevent, arriving
+        // through a door it cannot see.
+        //
+        // Matched on the WHOLE meaningful payload, not just the address: a
+        // visitor who corrects their city and resubmits is making a new request
+        // and must not be silently swallowed. Identical payload inside the
+        // window is, by any reasonable reading, the same request twice.
+        //
+        // No migration and no unique index: at this volume the window query is
+        // trivial, and an index would have to encode the same fingerprint to be
+        // useful. Returns the same shape as a fresh submit — the customer must
+        // never be told their request failed when it did not.
+        var duplicateCutoff = DateTime.UtcNow - DuplicateRequestWindow;
+        var recent = await db.DemandLeads
+            .AsNoTracking()
+            .Where(l => l.Source == "concierge"
+                     && l.Email == email
+                     && l.CreatedAt >= duplicateCutoff)
+            .Select(l => new { l.Id, l.City, l.ToCity, l.Category, l.NeedDate, l.Details })
+            .ToListAsync();
+
+        var duplicate = recent.FirstOrDefault(l =>
+            l.City == city
+            && l.ToCity == toCity
+            && l.Category == category
+            && l.NeedDate == needDate
+            && l.Details == details);
+
+        if (duplicate is not null)
+        {
+            logger.LogInformation(
+                "Duplicate concierge request from {Email} within {Minutes} min — returning lead {LeadId} without a second fan-out.",
+                email, DuplicateRequestWindow.TotalMinutes, duplicate.Id);
+            return Ok(new { ok = true });
+        }
 
         var lead = new DemandLead
         {
             Id        = Guid.NewGuid(),
-            Email     = req.Email.Trim(),
+            Email     = email,
             Name      = Clamp(req.Name, 120),
             Phone     = Clamp(req.Phone, 40),
             City      = city,
             ToCity    = toCity,
             // JSON binds a bare "yyyy-MM-dd" to Kind=Unspecified, which Npgsql rejects
-            // for timestamptz — normalize to UTC midnight (calendar-date semantics).
-            NeedDate  = req.NeedDate is { } nd ? DateTime.SpecifyKind(nd.Date, DateTimeKind.Utc) : null,
+            // for timestamptz — normalized to UTC midnight (calendar-date semantics)
+            // where it was read above.
+            NeedDate  = needDate,
             Details   = details,
             Category  = category,
             Query     = query.Length > 500 ? query[..500] : query,
             Source    = "concierge",
+            // Where this request came from, as the browser saw it. Source already
+            // says WHICH FORM was used ("concierge" vs "routed"); this says which
+            // campaign, post or search brought them to it — the difference between
+            // counting requests and knowing what a request costs. Free text on
+            // purpose: it is an opaque attribution string we report on, never
+            // something we branch behaviour on.
+            Attribution = Clamp(req.Attribution, 300),
             Language  = lang,
             Status    = DemandLeadStatus.New,
             CreatedAt = DateTime.UtcNow,
         };
+
+        // ── Automation check ──────────────────────────────────────────────────
+        // Decided BEFORE the save so the verdict can be written onto the lead the
+        // operator will read, but it never blocks the save itself.
+        var botReason = await DetectAutomationAsync(req, email);
+        if (botReason is not null)
+        {
+            // Written where the operator actually looks. It is a note, not a
+            // status: the lead sits in the normal New queue and gets worked like
+            // any other once a human has glanced at it.
+            lead.AdminNotes =
+                $"[auto] Held from automatic outreach — {botReason}. " +
+                "Review, then contact providers from Stage 1 if this is a real customer.";
+            logger.LogWarning(
+                "Concierge lead {LeadId} from {Email} held from auto-outreach: {Reason}.",
+                lead.Id, email, botReason);
+        }
 
         db.DemandLeads.Add(lead);
         await db.SaveChangesAsync();
@@ -279,15 +416,22 @@ public class SupportController(
         // wrapped whole, logged loudly with the lead id, and reported in the ops
         // alert so the admin knows to work it by hand.
         AutoOutreachSummary fanout;
-        try
+        if (botReason is not null)
         {
-            fanout = await outreachService.AutoFanOutAsync(lead);
+            fanout = AutoOutreachSummary.Skipped("automation_suspected");
         }
-        catch (Exception ex)
+        else
         {
-            logger.LogError(ex,
-                "Auto-outreach failed for concierge lead {LeadId} — lead saved, NOBODY contacted.", lead.Id);
-            fanout = AutoOutreachSummary.Skipped("failed");
+            try
+            {
+                fanout = await outreachService.AutoFanOutAsync(lead);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex,
+                    "Auto-outreach failed for concierge lead {LeadId} — lead saved, NOBODY contacted.", lead.Id);
+                fanout = AutoOutreachSummary.Skipped("failed");
+            }
         }
 
         // Enrich the instant ops alert (the concierge "phone alert") with a
@@ -366,9 +510,16 @@ public class SupportController(
         // the customer their request was lost when it was not.
         try
         {
+            // The services the visitor actually picked, not the single Category
+            // column they collapsed into. The receipt's whole job is to read the
+            // request back so they can spot their own typo, and for a
+            // multi-service ask — which the intake copy explicitly invites — the
+            // Category label is the generic "Service". The provider cold email
+            // already recovered the real list; the customer's own receipt did
+            // not. Same helper for both now (Helpers/LeadServiceLabel).
             var ack = CustomerRequestAckComposer.Compose(
                 lead,
-                EmailTranslations.For(lead.Language).CategoryLabel(lead.Category),
+                LeadServiceLabel.For(EmailTranslations.For(lead.Language), lead),
                 FrontendUrl.Contact(appUrl, lead.Language));
 
             emailQueue.EnqueueEmail(
@@ -389,5 +540,38 @@ public class SupportController(
         }
 
         return Ok(new { ok = true });
+    }
+
+    /// <summary>
+    /// Why this submission looks automated, or null when it looks like a person.
+    ///
+    /// Three independent signals, cheapest first. None of them rejects the
+    /// request — see the notes on <see cref="MinFormSeconds"/> for why a
+    /// suspected bot's lead is still saved and only its automatic fan-out is
+    /// withheld.
+    /// </summary>
+    private async Task<string?> DetectAutomationAsync(ConciergeRequest req, string email)
+    {
+        // 1. Honeypot. A field a human never sees and therefore never fills.
+        if (!string.IsNullOrWhiteSpace(req.Website))
+            return "hidden field was filled in";
+
+        // 2. Time on form. Only an explicitly implausible value counts: absent
+        //    means unknown, because a service-worker-cached older bundle does not
+        //    send it and its customers must keep being served normally.
+        if (req.ElapsedMs is { } elapsed && elapsed >= 0 && elapsed < MinFormSeconds * 1000)
+            return $"submitted {elapsed} ms after the form opened";
+
+        // 3. Volume per address. The signal a hand-rolled POST cannot omit, and
+        //    the one that actually bounds how much provider goodwill a single
+        //    attacker can burn. Counts only leads that were themselves eligible
+        //    for fan-out, so a held lead never pushes the next one over the line.
+        var since = DateTime.UtcNow.AddDays(-1);
+        var todayCount = await db.DemandLeads
+            .CountAsync(l => l.Source == "concierge" && l.Email == email && l.CreatedAt >= since);
+        if (todayCount >= MaxAutoFanOutPerEmailPerDay)
+            return $"{todayCount} requests from this address in the last 24 h";
+
+        return null;
     }
 }

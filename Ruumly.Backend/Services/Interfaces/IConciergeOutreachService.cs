@@ -64,6 +64,12 @@ public sealed record AutoOutreachSummary(
             + "Check the lead's outreach history.",
         "failed" =>
             "Auto-outreach: FAILED — see the server logs. Contact providers manually.",
+        // The lead IS saved and sits in the normal New queue; only the automatic
+        // send was withheld. See SupportController.DetectAutomationAsync — the
+        // reason is also written into the lead's admin notes.
+        "automation_suspected" =>
+            "Auto-outreach: HELD — this submission looks automated (see the lead's notes). "
+            + "If it is a real customer, contact providers from Stage 1.",
         _ =>
             $"Auto-contacted: {Emailed} provider(s) within {RadiusKm:0} km"
             + NoEmailSuffix()
