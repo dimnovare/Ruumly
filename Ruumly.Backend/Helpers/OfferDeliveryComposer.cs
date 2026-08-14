@@ -73,9 +73,34 @@ public static class OfferDeliveryComposer
         return new OfferEmailMessage(translations.OfferSubject, body.ToString(), link);
     }
 
-    private static string FormatPrice(OfferOption option) =>
-        option.PriceAmount is { } amount
-            ? $" \u2014 {amount.ToString("0.##", CultureInfo.InvariantCulture)} \u20ac" +
-              (string.IsNullOrWhiteSpace(option.PriceUnit) ? "" : $" / {option.PriceUnit}")
-            : "";
+    private static string FormatPrice(OfferOption option)
+    {
+        if (option.PriceAmount is not { } amount) return "";
+
+        var unit = DisplayUnit(option.PriceUnit);
+        return $" \u2014 {amount.ToString("0.##", CultureInfo.InvariantCulture)} \u20ac"
+             + (unit.Length == 0 ? "" : $" / {unit}");
+    }
+
+    /// <summary>
+    /// The unit without the separator it already carries. A stored unit comes in
+    /// whatever shape the surface that wrote it uses: the provider quote form and
+    /// PriceUnitNormalizer both emit the leading-slash shape ("/kuu"), and an
+    /// option prefilled from a listing can arrive with the currency glued on in
+    /// front of that. Printing it straight after our own separator is what put a
+    /// doubled slash into the price the customer read.
+    ///
+    /// Deliberately the same normalisation the offer page performs
+    /// (estonia-space-hub OfferPresentation.displayPriceUnit): the email and the
+    /// page it links to show one customer the same price, so a change to either
+    /// belongs in both. A unit carrying no separator of its own (a bare "kuu", or
+    /// a one-time fee) is passed through untouched - the caller adds the " / ".
+    /// </summary>
+    private static string DisplayUnit(string? priceUnit)
+    {
+        var unit = priceUnit?.Trim() ?? "";
+        if (unit.StartsWith('\u20ac')) unit = unit[1..].TrimStart();
+        if (unit.StartsWith('/')) unit = unit[1..].TrimStart();
+        return unit.TrimEnd();
+    }
 }

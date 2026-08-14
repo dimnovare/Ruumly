@@ -61,6 +61,22 @@ public sealed class ConciergeOutreachService(
         var sent    = new List<OutreachSentRecipient>();
         var skipped = new List<OutreachSkippedRecipient>();
         var emails  = new List<(string To, string Subject, string TextBody, string? HtmlBody)>();
+        // The directory is imported one row per BRANCH, so several supplier rows
+        // routinely stand behind a single head-office inbox. Deduping ids alone
+        // therefore mails one company twice about one request, and each copy
+        // carries its OWN quote token — so the same business can answer the same
+        // customer with two competing prices. Same reasoning, same shape as
+        // AdminSupplierIntroController's campaign dedupe.
+        var seenEmails = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        // Reserving the address on the way out is the difference between deduping
+        // ROWS and deduping INBOXES: without it a sibling branch inherits the
+        // freed slot and delivers the very copy this row was refused.
+        void Reserve(Supplier s)
+        {
+            if (s.ContactEmail.Trim() is { Length: > 0 } address) seenEmails.Add(address);
+        }
+
         IDbContextTransaction? transaction = null;
 
         try
@@ -88,6 +104,7 @@ public sealed class ConciergeOutreachService(
                 // asked for this supplier explicitly — and the answer is still no.
                 if (supplier.MarketingOptOutAt is not null)
                 {
+                    Reserve(supplier);
                     skipped.Add(new(supplierId, supplier.Name, "opted_out"));
                     continue;
                 }
@@ -102,16 +119,28 @@ public sealed class ConciergeOutreachService(
                 // clears the flag. Not overridable by `resend`.
                 if (supplier.ContactEmailUnusable)
                 {
+                    Reserve(supplier);
                     skipped.Add(new(supplierId, supplier.Name, "email_bounced"));
                     continue;
                 }
                 if (!resend && contactedSupplierIds.Contains(supplierId))
                 {
+                    Reserve(supplier);
                     skipped.Add(new(supplierId, supplier.Name, "already_contacted"));
                     continue;
                 }
 
                 var to = supplier.ContactEmail.Trim();
+                // Checked last, so a recipient we refuse for a reason of its own
+                // reports that reason rather than this catch-all. `resend` does
+                // not override it: an admin asking to re-contact a company still
+                // means one letter, not one per branch row they ticked.
+                if (!seenEmails.Add(to))
+                {
+                    skipped.Add(new(supplierId, supplier.Name, "duplicate_email"));
+                    continue;
+                }
+
                 // Per-recipient quote token: the provider opens /{lang}/quote/{token}
                 // and submits a price without an account. Minted here so the link in
                 // the email and the stored row always carry the same token.
@@ -233,6 +262,9 @@ public sealed class ConciergeOutreachService(
 
             var candidates   = new List<Guid>();
             var missingEmail = 0;
+            // Rebuilt per radius, like `candidates` itself: each widening starts
+            // the pick over from the top of the ranking.
+            var seenEmails   = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var candidate in MergeByService(ranked))
             {
                 if (candidates.Count >= max) break;
@@ -246,6 +278,15 @@ public sealed class ConciergeOutreachService(
                     missingEmail++;
                     continue;
                 }
+                // MergeByService dedupes supplier IDs, which is not the same as
+                // deduping companies: the directory holds one row per branch and
+                // the branches share an inbox. Dropped HERE rather than left for
+                // SendAsync to refuse, so the slot passes to the next distinct
+                // company instead of shrinking the fan-out — a request answered
+                // by one provider twice and a competitor not at all is the worst
+                // of both. Not counted as unreachable: the company IS contacted,
+                // through the higher-ranked row.
+                if (!seenEmails.Add(candidate.ContactEmail.Trim())) continue;
                 candidates.Add(candidate.SupplierId);
             }
 

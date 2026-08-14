@@ -375,6 +375,10 @@ public class AdminOffersController(
             .ToHashSet();
 
         var recipients = new List<OutreachPreviewItemDto>(requestedIds.Count);
+        // Same inbox-level dedupe the batch applies, in the same iteration order,
+        // so ticking two branch rows of one company shows the admin which of them
+        // will actually be written to before they press send.
+        var seenEmails = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var supplierId in requestedIds)
         {
             if (!suppliers.TryGetValue(supplierId, out var supplier))
@@ -402,6 +406,12 @@ public class AdminOffersController(
                     : contactedSupplierIds.Contains(supplierId)
                         ? "already_contacted"
                         : null;
+
+            // Reserved even when the row is skipped for its own reason — the
+            // batch reserves there too, and a sibling must not appear sendable
+            // because the row ahead of it was refused.
+            if (email is not null && !seenEmails.Add(email) && skipReason is null)
+                skipReason = "duplicate_email";
 
             recipients.Add(new(
                 supplier.Id,
