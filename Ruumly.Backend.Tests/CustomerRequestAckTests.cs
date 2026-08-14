@@ -33,7 +33,7 @@ public class CustomerRequestAckTests
     public void ReadsTheRequestBackInTheCustomersOwnLanguage(string language)
     {
         var t = EmailTranslations.For(language);
-        var (subject, body) = CustomerRequestAckComposer.Compose(
+        var (subject, body, _) = CustomerRequestAckComposer.Compose(
             Lead(language, needDate: new DateTime(2026, 8, 20)),
             t.CategoryLabel(DemandLeadCategory.Moving),
             "https://ruumly.eu/et/contact");
@@ -59,7 +59,7 @@ public class CustomerRequestAckTests
         foreach (var language in AllLanguages)
         {
             var t = EmailTranslations.For(language);
-            var (_, body) = CustomerRequestAckComposer.Compose(
+            var (_, body, _) = CustomerRequestAckComposer.Compose(
                 Lead(language), t.CategoryLabel(DemandLeadCategory.Moving), null);
 
             body.Should().NotContain("24")
@@ -74,7 +74,7 @@ public class CustomerRequestAckTests
     [Fact]
     public void HandlesAMissingNameWithoutGreetingNobody()
     {
-        var (_, body) = CustomerRequestAckComposer.Compose(
+        var (_, body, _) = CustomerRequestAckComposer.Compose(
             Lead(name: null), "Kolimine", null);
 
         body.Should().StartWith(EmailTranslations.For("et").AckGreetingNoName);
@@ -84,7 +84,7 @@ public class CustomerRequestAckTests
     [Fact]
     public void ShowsARouteWhenTheCustomerIsMovingBetweenCities()
     {
-        var (_, body) = CustomerRequestAckComposer.Compose(
+        var (_, body, _) = CustomerRequestAckComposer.Compose(
             Lead(city: "Tartu", toCity: "Tallinn"), "Kolimine", null);
 
         body.Should().Contain("Tartu → Tallinn");
@@ -94,7 +94,7 @@ public class CustomerRequestAckTests
     public void SaysAsSoonAsPossibleRatherThanPrintingNothingForAMissingDate()
     {
         var t = EmailTranslations.For("et");
-        var (_, body) = CustomerRequestAckComposer.Compose(
+        var (_, body, _) = CustomerRequestAckComposer.Compose(
             Lead(needDate: null), "Kolimine", null);
 
         body.Should().Contain(t.AckDateAsap);
@@ -104,7 +104,7 @@ public class CustomerRequestAckTests
     public void OmitsTheDetailsLineWhenTheCustomerGaveNone()
     {
         var t = EmailTranslations.For("et");
-        var (_, body) = CustomerRequestAckComposer.Compose(
+        var (_, body, _) = CustomerRequestAckComposer.Compose(
             Lead(details: null), "Kolimine", null);
 
         body.Should().NotContain(t.AckLabelDetails);
@@ -116,11 +116,106 @@ public class CustomerRequestAckTests
         foreach (var language in AllLanguages)
         {
             var t = EmailTranslations.For(language);
-            var (subject, body) = CustomerRequestAckComposer.Compose(
+            var (subject, body, _) = CustomerRequestAckComposer.Compose(
                 Lead(language), t.CategoryLabel(DemandLeadCategory.Moving),
                 "https://ruumly.eu/et/contact");
 
             (subject + body).Should().NotContain("{name}").And.NotContain("{url}");
         }
+    }
+
+    // ─── HTML body ────────────────────────────────────────────────────────────
+    //
+    // The receipt was text-only while the COLD email we send to strangers was
+    // branded HTML, so a customer's sole proof that Ruumly received their
+    // request looked less legitimate than unsolicited mail.
+
+    [Theory]
+    [InlineData("et")] [InlineData("en")] [InlineData("ru")]
+    [InlineData("lv")] [InlineData("lt")]
+    public void EveryLanguage_RendersAWellFormedHtmlBody(string language)
+    {
+        var message = CustomerRequestAckComposer.Compose(
+            Lead(language, needDate: new DateTime(2026, 9, 20)),
+            "Kolimine", "https://ruumly.eu/et/contact");
+
+        message.HtmlBody.Should().StartWith("<!DOCTYPE html>");
+        message.HtmlBody.Should().Contain("</html>");
+        message.HtmlBody.Should().Contain("Ruumly");
+        message.TextBody.Should().NotBeNullOrWhiteSpace("the plain-text fallback must survive");
+    }
+
+    [Fact]
+    public void HtmlReadsTheRequestBack_LikeTheTextVersion()
+    {
+        var message = CustomerRequestAckComposer.Compose(
+            Lead("et", city: "Tallinn", toCity: "Tartu", needDate: new DateTime(2026, 9, 20)),
+            "Kolimine", null);
+
+        message.HtmlBody.Should().Contain("Kolimine");
+        message.HtmlBody.Should().Contain("Tallinn");
+        message.HtmlBody.Should().Contain("Tartu");
+        message.HtmlBody.Should().Contain("20.09.2026");
+    }
+
+    /// <summary>
+    /// The name and the details are raw customer input rendered straight into
+    /// an HTML document. A visitor who types a tag must not be able to inject
+    /// markup into the mail their own address receives.
+    /// </summary>
+    [Fact]
+    public void CustomerSuppliedTextIsEscaped()
+    {
+        var message = CustomerRequestAckComposer.Compose(
+            Lead("et", name: "<script>alert(1)</script>",
+                 details: "3rd floor & \"no lift\" <b>urgent</b>"),
+            "Kolimine", null);
+
+        message.HtmlBody.Should().NotContain("<script>");
+        message.HtmlBody.Should().Contain("&lt;script&gt;");
+        message.HtmlBody.Should().Contain("&amp;");
+        message.HtmlBody.Should().Contain("&quot;no lift&quot;");
+        message.HtmlBody.Should().NotContain("<b>urgent</b>");
+    }
+
+    /// <summary>
+    /// WebUtility.HtmlEncode would turn every non-ASCII character into a numeric
+    /// entity. This message is read by Estonian, Latvian, Lithuanian and Russian
+    /// customers looking at their OWN name — mangling it is the one thing a
+    /// receipt cannot afford.
+    /// </summary>
+    [Fact]
+    public void DiacriticsAndCyrillicSurviveIntact()
+    {
+        var message = CustomerRequestAckComposer.Compose(
+            Lead("ru", name: "Пётр Õunapuu", city: "Kärdla",
+                 details: "Ühistu värav, 3. korrus — ilma liftita"),
+            "Перевозка", null);
+
+        message.HtmlBody.Should().Contain("Пётр Õunapuu");
+        message.HtmlBody.Should().Contain("Kärdla");
+        message.HtmlBody.Should().Contain("ilma liftita");
+        message.HtmlBody.Should().NotContain("&#");
+    }
+
+    [Fact]
+    public void HtmlStillRefusesToRepeatTheDeadlinePromise()
+    {
+        // Same contract as the text body: some requests reach no provider
+        // automatically, so the one message proving we received the request
+        // must not restate a deadline nobody enforces.
+        var message = CustomerRequestAckComposer.Compose(Lead("en"), "Moving", null);
+
+        message.HtmlBody.Should().NotContainEquivalentOf("24 hour");
+        message.HtmlBody.Should().NotContainEquivalentOf("2-3 offers");
+    }
+
+    [Fact]
+    public void NoTrackingPixelsOrRemoteAssets()
+    {
+        var message = CustomerRequestAckComposer.Compose(Lead("et"), "Kolimine", null);
+
+        message.HtmlBody.Should().NotContain("<img");
+        message.HtmlBody.Should().NotContain("http://");
     }
 }
