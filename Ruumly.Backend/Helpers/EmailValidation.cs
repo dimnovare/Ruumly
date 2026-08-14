@@ -52,6 +52,17 @@ public static class EmailValidation
     }
 
     /// <summary>
+    /// The canonical stored form of an address: trimmed and lower-cased. Mail is
+    /// delivered case-insensitively, so "Info@Yard.ee" and "info@yard.ee" are one
+    /// mailbox and must never become two rows. Anything persisting an address as an
+    /// IDENTITY — <c>User.Email</c> above all, since its unique index is what decides
+    /// who owns an account — stores this form and compares against this form, so
+    /// "the same address" has exactly one definition.
+    /// </summary>
+    public static string Normalize(string? email) =>
+        (email ?? string.Empty).Trim().ToLowerInvariant();
+
+    /// <summary>
     /// The domain part of an address, lower-cased, or null if the address is not
     /// <see cref="IsValid">valid</see>. Callers that group addresses by domain (the
     /// deliverability check does) must use this rather than splitting on '@'

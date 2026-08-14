@@ -50,7 +50,18 @@ public class OrderService(
                 if (user.SupplierId.HasValue)
                     query = query.Where(o => o.SupplierId == user.SupplierId.Value);
                 else
-                    query = query.Where(o => o.Supplier.ContactEmail == user.Email);
+                {
+                    // Legacy fallback for a provider with no SupplierId FK. Matched
+                    // case-insensitively because the two columns are filled by
+                    // different hands — the login is stored canonical, the supplier
+                    // row keeps whatever casing ops typed or the import carried.
+                    // A blank address matches nothing: imported directory rows store
+                    // ContactEmail as "" when the source had none.
+                    var email = EmailValidation.Normalize(user.Email);
+                    query = email.Length > 0
+                        ? query.Where(o => o.Supplier.ContactEmail.ToLower() == email)
+                        : query.Where(o => false);
+                }
             }
         }
         else if (role == UserRole.Customer)
@@ -110,10 +121,13 @@ public class OrderService(
                     query = query.Where(o => o.SupplierId == user.SupplierId.Value);
                 else
                 {
-                    var supplierIds = await db.Suppliers
-                        .Where(s => s.ContactEmail == user.Email)
-                        .Select(s => s.Id)
-                        .ToListAsync(ct);
+                    var email = EmailValidation.Normalize(user.Email);
+                    List<Guid> supplierIds = email.Length == 0
+                        ? []
+                        : await db.Suppliers
+                            .Where(s => s.ContactEmail.ToLower() == email)
+                            .Select(s => s.Id)
+                            .ToListAsync(ct);
                     query = query.Where(o => supplierIds.Contains(o.SupplierId));
                 }
             }
