@@ -378,7 +378,9 @@ public class AuthController(
     [EnableRateLimiting("public-email")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    // No 409 any more. It used to mean "this email already has an account with a
+    // supplier", which answered a question no anonymous caller is entitled to ask;
+    // that case now returns the ordinary 200 like every other accepted submission.
     public async Task<IActionResult> ApplyProviderPublic([FromBody] SupplierApplicationRequest request)
     {
         // Validate required fields
@@ -411,60 +413,58 @@ public class AuthController(
         if (existingApplication is not null)
             return Ok(new { applicationId = existingApplication.Id, message = "Application received. Please check your email." });
 
+        // An address that already has a Ruumly user is NEVER linked to a supplier
+        // from here. This endpoint is [AllowAnonymous]: the caller typed someone
+        // else's address into a public form and proved nothing — no session, no
+        // password, no control of the mailbox. Writing User.SupplierId on that
+        // evidence used to lock the real owner out of applying at all
+        // (POST /api/auth/apply-provider answers 409 "User is already a provider"
+        // once SupplierId is set), and a VERIFIED owner was never even emailed,
+        // because BackgroundEmailService skips the verification mail for verified
+        // users. Silently linking someone to a business they never applied for.
+        //
+        // Same rule the claim flow already enforces (ClaimController.CreateAccount):
+        // proving control of a mailbox is grounds for a session, not for adopting
+        // an existing account — and here not even that much was proved.
+        //
+        // The legitimate case — a customer with an account who wants to become a
+        // partner — is not refused, just routed to the door that checks who they
+        // are: sign in, then POST /api/auth/apply-provider, which links the
+        // supplier immediately and needs no admin. ExistingAccountAsync sends
+        // exactly that instruction, to the account holder.
+        var existingUser = await db.Users
+            .Where(u => u.Email.ToLower() == contactEmail)
+            .Select(u => new { u.Id, u.Language })
+            .FirstOrDefaultAsync();
+        if (existingUser is not null)
+            return await ExistingAccountAsync(request, contactEmail, existingUser.Language, lang);
+
         await using var tx = await db.Database.BeginTransactionAsync();
         try
         {
-            // Check if user with ContactEmail already exists
-            var existingUser = await db.Users
-                .Include(u => u.Supplier)
-                .FirstOrDefaultAsync(u => u.Email.ToLower() == contactEmail);
+            // New user — create User (Customer role, EmailVerified=false) + Supplier
+            var supplier = CreateSupplier(request);
+            var supplierId = supplier.Id;
 
-            Guid supplierId;
-            Guid userId;
-
-            if (existingUser is not null)
+            var newUser = new User
             {
-                // User exists and already has a supplier
-                if (existingUser.SupplierId.HasValue)
-                    return Conflict(new { error = "An application for this email already exists." });
+                Id            = Guid.NewGuid(),
+                Name          = request.ContactName,
+                Email         = contactEmail,
+                PasswordHash  = BC.HashPassword(Guid.NewGuid().ToString(), workFactor: 4),
+                Role          = UserRole.Customer,
+                Status        = UserStatus.Active,
+                Language      = lang,
+                SupplierId    = supplierId,
+                RegisteredAt  = DateTime.UtcNow,
+                EmailVerified = false,
+            };
+            var userId = newUser.Id;
 
-                // User exists but no supplier — create supplier linked to existing user
-                userId = existingUser.Id;
-                var supplier = CreateSupplier(request);
-                supplierId = supplier.Id;
-
-                existingUser.SupplierId = supplierId;
-
-                var integrationSettings = CreateIntegrationSettings(supplier.Id);
-                db.Suppliers.Add(supplier);
-                db.IntegrationSettings.Add(integrationSettings);
-            }
-            else
-            {
-                // New user — create User (Customer role, EmailVerified=false) + Supplier
-                var supplier = CreateSupplier(request);
-                supplierId = supplier.Id;
-
-                var newUser = new User
-                {
-                    Id            = Guid.NewGuid(),
-                    Name          = request.ContactName,
-                    Email         = contactEmail,
-                    PasswordHash  = BC.HashPassword(Guid.NewGuid().ToString(), workFactor: 4),
-                    Role          = UserRole.Customer,
-                    Status        = UserStatus.Active,
-                    Language      = lang,
-                    SupplierId    = supplierId,
-                    RegisteredAt  = DateTime.UtcNow,
-                    EmailVerified = false,
-                };
-                userId = newUser.Id;
-
-                var integrationSettings = CreateIntegrationSettings(supplier.Id);
-                db.Users.Add(newUser);
-                db.Suppliers.Add(supplier);
-                db.IntegrationSettings.Add(integrationSettings);
-            }
+            var integrationSettings = CreateIntegrationSettings(supplier.Id);
+            db.Users.Add(newUser);
+            db.Suppliers.Add(supplier);
+            db.IntegrationSettings.Add(integrationSettings);
 
             db.AuditLogs.Add(new AuditLog
             {
@@ -495,6 +495,95 @@ public class AuthController(
             await tx.RollbackAsync();
             throw;
         }
+    }
+
+    /// <summary>
+    /// At most one "you already have an account" mail per address per
+    /// <see cref="ExistingAccountNudgeHours"/>. Before this endpoint stopped
+    /// creating a Supplier for these submissions, the supplier dedupe above was
+    /// what capped it — one row, therefore one email, ever. Creating nothing
+    /// removes that cap, and an anonymous endpoint that mails a chosen address on
+    /// every request is a bombing tool with a rate limiter for a fuse. The audit
+    /// row written on send IS the token: no row in the window, no second mail.
+    /// </summary>
+    private const int ExistingAccountNudgeHours = 24;
+
+    private const string ExistingAccountAction = "supplier.public_application_existing_account";
+
+    /// <summary>
+    /// The public application form was submitted with an address that already has
+    /// a Ruumly account. Creates and links NOTHING — see the reasoning at the call
+    /// site — and instead tells the account holder how to apply for real, while
+    /// handing the submitted details to ops so a genuine applicant is not lost.
+    ///
+    /// Two rules about the mail, both because the submitter is unauthenticated:
+    /// <list type="number">
+    /// <item>Its LANGUAGE is the account's own, not the one in the request body.
+    /// The recipient is the account holder, so their stored preference decides —
+    /// and it keeps one more thing out of a stranger's hands.</item>
+    /// <item>Its CONTENT carries nothing from the submission. The company name
+    /// and registry code go to the ops inbox, which is internal, and never into
+    /// a message sent to a third party.</item>
+    /// </list>
+    /// </summary>
+    private async Task<IActionResult> ExistingAccountAsync(
+        SupplierApplicationRequest request,
+        string contactEmail,
+        string? accountLanguage,
+        string submittedLanguage)
+    {
+        var now   = DateTime.UtcNow;
+        var since = now.AddHours(-ExistingAccountNudgeHours);
+
+        var alreadyNudged = await db.AuditLogs.AnyAsync(a =>
+            a.Action    == ExistingAccountAction &&
+            a.Actor     == contactEmail &&
+            a.CreatedAt >= since);
+
+        if (!alreadyNudged)
+        {
+            var language = string.IsNullOrWhiteSpace(accountLanguage) ? submittedLanguage : accountLanguage;
+            var opsInbox = await OpsInbox.ResolveAsync(db);
+            var message  = SupplierApplySignInComposer.Compose(
+                language,
+                SupplierApplySignInComposer.SignInUrl(config["AppUrl"], language),
+                opsInbox);
+
+            emailQueue.EnqueueEmail(contactEmail, message.Subject, message.TextBody, message.HtmlBody);
+
+            // Same inbox the ordinary application notification uses, so partner
+            // applications stay in one place for whoever works them.
+            emailQueue.EnqueueEmail(
+                to:       "admin@ruumly.eu",
+                subject:  $"Provider application needs a hand: {request.CompanyName}",
+                textBody: $"Company: {request.CompanyName}\nContact: {request.ContactName} <{request.ContactEmail}>\n" +
+                          $"Phone: {request.ContactPhone}\nRegistry: {request.RegistryCode}\n\n" +
+                          $"{contactEmail} already has a Ruumly account, so NOTHING was created and " +
+                          "nothing was linked — an anonymous form submission is not proof that the " +
+                          "person filling it in owns that account.\n\n" +
+                          "They have been asked to sign in and apply from their account, which links " +
+                          "the supplier immediately. If they cannot, verify them by hand (phone, " +
+                          "registry, website) and create the supplier in admin.");
+
+            db.AuditLogs.Add(new AuditLog
+            {
+                Id        = Guid.NewGuid(),
+                Action    = ExistingAccountAction,
+                // The canonical address, not the typed one: this row is also the
+                // throttle token and has to match on the next submission however
+                // it is capitalised.
+                Actor     = contactEmail,
+                Target    = request.CompanyName,
+                Detail    = $"RegistryCode: {request.RegistryCode}. Existing account — nothing created or linked.",
+                CreatedAt = now,
+            });
+            await db.SaveChangesAsync();
+        }
+
+        // The same 200 and the same sentence every accepted submission gets. The
+        // applicationId is absent because no application row exists; we do not
+        // invent one to pad the shape.
+        return Ok(new { message = "Application received. Please check your email." });
     }
 
     private Supplier CreateSupplier(SupplierApplicationRequest r) => new()
