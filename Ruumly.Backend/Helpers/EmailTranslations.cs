@@ -300,6 +300,24 @@ public static class EmailTranslations
         // "Didn't ask for this? Ignore this email — nothing changes. Concerned:
         // write to {email}." A cold recipient must never be left wondering.
         string ClaimIgnoreTpl,
+        // ── "You already have an account" (apply_sign_in) ─────────────────────
+        // Sent when the PUBLIC partner-application form is submitted with an
+        // address that already has a Ruumly user. The anonymous caller proved
+        // nothing, so no supplier is created and no account is touched; this mail
+        // is the only thing that happens, and it goes to the account holder.
+        //
+        // Carries NO data from the submission — not the company name, not the
+        // registry code, nothing. Whoever filled the form is unauthenticated and
+        // may not be the recipient, so printing their text here would turn this
+        // into a delivery channel for a stranger's message. The application's
+        // details go to the ops inbox instead, where a human reads them.
+        string ApplySignInSubject,
+        string ApplySignInGreeting,
+        string ApplySignInBody,
+        string ApplySignInCta,
+        // "Wasn't you? Nothing was created and nothing changed." Same duty as
+        // ClaimIgnoreTpl: a recipient who did not act must never be left guessing.
+        string ApplySignInIgnoreTpl,
         // Service-category labels missing from the legacy EmailType* trio.
         // CategoryPacking / CategoryInsurance are STILL REFERENCED and must not be
         // deleted: we stopped selling those two as consumer services in 2026-08, but
@@ -393,6 +411,11 @@ public static class EmailTranslations
 
         public string ClaimIgnore(string email) =>
             ClaimIgnoreTpl.Replace("{email}", email);
+
+        // ── "You already have an account" ─────────────────────────────────────
+
+        public string ApplySignInIgnore(string email) =>
+            ApplySignInIgnoreTpl.Replace("{email}", email);
     }
 
     private static readonly EmailStrings Et = new(
@@ -570,6 +593,17 @@ public static class EmailTranslations
         ClaimCta:                      "Kinnitage ja muutke profiili",
         ClaimExpiryTpl:                "Link töötab ühe korra ja aegub {hours} tunni pärast.",
         ClaimIgnoreTpl:                "Kui teie seda ei küsinud, jätke see kiri tähelepanuta — midagi ei muutu. Küsimuste korral kirjutage aadressile {email}.",
+        ApplySignInSubject:            "Ruumly — teie e-posti aadressiga esitati partneriavaldus",
+        ApplySignInGreeting:           "Tere,",
+        ApplySignInBody:
+            "Ruumlys esitati partneriavaldus selle e-posti aadressiga. Sellel aadressil on juba " +
+            "Ruumly konto, seega me ei loonud ega muutnud midagi — avaldus peab tulema konto alt. " +
+            "Kui see olite teie, logige sisse ja esitage avaldus oma kontolt: nii on ettevõte kohe " +
+            "teie enda konto all ja saate seda ise hallata.",
+        ApplySignInCta:                "Logi sisse",
+        ApplySignInIgnoreTpl:
+            "Kui see polnud teie, jätke see kiri tähelepanuta — midagi ei loodud ja teie kontol ei " +
+            "muudetud midagi. Küsimuste korral kirjutage aadressile {email}.",
         CategoryCleaning:              "Koristus",
         CategoryPacking:               "Pakkimine",
         CategoryVanRental:             "Kaubiku rent",
@@ -752,6 +786,18 @@ public static class EmailTranslations
         ClaimCta:                      "Confirm and edit my profile",
         ClaimExpiryTpl:                "The link works once and expires in {hours} hours.",
         ClaimIgnoreTpl:                "If you didn't ask for this, ignore this email — nothing changes. Any concerns, write to {email}.",
+        ApplySignInSubject:            "Ruumly — a partner application used your email address",
+        ApplySignInGreeting:           "Hello,",
+        ApplySignInBody:
+            "A partner application was submitted on Ruumly with this email address. This address " +
+            "already has a Ruumly account, so nothing was created and nothing was changed — an " +
+            "application has to come from the account itself. If it was you, sign in and submit it " +
+            "from your account: your business is then linked to it straight away and you can manage " +
+            "it yourself.",
+        ApplySignInCta:                "Sign in",
+        ApplySignInIgnoreTpl:
+            "If this wasn't you, ignore this email — nothing was created and nothing about your " +
+            "account was changed. Any concerns, write to {email}.",
         CategoryCleaning:              "Cleaning",
         CategoryPacking:               "Packing",
         CategoryVanRental:             "Van rental",
@@ -933,6 +979,17 @@ public static class EmailTranslations
         ClaimCta:                      "Подтвердить и изменить профиль",
         ClaimExpiryTpl:                "Ссылка одноразовая и действительна {hours} ч.",
         ClaimIgnoreTpl:                "Если вы этого не запрашивали, просто проигнорируйте письмо — ничего не изменится. Если есть вопросы, напишите на {email}.",
+        ApplySignInSubject:            "Ruumly — с вашим адресом подана заявка партнёра",
+        ApplySignInGreeting:           "Здравствуйте,",
+        ApplySignInBody:
+            "На Ruumly подана заявка партнёра с этим адресом электронной почты. На этом адресе уже " +
+            "есть аккаунт Ruumly, поэтому мы ничего не создали и ничего не изменили — заявка должна " +
+            "подаваться из самого аккаунта. Если это были вы, войдите и отправьте заявку из своего " +
+            "аккаунта: тогда компания сразу будет привязана к нему, и вы сможете управлять ею сами.",
+        ApplySignInCta:                "Войти",
+        ApplySignInIgnoreTpl:
+            "Если это были не вы, просто проигнорируйте это письмо — ничего не создано и в вашем " +
+            "аккаунте ничего не изменилось. Если есть вопросы, напишите на {email}.",
         CategoryCleaning:              "Уборка",
         CategoryPacking:               "Упаковка",
         CategoryVanRental:             "Аренда фургона",
@@ -1115,6 +1172,17 @@ public static class EmailTranslations
         ClaimCta:                      "Apstiprināt un rediģēt manu profilu",
         ClaimExpiryTpl:                "Saite darbojas vienu reizi un ir derīga {hours} stundas.",
         ClaimIgnoreTpl:                "Ja jūs to nelūdzāt, vienkārši ignorējiet šo e-pastu — nekas nemainīsies. Ja rodas jautājumi, rakstiet uz {email}.",
+        ApplySignInSubject:            "Ruumly — ar jūsu e-pasta adresi iesniegts partnera pieteikums",
+        ApplySignInGreeting:           "Sveiki,",
+        ApplySignInBody:
+            "Ruumly tika iesniegts partnera pieteikums ar šo e-pasta adresi. Šai adresei jau ir " +
+            "Ruumly konts, tāpēc nekas netika izveidots un nekas netika mainīts — pieteikums " +
+            "jāiesniedz no paša konta. Ja tas bijāt jūs, pierakstieties un iesniedziet to no sava " +
+            "konta: tad uzņēmums uzreiz ir piesaistīts tam un jūs varat to pārvaldīt pats.",
+        ApplySignInCta:                "Pierakstīties",
+        ApplySignInIgnoreTpl:
+            "Ja tas nebijāt jūs, vienkārši ignorējiet šo e-pastu — nekas netika izveidots un jūsu " +
+            "kontā nekas netika mainīts. Ja rodas jautājumi, rakstiet uz {email}.",
         CategoryCleaning:              "Uzkopšana",
         CategoryPacking:               "Iepakošana",
         CategoryVanRental:             "Furgona noma",
@@ -1297,6 +1365,17 @@ public static class EmailTranslations
         ClaimCta:                      "Patvirtinti ir redaguoti mano profilį",
         ClaimExpiryTpl:                "Nuoroda veikia vieną kartą ir galioja {hours} val.",
         ClaimIgnoreTpl:                "Jei to neprašėte, tiesiog nepaisykite šio laiško — niekas nepasikeis. Jei kyla klausimų, rašykite adresu {email}.",
+        ApplySignInSubject:            "Ruumly — su jūsų el. pašto adresu pateikta partnerio paraiška",
+        ApplySignInGreeting:           "Sveiki,",
+        ApplySignInBody:
+            "Ruumly buvo pateikta partnerio paraiška su šiuo el. pašto adresu. Šiam adresui jau " +
+            "priskirta Ruumly paskyra, todėl nieko nesukūrėme ir nieko nepakeitėme — paraiška turi " +
+            "būti pateikta iš pačios paskyros. Jei tai buvote jūs, prisijunkite ir pateikite ją iš " +
+            "savo paskyros: tada įmonė iškart bus su ja susieta ir galėsite ją tvarkyti patys.",
+        ApplySignInCta:                "Prisijungti",
+        ApplySignInIgnoreTpl:
+            "Jei tai buvote ne jūs, tiesiog nepaisykite šio laiško — niekas nebuvo sukurta ir jūsų " +
+            "paskyroje niekas nepasikeitė. Jei kyla klausimų, rašykite adresu {email}.",
         CategoryCleaning:              "Valymas",
         CategoryPacking:               "Pakavimas",
         CategoryVanRental:             "Furgono nuoma",

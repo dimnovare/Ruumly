@@ -9,6 +9,7 @@ using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.DTOs.Responses;
+using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 using Microsoft.AspNetCore.Hosting;
@@ -295,6 +296,164 @@ public class NotifyInterestTests
 
         result.Should().BeOfType<OkObjectResult>();
         db.Users.Should().ContainSingle("one mailbox is one account, however it was capitalised");
+    }
+
+    // ─── The public form must never link an account it cannot prove is the
+    //     caller's. See AuthController.ExistingAccountAsync. ─────────────────
+
+    private static User ExistingAccount(
+        string email, bool verified = false, string language = "et", Guid? supplierId = null) => new()
+    {
+        Id            = Guid.NewGuid(),
+        Name          = "Yard Owner",
+        Email         = email,
+        PasswordHash  = "x",
+        Role          = supplierId is null ? UserRole.Customer : UserRole.Provider,
+        Status        = UserStatus.Active,
+        Language      = language,
+        SupplierId    = supplierId,
+        EmailVerified = verified,
+        RegisteredAt  = DateTime.UtcNow,
+    };
+
+    private static SupplierApplicationRequest Application(
+        string email, string company = "Yard OÜ", string language = "en") => new()
+    {
+        CompanyName  = company,
+        RegistryCode = "11223344",
+        ContactName  = "Someone Else",
+        ContactEmail = email,
+        ContactPhone = "+3725551111",
+        Language     = language,
+    };
+
+    [Fact]
+    public async Task ApplyProviderPublic_ExistingAccount_IsNeverLinkedToASupplier()
+    {
+        // The griefing hole: an anonymous caller who typed a stranger's address
+        // got User.SupplierId written for them. That alone locked the real owner
+        // out of applying — the authenticated route answers 409 "User is already
+        // a provider" the moment SupplierId is set.
+        var db    = CreateDb();
+        var queue = new CapturingBackgroundEmailQueue();
+        db.Users.Add(ExistingAccount("owner@yard.ee"));
+        await db.SaveChangesAsync();
+
+        var result = await MakeController(db, queue).ApplyProviderPublic(Application("owner@yard.ee"));
+
+        result.Should().BeOfType<OkObjectResult>();
+        db.Users.Single().SupplierId.Should().BeNull(
+            "an anonymous form submission proves nothing about who owns the mailbox");
+        db.Suppliers.Should().BeEmpty("nothing is created for a caller who proved nothing");
+        db.IntegrationSettings.Should().BeEmpty();
+        queue.VerificationUsers.Should().BeEmpty(
+            "the account already exists — a verification mail would say nothing about what happened");
+
+        queue.Emails.Should().ContainSingle(e => e.To == "owner@yard.ee")
+            .Which.Subject.Should().Be(EmailTranslations.For("et").ApplySignInSubject);
+        queue.Emails.Should().ContainSingle(e => e.To == "admin@ruumly.eu",
+            "ops still has to see a genuine application that could not be self-served");
+    }
+
+    [Fact]
+    public async Task ApplyProviderPublic_ExistingVerifiedAccount_IsTold_NotSilentlyLinked()
+    {
+        // The worst case of the old behaviour: BackgroundEmailService skips the
+        // verification mail for an already-verified user, so the victim was linked
+        // to a business they never applied for and heard nothing at all.
+        var db    = CreateDb();
+        var queue = new CapturingBackgroundEmailQueue();
+        db.Users.Add(ExistingAccount("verified@yard.ee", verified: true));
+        await db.SaveChangesAsync();
+
+        await MakeController(db, queue).ApplyProviderPublic(Application("verified@yard.ee"));
+
+        db.Users.Single().SupplierId.Should().BeNull();
+        queue.Emails.Should().ContainSingle(e => e.To == "verified@yard.ee",
+            "a verified account holder must hear about it, not be linked in silence");
+    }
+
+    [Fact]
+    public async Task ApplyProviderPublic_ExistingProviderAccount_AnswersLikeAnyOtherSubmission()
+    {
+        // This used to be a 409 "An application for this email already exists" —
+        // an account-existence oracle handed to anyone with the form open.
+        var db         = CreateDb();
+        var supplierId = Guid.NewGuid();
+        db.Users.Add(ExistingAccount("partner@yard.ee", supplierId: supplierId));
+        await db.SaveChangesAsync();
+
+        var result = await MakeController(db).ApplyProviderPublic(Application("partner@yard.ee"));
+
+        result.Should().BeOfType<OkObjectResult>(
+            "the reply must not tell an anonymous caller whether an address has an account");
+        db.Users.Single().SupplierId.Should().Be(supplierId, "the existing link is untouched");
+        db.Suppliers.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ApplyProviderPublic_ExistingAccount_ReplayedSubmissions_SendOneEmail()
+    {
+        // No Supplier row is created for these submissions, so the dedupe that
+        // used to cap the mail at one per address no longer applies. Without the
+        // audit-row throttle, the form becomes a mail-bombing tool aimed at the
+        // very account it is meant to protect.
+        var db    = CreateDb();
+        var queue = new CapturingBackgroundEmailQueue();
+        db.Users.Add(ExistingAccount("owner@yard.ee"));
+        await db.SaveChangesAsync();
+
+        var controller = MakeController(db, queue);
+        await controller.ApplyProviderPublic(Application("owner@yard.ee"));
+        var replay = await controller.ApplyProviderPublic(Application("Owner@Yard.EE"));
+
+        replay.Should().BeOfType<OkObjectResult>("a throttled replay is still an accepted submission");
+        queue.Emails.Should().ContainSingle(e => e.To == "owner@yard.ee",
+            "the throttle keys off the canonical address, so capitalisation cannot bypass it");
+        queue.Emails.Should().ContainSingle(e => e.To == "admin@ruumly.eu");
+        db.AuditLogs.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task ApplyProviderPublic_ExistingAccount_EmailsInTheAccountLanguage()
+    {
+        // The recipient is the account holder, not the submitter, so their stored
+        // language decides — and one more thing stays out of a stranger's hands.
+        var db    = CreateDb();
+        var queue = new CapturingBackgroundEmailQueue();
+        db.Users.Add(ExistingAccount("owner@yard.ee", language: "ru"));
+        await db.SaveChangesAsync();
+
+        await MakeController(db, queue)
+            .ApplyProviderPublic(Application("owner@yard.ee", language: "en"));
+
+        queue.Emails.Single(e => e.To == "owner@yard.ee")
+            .Subject.Should().Be(EmailTranslations.For("ru").ApplySignInSubject);
+    }
+
+    [Fact]
+    public async Task ApplyProviderPublic_ExistingAccount_EmailCarriesNothingFromTheSubmission()
+    {
+        // Whoever filled the form is unauthenticated and may not be the recipient.
+        // If their text reached this email, the endpoint would be a delivery
+        // channel for a stranger's message to a chosen address.
+        const string Planted = "URGENT confirm your bank details at evil.example";
+
+        var db    = CreateDb();
+        var queue = new CapturingBackgroundEmailQueue();
+        db.Users.Add(ExistingAccount("owner@yard.ee"));
+        await db.SaveChangesAsync();
+
+        await MakeController(db, queue)
+            .ApplyProviderPublic(Application("owner@yard.ee", company: Planted));
+
+        var nudge = queue.Emails.Single(e => e.To == "owner@yard.ee");
+        nudge.Subject.Should().NotContain("evil.example");
+        nudge.TextBody.Should().NotContain("evil.example",
+            "the mail is built from translated copy and a configured URL only");
+
+        queue.Emails.Single(e => e.To == "admin@ruumly.eu").TextBody.Should().Contain(Planted,
+            "the submitted details still reach the internal inbox, where a human reads them");
     }
 
     [Fact]
