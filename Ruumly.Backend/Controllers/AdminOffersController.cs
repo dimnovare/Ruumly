@@ -396,16 +396,19 @@ public class AdminOffersController(
             var email = string.IsNullOrWhiteSpace(supplier.ContactEmail)
                 ? null
                 : supplier.ContactEmail.Trim();
-            var skipReason = email is null
-                ? "no_email"
-                // Mirrors ConciergeOutreachService.SendAsync: a retired address
-                // is skipped there too, so the preview never promises a send
-                // that the batch will refuse.
-                : supplier.ContactEmailUnusable
-                    ? "email_bounced"
-                    : contactedSupplierIds.Contains(supplierId)
-                        ? "already_contacted"
-                        : null;
+            // Mirrors ConciergeOutreachService.SendAsync, in its order: the
+            // opt-out is a promise we made in writing and is refused there
+            // ahead of the operational reasons, so the preview never promises
+            // a send that the batch will refuse.
+            var skipReason = supplier.MarketingOptOutAt is not null
+                ? "opted_out"
+                : email is null
+                    ? "no_email"
+                    : supplier.ContactEmailUnusable
+                        ? "email_bounced"
+                        : contactedSupplierIds.Contains(supplierId)
+                            ? "already_contacted"
+                            : null;
 
             // Reserved even when the row is skipped for its own reason — the
             // batch reserves there too, and a sibling must not appear sendable
