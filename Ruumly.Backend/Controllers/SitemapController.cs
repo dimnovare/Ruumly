@@ -150,9 +150,18 @@ public class SitemapController(RuumlyDbContext db) : ControllerBase
             ("/how-it-works", "0.7", "monthly"),
             ("/faq",          "0.7", "monthly"),
             ("/provider",     "0.8", "weekly"),
-            ("/terms",        "0.3", "yearly"),
-            ("/privacy",      "0.3", "yearly"),
-            ("/cookies",      "0.3", "yearly"),
+            // /terms, /privacy and /cookies are deliberately ABSENT.
+            //
+            // All three render `<meta name="robots" content="noindex,nofollow">`
+            // — the React SEO component has always set it, and since 2026-08-14
+            // the prerendered HTML carries it too, so a crawler that does not run
+            // JS sees it as well. Listing a noindex URL in a sitemap is a
+            // contradiction: the sitemap says "index this", the page says "do
+            // not", and Google's own guidance is not to submit them. It also
+            // spends crawl budget re-fetching pages that can never rank.
+            //
+            // They stay reachable and linked from the footer, which is all a
+            // legal page needs.
         };
 
         foreach (var (path, priority, freq) in staticPages)

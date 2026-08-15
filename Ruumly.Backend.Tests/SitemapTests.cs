@@ -359,4 +359,41 @@ public class SitemapTests
         getAttrs.Should().ContainSingle();
         getAttrs[0].Template.Should().Be("sitemap.xml");
     }
+
+    /// <summary>
+    /// The legal pages render `robots: noindex,nofollow` — the React SEO
+    /// component always set it, and since 2026-08-14 the prerendered HTML
+    /// carries it too. Listing a noindex URL in the sitemap is a contradiction:
+    /// the sitemap asks Google to index a page that forbids indexing, and it
+    /// spends crawl budget on URLs that can never rank.
+    /// </summary>
+    [Fact]
+    public async Task Sitemap_OmitsNoindexLegalPages()
+    {
+        var db = TestDbContext.Create();
+        var controller = new SitemapController(db);
+
+        var result = await controller.Sitemap() as ContentResult;
+        var xml = result!.Content!;
+
+        foreach (var path in new[] { "/terms", "/privacy", "/cookies" })
+            xml.Should().NotContain(path, $"{path} is noindex and must not be advertised for indexing");
+    }
+
+    /// <summary>
+    /// The commercial front door must not rank below the pages it feeds.
+    /// </summary>
+    [Fact]
+    public async Task Sitemap_RanksTheRequestFunnelAboveTheCityHubs()
+    {
+        var db = TestDbContext.Create();
+        var controller = new SitemapController(db);
+
+        var result = await controller.Sitemap() as ContentResult;
+        var xml = result!.Content!;
+
+        xml.Should().Contain("/et/request");
+        // 0.9 for the funnel, 0.8 for the service x city hubs.
+        xml.Should().Contain("<priority>0.9</priority>");
+    }
 }
