@@ -191,6 +191,22 @@ public static class EmailTranslations
         string AckReply,
         string AckContactTpl,
         string AckSignature,
+        // ── Contact-form acknowledgement (contact_ack) ────────────────────────
+        // The same gap the concierge ack above closed, on the other public form:
+        // a message to /api/contact produced ONE email, to the team, and nothing
+        // at all to the person who wrote it. Reuses AckGreeting* and AckSignature
+        // — it is the same voice writing to the same person.
+        //
+        // Says nothing about timing, for the same reason the concierge ack does
+        // not: a promise made by a machine and kept by a human is a promise the
+        // machine should not make. It says a person reads it, and reads their
+        // own words back so they can see exactly what arrived.
+        string ContactAckSubject,
+        string ContactAckReceived,
+        string ContactAckSummaryHeading,
+        string ContactAckLabelSubject,
+        string ContactAckLabelMessage,
+        string ContactAckReply,
         // ── One-off supplier INTRODUCTION campaign (supplier_intro) ───────────
         // Sent ONCE to every directory provider we added from public research,
         // BEFORE an auto-fanout request ever lands in their inbox: a cold
@@ -558,6 +574,12 @@ public static class EmailTranslations
         AckReply:                      "Kui midagi muutub — kuupäev, kogus, aadress — vasta lihtsalt sellele kirjale. Nii jõuab info otse meieni.",
         AckContactTpl:                 "Võid kirjutada ka siit: {url}",
         AckSignature:                  "Parimate soovidega\nRuumly meeskond\ninfo@ruumly.eu",
+        ContactAckSubject:             "Sinu kiri jõudis meile kohale — Ruumly",
+        ContactAckReceived:            "Aitäh, et kirjutasid. Sinu sõnum on meil käes — selle loeb läbi päris inimene ja vastab sulle isiklikult.",
+        ContactAckSummaryHeading:      "Mida sa meile kirjutasid:",
+        ContactAckLabelSubject:        "Teema",
+        ContactAckLabelMessage:        "Sõnum",
+        ContactAckReply:               "Kui soovid midagi lisada või täpsustada, vasta lihtsalt sellele kirjale — see jõuab otse meieni.",
         IntroSubjectTpl:               "Kliendipäringud Ruumlyst — {company}",
         IntroGreeting:                 "Tere!",
         IntroOpening:                  "Kirjutame Ruumlyst, sest teie ettevõte pakub teenust, mida meie kliendid otsivad.",
@@ -751,6 +773,12 @@ public static class EmailTranslations
         AckReply:                      "If anything changes — the date, the amount, the address — just reply to this email. It comes straight to us.",
         AckContactTpl:                 "You can also write to us here: {url}",
         AckSignature:                  "Best regards\nThe Ruumly team\ninfo@ruumly.eu",
+        ContactAckSubject:             "We have your message — Ruumly",
+        ContactAckReceived:            "Thank you for writing. Your message reached us — a real person reads it and will answer you personally.",
+        ContactAckSummaryHeading:      "What you wrote to us:",
+        ContactAckLabelSubject:        "Subject",
+        ContactAckLabelMessage:        "Message",
+        ContactAckReply:               "If you want to add anything, just reply to this email — it comes straight to us.",
         IntroSubjectTpl:               "Customer requests from Ruumly — {company}",
         IntroGreeting:                 "Hello,",
         IntroOpening:                  "We are writing from Ruumly because your company offers a service our customers are looking for.",
@@ -944,6 +972,12 @@ public static class EmailTranslations
         AckReply:                      "Если что-то изменится — дата, объём, адрес — просто ответьте на это письмо. Оно придёт прямо к нам.",
         AckContactTpl:                 "Также можно написать нам здесь: {url}",
         AckSignature:                  "С наилучшими пожеланиями\nКоманда Ruumly\ninfo@ruumly.eu",
+        ContactAckSubject:             "Ваше сообщение у нас — Ruumly",
+        ContactAckReceived:            "Спасибо, что написали. Ваше сообщение дошло до нас — его прочитает живой человек и ответит вам лично.",
+        ContactAckSummaryHeading:      "Что вы нам написали:",
+        ContactAckLabelSubject:        "Тема",
+        ContactAckLabelMessage:        "Сообщение",
+        ContactAckReply:               "Если хотите что-то добавить, просто ответьте на это письмо — оно придёт прямо к нам.",
         IntroSubjectTpl:               "Заявки клиентов от Ruumly — {company}",
         IntroGreeting:                 "Здравствуйте!",
         IntroOpening:                  "Пишем вам из Ruumly, потому что ваша компания оказывает услугу, которую ищут наши клиенты.",
@@ -1137,6 +1171,12 @@ public static class EmailTranslations
         AckReply:                      "Ja kaut kas mainās — datums, apjoms, adrese — vienkārši atbildiet uz šo vēstuli. Tā nonāk tieši pie mums.",
         AckContactTpl:                 "Varat rakstīt mums arī šeit: {url}",
         AckSignature:                  "Ar cieņu\nRuumly komanda\ninfo@ruumly.eu",
+        ContactAckSubject:             "Jūsu ziņa ir saņemta — Ruumly",
+        ContactAckReceived:            "Paldies, ka rakstījāt. Jūsu ziņa ir nonākusi pie mums — to izlasīs īsts cilvēks un atbildēs jums personīgi.",
+        ContactAckSummaryHeading:      "Ko jūs mums rakstījāt:",
+        ContactAckLabelSubject:        "Temats",
+        ContactAckLabelMessage:        "Ziņa",
+        ContactAckReply:               "Ja vēlaties kaut ko piebilst, vienkārši atbildiet uz šo vēstuli — tā nonāk tieši pie mums.",
         IntroSubjectTpl:               "Klientu pieprasījumi no Ruumly — {company}",
         IntroGreeting:                 "Sveiki!",
         IntroOpening:                  "Rakstām no Ruumly, jo jūsu uzņēmums sniedz pakalpojumu, ko meklē mūsu klienti.",
@@ -1330,6 +1370,12 @@ public static class EmailTranslations
         AckReply:                      "Jei kas nors pasikeis — data, kiekis, adresas — tiesiog atsakykite į šį laišką. Jis ateis tiesiai pas mus.",
         AckContactTpl:                 "Taip pat galite parašyti mums čia: {url}",
         AckSignature:                  "Su geriausiais linkėjimais\nRuumly komanda\ninfo@ruumly.eu",
+        ContactAckSubject:             "Jūsų žinutę gavome — Ruumly",
+        ContactAckReceived:            "Ačiū, kad parašėte. Jūsų žinutė mus pasiekė — ją perskaitys tikras žmogus ir jums asmeniškai atsakys.",
+        ContactAckSummaryHeading:      "Ką mums parašėte:",
+        ContactAckLabelSubject:        "Tema",
+        ContactAckLabelMessage:        "Žinutė",
+        ContactAckReply:               "Jei norite ką nors pridurti, tiesiog atsakykite į šį laišką — jis ateis tiesiai pas mus.",
         IntroSubjectTpl:               "Klientų užklausos iš Ruumly — {company}",
         IntroGreeting:                 "Sveiki!",
         IntroOpening:                  "Rašome iš Ruumly, nes jūsų įmonė teikia paslaugą, kurios ieško mūsų klientai.",

@@ -65,13 +65,17 @@ public class SupportController(
     private const int MaxAutoFanOutPerEmailPerDay = 5;
 
     /// <summary>
-    /// Public contact form. Emails the team the visitor's message.
-    /// Delivery is queued so transient provider failures are retried without
-    /// delaying or failing the visitor's request.
+    /// Public contact form. Emails the team the visitor's message, and the
+    /// visitor a receipt. Delivery is queued so transient provider failures are
+    /// retried without delaying or failing the visitor's request.
+    ///
+    /// Rate limit "public-email" rather than "auth": since the receipt exists,
+    /// this endpoint sends mail to an address nobody has verified, which is
+    /// exactly what that (tighter) bucket is for.
     /// </summary>
     [HttpPost("contact")]
     [AllowAnonymous]
-    [EnableRateLimiting("auth")]
+    [EnableRateLimiting("public-email")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Contact([FromBody] ContactRequest req)
@@ -91,12 +95,50 @@ public class SupportController(
         if (string.IsNullOrWhiteSpace(teamEmail))
             teamEmail = "info@ruumly.eu";
 
-        var lang = string.IsNullOrWhiteSpace(req.Language) ? "et" : req.Language;
+        var lang   = string.IsNullOrWhiteSpace(req.Language) ? "et" : req.Language;
+        var sender = req.Email.Trim();
 
         emailQueue.EnqueueEmail(
             to:       teamEmail,
             subject:  $"[Ruumly contact] {req.Subject}",
-            textBody: $"From: {req.Name} <{req.Email}>\nLang: {lang}\n\n{req.Message}\n\n— Reply directly to {req.Email}");
+            textBody: $"From: {req.Name} <{sender}>\nLang: {lang}\n\n{req.Message}\n\n— Reply directly to {sender}",
+            htmlBody: null,
+            // Every Ruumly mail is FROM noreply@, so pressing Reply on this one
+            // used to compose a message to a mailbox nobody reads — which is why
+            // the body has to end by telling a human to copy the address out by
+            // hand. With the header set, Reply reaches the person who wrote in,
+            // and answering is one keystroke instead of a copy-paste. The line
+            // stays for the clients that hide Reply-To.
+            replyTo:  sender);
+
+        // The sender's own receipt. Until 2026-08-16 they got NOTHING: the form
+        // 200'd, the success screen said thank you, and the only evidence the
+        // message existed was in our inbox. On a form with no account behind it
+        // there is then no way to tell a silent success from a silent failure —
+        // which is what a partner is checking when the message they send is the
+        // single word "test".
+        //
+        // Never allowed to fail the request: the team mail is already queued, so
+        // 500-ing here would tell someone their message was lost when it was not.
+        try
+        {
+            var ack = ContactAckComposer.Compose(lang, req.Name, req.Subject, req.Message);
+
+            emailQueue.EnqueueEmail(
+                to:       sender,
+                subject:  ack.Subject,
+                textBody: ack.TextBody,
+                htmlBody: ack.HtmlBody,
+                // The receipt invites a reply, so replies must land in the inbox
+                // a human actually reads — the same one the message went to.
+                replyTo:  teamEmail);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex,
+                "Contact acknowledgement enqueue failed for {Email} — team notified, sender NOT acknowledged.",
+                sender);
+        }
 
         return Ok(new { success = true });
     }
