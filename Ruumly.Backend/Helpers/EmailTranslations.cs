@@ -316,6 +316,22 @@ public static class EmailTranslations
         // "Didn't ask for this? Ignore this email — nothing changes. Concerned:
         // write to {email}." A cold recipient must never be left wondering.
         string ClaimIgnoreTpl,
+        // ── "You have it" confirmation (claim_done) ───────────────────────────
+        // Sent the moment the magic link is redeemed. Before this the only mail
+        // leaving a successful claim went to OPS: the provider proved control of
+        // their inbox, edited their page, and heard nothing back at all — which
+        // is exactly why one of them went looking for the contact form to ask
+        // whether anything had happened.
+        //
+        // Its real work is ClaimDoneRequests. Customer requests are fanned out to
+        // Supplier.ContactEmail, so the address this mail arrives at IS the
+        // channel — and a provider who has never been told that has no reason to
+        // keep it current, or to watch it.
+        string ClaimDoneSubjectTpl,
+        string ClaimDoneBody,
+        string ClaimDoneCta,
+        string ClaimDoneRequests,
+        string ClaimDoneEdit,
         // ── "You already have an account" (apply_sign_in) ─────────────────────
         // Sent when the PUBLIC partner-application form is submitted with an
         // address that already has a Ruumly user. The anonymous caller proved
@@ -427,6 +443,11 @@ public static class EmailTranslations
 
         public string ClaimIgnore(string email) =>
             ClaimIgnoreTpl.Replace("{email}", email);
+
+        /// <summary>Subject of the confirmation, carrying the provider's own
+        /// company name — the same recognition signal the intro subject uses.</summary>
+        public string ClaimDoneSubject(string company) =>
+            ClaimDoneSubjectTpl.Replace("{company}", company);
 
         // ── "You already have an account" ─────────────────────────────────────
 
@@ -615,6 +636,11 @@ public static class EmailTranslations
         ClaimCta:                      "Kinnitage ja muutke profiili",
         ClaimExpiryTpl:                "Link töötab ühe korra ja aegub {hours} tunni pärast.",
         ClaimIgnoreTpl:                "Kui teie seda ei küsinud, jätke see kiri tähelepanuta — midagi ei muutu. Küsimuste korral kirjutage aadressile {email}.",
+        ClaimDoneSubjectTpl:           "Ruumly — {company} profiil on nüüd teie oma",
+        ClaimDoneBody:                 "Profiili ülevõtmine on kinnitatud. Teie ettevõtte leht Ruumlys on nüüd teie hallata ja iga muudatus on avalikul lehel kohe näha.",
+        ClaimDoneCta:                  "Vaadake oma lehte",
+        ClaimDoneRequests:             "Kui klient otsib teie teenust teie piirkonnas, saadame päringu sellele e-posti aadressile. Vastata saab otse kirjast — kontot pole vaja.",
+        ClaimDoneEdit:                 "Andmete muutmiseks avage oma leht ja küsige uus link. Saadame selle profiilil olevale kontaktaadressile, nii et hoidke see aadress ajakohasena — kliendipäringud lähevad just sinna.",
         ApplySignInSubject:            "Ruumly — teie e-posti aadressiga esitati partneriavaldus",
         ApplySignInGreeting:           "Tere,",
         ApplySignInBody:
@@ -814,6 +840,11 @@ public static class EmailTranslations
         ClaimCta:                      "Confirm and edit my profile",
         ClaimExpiryTpl:                "The link works once and expires in {hours} hours.",
         ClaimIgnoreTpl:                "If you didn't ask for this, ignore this email — nothing changes. Any concerns, write to {email}.",
+        ClaimDoneSubjectTpl:           "Ruumly — the {company} profile is yours",
+        ClaimDoneBody:                 "Your claim is confirmed. Your company's page on Ruumly is yours to manage, and every change you make shows on the public page straight away.",
+        ClaimDoneCta:                  "See your page",
+        ClaimDoneRequests:             "When a customer looks for your service in your area, we send the request to this email address. You can answer straight from that email — no account needed.",
+        ClaimDoneEdit:                 "To change your details later, open your page and ask for a new link. We send it to the contact address on the profile, so keep that address current — customer requests go to exactly that inbox.",
         ApplySignInSubject:            "Ruumly — a partner application used your email address",
         ApplySignInGreeting:           "Hello,",
         ApplySignInBody:
@@ -1013,6 +1044,11 @@ public static class EmailTranslations
         ClaimCta:                      "Подтвердить и изменить профиль",
         ClaimExpiryTpl:                "Ссылка одноразовая и действительна {hours} ч.",
         ClaimIgnoreTpl:                "Если вы этого не запрашивали, просто проигнорируйте письмо — ничего не изменится. Если есть вопросы, напишите на {email}.",
+        ClaimDoneSubjectTpl:           "Ruumly — профиль {company} теперь ваш",
+        ClaimDoneBody:                 "Передача профиля подтверждена. Страница вашей компании в Ruumly теперь под вашим управлением, и каждое изменение сразу видно на публичной странице.",
+        ClaimDoneCta:                  "Посмотреть свою страницу",
+        ClaimDoneRequests:             "Когда клиент ищет вашу услугу в вашем районе, мы отправляем заявку на этот адрес электронной почты. Ответить можно прямо из письма — аккаунт не нужен.",
+        ClaimDoneEdit:                 "Чтобы изменить данные позже, откройте свою страницу и запросите новую ссылку. Мы отправим её на контактный адрес из профиля, поэтому держите его актуальным — заявки клиентов приходят именно туда.",
         ApplySignInSubject:            "Ruumly — с вашим адресом подана заявка партнёра",
         ApplySignInGreeting:           "Здравствуйте,",
         ApplySignInBody:
@@ -1212,6 +1248,11 @@ public static class EmailTranslations
         ClaimCta:                      "Apstiprināt un rediģēt manu profilu",
         ClaimExpiryTpl:                "Saite darbojas vienu reizi un ir derīga {hours} stundas.",
         ClaimIgnoreTpl:                "Ja jūs to nelūdzāt, vienkārši ignorējiet šo e-pastu — nekas nemainīsies. Ja rodas jautājumi, rakstiet uz {email}.",
+        ClaimDoneSubjectTpl:           "Ruumly — {company} profils tagad ir jūsu",
+        ClaimDoneBody:                 "Profila pārņemšana ir apstiprināta. Jūsu uzņēmuma lapa Ruumly tagad ir jūsu pārvaldībā, un katra izmaiņa uzreiz parādās publiskajā lapā.",
+        ClaimDoneCta:                  "Apskatiet savu lapu",
+        ClaimDoneRequests:             "Kad klients meklē jūsu pakalpojumu jūsu apkaimē, mēs nosūtām pieprasījumu uz šo e-pasta adresi. Atbildēt var tieši no vēstules — konts nav vajadzīgs.",
+        ClaimDoneEdit:                 "Lai vēlāk mainītu datus, atveriet savu lapu un palūdziet jaunu saiti. Mēs to nosūtīsim uz profilā norādīto kontaktadresi, tāpēc uzturiet to aktuālu — klientu pieprasījumi nonāk tieši tur.",
         ApplySignInSubject:            "Ruumly — ar jūsu e-pasta adresi iesniegts partnera pieteikums",
         ApplySignInGreeting:           "Sveiki,",
         ApplySignInBody:
@@ -1411,6 +1452,11 @@ public static class EmailTranslations
         ClaimCta:                      "Patvirtinti ir redaguoti mano profilį",
         ClaimExpiryTpl:                "Nuoroda veikia vieną kartą ir galioja {hours} val.",
         ClaimIgnoreTpl:                "Jei to neprašėte, tiesiog nepaisykite šio laiško — niekas nepasikeis. Jei kyla klausimų, rašykite adresu {email}.",
+        ClaimDoneSubjectTpl:           "Ruumly — {company} profilis dabar jūsų",
+        ClaimDoneBody:                 "Profilio perėmimas patvirtintas. Jūsų įmonės puslapis Ruumly dabar yra jūsų valdomas, o kiekvienas pakeitimas iškart matomas viešame puslapyje.",
+        ClaimDoneCta:                  "Peržiūrėkite savo puslapį",
+        ClaimDoneRequests:             "Kai klientas ieško jūsų paslaugos jūsų rajone, užklausą siunčiame šiuo el. pašto adresu. Atsakyti galite tiesiai iš laiško — paskyros nereikia.",
+        ClaimDoneEdit:                 "Norėdami vėliau pakeisti duomenis, atidarykite savo puslapį ir paprašykite naujos nuorodos. Ją atsiųsime profilyje nurodytu kontaktiniu adresu, todėl laikykite jį aktualų — klientų užklausos ateina būtent ten.",
         ApplySignInSubject:            "Ruumly — su jūsų el. pašto adresu pateikta partnerio paraiška",
         ApplySignInGreeting:           "Sveiki,",
         ApplySignInBody:

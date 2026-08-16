@@ -276,6 +276,41 @@ public partial class ClaimController(
             $"Claimed at: {now:u}\n\n" +
             "They can now edit their own name, contact details, address, services and description.");
 
+        // The provider's own confirmation. Until 2026-08-16 the mail above was
+        // the ONLY thing a successful claim produced — the business proved
+        // control of its inbox and heard nothing back, so the one message
+        // telling them what they now have, and that customer requests will
+        // arrive at this very address, was never written.
+        //
+        // Sent to the address the magic link went to (claim.RequestedEmail),
+        // never to Supplier.ContactEmail: for a token to exist at all the two
+        // were equal ignoring case, and the claimant's session may rewrite the
+        // stored one moments from now. Only the proved mailbox may be mailed.
+        //
+        // Wrapped whole: the claim is already committed and the session token
+        // below is the credential the edit form needs. A mail failure must never
+        // turn a successful redemption into an error page telling the provider
+        // their link did not work.
+        try
+        {
+            var message = ClaimConfirmedComposer.Compose(
+                claim.Language,
+                supplier.Name,
+                ClaimConfirmedComposer.ProfileUrl(config["AppUrl"], claim.Language, supplier.Slug!),
+                FrontendUrl.Contact(config["AppUrl"], claim.Language));
+
+            emailQueue.EnqueueEmail(
+                claim.RequestedEmail, message.Subject, message.TextBody, message.HtmlBody,
+                // The mail invites questions; replies have to reach a human.
+                opsInbox);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex,
+                "Claim confirmation enqueue failed for supplier {SupplierId} ({Slug}) — " +
+                "profile IS claimed, provider not told.", supplier.Id, supplier.Slug);
+        }
+
         return Ok(new ClaimSessionDto(
             SessionToken: sessionToken,
             ExpiresAt:    claim.SessionExpiresAt!.Value,

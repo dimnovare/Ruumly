@@ -28,11 +28,11 @@ public class SupplierClaimTests
 {
     private sealed class CapturingEmailQueue : IBackgroundEmailQueue
     {
-        public List<(string To, string Subject, string TextBody, string? HtmlBody)> Emails { get; } = [];
+        public List<(string To, string Subject, string TextBody, string? HtmlBody, string? ReplyTo)> Emails { get; } = [];
         public void EnqueueEmail(string to, string subject, string textBody, string? htmlBody = null)
-            => Emails.Add((to, subject, textBody, htmlBody));
+            => Emails.Add((to, subject, textBody, htmlBody, null));
         public void EnqueueEmail(string to, string subject, string textBody, string? htmlBody, string? replyTo)
-            => Emails.Add((to, subject, textBody, htmlBody));
+            => Emails.Add((to, subject, textBody, htmlBody, replyTo));
         public void EnqueueVerificationEmail(Guid userId) { }
     }
 
@@ -182,7 +182,7 @@ public class SupplierClaimTests
         return raw;
     }
 
-    private static List<(string To, string Subject, string TextBody, string? HtmlBody)> Sent(
+    private static List<(string To, string Subject, string TextBody, string? HtmlBody, string? ReplyTo)> Sent(
         IBackgroundEmailQueue queue) => ((CapturingEmailQueue)queue).Emails;
 
     // ─── What an unverified visitor may learn ─────────────────────────────────
@@ -406,6 +406,108 @@ public class SupplierClaimTests
         // The uptake metric measures FIRST response — a returning owner must not
         // reset it.
         db.Suppliers.Single(s => s.Id == supplier.Id).ClaimedAt.Should().Be(firstClaimedAt);
+    }
+
+    // ─── What the PROVIDER hears back ─────────────────────────────────────────
+    //
+    // Until 2026-08-16 a successful claim produced one email and it went to ops.
+    // The business proved control of its inbox and heard nothing — which is why
+    // one of them went looking for the contact form afterwards to send the word
+    // "test".
+
+    [Fact]
+    public async Task Verify_TellsTheProviderTheProfileIsTheirs()
+    {
+        var db       = TestDbContext.Create();
+        var supplier = MakeDirectorySupplier(db);
+        var queue    = new CapturingEmailQueue();
+
+        await ClaimAsync(db, supplier, queue);
+
+        var confirmation = Sent(queue).Single(
+            e => e.Subject == EmailTranslations.For("et").ClaimDoneSubject("Kolimisabi OÜ"));
+        confirmation.To.Should().Be("info@kolimisabi.ee");
+        confirmation.TextBody.Should().Contain("https://ruumly.eu/et/partner/kolimisabi");
+        confirmation.HtmlBody.Should().NotBeNullOrWhiteSpace();
+        // Questions about a profile go to a human, not to noreply@.
+        confirmation.ReplyTo.Should().Be(OpsInbox.Fallback);
+    }
+
+    [Fact]
+    public async Task Verify_TellsThemWhereCustomerRequestsWillArrive()
+    {
+        // The line this whole email exists for. Auto-fanout mails
+        // Supplier.ContactEmail, so the mailbox the confirmation lands in IS the
+        // channel — a provider never told that has no reason to keep it current
+        // or to watch it, and the cold request months later reads as spam.
+        var db       = TestDbContext.Create();
+        var supplier = MakeDirectorySupplier(db);
+        var queue    = new CapturingEmailQueue();
+
+        await ClaimAsync(db, supplier, queue);
+
+        var t = EmailTranslations.For("et");
+        Sent(queue).Single(e => e.Subject == t.ClaimDoneSubject("Kolimisabi OÜ"))
+            .TextBody.Should().Contain(t.ClaimDoneRequests).And.Contain(t.ClaimDoneEdit);
+    }
+
+    [Fact]
+    public async Task Verify_ConfirmsInTheProvidersOwnLanguage()
+    {
+        var db      = TestDbContext.Create();
+        var latvian = MakeDirectorySupplier(
+            db, "Pārvākšanās SIA", "parvaksanas", "info@parvaksanas.lv", country: "LV");
+        var queue   = new CapturingEmailQueue();
+
+        await ClaimAsync(db, latvian, queue);
+
+        var t = EmailTranslations.For("lv");
+        var confirmation = Sent(queue).Single(e => e.Subject == t.ClaimDoneSubject("Pārvākšanās SIA"));
+        confirmation.TextBody.Should().Contain("https://ruumly.eu/lv/partner/parvaksanas");
+        // Diacritics must survive as characters, not as numeric entities — this
+        // is a business reading its OWN name.
+        confirmation.Subject.Should().Contain("Pārvākšanās");
+        confirmation.HtmlBody.Should().Contain(t.ClaimDoneBody);
+    }
+
+    [Fact]
+    public async Task Verify_ConfirmationGoesToTheProvedMailbox_WhateverCaseWasTyped()
+    {
+        var db       = TestDbContext.Create();
+        var supplier = MakeDirectorySupplier(db);
+        var queue    = new CapturingEmailQueue();
+
+        await MakeController(db, queue).RequestLink(
+            supplier.Slug!, new ClaimRequestLinkRequest("INFO@Kolimisabi.EE"), default);
+        var raw = RawTokenFor(db.SupplierClaims.Single(c => c.TokenHash != null), queue);
+
+        await MakeController(db, queue).Verify(new ClaimVerifyRequest(raw), default);
+
+        // Only the address the link was actually delivered to is ever mailed.
+        Sent(queue)
+            .Single(e => e.Subject == EmailTranslations.For("et").ClaimDoneSubject("Kolimisabi OÜ"))
+            .To.Should().Be("info@kolimisabi.ee");
+    }
+
+    [Fact]
+    public async Task Verify_SendsNoConfirmationWhenTheLinkIsDead()
+    {
+        var db       = TestDbContext.Create();
+        var supplier = MakeDirectorySupplier(db);
+        var queue    = new CapturingEmailQueue();
+
+        await MakeController(db, queue)
+            .RequestLink(supplier.Slug!, new ClaimRequestLinkRequest(supplier.ContactEmail), default);
+        var claim = db.SupplierClaims.Single();
+        var raw   = RawTokenFor(claim, queue);
+
+        claim.TokenExpiresAt = DateTime.UtcNow.AddMinutes(-1);
+        db.SaveChanges();
+
+        (await MakeController(db, queue).Verify(new ClaimVerifyRequest(raw), default))
+            .Should().BeOfType<NotFoundObjectResult>();
+        Sent(queue).Should().NotContain(
+            e => e.Subject == EmailTranslations.For("et").ClaimDoneSubject("Kolimisabi OÜ"));
     }
 
     // ─── Claim → provider account ─────────────────────────────────────────────
