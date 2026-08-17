@@ -83,19 +83,41 @@ public static class LeadPhotoNormalizer
     }
 
     /// <summary>
-    /// Exactly the shape <see cref="LeadPhotoController"/> mints:
-    /// <c>lead-photos/</c> + 32 lowercase hex + <c>.jpg</c>. No traversal, no
-    /// separators, no alternative extension.
+    /// Exactly the shape the upload path mints, and nothing else.
+    ///
+    /// The stored key is NOT simply the filename we asked for: the R2 service
+    /// prepends its own <c>yyyy/MM/</c> partition to every object, so what comes
+    /// back is <c>2026/08/lead-photos/{32 hex}.jpg</c>. An earlier version of
+    /// this check anchored on the prefix at position zero and therefore rejected
+    /// every real upload — photos would have been stored successfully and then
+    /// silently dropped when attaching them to the lead. Caught against
+    /// production, which is the only place the partition shows up.
+    ///
+    /// So: an OPTIONAL leading <c>yyyy/MM/</c>, then the fixed segment, then 32
+    /// lowercase hex and <c>.jpg</c>. Everything is still pinned — no traversal,
+    /// no extra segments, no alternative extension — and the local-disk service,
+    /// which does not partition, keeps working.
     /// </summary>
     private static bool IsIssuedKey(string key)
     {
         const int hexLength = 32;
         const string suffix = ".jpg";
 
-        if (!key.StartsWith(KeyPrefix, StringComparison.Ordinal)) return false;
-        if (!key.EndsWith(suffix, StringComparison.Ordinal)) return false;
+        var rest = key;
 
-        var name = key[KeyPrefix.Length..^suffix.Length];
+        // Optional yyyy/MM/ partition, matched strictly rather than skipped.
+        var firstSlash = rest.IndexOf('/');
+        if (firstSlash == 4 && rest.Length > 8
+            && rest[5..7].All(char.IsAsciiDigit) && rest[..4].All(char.IsAsciiDigit)
+            && rest[7] == '/')
+        {
+            rest = rest[8..];
+        }
+
+        if (!rest.StartsWith(KeyPrefix, StringComparison.Ordinal)) return false;
+        if (!rest.EndsWith(suffix, StringComparison.Ordinal)) return false;
+
+        var name = rest[KeyPrefix.Length..^suffix.Length];
         if (name.Length != hexLength) return false;
 
         foreach (var ch in name)
