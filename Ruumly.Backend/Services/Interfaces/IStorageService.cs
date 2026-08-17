@@ -36,6 +36,9 @@ public interface IStorageService
 
     /// <summary>Download bytes of a private-bucket object by key. Null if absent.</summary>
     Task<byte[]?> DownloadPrivateAsync(string key);
+
+    /// <summary>Delete a private-bucket object by key. No-op when it does not exist.</summary>
+    Task DeletePrivateAsync(string key);
 }
 
 /// <summary>A stored object: its stable storage key and its public URL.</summary>

@@ -63,6 +63,14 @@ public class LocalDiskStorageService(
         return key;
     }
 
+    /// <summary>Delete a private object by key. Missing is success — the sweep re-runs.</summary>
+    public Task DeletePrivateAsync(string key)
+    {
+        var fullPath = Path.Combine(BasePath, key.Replace('/', Path.DirectorySeparatorChar));
+        if (File.Exists(fullPath)) File.Delete(fullPath);
+        return Task.CompletedTask;
+    }
+
     public Task<byte[]?> DownloadPrivateAsync(string key)
     {
         var fullPath = Path.Combine(BasePath, key.Replace('/', Path.DirectorySeparatorChar));

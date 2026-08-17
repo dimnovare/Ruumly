@@ -46,6 +46,7 @@ public class QuoteSubmitNpgsqlTests(PostgresIntegrationFixture pg)
                 new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(),
                 Microsoft.Extensions.Logging.Abstractions.NullLogger<
                     Ruumly.Backend.Services.Implementations.OfferAutoSendService>.Instance),
+            new TestServices.NoStorage(),
             Microsoft.Extensions.Logging.Abstractions.NullLogger<QuoteController>.Instance)
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },

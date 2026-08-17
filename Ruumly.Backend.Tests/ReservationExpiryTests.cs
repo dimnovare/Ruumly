@@ -63,7 +63,7 @@ public class ReservationExpiryTests
         await db.SaveChangesAsync();
 
         var service = new BackgroundCleanupService(
-            db, email, config,
+            db, email, config, new TestServices.NoStorage(),
             NullLogger<BackgroundCleanupService>.Instance);
 
         // Act
@@ -119,7 +119,7 @@ public class ReservationExpiryTests
         await db.SaveChangesAsync();
 
         var service = new BackgroundCleanupService(
-            db, email, config,
+            db, email, config, new TestServices.NoStorage(),
             NullLogger<BackgroundCleanupService>.Instance);
 
         // Act

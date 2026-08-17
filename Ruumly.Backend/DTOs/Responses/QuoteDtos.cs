@@ -8,7 +8,14 @@ public sealed record PublicQuoteProviderDto(string Name);
 /// (name/email/phone) — only the structured ask the customer submitted.
 /// </summary>
 public sealed record PublicQuoteLeadDto(
-    string Category, string City, string? ToCity, DateTime? NeedDate, string? Details);
+    string Category, string City, string? ToCity, DateTime? NeedDate, string? Details,
+    /// <summary>
+    /// How many photos the customer attached. The page renders that many
+    /// &lt;img&gt; tags pointed at /api/quote/{token}/photos/{index} — indexes,
+    /// never storage keys, so the private-bucket layout is not published to
+    /// anyone holding a quote token.
+    /// </summary>
+    int PhotoCount = 0);
 
 /// <summary>The provider's already-submitted quote (prefill for "update your quote").</summary>
 public sealed record PublicQuoteExistingDto(

@@ -60,4 +60,25 @@ public class DemandLead
     /// query string.
     /// </summary>
     [MaxLength(300)]  public string? Attribution { get; set; }
+
+    /// <summary>
+    /// Private-bucket storage keys for photos the customer attached, as a JSON
+    /// array. Empty/null for the overwhelming majority of requests.
+    ///
+    /// Exists because a provider refused to quote without them: Adduco replied
+    /// to a real Haapsalu move with "selle info pealt adekvaatset pakkumist
+    /// paraku ei saa teha" and asked for pictures, costing a full round trip on
+    /// a job the customer needed that same week. For bulky or awkward loads a
+    /// photo is not decoration — it is the difference between a price and a
+    /// guess.
+    ///
+    /// KEYS, never URLs. These objects live in the PRIVATE bucket and have no
+    /// public address: they are streamed back only through an endpoint that
+    /// checks a credential, because they are pictures of somebody's home.
+    ///
+    /// Retention is 30 days (LeadPhotoRetentionDays), enforced by a daily purge.
+    /// That covers the whole concierge loop with room for a slow provider, and
+    /// nothing beyond it — see BackgroundCleanupService.CleanupLeadPhotosAsync.
+    /// </summary>
+    public string? PhotoKeysJson { get; set; }
 }

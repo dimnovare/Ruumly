@@ -72,5 +72,11 @@ public record ConciergeRequest(
     /// marker on the lead's Query — see ServiceCategories.DateFlexibleMarker for
     /// why the distinction matters to the provider email.
     /// </summary>
-    bool? DateFlexible = null
+    bool? DateFlexible = null,
+    /// <summary>
+    /// Private-bucket keys returned by POST /api/leads/photos. Validated
+    /// server-side before storage — a caller must not be able to point a lead
+    /// at an arbitrary object. See DemandLead.PhotoKeysJson.
+    /// </summary>
+    List<string>? PhotoKeys = null
 );
