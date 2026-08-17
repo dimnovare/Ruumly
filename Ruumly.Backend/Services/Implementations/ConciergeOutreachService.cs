@@ -282,6 +282,12 @@ public sealed class ConciergeOutreachService(
         // because each service now has its own ladder: step 0 of a storage +
         // moving request searches 15 km for the storage and 25 km for the
         // movers, simultaneously and correctly.
+        // Whether ANY search managed to derive a geographic anchor. When none did,
+        // the customer's city matched no provider row at all — a different
+        // failure from "nobody is near enough", and the one the ops alert used to
+        // misreport. See AutoOutreachSummary.Describe, case "city_unresolved".
+        var anchorResolved = false;
+
         for (var step = 0; step < AutoRadiusSteps; step++)
         {
             searchedKm = MaxRadiusAt(anchors, step);
@@ -298,6 +304,7 @@ public sealed class ConciergeOutreachService(
                         Query: null, AllEstonia: false, AllCategories: false,
                         RadiusKm: RadiusFor(anchor.Category, step), Limit: 50),
                     ct);
+                if (matches.Anchor is not null) anchorResolved = true;
                 ranked.Add(matches.Items);
             }
 
@@ -345,7 +352,14 @@ public sealed class ConciergeOutreachService(
         }
 
         if (picked.Count == 0)
-            return AutoOutreachSummary.Skipped("no_candidates", noEmail, searchedKm);
+            return anchorResolved
+                ? AutoOutreachSummary.Skipped("no_candidates", noEmail, searchedKm)
+                // Nothing matched the city, so the radius was never the constraint.
+                // Report the string that failed — it is what the operator has to fix.
+                : AutoOutreachSummary.Skipped(
+                    "city_unresolved", noEmail, searchedKm,
+                    string.Join(" → ", new[] { lead.City, lead.ToCity }
+                        .Where(c => !string.IsNullOrWhiteSpace(c))));
 
         var result = await SendAsync(lead, picked, resend: false, actor: AutoActor, ct);
         if (result.SerializationConflict)

@@ -65,5 +65,12 @@ public record ConciergeRequest(
     /// does not send this field must keep working exactly as before — treating
     /// its silence as bot-like would quietly stop fanning out real requests.
     /// </summary>
-    long? ElapsedMs = null
+    long? ElapsedMs = null,
+    /// <summary>
+    /// The visitor explicitly answered "my date is flexible" instead of naming a
+    /// day. Only meaningful when <c>NeedDate</c> is absent, and recorded as a
+    /// marker on the lead's Query — see ServiceCategories.DateFlexibleMarker for
+    /// why the distinction matters to the provider email.
+    /// </summary>
+    bool? DateFlexible = null
 );

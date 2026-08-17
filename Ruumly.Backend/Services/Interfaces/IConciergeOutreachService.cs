@@ -39,11 +39,16 @@ public sealed record AutoOutreachSummary(
     int SkippedNoEmail,
     double RadiusKm,
     string? SkipReason,
-    IReadOnlyList<string> Providers)
+    IReadOnlyList<string> Providers,
+    /// <summary>
+    /// Extra fact the ops line needs — currently the unresolvable city on a
+    /// <c>city_unresolved</c> skip. Never shown to a provider or a customer.
+    /// </summary>
+    string? Context = null)
 {
     public static AutoOutreachSummary Skipped(
-        string reason, int skippedNoEmail = 0, double radiusKm = 0) =>
-        new(0, skippedNoEmail, radiusKm, reason, []);
+        string reason, int skippedNoEmail = 0, double radiusKm = 0, string? context = null) =>
+        new(0, skippedNoEmail, radiusKm, reason, [], context);
 
     /// <summary>The fan-out line for the ops alert (English — ops-facing).</summary>
     public string Describe() => SkipReason switch
@@ -59,6 +64,21 @@ public sealed record AutoOutreachSummary(
         "no_candidates" =>
             $"Auto-outreach: no reachable provider within {RadiusKm:0} km"
             + NoEmailSuffix() + " — contact providers manually.",
+        // The most misleading line this alert ever produced. When the customer's
+        // city matches no provider row, ProviderCandidateFinder cannot derive a
+        // geographic anchor, and with no anchor the nearby search keeps nothing —
+        // so widening 25 → 50 → 100 km is futile, every pass re-deriving the same
+        // null anchor. It reported that as "no reachable provider within 100 km",
+        // which reads as a SUPPLY problem and sends the operator off to recruit
+        // partners. On 2026-08-17 the real cause was a customer typing
+        // "Haapsalu Lihula mnt 10" into the city field while 34 movers sat within
+        // range of Haapsalu. Fixing the string takes ten seconds; recruiting a
+        // provider takes a week. The alert has to tell them apart.
+        "city_unresolved" =>
+            $"Auto-outreach: the city \"{Context}\" matches no provider location, so no "
+            + "geographic search was possible — this is very likely a typo or a street "
+            + "address in the city field, NOT missing supply. Fix the city on the lead "
+            + "(admin → Edit request), then send outreach from Stage 1.",
         "conflict" =>
             "Auto-outreach: skipped — a concurrent outreach was already in flight. "
             + "Check the lead's outreach history.",

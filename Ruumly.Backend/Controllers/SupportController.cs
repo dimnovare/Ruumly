@@ -283,6 +283,10 @@ public class SupportController(
         var categorySummary = validCategories.Count > 0 ? string.Join('+', validCategories) : "any";
         if (packingRequested)   categorySummary += $" {ServiceCategories.PackingAddOnMarker}";
         if (insuranceRequested) categorySummary += $" {ServiceCategories.InsuranceAskedMarker}";
+        // "My date is flexible" is an ANSWER, not a blank. Recorded only when no
+        // date was given, since a named date makes the question moot.
+        if (req.DateFlexible == true && req.NeedDate is null)
+            categorySummary += $" {ServiceCategories.DateFlexibleMarker}";
 
         var parts = new List<string>
         {
