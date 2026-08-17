@@ -70,8 +70,15 @@ public static class ProviderOutreachComposer
         // "—" tells a provider nothing and reads as a broken template. An absent
         // date/details becomes a real instruction instead ("as soon as possible —
         // we'll confirm it" / "not specified — we'll check with the customer").
-        var date     = lead.NeedDate?.ToString("yyyy-MM-dd");
-        var dateText = date ?? t.OutreachDateAsap;
+        var date = lead.NeedDate?.ToString("yyyy-MM-dd");
+        // Three distinct states, not two. A named day; an explicit "any day suits
+        // me", which a provider can quote against; and silence, which they cannot.
+        // The middle one used to be reported as the third, telling a provider the
+        // customer had not answered a question they had in fact answered.
+        var dateText = date
+            ?? (ServiceCategories.HasFlexibleDate(lead.Query)
+                ? t.OutreachDateFlexible
+                : t.OutreachDateAsap);
         var details  = string.IsNullOrWhiteSpace(lead.Details)
             ? t.OutreachDetailsMissing
             : lead.Details.Trim();

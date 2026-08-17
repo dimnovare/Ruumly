@@ -120,6 +120,19 @@ public static class ServiceCategories
     public const string InsuranceAskedMarker = "+insurance-asked";
 
     /// <summary>
+    /// Appended when the visitor explicitly answered "my date is flexible"
+    /// rather than leaving the date blank.
+    ///
+    /// Those are different facts and were indistinguishable: the funnel requires
+    /// a date for moving/trailer/van/cleaning and offers "flexible" as the
+    /// escape, but the answer was collected in the browser and never sent. So a
+    /// provider was told the customer "did not specify a date, we will confirm
+    /// it" when the customer had in fact answered the question — and ops could
+    /// not tell a considered "any day suits me" from an abandoned field.
+    /// </summary>
+    public const string DateFlexibleMarker = "+date-flexible";
+
+    /// <summary>
     /// True when this lead's Query carries the packing add-on marker in the
     /// segment the intake actually wrote.
     ///
@@ -130,7 +143,21 @@ public static class ServiceCategories
     /// the search to the leading category segment means a visitor cannot type
     /// "+packing-addon" into a free-text field and inject a line into provider mail.
     /// </summary>
-    public static bool HasPackingAddOn(string? query)
+    public static bool HasPackingAddOn(string? query) =>
+        HasMarker(query, PackingAddOnMarker);
+
+    /// <summary>
+    /// True when the visitor explicitly said their date is flexible, as opposed
+    /// to simply not answering. Same strictness as <see cref="HasPackingAddOn"/>.
+    /// </summary>
+    public static bool HasFlexibleDate(string? query) =>
+        HasMarker(query, DateFlexibleMarker);
+
+    /// <summary>
+    /// Whether the intake wrote <paramref name="marker"/> into the leading
+    /// category segment of a concierge Query.
+    /// </summary>
+    private static bool HasMarker(string? query, string marker)
     {
         if (string.IsNullOrEmpty(query) ||
             !query.StartsWith(ConciergeQueryPrefix, StringComparison.Ordinal))
@@ -140,7 +167,7 @@ public static class ServiceCategories
         var separator = head.IndexOf(" | ", StringComparison.Ordinal);
         if (separator >= 0) head = head[..separator];
 
-        return head.Contains(PackingAddOnMarker, StringComparison.Ordinal);
+        return head.Contains(marker, StringComparison.Ordinal);
     }
 
     /// <summary>

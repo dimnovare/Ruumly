@@ -139,6 +139,9 @@ public static class EmailTranslations
         // Shown INSTEAD of a bare "—" when the customer gave no date / no
         // details: a provider must never be asked to price a dash.
         string OutreachDateAsap,
+        // The visitor explicitly said any day suits them — a fact a provider can
+        // quote against, unlike the silence OutreachDateAsap covers.
+        string OutreachDateFlexible,
         string OutreachDetailsMissing,
         // Packing add-on. A "packing" request is routed to a Moving lead, so the
         // lead's Category cannot carry the ask; ProviderOutreachComposer recovers
@@ -536,6 +539,7 @@ public static class EmailTranslations
         OutreachLabelDate:             "Soovitud aeg",
         OutreachLabelDetails:          "Lisainfo",
         OutreachDateAsap:              "esimesel võimalusel — klient kuupäeva ei märkinud, täpsustame selle üle",
+        OutreachDateFlexible:          "klient on kuupäevaga paindlik — pakkuge teile sobiv aeg",
         OutreachDetailsMissing:        "klient ei täpsustanud — küsime tema käest üle",
         OutreachPackingAddOn:          "Klient soovib lisaks pakkimisabi — palun arvestage see oma hinna sisse.",
         OutreachUrgentBadge:           "KIIRE",
@@ -729,6 +733,7 @@ public static class EmailTranslations
         OutreachLabelDate:             "Preferred date",
         OutreachLabelDetails:          "Details",
         OutreachDateAsap:              "as soon as possible — the customer gave no date, we'll confirm it",
+        OutreachDateFlexible:          "the customer is flexible on the date — propose a day that suits you",
         OutreachDetailsMissing:        "not specified — we'll check with the customer",
         OutreachPackingAddOn:          "The customer also wants packing help — please include it in your price.",
         OutreachUrgentBadge:           "URGENT",
@@ -922,6 +927,7 @@ public static class EmailTranslations
         OutreachLabelDate:             "Желаемая дата",
         OutreachLabelDetails:          "Детали",
         OutreachDateAsap:              "как можно скорее — клиент не указал дату, мы её уточним",
+        OutreachDateFlexible:          "клиент гибок по дате — предложите удобный вам день",
         OutreachDetailsMissing:        "клиент не указал — мы уточним у него",
         OutreachPackingAddOn:          "Клиент также хочет помощь с упаковкой — пожалуйста, включите её в свою цену.",
         OutreachUrgentBadge:           "СРОЧНО",
@@ -1115,6 +1121,7 @@ public static class EmailTranslations
         OutreachLabelDate:             "Vēlamais datums",
         OutreachLabelDetails:          "Detaļas",
         OutreachDateAsap:              "pēc iespējas ātrāk — klients nenorādīja datumu, mēs to precizēsim",
+        OutreachDateFlexible:          "klients ir elastīgs ar datumu — piedāvājiet jums ērtu dienu",
         OutreachDetailsMissing:        "klients nenorādīja — mēs to noskaidrosim",
         OutreachPackingAddOn:          "Klients vēlas arī palīdzību ar iepakošanu — lūdzu, iekļaujiet to savā cenā.",
         OutreachUrgentBadge:           "STEIDZAMI",
@@ -1308,6 +1315,7 @@ public static class EmailTranslations
         OutreachLabelDate:             "Pageidaujama data",
         OutreachLabelDetails:          "Detalės",
         OutreachDateAsap:              "kuo greičiau — klientas nenurodė datos, mes ją patikslinsime",
+        OutreachDateFlexible:          "klientas lankstus dėl datos — pasiūlykite jums patogią dieną",
         OutreachDetailsMissing:        "klientas nenurodė — mes pasitikslinsime",
         OutreachPackingAddOn:          "Klientas taip pat pageidauja pakavimo pagalbos — prašome įtraukti ją į savo kainą.",
         OutreachUrgentBadge:           "SKUBU",
