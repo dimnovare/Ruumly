@@ -120,6 +120,35 @@ public class LeadPhotoTests
         LeadPhotoNormalizer.KeepIssuedKeys([real]).Should().ContainSingle().And.Contain(real);
     }
 
+    /// <summary>
+    /// The R2 service prepends its own yyyy/MM/ partition, so a real stored key
+    /// is "2026/08/lead-photos/{hex}.jpg" — not the filename we asked for. The
+    /// first version of the validator anchored the prefix at position zero and
+    /// rejected every genuine upload: photos stored fine and were then silently
+    /// dropped when attaching them to the lead. Caught against production,
+    /// because local disk does not partition.
+    /// </summary>
+    [Fact]
+    public void AcceptsTheDatePartitionedKeyR2ActuallyReturns()
+    {
+        var stored = $"2026/08/{LeadPhotoNormalizer.KeyPrefix}{Guid.NewGuid():N}.jpg";
+
+        LeadPhotoNormalizer.KeepIssuedKeys([stored])
+            .Should().ContainSingle().And.Contain(stored);
+    }
+
+    [Theory]
+    // The partition must be matched, not merely skipped — an arbitrary leading
+    // segment is exactly the traversal this check exists to refuse.
+    [InlineData("contracts/xx/lead-photos/00112233445566778899aabbccddeeff.jpg")]
+    [InlineData("2026/8/lead-photos/00112233445566778899aabbccddeeff.jpg")]
+    [InlineData("20268/08/lead-photos/00112233445566778899aabbccddeeff.jpg")]
+    [InlineData("2026/08/2026/08/lead-photos/00112233445566778899aabbccddeeff.jpg")]
+    public void RefusesAnythingThatOnlyLooksLikeAPartition(string forged)
+    {
+        LeadPhotoNormalizer.KeepIssuedKeys([forged]).Should().BeEmpty();
+    }
+
     [Theory]
     // The attack this exists to stop: pointing a lead at a signed contract and
     // reading it back through the quote page.
