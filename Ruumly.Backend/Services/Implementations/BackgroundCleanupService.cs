@@ -11,8 +11,73 @@ public class BackgroundCleanupService(
     RuumlyDbContext db,
     IEmailSender emailSender,
     IConfiguration config,
+    IStorageService storageService,
     ILogger<BackgroundCleanupService> logger)
 {
+    /// <summary>
+    /// How long a customer's request photos live. Long enough for the whole
+    /// concierge loop — outreach, a slow provider's quote, the customer
+    /// choosing, a follow-up — and not a day longer. They are pictures of
+    /// somebody's home; keeping them past their usefulness is the kind of thing
+    /// that is nobody's problem right up until it is.
+    /// </summary>
+    public const int LeadPhotoRetentionDays = 30;
+
+    /// <summary>
+    /// Deletes request photos older than <see cref="LeadPhotoRetentionDays"/>
+    /// from the private bucket and clears the keys off the lead.
+    ///
+    /// Also collects ORPHANS by construction: an upload that was never submitted
+    /// with a request has no lead pointing at it, so nothing here clears it —
+    /// which is why the sweep below deletes by AGE OF THE LEAD and a separate
+    /// bucket lifecycle rule should cover uploads that never became a lead at
+    /// all. See the note in LeadPhotoController: the anonymous endpoint can be
+    /// made to store bytes that are never claimed.
+    ///
+    /// The lead itself is kept. A request that went nowhere is data — the
+    /// audit trail, the metrics denominators and the "what were we missing"
+    /// question all depend on it. Only the photos expire.
+    ///
+    /// Registered as a Hangfire recurring job (daily).
+    /// </summary>
+    public async Task CleanupLeadPhotosAsync()
+    {
+        var cutoff = DateTime.UtcNow.AddDays(-LeadPhotoRetentionDays);
+        var expired = await db.DemandLeads
+            .Where(l => l.PhotoKeysJson != null && l.CreatedAt < cutoff)
+            .ToListAsync();
+        if (expired.Count == 0) return;
+
+        var storage = storageService;
+        var deleted = 0;
+
+        foreach (var lead in expired)
+        {
+            foreach (var key in LeadPhotos.Keys(lead.PhotoKeysJson))
+            {
+                try
+                {
+                    await storage.DeletePrivateAsync(key);
+                    deleted++;
+                }
+                catch (Exception ex)
+                {
+                    // A single object that will not delete must not strand every
+                    // other lead's photos behind it. Logged and skipped; the next
+                    // run tries again because the keys stay on the lead until the
+                    // whole set succeeds.
+                    logger.LogWarning(ex, "Could not delete expired lead photo {Key}.", key);
+                }
+            }
+            lead.PhotoKeysJson = null;
+        }
+
+        await db.SaveChangesAsync();
+        logger.LogInformation(
+            "Lead photo cleanup: cleared {Leads} lead(s), deleted {Objects} object(s) older than {Days} days.",
+            expired.Count, deleted, LeadPhotoRetentionDays);
+    }
+
     /// <summary>
     /// Deletes refresh tokens that are revoked or expired, provided they were
     /// created more than 7 days ago (grace period to avoid racing active sessions).

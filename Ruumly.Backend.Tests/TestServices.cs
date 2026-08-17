@@ -22,4 +22,21 @@ internal static class TestServices
         new ConciergeOutreachService(
             db, queue, config ?? new ConfigurationBuilder().Build(),
             NullLogger<ConciergeOutreachService>.Instance);
+
+    /// <summary>
+    /// Storage that stores nothing. Several controllers and the cleanup job now
+    /// take IStorageService only because of the request-photo feature; tests that
+    /// exercise anything else should not need a bucket to do it.
+    /// </summary>
+    public sealed class NoStorage : IStorageService
+    {
+        public Task<string> UploadAsync(Stream s, string f, string c) => Task.FromResult("");
+        public Task<StoredObject> UploadWithKeyAsync(Stream s, string f, string c) =>
+            Task.FromResult(new StoredObject("", ""));
+        public Task<byte[]?> DownloadAsync(string key) => Task.FromResult<byte[]?>(null);
+        public Task DeleteAsync(string publicUrl) => Task.CompletedTask;
+        public Task<string> UploadPrivateAsync(Stream s, string f, string c) => Task.FromResult("");
+        public Task<byte[]?> DownloadPrivateAsync(string key) => Task.FromResult<byte[]?>(null);
+        public Task DeletePrivateAsync(string key) => Task.CompletedTask;
+    }
 }

@@ -136,12 +136,19 @@ public static class EmailTranslations
         string OutreachLabelLocation,
         string OutreachLabelDate,
         string OutreachLabelDetails,
+        string OutreachLabelPhotos,
         // Shown INSTEAD of a bare "—" when the customer gave no date / no
         // details: a provider must never be asked to price a dash.
         string OutreachDateAsap,
         // The visitor explicitly said any day suits them — a fact a provider can
         // quote against, unlike the silence OutreachDateAsap covers.
         string OutreachDateFlexible,
+        // Photos exist for this request. The provider never receives them as
+        // attachments — they are pictures of somebody's home, served only behind
+        // the per-recipient quote token. This line is what makes the CTA worth
+        // clicking: the thing they need in order to price the job is on the
+        // other side of it.
+        string OutreachPhotosTpl,
         string OutreachDetailsMissing,
         // Packing add-on. A "packing" request is routed to a Moving lead, so the
         // lead's Category cannot carry the ask; ProviderOutreachComposer recovers
@@ -360,6 +367,10 @@ public static class EmailTranslations
             _                            => CategoryAny,
         };
 
+        /// <summary>"The customer attached N photos — view them on the quote page."</summary>
+        public string OutreachPhotos(int count) =>
+            OutreachPhotosTpl.Replace("{count}", count.ToString());
+
         public string OutreachSubject(string category, string city) =>
             OutreachSubjectTpl
                 .Replace("{category}", category)
@@ -538,8 +549,10 @@ public static class EmailTranslations
         OutreachLabelLocation:         "Asukoht",
         OutreachLabelDate:             "Soovitud aeg",
         OutreachLabelDetails:          "Lisainfo",
+        OutreachLabelPhotos:           "Pildid",
         OutreachDateAsap:              "esimesel võimalusel — klient kuupäeva ei märkinud, täpsustame selle üle",
         OutreachDateFlexible:          "klient on kuupäevaga paindlik — pakkuge teile sobiv aeg",
+        OutreachPhotosTpl:             "Klient lisas {count} pilti — need on nähtavad hinna esitamise lehel.",
         OutreachDetailsMissing:        "klient ei täpsustanud — küsime tema käest üle",
         OutreachPackingAddOn:          "Klient soovib lisaks pakkimisabi — palun arvestage see oma hinna sisse.",
         OutreachUrgentBadge:           "KIIRE",
@@ -732,8 +745,10 @@ public static class EmailTranslations
         OutreachLabelLocation:         "Location",
         OutreachLabelDate:             "Preferred date",
         OutreachLabelDetails:          "Details",
+        OutreachLabelPhotos:           "Photos",
         OutreachDateAsap:              "as soon as possible — the customer gave no date, we'll confirm it",
         OutreachDateFlexible:          "the customer is flexible on the date — propose a day that suits you",
+        OutreachPhotosTpl:             "The customer attached {count} photo(s) — you can view them on the quote page.",
         OutreachDetailsMissing:        "not specified — we'll check with the customer",
         OutreachPackingAddOn:          "The customer also wants packing help — please include it in your price.",
         OutreachUrgentBadge:           "URGENT",
@@ -926,8 +941,10 @@ public static class EmailTranslations
         OutreachLabelLocation:         "Местоположение",
         OutreachLabelDate:             "Желаемая дата",
         OutreachLabelDetails:          "Детали",
+        OutreachLabelPhotos:           "Фото",
         OutreachDateAsap:              "как можно скорее — клиент не указал дату, мы её уточним",
         OutreachDateFlexible:          "клиент гибок по дате — предложите удобный вам день",
+        OutreachPhotosTpl:             "Клиент приложил {count} фото — их можно посмотреть на странице подачи цены.",
         OutreachDetailsMissing:        "клиент не указал — мы уточним у него",
         OutreachPackingAddOn:          "Клиент также хочет помощь с упаковкой — пожалуйста, включите её в свою цену.",
         OutreachUrgentBadge:           "СРОЧНО",
@@ -1120,8 +1137,10 @@ public static class EmailTranslations
         OutreachLabelLocation:         "Atrašanās vieta",
         OutreachLabelDate:             "Vēlamais datums",
         OutreachLabelDetails:          "Detaļas",
+        OutreachLabelPhotos:           "Fotoattēli",
         OutreachDateAsap:              "pēc iespējas ātrāk — klients nenorādīja datumu, mēs to precizēsim",
         OutreachDateFlexible:          "klients ir elastīgs ar datumu — piedāvājiet jums ērtu dienu",
+        OutreachPhotosTpl:             "Klients pievienoja {count} fotoattēlu(s) — tos var apskatīt cenas iesniegšanas lapā.",
         OutreachDetailsMissing:        "klients nenorādīja — mēs to noskaidrosim",
         OutreachPackingAddOn:          "Klients vēlas arī palīdzību ar iepakošanu — lūdzu, iekļaujiet to savā cenā.",
         OutreachUrgentBadge:           "STEIDZAMI",
@@ -1314,8 +1333,10 @@ public static class EmailTranslations
         OutreachLabelLocation:         "Vieta",
         OutreachLabelDate:             "Pageidaujama data",
         OutreachLabelDetails:          "Detalės",
+        OutreachLabelPhotos:           "Nuotraukos",
         OutreachDateAsap:              "kuo greičiau — klientas nenurodė datos, mes ją patikslinsime",
         OutreachDateFlexible:          "klientas lankstus dėl datos — pasiūlykite jums patogią dieną",
+        OutreachPhotosTpl:             "Klientas pridėjo {count} nuotrauką(-as) — jas galite peržiūrėti kainos pateikimo puslapyje.",
         OutreachDetailsMissing:        "klientas nenurodė — mes pasitikslinsime",
         OutreachPackingAddOn:          "Klientas taip pat pageidauja pakavimo pagalbos — prašome įtraukti ją į savo kainą.",
         OutreachUrgentBadge:           "SKUBU",

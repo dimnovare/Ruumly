@@ -103,6 +103,21 @@ public class CloudflareR2StorageService(
         }
     }
 
+    /// <summary>
+    /// Delete a private object by key. A missing object is success, not an error:
+    /// the retention sweep must be safe to re-run after a partial failure.
+    /// </summary>
+    public async Task DeletePrivateAsync(string key)
+    {
+        try
+        {
+            await _s3.DeleteObjectAsync(PrivateBucket, key);
+        }
+        catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+        }
+    }
+
     public async Task DeleteAsync(string publicUrl)
     {
         var bucket   = config["Storage:R2BucketName"]!;

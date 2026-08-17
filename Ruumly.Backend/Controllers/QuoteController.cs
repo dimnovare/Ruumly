@@ -32,6 +32,7 @@ public class QuoteController(
     RuumlyDbContext db,
     IBackgroundEmailQueue emailQueue,
     IOfferAutoSendService autoSend,
+    IStorageService storage,
     ILogger<QuoteController> logger) : ControllerBase
 {
     /// <summary>Upper bound for a submitted price — keeps numeric(18,4) from overflowing into a 500.</summary>
@@ -91,13 +92,59 @@ public class QuoteController(
             new PublicQuoteProviderDto(providerName),
             new PublicQuoteLeadDto(
                 ServiceCategories.SlugFor(lead.Category),
-                lead.City, lead.ToCity, lead.NeedDate, lead.Details),
+                lead.City, lead.ToCity, lead.NeedDate, lead.Details,
+                LeadPhotos.Count(lead.PhotoKeysJson)),
             "EUR",
             alreadySubmitted,
             existing,
             // Lets the page render the closed state up front instead of only
             // discovering it when the submit 409s.
             Closed: TerminalLeadStatuses.Contains(lead.Status)));
+    }
+
+    /// <summary>
+    /// Streams one of the customer's photos to the holder of this quote token.
+    ///
+    /// Addressed by INDEX, not by storage key: the page is public-with-a-token,
+    /// and publishing private-bucket keys to everyone who can open it would
+    /// invite exactly the probing that keeping them private is meant to prevent.
+    /// The index is resolved against THIS lead's own list, so a token can only
+    /// ever reach the photos of the request it was minted for.
+    ///
+    /// Same 404-for-everything contract as the rest of this controller: an
+    /// unknown token, a closed lead and an out-of-range index are
+    /// indistinguishable from outside.
+    /// </summary>
+    [HttpGet("{token}/photos/{index:int}")]
+    [AllowAnonymous]
+    [EnableRateLimiting("search")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetQuotePhoto(string token, int index, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(token) || index < 0) return NotFound();
+
+        var outreach = await db.ProviderOutreaches
+            .AsNoTracking()
+            .FirstOrDefaultAsync(o => o.QuoteToken == token, ct);
+        if (outreach is null) return NotFound();
+
+        var lead = await db.DemandLeads
+            .AsNoTracking()
+            .FirstOrDefaultAsync(d => d.Id == outreach.DemandLeadId, ct);
+        if (lead is null) return NotFound();
+
+        var keys = LeadPhotos.Keys(lead.PhotoKeysJson);
+        if (index >= keys.Count) return NotFound();
+
+        var bytes = await storage.DownloadPrivateAsync(keys[index]);
+        if (bytes is null) return NotFound();
+
+        // Everything stored by this feature is re-encoded JPEG — see
+        // LeadPhotoNormalizer — so the type is known rather than sniffed.
+        // no-store: a customer's home should not linger in a shared cache.
+        Response.Headers.CacheControl = "private, no-store";
+        return File(bytes, "image/jpeg");
     }
 
     /// <summary>

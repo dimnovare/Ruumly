@@ -129,6 +129,14 @@ public static class ProviderOutreachComposer
         facts.Add((t.OutreachLabelDate,     dateText));
         facts.Add((t.OutreachLabelDetails,  details));
 
+        // Photos are NOT attached — they are pictures of somebody's home, and
+        // they live behind the per-recipient quote token. Saying they exist is
+        // what turns the CTA from a form into the thing the provider needs:
+        // Adduco refused to quote a real move until it had them.
+        var photoCount = LeadPhotos.Count(lead.PhotoKeysJson);
+        if (photoCount > 0)
+            facts.Add((t.OutreachLabelPhotos, t.OutreachPhotos(photoCount)));
+
         return new(
             language,
             subject,

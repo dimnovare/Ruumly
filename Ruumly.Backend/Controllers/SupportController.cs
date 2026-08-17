@@ -309,8 +309,9 @@ public class SupportController(
         // provider sees packing as a localized fact line rendered by the composer.
         // Insurance never reaches a provider at all — "no consumer product; route
         // by hand" is an instruction to us, not to a mover.
-        var details = Clamp(req.Details, 2000);
-        var email   = req.Email.Trim();
+        var details    = Clamp(req.Details, 2000);
+        var email      = req.Email.Trim();
+        var photoKeys  = LeadPhotoNormalizer.KeepIssuedKeys(req.PhotoKeys);
 
         // ── Duplicate submit ─────────────────────────────────────────────────
         // The submit button disables itself while the mutation is in flight, but
@@ -380,6 +381,13 @@ public class SupportController(
             // purpose: it is an opaque attribution string we report on, never
             // something we branch behaviour on.
             Attribution = Clamp(req.Attribution, 300),
+            // Filtered to keys the upload endpoint could actually have issued.
+            // Without that a caller could point a lead at any object in the
+            // private bucket — signed contracts included — and read it back
+            // through the quote page. See LeadPhotoNormalizer.KeepIssuedKeys.
+            PhotoKeysJson = photoKeys.Count > 0
+                ? System.Text.Json.JsonSerializer.Serialize(photoKeys)
+                : null,
             Language  = lang,
             Status    = DemandLeadStatus.New,
             CreatedAt = DateTime.UtcNow,

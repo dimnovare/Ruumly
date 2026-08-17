@@ -206,6 +206,7 @@ public class ContractDokobitCompletionTests
         }
 
         public Task<byte[]?> DownloadPrivateAsync(string key) => throw new NotSupportedException();
+        public Task DeletePrivateAsync(string key) => Task.CompletedTask;
     }
 
     private sealed class UnusedContractService : IContractService

@@ -290,6 +290,19 @@ builder.Services.AddRateLimiter(options =>
             QueueLimit  = 0,
         }));
 
+    // Anonymous photo upload from the public request funnel. Its own bucket,
+    // deliberately NOT the authenticated "upload" policy: this one accepts
+    // multi-megabyte bodies from anybody on the internet, so it is the tightest
+    // limit that still lets a real customer attach the six photos the funnel
+    // allows, retry a couple that failed on a phone connection, and finish.
+    options.AddPolicy("lead-photo", ctx =>
+        RateLimitPartition.GetFixedWindowLimiter(IpKey(ctx), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 15,
+            Window      = TimeSpan.FromMinutes(10),
+            QueueLimit  = 0,
+        }));
+
     options.AddPolicy("booking", ctx =>
         RateLimitPartition.GetFixedWindowLimiter(UserOrIpKey(ctx), _ => new FixedWindowRateLimiterOptions
         {
@@ -601,6 +614,14 @@ using (var scope = app.Services.CreateScope())
     recurringJobManager.AddOrUpdate<BackgroundCleanupService>(
         "cleanup-tokens",
         x => x.CleanupStaleRefreshTokensAsync(),
+        Cron.Daily);
+
+    // Request photos are pictures of somebody's home. They exist so a provider
+    // can quote, and they expire once that is done — see
+    // BackgroundCleanupService.LeadPhotoRetentionDays.
+    recurringJobManager.AddOrUpdate<BackgroundCleanupService>(
+        "cleanup-lead-photos",
+        x => x.CleanupLeadPhotosAsync(),
         Cron.Daily);
 
     recurringJobManager.AddOrUpdate<StaleBookingCleanupJob>(
