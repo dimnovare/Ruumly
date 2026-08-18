@@ -87,3 +87,52 @@ rest is aimed at the right stage.
 - `Peetri Miniladu` has an Active provider login but `ClaimedAt` is null — the
   two "claimed" facts have already drifted, as flagged when the delivery gate
   was built. Delivery keys off the login, which is the correct one.
+
+---
+
+## Correction, same day: it was not deliverability
+
+The section above reasoned that the 18 silent contacts might never have been
+delivered, and that the absence of bounces proved nothing. The first half of
+that turned out to be wrong, and the second half was worse than stated.
+
+**Worse first.** The Resend webhook had never been configured at all — there was
+no endpoint in the Resend account, so no bounce, complaint or delivery event has
+ever reached Ruumly since the feature shipped. `EmailDeliveryTracker` had never
+executed against real traffic and `ContactEmailUnusable` was false on all 1,187
+suppliers because nothing could set it. "No bounce recorded" was not weak
+evidence; it was no evidence.
+
+Fixed the same day: endpoint created and subscribed to `email.bounced`,
+`email.complained`, `email.delivered` and `email.opened`; `Resend__WebhookSecret`
+set in Railway. The endpoint now answers an unsigned caller with 401 rather than
+admitting it has no secret with 503.
+
+**Now the wrong half.** A full DNS pass over the directory — 1,187 rows, 957
+syntactically valid addresses, 565 unique domains — found **562 domains with
+valid MX**. Only three rows sit on a domain that cannot receive mail at all
+(Merva OÜ, Rinoceras UAB, Valytė MB).
+
+Every Viljandi provider resolves: Lahe miniladu, Blackline, Miil, Alevi Hoiuladu.
+Their mail servers are live.
+
+So the dead-address hypothesis is dead. The most likely remaining explanation is
+the uncomfortable one — **the providers received the outreach and did not
+answer** — with spam placement and unmonitored mailboxes still open as
+alternatives. The webhook will separate those on the next send, which is exactly
+what it was for.
+
+That changes what to build. It is not a deliverability problem to engineer
+around; it is the outreach email, or the proposition inside it, failing to earn
+a reply from a business that got it.
+
+## The finding nobody was looking for
+
+**230 of 1,187 suppliers have no email address at all, and 226 of those are
+active.** Nineteen percent of the directory is businesses no one can contact by
+any means. They are returned by the candidate finder, they inflate every coverage
+number the site publishes — the 124 trailer city hubs, the per-city counts — and
+the fan-out skips them silently.
+
+That is a supply number that is not what it appears to be, and it is worth
+deciding what an uncontactable directory row is actually for.
