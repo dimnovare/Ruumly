@@ -42,6 +42,7 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
     public DbSet<Offer>            Offers             => Set<Offer>();
     public DbSet<OfferOption>      OfferOptions       => Set<OfferOption>();
     public DbSet<ProviderOutreach> ProviderOutreaches => Set<ProviderOutreach>();
+    public DbSet<ProviderInfoRequest> ProviderInfoRequests => Set<ProviderInfoRequest>();
     public DbSet<SupplierClaim>    SupplierClaims     => Set<SupplierClaim>();
     public DbSet<EmailDeliveryEvent> EmailDeliveryEvents => Set<EmailDeliveryEvent>();
 
@@ -472,6 +473,31 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
             e.HasOne(o => o.Supplier)
                 .WithMany()
                 .HasForeignKey(o => o.SupplierId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<ProviderInfoRequest>(e =>
+        {
+            // The two questions ops actually asks of this table: "what is blocked
+            // on THIS lead" (the workspace) and "has this provider already told
+            // us, on this link" (the quote page's own read-back).
+            e.HasIndex(r => r.DemandLeadId);
+            e.HasIndex(r => r.ProviderOutreachId);
+            // Cascade from all three parents. The row is a fact ABOUT a specific
+            // (lead, supplier, outreach) triple and means nothing once any of them
+            // is gone — unlike OfferOption, which deliberately outlives its
+            // outreach because it is customer-facing work product.
+            e.HasOne(r => r.DemandLead)
+                .WithMany()
+                .HasForeignKey(r => r.DemandLeadId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(r => r.Supplier)
+                .WithMany()
+                .HasForeignKey(r => r.SupplierId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(r => r.ProviderOutreach)
+                .WithMany()
+                .HasForeignKey(r => r.ProviderOutreachId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

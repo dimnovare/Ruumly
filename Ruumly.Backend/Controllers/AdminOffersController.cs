@@ -468,10 +468,17 @@ public class AdminOffersController(
                 retryable = true,
             });
 
+        // A RESEND reuses the existing outreach row, so a provider who is already
+        // blocked can appear in this result still blocked. Looked up rather than
+        // passed as null: "freshly sent, therefore nothing open" is true of a
+        // first send and quietly false of a resend.
+        var openAsks = await OpenInfoRequestsAsync(id);
+
         return Ok(new
         {
             sent = result.Sent
-                .Select(s => MapOutreach(s.Row, s.SupplierName))
+                .Select(s => MapOutreach(
+                    s.Row, s.SupplierName, openAsks.GetValueOrDefault(s.Row.Id)))
                 .ToList(),
             skipped = result.Skipped
                 .Select(s => (object)new
@@ -514,7 +521,10 @@ public class AdminOffersController(
             })
             .ToListAsync();
 
-        return Ok(rows.Select(r => MapOutreach(r.Row, r.SupplierName)).ToList());
+        var openAsks = await OpenInfoRequestsAsync(id);
+        return Ok(rows
+            .Select(r => MapOutreach(r.Row, r.SupplierName, openAsks.GetValueOrDefault(r.Row.Id)))
+            .ToList());
     }
 
     [HttpPatch("outreach/{id:guid}")]
@@ -541,7 +551,14 @@ public class AdminOffersController(
             .Where(s => s.Id == row.SupplierId)
             .Select(s => (string?)s.Name)
             .FirstOrDefaultAsync();
-        return Ok(MapOutreach(row, supplierName));
+        // Scoped to this one row, not the lead: an admin re-typing a status must
+        // not silently drop the blocked marker off the row they just edited.
+        var openAsk = await Db.ProviderInfoRequests
+            .AsNoTracking()
+            .Where(r => r.ProviderOutreachId == row.Id && r.ResolvedAt == null)
+            .OrderByDescending(r => r.CreatedAt)
+            .FirstOrDefaultAsync();
+        return Ok(MapOutreach(row, supplierName, openAsk));
     }
 
     // ─── Mapping / helpers ────────────────────────────────────────────────────
@@ -613,7 +630,8 @@ public class AdminOffersController(
             .ToList(),
     };
 
-    private static object MapOutreach(ProviderOutreach o, string? supplierName) => new
+    private static object MapOutreach(
+        ProviderOutreach o, string? supplierName, ProviderInfoRequest? openInfoRequest) => new
     {
         id           = o.Id,
         demandLeadId = o.DemandLeadId,
@@ -631,7 +649,55 @@ public class AdminOffersController(
         quotedAvailability = o.QuotedAvailability,
         quotedNote         = o.QuotedNote,
         quotedAt           = o.QuotedAt,
+        // The provider's OPEN "I cannot price this yet" (ProviderInfoRequest),
+        // null once ops resolves it.
+        //
+        // It rides on the outreach row rather than on the lead, and rather than
+        // on a queue endpoint of its own, because the block and its reason are
+        // ONE fact: the row's status is already `needsinfo`, and the ask is what
+        // that word means. Split across two payloads they refetch independently,
+        // so the workspace would spend real windows rendering "blocked" with no
+        // question under it, or a question the operator just closed. It is also
+        // the only join that is correct — the ask names an OUTREACH, not a
+        // supplier (see ProviderInfoRequest.ProviderOutreachId: one company can
+        // be contacted twice about the same lead, and only one of those links is
+        // the one to answer).
+        infoRequest = openInfoRequest is null ? null : (object)new
+        {
+            id      = openInfoRequest.Id,
+            // Re-validated on the way out by Parse, so a slug this build no
+            // longer knows cannot reach the UI as an unlabelled chip.
+            reasons = InfoRequestReasons.Parse(openInfoRequest.ReasonsJson),
+            note    = openInfoRequest.Note,
+            askedAt = openInfoRequest.CreatedAt,
+        },
     };
+
+    /// <summary>
+    /// The open asks for one lead, keyed by the outreach they block.
+    ///
+    /// Batched rather than resolved per row: the workspace renders every outreach
+    /// row for a lead at once, and a per-row lookup would be an N+1 on the one
+    /// query the operator waits for.
+    ///
+    /// Newest wins per outreach. The quote endpoint add-or-updates a single open
+    /// row, so there is normally exactly one — but nothing in the schema ENFORCES
+    /// that (no unique index), and a plain ToDictionary would throw on the day a
+    /// second one appears, taking the whole outreach list down with it. The ask
+    /// they sent most recently is also the one worth answering.
+    /// </summary>
+    private async Task<Dictionary<Guid, ProviderInfoRequest>> OpenInfoRequestsAsync(
+        Guid leadId, CancellationToken ct = default)
+    {
+        var rows = await Db.ProviderInfoRequests
+            .AsNoTracking()
+            .Where(r => r.DemandLeadId == leadId && r.ResolvedAt == null)
+            .ToListAsync(ct);
+
+        return rows
+            .GroupBy(r => r.ProviderOutreachId)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(r => r.CreatedAt).First());
+    }
 
     /// <summary>
     /// Vets the whole payload before a single row is touched — a rejected save

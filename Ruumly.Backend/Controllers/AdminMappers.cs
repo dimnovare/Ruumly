@@ -103,6 +103,57 @@ internal static class AdminMappers
         ContactEmailBounceReason: s.ContactEmailBounceReason,
         ServiceTypes:             Constants.ServiceCategories.ParseServiceTypes(s.ServiceTypesJson));
 
+    /// <summary>
+    /// One row of the admin lead queue (GET /admin/leads).
+    ///
+    /// Mapped in C# rather than inside the EF projection because of a single
+    /// field: photoCount. The photo keys live in a JSON column that LeadPhotos
+    /// re-validates on the way out — a parse, not something a database can
+    /// express — so the count can only be taken once the row is materialised.
+    /// Everything else is byte-for-byte the shape the projection used to emit;
+    /// the frontend reads these names.
+    ///
+    /// The keys themselves are deliberately absent. They address objects in the
+    /// PRIVATE bucket, so the admin UI reads a photo by INDEX through
+    /// GET /admin/leads/{id}/photos/{index} instead. A count is everything the
+    /// list needs to badge a request, and everything the browser is trusted with.
+    ///
+    /// <paramref name="supplierName"/> is passed in rather than read off the
+    /// entity: the routed-partner name comes from a correlated subquery in the
+    /// caller's EF query, which a pure mapper has no DbContext to run.
+    /// </summary>
+    internal static object MapAdminLead(Models.DemandLead d, string? supplierName) => new
+    {
+        d.Id,
+        d.Name,
+        d.Email,
+        d.Phone,
+        d.City,
+        category = d.Category.ToString().ToLowerInvariant(),
+        d.Query,
+        d.Language,
+        d.CreatedAt,
+        status = d.Status.ToString().ToLowerInvariant(),
+        d.AdminNotes,
+        // Concierge intake context (null for legacy/routed leads)
+        d.ToCity,
+        d.NeedDate,
+        d.Details,
+        d.Source,
+        // Which campaign/post/search produced this request. Source says which
+        // form; this says what it cost to get someone to it.
+        d.Attribution,
+        d.ContactedAt,
+        // Routing + quote (null for generic demand-capture leads)
+        d.SupplierId,
+        supplierName,
+        d.ListingId,
+        d.QuotedPrice,
+        d.QuotedAt,
+        d.ProviderNotes,
+        photoCount = LeadPhotos.Count(d.PhotoKeysJson),
+    };
+
     internal static IntegrationSettingsDto MapIntegrationSettings(Models.IntegrationSettings i) => new(
         Id:                  i.Id,
         SupplierId:          i.SupplierId,

@@ -4,7 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Ruumly.Backend.Constants;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.Helpers;
+using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
+using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Controllers;
 
@@ -77,42 +79,27 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
         var ordered = needsResponse
             ? query.OrderBy(d => d.CreatedAt)            // oldest uncontacted first
             : query.OrderByDescending(d => d.CreatedAt); // newest first (default)
-        var leads = await ordered
+        // Two steps on purpose. The row shape is built by AdminMappers.MapAdminLead
+        // in C#, because one of its fields (photoCount) is a JSON parse the
+        // database cannot perform — see that mapper. So the query fetches the
+        // entity plus the one thing only it can resolve (the routed partner's
+        // name, a correlated subquery), and the DTO is shaped afterwards.
+        // AsNoTracking because materialising whole entities would otherwise leave
+        // a page of leads in the change tracker for a read-only GET.
+        var rows = await ordered
+            .AsNoTracking()
             .Skip((page - 1) * limit)
             .Take(limit)
             .Select(d => new
             {
-                d.Id,
-                d.Name,
-                d.Email,
-                d.Phone,
-                d.City,
-                category     = d.Category.ToString().ToLower(),
-                d.Query,
-                d.Language,
-                d.CreatedAt,
-                status       = d.Status.ToString().ToLower(),
-                d.AdminNotes,
-                // Concierge intake context (null for legacy/routed leads)
-                d.ToCity,
-                d.NeedDate,
-                d.Details,
-                d.Source,
-                // Which campaign/post/search produced this request. Source says
-                // which form; this says what it cost to get someone to it.
-                d.Attribution,
-                d.ContactedAt,
-                // Routing + quote (null for generic demand-capture leads)
-                d.SupplierId,
-                supplierName = d.SupplierId == null
+                Lead = d,
+                SupplierName = d.SupplierId == null
                     ? null
                     : Db.Suppliers.Where(s => s.Id == d.SupplierId).Select(s => s.Name).FirstOrDefault(),
-                d.ListingId,
-                d.QuotedPrice,
-                d.QuotedAt,
-                d.ProviderNotes,
             })
             .ToListAsync();
+
+        var leads = rows.Select(r => AdminMappers.MapAdminLead(r.Lead, r.SupplierName)).ToList();
 
         return Ok(new { total, page, limit, items = leads });
     }
@@ -301,6 +288,15 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
                 Db.Offers.RemoveRange(offers);
             }
 
+            // Before the outreach rows they hang off: a provider's "I can't quote
+            // this yet" is a fact about one specific outreach and means nothing
+            // without it. Deleted explicitly for the same reason as everything
+            // else here — so a canary lead leaves nothing behind on the InMemory
+            // provider either, rather than only where the DB enforces cascades.
+            var infoRequests = await Db.ProviderInfoRequests
+                .Where(r => r.DemandLeadId == id).ToListAsync();
+            Db.ProviderInfoRequests.RemoveRange(infoRequests);
+
             var outreaches = await Db.ProviderOutreaches
                 .Where(o => o.DemandLeadId == id).ToListAsync();
             Db.ProviderOutreaches.RemoveRange(outreaches);
@@ -322,6 +318,134 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
         }
 
         return NoContent();
+    }
+
+    /// <summary>
+    /// Closes a provider's "I cannot price this yet" (<see cref="ProviderInfoRequest"/>):
+    /// ops has answered the question, so the provider can quote.
+    ///
+    /// WHY THIS EXISTS AT ALL. The ask could be raised but never lowered — nothing
+    /// in the system could write <c>ResolvedAt</c>. So the quote page went on
+    /// telling the provider we still owed them an answer after we had sent it, and
+    /// the outreach row sat on NeedsInfo forever. A flag with no off switch stops
+    /// meaning "blocked" within a week and starts meaning "was blocked once".
+    ///
+    /// WHY THE OUTREACH GOES BACK TO <c>Sent</c>, and to nothing else:
+    ///
+    ///   • NOT <c>Replied</c>, which is the tempting one. GetLeadMetrics counts a
+    ///     Replied outreach as a supplier MATCH — the concierge north-star the
+    ///     founder reports. Answering somebody's question is not that provider
+    ///     agreeing to serve the job; it is us unblocking them so they can decide.
+    ///     Landing on Replied here would inflate match rate with exactly the
+    ///     requests we are most stuck on, silently, and it is the whole reason
+    ///     NeedsInfo was appended to the enum instead of reusing Replied.
+    ///   • NOT <c>NoAnswer</c>, even though the flip could have come from there.
+    ///     NoAnswer is an admin's guess that the provider never came back, and the
+    ///     question they sent is the proof it was wrong; restoring it would
+    ///     re-assert a fact we know to be false.
+    ///   • <c>Sent</c> says exactly what is now true: they were contacted, the ball
+    ///     is in their court, and no price has arrived. That is where an outreach
+    ///     waits, so the row rejoins the normal queue instead of needing its own.
+    ///
+    /// Only when the row is STILL on NeedsInfo. A provider who submitted a price
+    /// while the question was open is already Replied, and a dead address is
+    /// Bounced/Complained — those are stronger facts than "we answered them", and
+    /// resetting one to Sent would erase a real quote from the ops view. Same
+    /// guard, same reasoning, as the flip in QuoteController.NeedInfo.
+    ///
+    /// IDEMPOTENT. Resolving an already-resolved ask is a 200 that changes
+    /// nothing: it does not re-stamp ResolvedAt (which would rewrite when we
+    /// actually answered), does not touch the outreach (which may legitimately
+    /// have moved on since), and writes no second audit row. Two operators
+    /// clicking the same button, or one double-click, must not be an error the
+    /// person has to interpret mid-loop.
+    /// </summary>
+    /// <response code="200">Resolved — or already was.</response>
+    /// <response code="404">No info request with that id.</response>
+    [HttpPost("info-requests/{id:guid}/resolve")]
+    public async Task<IActionResult> ResolveInfoRequest(Guid id)
+    {
+        var request = await Db.ProviderInfoRequests.FindAsync(id);
+        if (request is null) return NotFound(Error("Info request not found."));
+
+        var outreach = await Db.ProviderOutreaches.FindAsync(request.ProviderOutreachId);
+
+        if (request.ResolvedAt is null)
+        {
+            request.ResolvedAt = DateTime.UtcNow;
+
+            if (outreach is { Status: ProviderOutreachStatus.NeedsInfo })
+                outreach.Status = ProviderOutreachStatus.Sent;
+
+            // Names the reasons, because the row itself stops being able to: once
+            // ResolvedAt is set the workspace no longer shows it, and the audit
+            // trail becomes the only record of what the provider was blocked on.
+            var reasons = InfoRequestReasons.Parse(request.ReasonsJson);
+            Audit("lead.info_request_resolved", User.GetUserId().ToString(), request.Id.ToString(),
+                  $"Lead {request.DemandLeadId}, supplier {request.SupplierId}, " +
+                  $"outreach {request.ProviderOutreachId}. Asked for: " +
+                  $"{(reasons.Count == 0 ? "not itemised" : string.Join(", ", reasons))}. " +
+                  $"Outreach now: {(outreach is null ? "missing" : outreach.Status.ToString())}.");
+
+            await Db.SaveChangesAsync();
+        }
+
+        return Ok(new
+        {
+            id                 = request.Id,
+            providerOutreachId = request.ProviderOutreachId,
+            resolvedAt         = request.ResolvedAt,
+            outreachStatus     = outreach?.Status.ToString().ToLower(),
+        });
+    }
+
+    /// <summary>
+    /// Streams one of the customer's photos to the admin.
+    ///
+    /// The founder runs the whole match loop by hand out of this workspace, and
+    /// until now he was the only participant who could NOT see the pictures: the
+    /// provider gets them through their quote token, the customer sent them, and
+    /// ops was left unable to say whether they were good enough to quote from,
+    /// answer a provider's question about them, or tell a customer to re-shoot.
+    ///
+    /// Addressed by INDEX, not by storage key — the same contract as the
+    /// provider's <c>GET /api/quote/{token}/photos/{index}</c>. The index is
+    /// resolved against THIS lead's own list, so the id in the URL is the only
+    /// thing that decides which private objects are reachable; the keys never
+    /// leave the server, and no caller can name an object of their own.
+    ///
+    /// Admin-only by inheritance from <see cref="AdminBaseController"/> — there
+    /// is no token or public form of this route.
+    /// </summary>
+    /// <response code="200">The photo, as JPEG.</response>
+    /// <response code="404">Unknown lead, or no photo at that index.</response>
+    [HttpGet("leads/{id:guid}/photos/{index:int}")]
+    public async Task<IActionResult> GetLeadPhoto(
+        Guid id, int index, [FromServices] IStorageService storage, CancellationToken ct)
+    {
+        // Bodiless 404s, unlike the JSON Error() the rest of this controller
+        // returns: the caller is an image fetch, not a JSON consumer, and a
+        // missing photo is rendered as a broken tile either way.
+        if (index < 0) return NotFound();
+
+        var lead = await Db.DemandLeads
+            .AsNoTracking()
+            .FirstOrDefaultAsync(d => d.Id == id, ct);
+        if (lead is null) return NotFound();
+
+        // Malformed JSON in the column yields an empty list rather than throwing
+        // (see LeadPhotos), so a bad row is a 404 here, not a 500.
+        var keys = LeadPhotos.Keys(lead.PhotoKeysJson);
+        if (index >= keys.Count) return NotFound();
+
+        var bytes = await storage.DownloadPrivateAsync(keys[index]);
+        if (bytes is null) return NotFound();
+
+        // Everything stored by this feature is re-encoded JPEG — see
+        // LeadPhotoNormalizer — so the type is known rather than sniffed.
+        // no-store: a customer's home should not linger in a shared cache.
+        Response.Headers.CacheControl = "private, no-store";
+        return File(bytes, "image/jpeg");
     }
 
     [HttpGet("leads/{id:guid}/provider-candidates")]
