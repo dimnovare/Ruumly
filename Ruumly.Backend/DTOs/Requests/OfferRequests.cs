@@ -70,3 +70,14 @@ public record SubmitQuoteRequest(
     string? PriceUnit = null,
     string? Availability = null,
     string? Note = null);
+
+/// <summary>
+/// POST /api/quote/{token}/need-info — the provider cannot price the request and
+/// says what is missing. <c>Reasons</c> are
+/// <see cref="Constants.InfoRequestReasons"/> slugs; unknown ones are dropped
+/// rather than refused. Either a recognised reason or a <c>Note</c> is required —
+/// both empty is the one payload that tells us nothing and is a 400.
+/// </summary>
+public record NeedInfoRequest(
+    List<string>? Reasons = null,
+    string? Note = null);

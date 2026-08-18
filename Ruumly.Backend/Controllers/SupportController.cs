@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -68,6 +69,12 @@ public class SupportController(
     /// Public contact form. Emails the team the visitor's message.
     /// Delivery is queued so transient provider failures are retried without
     /// delaying or failing the visitor's request.
+    ///
+    /// When the message was written on a partner's public page it also carries
+    /// that partner's slug, and then it is DEMAND rather than correspondence —
+    /// see <see cref="CapturePartnerMessageAsync"/>, which turns it into a routed
+    /// <see cref="DemandLead"/> and delivers it to the partner when we are
+    /// allowed to write to them.
     /// </summary>
     [HttpPost("contact")]
     [AllowAnonymous]
@@ -93,12 +100,208 @@ public class SupportController(
 
         var lang = string.IsNullOrWhiteSpace(req.Language) ? "et" : req.Language;
 
+        // Null for the ordinary /contact page, which sends no slug — the ops mail
+        // below is then byte-for-byte what it always was.
+        var partnerReport = await CapturePartnerMessageAsync(req, lang);
+
         emailQueue.EnqueueEmail(
             to:       teamEmail,
             subject:  $"[Ruumly contact] {req.Subject}",
-            textBody: $"From: {req.Name} <{req.Email}>\nLang: {lang}\n\n{req.Message}\n\n— Reply directly to {req.Email}");
+            textBody: $"From: {req.Name} <{req.Email}>\nLang: {lang}\n{partnerReport}\n{req.Message}\n\n— Reply directly to {req.Email}");
 
         return Ok(new { success = true });
+    }
+
+    /// <summary>
+    /// Captures a message written on <c>/{lang}/partner/{slug}</c> as a routed
+    /// <see cref="DemandLead"/> (<c>Source = "partner-page"</c>) and delivers it
+    /// to that partner when — and only when — they are someone we may write to.
+    ///
+    /// WHY THIS EXISTS. The dialog on a partner page tells the sender, in all five
+    /// languages, that the partner will get back to them. It posted here, the team
+    /// inbox got one untracked email, and the partner was never told: both people
+    /// who used it (Peetri Miniladu 2026-08-16, GREENAS UAB 2026-08-17) are still
+    /// waiting. And the message is not a support question — someone asking a
+    /// self-storage company in Peetri about space is a customer request inside the
+    /// Tallinn concierge catchment, which is the only kind of event this business
+    /// is currently trying to produce.
+    ///
+    /// Returns the block the ops alert must carry, so a human can see at a glance
+    /// whether the partner already has the message or ops has to relay it by hand;
+    /// null when the request did not come from a partner page. NEVER throws and
+    /// never fails the visitor: everything here is strictly better than the old
+    /// behaviour, and none of it is worth a 500 on a message we could still email.
+    /// </summary>
+    private async Task<string?> CapturePartnerMessageAsync(ContactRequest req, string lang)
+    {
+        if (string.IsNullOrWhiteSpace(req.PartnerSlug)) return null;
+
+        var slug = req.PartnerSlug.Trim();
+        try
+        {
+            // Same shape guard the public profile endpoint applies before it
+            // touches the database — the slug reaches us from the same URL, so a
+            // caller who invents one gets the same flat refusal there and here.
+            if (slug.Length is < 2 or > 80 || !Regex.IsMatch(slug, "^[a-z0-9-]+$"))
+                return Unresolved(slug);
+
+            // Same visibility rule the public profile endpoint enforces
+        // (SupplierProfileService.GetBySlugAsync): active AND published. Matching
+        // on IsActive alone would let a row that has no reachable page capture a
+        // lead, which can only happen through a hand-rolled POST — a divergence
+        // with no legitimate caller behind it.
+        var supplier = await db.Suppliers.FirstOrDefaultAsync(
+            s => s.Slug == slug && s.IsActive && s.IsPartnerPagePublished);
+            if (supplier is null)
+                return Unresolved(slug);
+
+            // What the message is ABOUT. The visitor chose a company, not a
+            // service, so the partner's own catalogue is the only evidence there
+            // is — and it is evidence only when it says one thing. A partner that
+            // sells three services tells us nothing about this message, and Any is
+            // the honest answer: an admin re-categorises it in one click, whereas a
+            // confidently wrong category quietly routes the follow-up to the wrong
+            // providers.
+            var services = ServiceCategories.ParseServiceTypes(supplier.ServiceTypesJson)
+                .Select(s => s?.Trim().ToLowerInvariant() ?? "")
+                .Where(ServiceCategories.IsConsumerSlug)
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+
+            // The visitor never typed a city, and City drives every geographic
+            // surface we have (admin list, provider match radius). The partner's
+            // own primary site is the only honest stand-in — same rule the claim
+            // flow uses for the same reason.
+            var city = await db.SupplierLocations
+                .Where(l => l.SupplierId == supplier.Id && l.IsActive && !l.IsSynthetic)
+                .OrderBy(l => l.CreatedAt).ThenBy(l => l.Id)
+                .Select(l => l.City)
+                .FirstOrDefaultAsync() ?? "";
+
+            var message = req.Message?.Trim() ?? "";
+
+            var lead = new DemandLead
+            {
+                Id         = Guid.NewGuid(),
+                Email      = req.Email.Trim(),
+                Name       = Trimmed(req.Name, 120),
+                City       = Trimmed(city, 100) ?? "",
+                Category   = services.Count == 1
+                    ? ServiceCategories.BySlug[services[0]]
+                    : DemandLeadCategory.Any,
+                SupplierId = supplier.Id,
+                // Query is the admin list view's one-liner and stops at 500 chars,
+                // but the form accepts 5000 — so the customer's own words are also
+                // kept whole in Details, which is where a later hand-run outreach
+                // would read them from.
+                Query      = Trimmed(message, 500),
+                Details    = Trimmed(message, 2000),
+                Language   = lang,
+                Status     = DemandLeadStatus.New,
+                // Its own tag: addressed to ONE named company from that company's
+                // page, so it is neither the concierge funnel (whose north-star
+                // metrics filter on Source=="concierge" and must not absorb this)
+                // nor a listing-routed quote.
+                Source     = "partner-page",
+                CreatedAt  = DateTime.UtcNow,
+            };
+
+            db.DemandLeads.Add(lead);
+            await db.SaveChangesAsync();
+
+            // ── May we write to this partner at all? ──────────────────────────
+            // Nearly all of the ~1187 supplier rows are SCRAPED directory imports:
+            // a public page exists for them, but nobody behind it ever asked to
+            // hear from us. Forwarding a visitor's message to one of those is a
+            // cold email we send on a stranger's behalf to a business whose only
+            // relationship with Ruumly is that we listed it.
+            //
+            // So delivery needs a CLAIMED partner — someone who proved control of
+            // ContactEmail through /{lang}/claim/{slug}, which is exactly what
+            // mints the Provider user this looks for. The two flags below outrank
+            // even that: an opt-out is a promise we made in writing, and a bounced
+            // address cannot be reached and costs sending reputation to retry.
+            //
+            // Note what is deliberately ABSENT: IConciergeOutreachService. A
+            // partner-page message names one company; fanning it out would
+            // cold-email that company's competitors off the back of a note a
+            // customer wrote to it.
+            var providerUserIds = await db.Users
+                .Where(u => u.SupplierId == supplier.Id && u.Role == UserRole.Provider)
+                .Select(u => u.Id)
+                .ToListAsync();
+
+            var withheld =
+                providerUserIds.Count == 0                       ? "unclaimed directory profile" :
+                supplier.MarketingOptOutAt is not null           ? "partner opted out of contact" :
+                supplier.ContactEmailUnusable                    ? "partner's email address has bounced" :
+                string.IsNullOrWhiteSpace(supplier.ContactEmail) ? "no contact address on file" :
+                null;
+
+            if (withheld is null)
+            {
+                foreach (var uid in providerUserIds)
+                    await notificationService.CreateAsync(
+                        uid, NotificationType.Order,
+                        title:      "New message from your Ruumly page",
+                        desc:       $"{lead.Name ?? lead.Email} — {req.Subject}",
+                        actionUrl:  "/provider/leads",
+                        entityId:   lead.Id.ToString(),
+                        entityType: "lead");
+
+                emailQueue.EnqueueEmail(
+                    to:       supplier.ContactEmail,
+                    subject:  $"New message from your Ruumly page — {req.Subject}",
+                    textBody: $"Name: {lead.Name}\nEmail: {lead.Email}\n\n{message}\n\n" +
+                              $"Reply to this mail to answer {lead.Email} directly, " +
+                              "or respond from your Ruumly dashboard → Leads.",
+                    htmlBody: null,
+                    // Reply-To the CUSTOMER, not ops: the partner page promised
+                    // this person the partner would get back to them, and hitting
+                    // reply is the shortest path from that promise to a kept one.
+                    // (Provider cold outreach points Reply-To at ops instead —
+                    // there the reply is an answer to us, not to a stranger.)
+                    replyTo:  lead.Email);
+            }
+            else
+            {
+                logger.LogInformation(
+                    "Partner-page lead {LeadId} for supplier {SupplierId} not delivered: {Reason}.",
+                    lead.Id, supplier.Id, withheld);
+            }
+
+            var appUrl    = string.IsNullOrWhiteSpace(config["AppUrl"]) ? "https://ruumly.eu" : config["AppUrl"];
+            var adminLink = FrontendUrl.Localized(appUrl, "et", $"admin?tab=leads&lead={lead.Id}");
+
+            return $"Partner page: {supplier.Name} ({slug})\n" +
+                   (withheld is null
+                       ? "Partner notified: yes — email + provider dashboard\n"
+                       : $"Partner notified: NO ({withheld}) — RELAY THIS BY HAND\n") +
+                   $"Lead: {ServiceCategories.SlugFor(lead.Category)}" +
+                   (lead.City.Length > 0 ? $" in {lead.City}" : "") + ", Source=partner-page\n" +
+                   $"Open the workspace: {adminLink}\n";
+        }
+        catch (Exception ex)
+        {
+            // The visitor's message still reaches ops through the mail this
+            // returns into, which is everything the old code ever did.
+            logger.LogError(ex,
+                "Partner-page message capture failed for slug {Slug} — falling back to an ops email only.",
+                slug);
+            return $"Partner page: {slug} — CAPTURE FAILED (see logs). " +
+                   "Check the CRM for a lead, then relay this by hand.\n";
+        }
+
+        static string Unresolved(string slug) =>
+            $"Partner page: \"{slug}\" matched no active partner — no lead created, ops email only.\n";
+    }
+
+    /// <summary>Trimmed, clamped to <paramref name="max"/> chars; null when empty.</summary>
+    private static string? Trimmed(string? value, int max)
+    {
+        var trimmed = value?.Trim();
+        if (string.IsNullOrEmpty(trimmed)) return null;
+        return trimmed.Length > max ? trimmed[..max] : trimmed;
     }
 
     /// <summary>

@@ -88,6 +88,20 @@ public class QuoteController(
                 outreach.QuotedAvailability, outreach.QuotedNote)
             : null;
 
+        // The provider's own open "I can't price this yet" flag, so re-opening the
+        // link shows that we have it rather than inviting them to send it again.
+        // UNRESOLVED only: once ops has answered the question the page has nothing
+        // left to say about it and should go back to simply asking for a price.
+        var openInfo = await db.ProviderInfoRequests
+            .AsNoTracking()
+            .Where(r => r.ProviderOutreachId == outreach.Id && r.ResolvedAt == null)
+            .OrderByDescending(r => r.CreatedAt)
+            .FirstOrDefaultAsync();
+        var infoRequest = openInfo is null
+            ? null
+            : new PublicQuoteInfoRequestDto(
+                InfoRequestReasons.Parse(openInfo.ReasonsJson), openInfo.Note, openInfo.CreatedAt);
+
         return Ok(new PublicQuoteDto(
             new PublicQuoteProviderDto(providerName),
             new PublicQuoteLeadDto(
@@ -99,7 +113,9 @@ public class QuoteController(
             existing,
             // Lets the page render the closed state up front instead of only
             // discovering it when the submit 409s.
-            Closed: TerminalLeadStatuses.Contains(lead.Status)));
+            Closed: TerminalLeadStatuses.Contains(lead.Status),
+            InfoRequested: infoRequest is not null,
+            InfoRequest: infoRequest));
     }
 
     /// <summary>
@@ -176,7 +192,6 @@ public class QuoteController(
         // endpoint. No real storage/moving quote approaches this.
         if (req.PriceAmount > MaxPriceAmount)
             return BadRequest(new { error = "Price is too large." });
-        static bool HasAngle(string? s) => s is not null && (s.Contains('<') || s.Contains('>'));
         if (HasAngle(req.PriceUnit) || HasAngle(req.Availability) || HasAngle(req.Note))
             return BadRequest(new { error = "Text fields contain invalid characters." });
 
@@ -237,6 +252,177 @@ public class QuoteController(
         }
 
         throw new InvalidOperationException("Serializable quote submit retry limit exhausted.");
+    }
+
+    /// <summary>
+    /// The second action on the quote page: "I cannot price this from what you
+    /// sent me — here is what is missing."
+    ///
+    /// Until this existed the page offered submitting a price and nothing else,
+    /// so a provider who could not do that had to reply to the email instead.
+    /// That reply lands in a shared ops inbox as free text with nothing on it
+    /// naming the lead — which is exactly what happened on 2026-08-17, when
+    /// Adduco answered a live Haapsalu move with "selle info pealt adekvaatset
+    /// pakkumist paraku ei saa teha" and asked whether both ends were the same
+    /// address, plus photos. It cost a full round trip on a job the customer
+    /// needed that week, and to every metric we have that outreach still counted
+    /// as silence.
+    ///
+    /// Records a <see cref="ProviderInfoRequest"/>, moves the outreach off the
+    /// silent states to NeedsInfo, and alerts ops with the lead reference in the
+    /// subject so the mail threads with the original outreach. It does NOT email
+    /// the customer: what to ask a person, and in which language, is a human
+    /// decision for now.
+    ///
+    /// Same contract as the rest of this controller — an unknown token is
+    /// indistinguishable from a missing one, a closed lead 409s with a reason,
+    /// and nothing in the response mentions the customer.
+    /// </summary>
+    [HttpPost("{token}/need-info")]
+    [AllowAnonymous]
+    // Same bucket as the price submit: it is the same provider, on the same page,
+    // and it likewise costs one outbound ops email per call.
+    [EnableRateLimiting("provider-quote")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> NeedInfo(string token, [FromBody] NeedInfoRequest req)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+            return NotFound(new { error = "Quote not found." });
+
+        // Validate BEFORE any lookup or mutation, exactly like SubmitQuote.
+        if (req is null)
+            return BadRequest(new { error = "Tell us what is missing." });
+        if (HasAngle(req.Note))
+            return BadRequest(new { error = "Text fields contain invalid characters." });
+
+        // Unknown/duplicate/blank slugs are dropped rather than refused: a stale
+        // checkbox in a cached page must not cost us the reply. What CANNOT be
+        // stored is a flag carrying nothing at all — an empty reason set and an
+        // empty note is not an answer, it is a row that would sit in the ops
+        // queue saying "somebody is blocked on something".
+        var reasons = InfoRequestReasons.Normalize(req.Reasons);
+        var note    = Clamp(req.Note, 2000);
+        if (reasons.Count == 0 && note is null)
+            return BadRequest(new { error = "Tell us what is missing." });
+
+        var outreach = await db.ProviderOutreaches
+            .FirstOrDefaultAsync(o => o.QuoteToken == token);
+        if (outreach is null)
+            return NotFound(new { error = "Quote not found." });
+
+        var lead = await db.DemandLeads.FirstOrDefaultAsync(d => d.Id == outreach.DemandLeadId);
+        if (lead is null)
+            return NotFound(new { error = "Quote not found." });
+
+        // A closed request takes no new work. Answering a question about a lead
+        // that is already booked, dismissed or unmatched would put dead work back
+        // in the ops queue — the same reasoning as the quote submit, and the same
+        // machine-readable reason so the page can say "already closed".
+        if (TerminalLeadStatuses.Contains(lead.Status))
+        {
+            return Conflict(new
+            {
+                error  = "This request is already closed.",
+                reason = "lead_closed",
+            });
+        }
+
+        // Add-or-update the OPEN request for this outreach rather than appending a
+        // row per press. A provider who clicks twice, or comes back to add the
+        // detail they forgot, has one question outstanding, not two — and ops
+        // closes questions, so two rows would mean closing the same thing twice.
+        var request = await db.ProviderInfoRequests
+            .Where(r => r.ProviderOutreachId == outreach.Id && r.ResolvedAt == null)
+            .OrderByDescending(r => r.CreatedAt)
+            .FirstOrDefaultAsync();
+        if (request is null)
+        {
+            request = new ProviderInfoRequest
+            {
+                Id                 = Guid.NewGuid(),
+                DemandLeadId       = lead.Id,
+                SupplierId         = outreach.SupplierId,
+                ProviderOutreachId = outreach.Id,
+                CreatedAt          = DateTime.UtcNow,
+            };
+            db.ProviderInfoRequests.Add(request);
+        }
+
+        // Reasons REPLACE (a checkbox set is submitted whole, so unticking one has
+        // to mean something) but an EMPTY set does not — that is an omission, not
+        // a retraction, and it must not silently erase what they told us the first
+        // time. Same rule, same reason, as the quote note above.
+        if (reasons.Count > 0) request.ReasonsJson = InfoRequestReasons.Serialize(reasons);
+        if (note is not null)  request.Note        = note;
+
+        // "Replied, but blocked" — applied ONLY from a state that means silence.
+        // Sent is the one this feature exists to end; NoAnswer is an admin's guess
+        // that the provider never came back, which this message disproves. Every
+        // other state is a stronger fact already on the record — a submitted price
+        // (Replied), a refusal (Declined), a dead address (Bounced/Complained) —
+        // and a question must not overwrite any of them.
+        if (outreach.Status is ProviderOutreachStatus.Sent or ProviderOutreachStatus.NoAnswer)
+            outreach.Status = ProviderOutreachStatus.NeedsInfo;
+
+        await db.SaveChangesAsync();
+
+        // Read back what is now STORED rather than echoing the request: after the
+        // merge above those can differ, and the page should render what we
+        // actually hold.
+        var storedReasons = InfoRequestReasons.Parse(request.ReasonsJson);
+
+        // Strictly after the write commits. The email queue hands the job to
+        // Hangfire, which commits on its own connection — so a failed save must
+        // never be able to leave an ops alert claiming a provider replied when
+        // nothing was recorded. Same ordering, same reason, as
+        // ConciergeOutreachService and the quote submit above.
+        await EnqueueNeedInfoOpsAlertAsync(lead, outreach, storedReasons, request.Note);
+
+        return Ok(new NeedInfoSubmittedDto(true, storedReasons, request.Note));
+    }
+
+    /// <summary>
+    /// Tells ops a provider is blocked, in the one place they already watch.
+    ///
+    /// The lead reference goes in the SUBJECT: Reply-To on provider mail is a
+    /// single shared inbox and two live Tallinn → Tartu moves produce identical
+    /// subjects, so without the handle this alert would land with nothing on it
+    /// saying which customer it is about — the very failure the feature exists to
+    /// fix. Same 8-hex handle the original outreach subject carries, so the two
+    /// sit together in a search (and, in most clients, in one thread).
+    /// </summary>
+    private async Task EnqueueNeedInfoOpsAlertAsync(
+        DemandLead lead, ProviderOutreach outreach,
+        IReadOnlyList<string> reasons, string? note)
+    {
+        var supplierName = await db.Suppliers
+            .Where(s => s.Id == outreach.SupplierId)
+            .Select(s => s.Name)
+            .FirstOrDefaultAsync() ?? "Provider";
+
+        var reference = ProviderOutreachComposer.Reference(lead.Id);
+        var route     = string.IsNullOrWhiteSpace(lead.ToCity)
+            ? lead.City
+            : $"{lead.City} → {lead.ToCity}";
+        var category  = ServiceCategories.SlugFor(lead.Category);
+        var missing   = reasons.Count == 0
+            ? "  • not itemised — see their note"
+            : string.Join("\n", reasons.Select(r => $"  • {InfoRequestReasons.OpsLabel(r)}"));
+
+        var opsInbox = await OpsInbox.ResolveAsync(db);
+        emailQueue.EnqueueEmail(
+            opsInbox,
+            $"Ruumly — provider needs more info ({route}) [{reference}]",
+            $"Provider {supplierName} cannot quote the {category} request in {route} yet.\n\n" +
+            $"What they are missing:\n{missing}\n\n" +
+            $"Their note: {note ?? "—"}\n\n" +
+            $"Lead reference: {reference}\n\n" +
+            "The customer has NOT been contacted about this. Deciding what to ask them, and in " +
+            "which language, is a human call — answer it from the admin CRM → Leads, then mark " +
+            "the request resolved.");
     }
 
     /// <summary>
@@ -409,6 +595,14 @@ public class QuoteController(
                 "draft is still in the admin workspace.", id);
         }
     }
+
+    /// <summary>
+    /// Cheap "this is prose, not markup" gate on anything a public caller typed.
+    /// Shared by both public writes so the two cannot drift apart — a field the
+    /// quote form refuses must not be accepted by the form beside it.
+    /// </summary>
+    private static bool HasAngle(string? s) =>
+        s is not null && (s.Contains('<') || s.Contains('>'));
 
     private static string? Clamp(string? s, int max)
     {

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs.Responses;
+using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
 
 namespace Ruumly.Backend.Services.Implementations;
@@ -50,6 +51,12 @@ public class SupplierProfileService(RuumlyDbContext db, IDistributedCache cache)
                 ListingCount = db.Listings.Count(li => li.LocationId == l.Id && li.IsActive),
             })
             .ToListAsync(ct);
+
+        // Whether a message sent from this profile reaches a human. Same predicate
+        // the contact endpoint uses to decide delivery, so the page can never
+        // promise a reply the backend will not send.
+        var repliesDirectly = await db.Users
+            .AnyAsync(u => u.SupplierId == supplier.Id && u.Role == UserRole.Provider, ct);
 
         Dictionary<string, string>? longDescription = null;
         if (!string.IsNullOrWhiteSpace(supplier.LongDescriptionTranslationsJson))
@@ -104,7 +111,8 @@ public class SupplierProfileService(RuumlyDbContext db, IDistributedCache cache)
             ServiceTypes:     ParseServiceTypes(supplier.ServiceTypesJson),
             PriceFrom:        supplier.PriceFrom,
             PriceUnit:        supplier.PriceUnit,
-            PriceNote:        supplier.PriceNote);
+            PriceNote:        supplier.PriceNote,
+            RepliesDirectly:  repliesDirectly);
 
         await cache.SetStringAsync(
             cacheKey,
