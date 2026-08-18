@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace Ruumly.Backend.DTOs.Requests;
 
 public record ContactRequest(
@@ -91,5 +93,31 @@ public record ConciergeRequest(
     /// server-side before storage — a caller must not be able to point a lead
     /// at an arbitrary object. See DemandLead.PhotoKeysJson.
     /// </summary>
-    List<string>? PhotoKeys = null
+    List<string>? PhotoKeys = null,
+    /// <summary>
+    /// The intake's one-tap scoping answers, as
+    /// <c>{"movingSize":2,"movingAccess":3}</c> — question id → 1-based chip
+    /// position. Validated against <c>Constants.ScopeQuestions</c> before
+    /// storage: unknown ids and out-of-range positions are dropped, never
+    /// trusted, and never 400 the request.
+    ///
+    /// Bound as <see cref="JsonElement"/> values rather than <c>int</c> on
+    /// purpose. A <c>Dictionary&lt;string,int&gt;</c> makes ONE malformed value
+    /// ("movingSize": null, from a stale service-worker-cached bundle or a
+    /// hand-rolled POST) a model-binding 400 that loses the entire request —
+    /// and the scoping answers are an extra on a request, never worth the
+    /// request itself. See ScopeQuestions.Normalize.
+    /// </summary>
+    Dictionary<string, JsonElement>? Scope = null,
+    /// <summary>
+    /// Street address the job starts at, and ends at for a move. Optional and
+    /// stored as given — we do not geocode or validate it, because the person
+    /// who lives there is the authority on their own address.
+    ///
+    /// NEVER reaches a provider before the customer accepts an offer: it is
+    /// absent from the outreach email and from the public quote DTO, which keep
+    /// showing the city exactly as before. See DemandLead.FromAddress.
+    /// </summary>
+    string? FromAddress = null,
+    string? ToAddress = null
 );

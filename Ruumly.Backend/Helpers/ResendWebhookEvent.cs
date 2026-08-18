@@ -21,14 +21,27 @@ public sealed record ResendWebhookEvent(
 {
     public const string BouncedType    = "email.bounced";
     public const string ComplainedType = "email.complained";
+    public const string DeliveredType  = "email.delivered";
+    public const string OpenedType     = "email.opened";
 
     /// <summary>
     /// The two events that mean "this address did not reach a human". Everything
-    /// else Resend may send (delivered, opened, clicked…) is accepted and ignored,
-    /// so enabling extra events in the dashboard can never break the endpoint.
+    /// else Resend may send (clicked, sent…) is accepted and ignored, so enabling
+    /// extra events in the dashboard can never break the endpoint.
     /// </summary>
     public bool IsDeliveryFailure =>
         Type is BouncedType or ComplainedType;
+
+    /// <summary>
+    /// The mirror image: the two events that say the message DID get somewhere.
+    /// Kept separate from <see cref="IsDeliveryFailure"/> rather than folded into
+    /// one "interesting event" flag, because the two halves are applied by
+    /// completely different rules — a failure retires an address and rewrites
+    /// outreach status, a confirmation only stamps a timestamp and must never
+    /// touch either. One predicate would invite one code path.
+    /// </summary>
+    public bool IsDeliveryConfirmation =>
+        Type is DeliveredType or OpenedType;
 
     /// <summary>A hard bounce or a spam complaint retires the address.</summary>
     public bool DisablesAddress =>

@@ -81,4 +81,52 @@ public class DemandLead
     /// nothing beyond it — see BackgroundCleanupService.CleanupLeadPhotosAsync.
     /// </summary>
     public string? PhotoKeysJson { get; set; }
+
+    /// <summary>
+    /// The intake's scoping answers as submitted, e.g.
+    /// <c>{"movingSize":2,"movingAccessOrigin":3,"packingHelp":4}</c>.
+    ///
+    /// The funnel already asks these as one-tap chips and then throws the
+    /// structure away: it renders them to a sentence in the CUSTOMER's language
+    /// and glues them into <see cref="Details"/>. Two costs follow. A Russian
+    /// customer's answers are pasted verbatim into an Estonian mover's email,
+    /// and nothing can be queried -- "moves with no lift" is not a question the
+    /// admin can ask.
+    ///
+    /// Stored as JSON rather than typed columns because Phase 1 is largely about
+    /// ADDING questions, and a column per question would mean a migration per
+    /// iteration. Labels are resolved at compose time in the RECIPIENT's
+    /// language, which is what fixes the leak. Read through the LeadScope helper,
+    /// which never throws and drops unknown ids -- same contract as LeadPhotos.
+    /// </summary>
+    public string? ScopeJson { get; set; }
+
+    /// <summary>
+    /// Street address the job starts at, and ends at for a move.
+    ///
+    /// Never collected before, for any service, at any stage -- so the founder
+    /// brokered it by hand on every single job, and a mover could not finalise
+    /// anything without a round trip. Adduco's refusal on the Haapsalu move
+    /// turned partly on not knowing whether the two ends shared an address.
+    ///
+    /// NOT shown to a provider before the customer accepts an offer: until then
+    /// they see the city, exactly as today. This is somebody's home.
+    /// </summary>
+    [MaxLength(300)] public string? FromAddress { get; set; }
+    [MaxLength(300)] public string? ToAddress   { get; set; }
+
+    /// <summary>
+    /// Credential for the customer's own status page, /{lang}/request-status/{token}.
+    ///
+    /// A concierge customer has no account, so between the receipt email and the
+    /// offer email they hear nothing and cannot tell a slow success from a
+    /// silent failure -- which mattered enormously while a city-matching bug was
+    /// quietly emailing nobody. RequestDetailPage redirects to /account, which
+    /// they do not have.
+    ///
+    /// A token, not the lead id: ids are sequential-ish and enumerable, and this
+    /// page shows a stranger what somebody is moving and when their home will be
+    /// empty. Nullable because rows created before this feature have no page.
+    /// </summary>
+    [MaxLength(64)] public string? StatusToken { get; set; }
 }

@@ -641,6 +641,19 @@ public class AdminOffersController(
         sentAt       = o.SentAt,
         status       = o.Status.ToString().ToLower(),
         note         = o.Note,
+        // Did this specific provider actually receive it? The 30-day aggregate in
+        // GetLeadMetrics cannot answer that for one row, and the question that
+        // started this work was exactly per-row: five Viljandi storage requests
+        // reached 18 providers and produced no reply at all, and nothing recorded
+        // said whether any of them got the mail.
+        //
+        // Null means UNKNOWN, never "not delivered" -- every row sent before the
+        // Resend webhook existed has both null, and open tracking is a separate
+        // account-level setting that may never have been on. Read the doc comments
+        // on ProviderOutreach.DeliveredAt/OpenedAt before rendering either as a
+        // fact about the provider.
+        deliveredAt  = o.DeliveredAt,
+        openedAt     = o.OpenedAt,
         // The provider's answer from the tokenized quote page — all null until
         // they submit one (and on legacy rows sent before quote links existed).
         // Drives the "Quoted {amount} {unit}" outreach-history row.

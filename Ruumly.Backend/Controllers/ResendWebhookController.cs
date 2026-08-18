@@ -18,8 +18,13 @@ namespace Ruumly.Backend.Controllers;
 ///
 /// Configure in the Resend dashboard (Webhooks → Add endpoint):
 ///   URL     https://api.ruumly.eu/api/webhooks/resend
-///   Events  email.bounced, email.complained
+///   Events  email.bounced, email.complained, email.delivered, email.opened
 ///   Secret  copy the "whsec_..." signing secret into RESEND__WEBHOOKSECRET
+///
+/// The endpoint itself had never been created in the Resend account until
+/// 2026-08-18 — the code shipped, nothing was ever subscribed, and so every
+/// bounce since had been discarded by Resend before reaching us. Shipping this
+/// file is not the same as configuring it; check the dashboard, not the repo.
 /// </summary>
 [ApiController]
 [Route("api/webhooks")]
@@ -90,9 +95,12 @@ public sealed class ResendWebhookController(
             return BadRequest(new { error = "Malformed webhook payload." });
         }
 
-        // Delivered/opened/clicked are accepted and ignored, so turning extra
-        // events on in the dashboard can never start failing deliveries.
-        if (!evt.IsDeliveryFailure)
+        // Failures retire an address; confirmations only stamp a timestamp on the
+        // outreach row (the sent → delivered → opened funnel). Anything else
+        // Resend may send — clicked, sent, scheduled — is accepted and ignored,
+        // so turning extra events on in the dashboard can never start failing
+        // deliveries in their retry queue.
+        if (!evt.IsDeliveryFailure && !evt.IsDeliveryConfirmation)
             return Ok(new { received = true, applied = false, reason = "ignored_event" });
 
         if (evt.Recipients.Count == 0)
@@ -104,10 +112,24 @@ public sealed class ResendWebhookController(
             if (outcome.Duplicate)
                 return Ok(new { received = true, applied = false, reason = "duplicate" });
 
-            logger.LogInformation(
-                "Resend {EventType} for {Recipient} ({BounceType}): {Flagged} supplier(s) flagged unusable, {Rows} outreach row(s) updated.",
-                evt.Type, evt.Recipients[0], evt.BounceType ?? "unknown",
-                outcome.SuppliersFlagged, outcome.OutreachRowsUpdated);
+            if (evt.IsDeliveryConfirmation)
+            {
+                // Debug, not Information: a confirmation arrives for every single
+                // email we send, twice once opens are counted. At Information the
+                // bounce lines — the ones somebody actually needs to find — would
+                // be a rounding error in the log stream. The aggregate lives in
+                // GET /api/admin/leads/metrics instead.
+                logger.LogDebug(
+                    "Resend {EventType} for {Recipient}: {Rows} outreach row(s) stamped.",
+                    evt.Type, evt.Recipients[0], outcome.OutreachRowsUpdated);
+            }
+            else
+            {
+                logger.LogInformation(
+                    "Resend {EventType} for {Recipient} ({BounceType}): {Flagged} supplier(s) flagged unusable, {Rows} outreach row(s) updated.",
+                    evt.Type, evt.Recipients[0], evt.BounceType ?? "unknown",
+                    outcome.SuppliersFlagged, outcome.OutreachRowsUpdated);
+            }
 
             return Ok(new
             {

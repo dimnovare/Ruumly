@@ -612,6 +612,10 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
     /// contact (Contacted/Quoted/Converted with a real ContactedAt) — dismissed
     /// and unmatched leads are closures, not contact, so they can't make the ops
     /// team look artificially fast or inflate the contact rate.
+    ///
+    /// outreachDelivery30d is the provider-side half of the same story — did the
+    /// ask even arrive — and is measured over a deliberately narrower base than
+    /// everything else here; the comment on it explains why.
     /// </summary>
     [HttpGet("leads/metrics")]
     public async Task<IActionResult> GetLeadMetrics()
@@ -685,6 +689,53 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
                 || matchSignalIds.Contains(d.Id));
         }
 
+        // ── Outreach delivery telemetry (2026-08-18) ─────────────────────────
+        // Decomposes the provider side into sent → delivered → opened, so that
+        // "we asked 18 providers and nobody answered" can be told apart from "we
+        // asked 18 providers and the mail never arrived". Those need opposite
+        // fixes — a better ask versus a deliverability repair — and until the
+        // Resend webhook was actually configured (it never had been; see
+        // ResendWebhookController) nothing stored could distinguish them.
+        //
+        // THE DENOMINATOR IS THE WHOLE PROBLEM HERE. DeliveredAt/OpenedAt can
+        // only be written by that webhook, and the columns are deliberately not
+        // backfilled, so every row sent before it existed is UNKNOWN — not
+        // undelivered. A rate over all outreach would therefore report a
+        // delivery collapse that is really just our own history, and it would
+        // stay wrong forever rather than converging.
+        //
+        // So the measurable base starts at the first outreach row that ever
+        // received a receipt. Derived from the data rather than hard-coded to a
+        // date: nobody has to remember to edit a constant, it is correct on any
+        // environment (a fresh staging DB has its own start), and before the
+        // first receipt ever lands it reports nulls rather than a confident 0%.
+        // Rows in the window that predate it are surfaced as unknownSent, so the
+        // blind spot is visible instead of silently folded into either number.
+        var telemetryFrom = await Db.ProviderOutreaches
+            .Where(o => o.DeliveredAt != null || o.OpenedAt != null)
+            .OrderBy(o => o.SentAt)
+            .Select(o => (DateTime?)o.SentAt)
+            .FirstOrDefaultAsync();
+
+        // Concierge-scoped like everything else on this endpoint: outreach for a
+        // partner-direct or routed lead is a different channel and must not move
+        // the demand funnel. Windowed on the OUTREACH's own SentAt, not the
+        // lead's CreatedAt — this measures messages, and an old lead worked last
+        // week is exactly the message we want counted.
+        var outreach30d = await (
+            from o in Db.ProviderOutreaches
+            join d in Db.DemandLeads on o.DemandLeadId equals d.Id
+            where d.Source == ConciergeSource && o.SentAt >= monthAgo
+            select new { o.SentAt, o.DeliveredAt, o.OpenedAt })
+            .ToListAsync();
+
+        var measurable = outreach30d
+            .Where(o => telemetryFrom != null && o.SentAt >= telemetryFrom.Value)
+            .ToList();
+        var measuredSent   = measurable.Count;
+        var deliveredCount = measurable.Count(o => o.DeliveredAt != null);
+        var openedCount    = measurable.Count(o => o.OpenedAt != null);
+
         // Median minutes from creation to first genuine touch (admin ContactedAt,
         // or an earlier partner RespondedAt). Sample is the genuine-contact set —
         // never dismissed/unmatched closures. Null when nothing was contacted yet.
@@ -723,6 +774,33 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
                 matched,
                 total = matchBase,
                 rate  = matchBase == 0 ? 0d : matched / (double)matchBase,
+            },
+            // Provider-side delivery funnel over the same 30 days. Rates are
+            // null, never 0, when the base is empty: "no measurable outreach
+            // yet" and "nothing was delivered" are opposite conclusions, and
+            // this metric exists precisely because they were being confused.
+            //
+            // Both rates share the sent base rather than nesting opened inside
+            // delivered — they answer two different questions ("did it arrive",
+            // "did anyone look"), and an open whose delivery receipt was missed
+            // cannot then produce an open rate above 100%. Note that a null
+            // OpenedAt is WEAK evidence (tracking pixels are widely blocked), so
+            // openRate is a floor on attention, not a measurement of it; a low
+            // deliveredRate is the alarming one.
+            outreachDelivery30d = new
+            {
+                // Null until the very first receipt ever arrives — the marker
+                // that everything below is unknown rather than zero.
+                measuredFrom  = telemetryFrom,
+                sent          = measuredSent,
+                delivered     = deliveredCount,
+                opened        = openedCount,
+                deliveredRate = measuredSent == 0 ? (double?)null : deliveredCount / (double)measuredSent,
+                openRate      = measuredSent == 0 ? (double?)null : openedCount / (double)measuredSent,
+                // Outreach in the window sent before telemetry existed. Genuinely
+                // unknown, so it is reported separately and NEVER counted as
+                // undelivered.
+                unknownSent   = outreach30d.Count - measuredSent,
             },
             medianFirstResponseMinutes,
         });

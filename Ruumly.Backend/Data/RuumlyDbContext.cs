@@ -120,6 +120,15 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
             .IsUnique()
             .HasFilter("\"Slug\" IS NOT NULL");
 
+        // The customer's status page looks a lead up by this token on every visit,
+        // and the token IS the credential -- so the database, not app code, is
+        // where "no two leads share one" has to be true. Filtered because every
+        // row created before the status page existed carries null.
+        model.Entity<DemandLead>()
+            .HasIndex(e => e.StatusToken)
+            .IsUnique()
+            .HasFilter("\"StatusToken\" IS NOT NULL");
+
         // The Montonio webhook finds the invoice by PaymentOrderId on every payment
         // callback — index it (and enforce one invoice per payment order).
         model.Entity<Invoice>()

@@ -1,3 +1,4 @@
+using Ruumly.Backend.Constants;
 using Ruumly.Backend.Models.Enums;
 
 namespace Ruumly.Backend.Helpers;
@@ -337,7 +338,21 @@ public static class EmailTranslations
         string CategoryPacking,
         string CategoryVanRental,
         string CategoryInsurance,
-        string CategoryAny
+        string CategoryAny,
+        // ── Intake scoping answers (see Constants/ScopeQuestions) ─────────────
+        // The chips the customer tapped — home size, floor and lift, how long,
+        // what is being hauled — rendered as fact lines in the RECIPIENT's
+        // language. The whole point of storing the answer as a position rather
+        // than as a sentence: the same lead has to read Estonian to an Estonian
+        // mover and Latvian to a Latvian one, whatever language the customer
+        // filled the form in.
+        //
+        // ONE FLAT DICTIONARY rather than ~66 more positional parameters, keyed
+        // exactly like the frontend's own translation keys ("movingSize.label",
+        // "movingSize.opt3") so the two catalogues can be diffed by eye. A
+        // question with no entry here renders NO line at all — never a raw id
+        // and never a bare number, which is worse than silence in a cold email.
+        IReadOnlyDictionary<string, string> ScopeText
     )
     {
         public string SupplierWelcomeBody(string name) =>
@@ -366,6 +381,24 @@ public static class EmailTranslations
             DemandLeadCategory.Insurance => CategoryInsurance,
             _                            => CategoryAny,
         };
+
+        /// <summary>
+        /// Fact-table label for a scoping question ("Home size"), or null when
+        /// this language has no wording for it. A NOUN PHRASE, not the question
+        /// the customer was asked: the customer saw "What size is the home?",
+        /// the provider reads a row in a table of job facts.
+        /// </summary>
+        public string? ScopeLabel(string questionId) =>
+            ScopeText.GetValueOrDefault($"{questionId}.label");
+
+        /// <summary>
+        /// The wording of one chip ("2nd–3rd floor, no lift"), or null when this
+        /// language has no wording for it. Null is a normal answer, not an error:
+        /// a stored row can name a question — or an option — that this build no
+        /// longer has copy for, and the caller drops the line.
+        /// </summary>
+        public string? ScopeOption(string questionId, int option) =>
+            ScopeText.GetValueOrDefault($"{questionId}.opt{option}");
 
         /// <summary>"The customer attached N photos — view them on the quote page."</summary>
         public string OutreachPhotos(int count) =>
@@ -431,6 +464,586 @@ public static class EmailTranslations
         public string ApplySignInIgnore(string email) =>
             ApplySignInIgnoreTpl.Replace("{email}", email);
     }
+
+    // ─── Intake scoping answers, one dictionary per language ──────────────────
+    //
+    // Declared BEFORE the EmailStrings instances below: static field
+    // initializers run in textual order, so a dictionary defined after Et would
+    // still be null when Et is constructed.
+    //
+    // Keys mirror the frontend's own translation keys exactly
+    // ("movingSize.label", "movingSize.opt3" → request.scope.movingSize.opt3),
+    // so the customer-facing catalogue and this provider-facing one can be
+    // diffed by eye. The WORDING deliberately differs in two places:
+    //
+    //   • Labels are noun phrases, not questions. The customer was asked "What
+    //     size is the home?"; the provider reads a row in a table of job facts.
+    //   • "Not sure" says WHOSE uncertainty it is. "Home size: Not sure" in a
+    //     cold email reads like a broken template; "the customer is not sure" is
+    //     a fact a provider can price a range against — the same reason
+    //     OutreachDateAsap exists instead of a dash.
+    //
+    // Every option is the SAME answer the customer tapped, in the recipient's
+    // language. Nothing here is ever rendered to the customer.
+
+    /// <summary>
+    /// Fills in the chips of <c>movingAccessFrom</c> and <c>movingAccessTo</c>
+    /// by copying <c>movingAccess</c>'s, and returns the same dictionary.
+    ///
+    /// The two ends ask the identical question about a different address, so
+    /// their five answers must READ identically — a provider comparing
+    /// "Access at pickup" with "Access at destination" is comparing two floors,
+    /// and any wording difference between the rows would look like a difference
+    /// in what was asked. Typing them out three times per language is 75 string
+    /// literals that a later fix ("4. korrus" → "4. korrus või kõrgem") would
+    /// only ever be applied to one or two of. Copying at construction makes the
+    /// drift impossible instead of merely discouraged.
+    ///
+    /// Only the OPTIONS are shared. The three labels are genuinely different
+    /// wording and stay written out per language.
+    /// </summary>
+    private static Dictionary<string, string> WithSharedAccessChips(Dictionary<string, string> scope)
+    {
+        for (var option = 1; option <= 5; option++)
+        {
+            var chip = scope[$"{ScopeQuestions.MovingAccess}.opt{option}"];
+            scope[$"{ScopeQuestions.MovingAccessFrom}.opt{option}"] = chip;
+            scope[$"{ScopeQuestions.MovingAccessTo}.opt{option}"]   = chip;
+        }
+        return scope;
+    }
+
+    private static readonly IReadOnlyDictionary<string, string> ScopeEt =
+        WithSharedAccessChips(new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["warehouseSize.label"]      = "Vajalik pind",
+            ["warehouseSize.opt1"]       = "Paar kasti (~1–2 m²)",
+            ["warehouseSize.opt2"]       = "Väike tuba (~3–5 m²)",
+            ["warehouseSize.opt3"]       = "Tuba (~5–10 m²)",
+            ["warehouseSize.opt4"]       = "2-toaline korter (~10–15 m²)",
+            ["warehouseSize.opt5"]       = "Maja või rohkem (15+ m²)",
+            ["warehouseSize.opt6"]       = "Klient ei ole kindel",
+            ["warehouseDuration.label"]  = "Hoiuperiood",
+            ["warehouseDuration.opt1"]   = "Alla kuu",
+            ["warehouseDuration.opt2"]   = "1–3 kuud",
+            ["warehouseDuration.opt3"]   = "3–12 kuud",
+            ["warehouseDuration.opt4"]   = "Üle aasta",
+            ["warehouseDuration.opt5"]   = "Klient ei ole kindel",
+            ["warehouseGoods.label"]     = "Hoiustatav vara",
+            ["warehouseGoods.opt1"]      = "Kodune vara ja mööbel",
+            ["warehouseGoods.opt2"]      = "Kastid, dokumendid või ärikaup",
+            ["warehouseGoods.opt3"]      = "Auto, mootorratas või paat",
+            ["warehouseGoods.opt4"]      = "Tööriistad, tehnika või ehitusmaterjal",
+            ["warehouseGoods.opt5"]      = "Kliimatundlik kaup (vein, elektroonika, pillid)",
+            ["warehouseGoods.opt6"]      = "Klient ei ole kindel",
+            ["movingSize.label"]         = "Kodu suurus",
+            ["movingSize.opt1"]          = "Stuudio või 1-toaline",
+            ["movingSize.opt2"]          = "2-toaline korter",
+            ["movingSize.opt3"]          = "3-toaline korter",
+            ["movingSize.opt4"]          = "4-toaline või suurem",
+            ["movingSize.opt5"]          = "Kontor või äripind",
+            ["movingSize.opt6"]          = "Klient ei ole kindel",
+            ["movingAccess.label"]       = "Korrus ja lift",
+            ["movingAccess.opt1"]        = "Maja või esimene korrus",
+            ["movingAccess.opt2"]        = "Korrus liftiga",
+            ["movingAccess.opt3"]        = "2.–3. korrus, liftita",
+            ["movingAccess.opt4"]        = "4. korrus või kõrgem, liftita",
+            ["movingAccess.opt5"]        = "Klient ei ole kindel",
+            // Chips for the two ends are copied from movingAccess above by
+            // WithSharedAccessChips — only the labels differ.
+            ["movingAccessFrom.label"]   = "Juurdepääs lähtekohas",
+            ["movingAccessTo.label"]     = "Juurdepääs sihtkohas",
+            ["movingHeavyItems.label"]   = "Rasked või keerukad esemed",
+            ["movingHeavyItems.opt1"]    = "Midagi erilist ei ole",
+            ["movingHeavyItems.opt2"]    = "Klaver",
+            ["movingHeavyItems.opt3"]    = "Seif, jõusaali seadmed või masin",
+            ["movingHeavyItems.opt4"]    = "Akvaarium, kunstiteos või muu õrn ese",
+            ["movingHeavyItems.opt5"]    = "Mitu neist",
+            ["movingHeavyItems.opt6"]    = "Klient ei ole kindel",
+            ["packingHelp.label"]        = "Pakkimisabi",
+            ["packingHelp.opt1"]         = "Jah — pakkige kõik ära",
+            ["packingHelp.opt2"]         = "Ainult õrnad ja suured esemed",
+            ["packingHelp.opt3"]         = "Ainult kastid ja pakkematerjal",
+            ["packingHelp.opt4"]         = "Ei — klient pakib ise",
+            ["trailerDuration.label"]    = "Rendiperiood",
+            ["trailerDuration.opt1"]     = "Paar tundi",
+            ["trailerDuration.opt2"]     = "Üks päev",
+            ["trailerDuration.opt3"]     = "2–3 päeva",
+            ["trailerDuration.opt4"]     = "Nädal või rohkem",
+            ["trailerDuration.opt5"]     = "Klient ei ole kindel",
+            ["trailerType.label"]        = "Veos",
+            ["trailerType.opt1"]         = "Mööbel või kolimiskraam",
+            ["trailerType.opt2"]         = "Ehitusmaterjal või aiajäätmed",
+            ["trailerType.opt3"]         = "Tehnika või ATV",
+            ["trailerType.opt4"]         = "Paat või jett",
+            ["trailerType.opt5"]         = "Klient ei ole kindel",
+            ["trailerTow.label"]         = "Haakeseade ja juhiluba",
+            ["trailerTow.opt1"]          = "Auto haakeseadmega, B-kategooria (kuni 750 kg)",
+            ["trailerTow.opt2"]          = "Auto haakeseadmega, BE-kategooria (üle 750 kg)",
+            ["trailerTow.opt3"]          = "Haakeseade on olemas, kategooria pole teada",
+            ["trailerTow.opt4"]          = "Haakeseadet ei ole — vajab ka autot",
+            ["trailerTow.opt5"]          = "Klient ei ole kindel",
+            ["vanrentalDriver.label"]    = "Juht",
+            ["vanrentalDriver.opt1"]     = "Ilma juhita — klient sõidab ise",
+            ["vanrentalDriver.opt2"]     = "Koos juhiga",
+            ["vanrentalDriver.opt3"]     = "Koos juhi ja laadijatega",
+            ["vanrentalDriver.opt4"]     = "Ükskõik kumb — kumb on odavam",
+            ["vanrentalDriver.opt5"]     = "Klient ei ole kindel",
+            ["vanrentalDuration.label"]  = "Rendiperiood",
+            ["vanrentalDuration.opt1"]   = "Paar tundi",
+            ["vanrentalDuration.opt2"]   = "Üks päev",
+            ["vanrentalDuration.opt3"]   = "2–3 päeva",
+            ["vanrentalDuration.opt4"]   = "Nädal või rohkem",
+            ["vanrentalDuration.opt5"]   = "Klient ei ole kindel",
+            ["vanrentalSize.label"]      = "Kaubiku suurus",
+            ["vanrentalSize.opt1"]       = "Väike (kuni ~6 m³)",
+            ["vanrentalSize.opt2"]       = "Keskmine (~8–12 m³)",
+            ["vanrentalSize.opt3"]       = "Suur (~15 m³ või rohkem)",
+            ["vanrentalSize.opt4"]       = "Klient ei ole kindel",
+            ["cleaningType.label"]       = "Koristuse liik",
+            ["cleaningType.opt1"]        = "Koristus vanas kodus",
+            ["cleaningType.opt2"]        = "Koristus uues kodus",
+            ["cleaningType.opt3"]        = "Remondijärgne koristus",
+            ["cleaningType.opt4"]        = "Regulaarne koristus",
+            ["cleaningType.opt5"]        = "Klient ei ole kindel",
+            ["cleaningSize.label"]       = "Pinna suurus",
+            ["cleaningSize.opt1"]        = "Kuni 40 m² (1 tuba)",
+            ["cleaningSize.opt2"]        = "40–70 m² (2 tuba)",
+            ["cleaningSize.opt3"]        = "70–110 m² (3–4 tuba)",
+            ["cleaningSize.opt4"]        = "Üle 110 m² või maja",
+            ["cleaningSize.opt5"]        = "Klient ei ole kindel",
+            ["cleaningExtras.label"]     = "Lisatööd",
+            ["cleaningExtras.opt1"]      = "Ainult tavakoristus",
+            ["cleaningExtras.opt2"]      = "Aknad",
+            ["cleaningExtras.opt3"]      = "Ahi",
+            ["cleaningExtras.opt4"]      = "Külmik",
+            ["cleaningExtras.opt5"]      = "Aknad, ahi ja külmik",
+            ["cleaningExtras.opt6"]      = "Klient ei ole kindel",
+        });
+
+    private static readonly IReadOnlyDictionary<string, string> ScopeEn =
+        WithSharedAccessChips(new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["warehouseSize.label"]      = "Space needed",
+            ["warehouseSize.opt1"]       = "A few boxes (~1–2 m²)",
+            ["warehouseSize.opt2"]       = "Small room (~3–5 m²)",
+            ["warehouseSize.opt3"]       = "Room (~5–10 m²)",
+            ["warehouseSize.opt4"]       = "1-bedroom flat (~10–15 m²)",
+            ["warehouseSize.opt5"]       = "House or more (15+ m²)",
+            ["warehouseSize.opt6"]       = "The customer is not sure",
+            ["warehouseDuration.label"]  = "Storage period",
+            ["warehouseDuration.opt1"]   = "Under a month",
+            ["warehouseDuration.opt2"]   = "1–3 months",
+            ["warehouseDuration.opt3"]   = "3–12 months",
+            ["warehouseDuration.opt4"]   = "Over a year",
+            ["warehouseDuration.opt5"]   = "The customer is not sure",
+            ["warehouseGoods.label"]     = "What is being stored",
+            ["warehouseGoods.opt1"]      = "Household items and furniture",
+            ["warehouseGoods.opt2"]      = "Boxes, documents or business stock",
+            ["warehouseGoods.opt3"]      = "A car, motorcycle or boat",
+            ["warehouseGoods.opt4"]      = "Tools, machinery or building materials",
+            ["warehouseGoods.opt5"]      = "Climate-sensitive goods (wine, electronics, instruments)",
+            ["warehouseGoods.opt6"]      = "The customer is not sure",
+            ["movingSize.label"]         = "Home size",
+            ["movingSize.opt1"]          = "Studio",
+            ["movingSize.opt2"]          = "1-bedroom",
+            ["movingSize.opt3"]          = "2-bedroom",
+            ["movingSize.opt4"]          = "3-bedroom or larger",
+            ["movingSize.opt5"]          = "Office or business",
+            ["movingSize.opt6"]          = "The customer is not sure",
+            ["movingAccess.label"]       = "Floor and lift",
+            ["movingAccess.opt1"]        = "House or ground floor",
+            ["movingAccess.opt2"]        = "Upper floor with a lift",
+            ["movingAccess.opt3"]        = "2nd–3rd floor, no lift",
+            ["movingAccess.opt4"]        = "4th floor or higher, no lift",
+            ["movingAccess.opt5"]        = "The customer is not sure",
+            ["movingAccessFrom.label"]   = "Access at pickup",
+            ["movingAccessTo.label"]     = "Access at destination",
+            ["movingHeavyItems.label"]   = "Heavy or awkward items",
+            ["movingHeavyItems.opt1"]    = "Nothing unusual",
+            ["movingHeavyItems.opt2"]    = "A piano",
+            ["movingHeavyItems.opt3"]    = "A safe, gym equipment or a machine",
+            ["movingHeavyItems.opt4"]    = "An aquarium, artwork or something fragile",
+            ["movingHeavyItems.opt5"]    = "Several of these",
+            ["movingHeavyItems.opt6"]    = "The customer is not sure",
+            ["packingHelp.label"]        = "Packing help",
+            ["packingHelp.opt1"]         = "Yes — pack everything",
+            ["packingHelp.opt2"]         = "Only fragile and bulky items",
+            ["packingHelp.opt3"]         = "Just boxes and packing materials",
+            ["packingHelp.opt4"]         = "No — the customer packs themselves",
+            ["trailerDuration.label"]    = "Rental period",
+            ["trailerDuration.opt1"]     = "A few hours",
+            ["trailerDuration.opt2"]     = "One day",
+            ["trailerDuration.opt3"]     = "2–3 days",
+            ["trailerDuration.opt4"]     = "A week or more",
+            ["trailerDuration.opt5"]     = "The customer is not sure",
+            ["trailerType.label"]        = "Cargo",
+            ["trailerType.opt1"]         = "Furniture or moving boxes",
+            ["trailerType.opt2"]         = "Building materials or garden waste",
+            ["trailerType.opt3"]         = "Machinery or an ATV",
+            ["trailerType.opt4"]         = "A boat or jet ski",
+            ["trailerType.opt5"]         = "The customer is not sure",
+            ["trailerTow.label"]         = "Towing capability",
+            ["trailerTow.opt1"]          = "Car with tow bar, licence B (up to 750 kg)",
+            ["trailerTow.opt2"]          = "Car with tow bar, licence BE (over 750 kg)",
+            ["trailerTow.opt3"]          = "Has a tow bar, unsure about licence class",
+            ["trailerTow.opt4"]          = "No tow bar — needs a vehicle too",
+            ["trailerTow.opt5"]          = "The customer is not sure",
+            ["vanrentalDriver.label"]    = "Driver",
+            ["vanrentalDriver.opt1"]     = "Without a driver — the customer drives",
+            ["vanrentalDriver.opt2"]     = "With a driver",
+            ["vanrentalDriver.opt3"]     = "With a driver and loaders",
+            ["vanrentalDriver.opt4"]     = "Either — whichever is cheaper",
+            ["vanrentalDriver.opt5"]     = "The customer is not sure",
+            ["vanrentalDuration.label"]  = "Rental period",
+            ["vanrentalDuration.opt1"]   = "A few hours",
+            ["vanrentalDuration.opt2"]   = "One day",
+            ["vanrentalDuration.opt3"]   = "2–3 days",
+            ["vanrentalDuration.opt4"]   = "A week or more",
+            ["vanrentalDuration.opt5"]   = "The customer is not sure",
+            ["vanrentalSize.label"]      = "Van size",
+            ["vanrentalSize.opt1"]       = "Small (up to ~6 m³)",
+            ["vanrentalSize.opt2"]       = "Medium (~8–12 m³)",
+            ["vanrentalSize.opt3"]       = "Large (~15 m³ or more)",
+            ["vanrentalSize.opt4"]       = "The customer is not sure",
+            ["cleaningType.label"]       = "Cleaning type",
+            ["cleaningType.opt1"]        = "Move-out cleaning",
+            ["cleaningType.opt2"]        = "Move-in cleaning",
+            ["cleaningType.opt3"]        = "After renovation",
+            ["cleaningType.opt4"]        = "Regular cleaning",
+            ["cleaningType.opt5"]        = "The customer is not sure",
+            ["cleaningSize.label"]       = "Property size",
+            ["cleaningSize.opt1"]        = "Up to 40 m² (1 room)",
+            ["cleaningSize.opt2"]        = "40–70 m² (2 rooms)",
+            ["cleaningSize.opt3"]        = "70–110 m² (3–4 rooms)",
+            ["cleaningSize.opt4"]        = "Over 110 m² or a house",
+            ["cleaningSize.opt5"]        = "The customer is not sure",
+            ["cleaningExtras.label"]     = "Extras",
+            ["cleaningExtras.opt1"]      = "Standard clean only",
+            ["cleaningExtras.opt2"]      = "Windows",
+            ["cleaningExtras.opt3"]      = "Oven",
+            ["cleaningExtras.opt4"]      = "Fridge",
+            ["cleaningExtras.opt5"]      = "Windows, oven and fridge",
+            ["cleaningExtras.opt6"]      = "The customer is not sure",
+        });
+
+    private static readonly IReadOnlyDictionary<string, string> ScopeRu =
+        WithSharedAccessChips(new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["warehouseSize.label"]      = "Требуемая площадь",
+            ["warehouseSize.opt1"]       = "Пара коробок (~1–2 м²)",
+            ["warehouseSize.opt2"]       = "Небольшая комната (~3–5 м²)",
+            ["warehouseSize.opt3"]       = "Комната (~5–10 м²)",
+            ["warehouseSize.opt4"]       = "2-комнатная (~10–15 м²)",
+            ["warehouseSize.opt5"]       = "Дом или больше (15+ м²)",
+            ["warehouseSize.opt6"]       = "Клиент пока не знает",
+            ["warehouseDuration.label"]  = "Срок хранения",
+            ["warehouseDuration.opt1"]   = "Меньше месяца",
+            ["warehouseDuration.opt2"]   = "1–3 месяца",
+            ["warehouseDuration.opt3"]   = "3–12 месяцев",
+            ["warehouseDuration.opt4"]   = "Больше года",
+            ["warehouseDuration.opt5"]   = "Клиент пока не знает",
+            ["warehouseGoods.label"]     = "Предмет хранения",
+            ["warehouseGoods.opt1"]      = "Домашние вещи и мебель",
+            ["warehouseGoods.opt2"]      = "Коробки, документы или товар компании",
+            ["warehouseGoods.opt3"]      = "Автомобиль, мотоцикл или лодка",
+            ["warehouseGoods.opt4"]      = "Инструменты, техника или стройматериалы",
+            ["warehouseGoods.opt5"]      = "Требует климат-контроля (вино, электроника, музыкальные инструменты)",
+            ["warehouseGoods.opt6"]      = "Клиент пока не знает",
+            ["movingSize.label"]         = "Размер жилья",
+            ["movingSize.opt1"]          = "Студия или 1-комнатная",
+            ["movingSize.opt2"]          = "2-комнатная квартира",
+            ["movingSize.opt3"]          = "3-комнатная квартира",
+            ["movingSize.opt4"]          = "4-комнатная и больше",
+            ["movingSize.opt5"]          = "Офис или бизнес",
+            ["movingSize.opt6"]          = "Клиент пока не знает",
+            ["movingAccess.label"]       = "Этаж и лифт",
+            ["movingAccess.opt1"]        = "Дом или первый этаж",
+            ["movingAccess.opt2"]        = "Этаж с лифтом",
+            ["movingAccess.opt3"]        = "2–3 этаж, без лифта",
+            ["movingAccess.opt4"]        = "4 этаж и выше, без лифта",
+            ["movingAccess.opt5"]        = "Клиент пока не знает",
+            ["movingAccessFrom.label"]   = "Доступ по адресу отправления",
+            ["movingAccessTo.label"]     = "Доступ по адресу назначения",
+            ["movingHeavyItems.label"]   = "Тяжёлые или негабаритные предметы",
+            ["movingHeavyItems.opt1"]    = "Ничего необычного",
+            ["movingHeavyItems.opt2"]    = "Пианино",
+            ["movingHeavyItems.opt3"]    = "Сейф, тренажёры или станок",
+            ["movingHeavyItems.opt4"]    = "Аквариум, картина или что-то хрупкое",
+            ["movingHeavyItems.opt5"]    = "Несколько из перечисленного",
+            ["movingHeavyItems.opt6"]    = "Клиент пока не знает",
+            ["packingHelp.label"]        = "Помощь с упаковкой",
+            ["packingHelp.opt1"]         = "Да — упаковать всё",
+            ["packingHelp.opt2"]         = "Только хрупкое и крупногабаритное",
+            ["packingHelp.opt3"]         = "Только коробки и упаковочные материалы",
+            ["packingHelp.opt4"]         = "Нет — клиент упакует сам",
+            ["trailerDuration.label"]    = "Срок аренды",
+            ["trailerDuration.opt1"]     = "Пара часов",
+            ["trailerDuration.opt2"]     = "Один день",
+            ["trailerDuration.opt3"]     = "2–3 дня",
+            ["trailerDuration.opt4"]     = "Неделя или больше",
+            ["trailerDuration.opt5"]     = "Клиент пока не знает",
+            ["trailerType.label"]        = "Груз",
+            ["trailerType.opt1"]         = "Мебель или вещи при переезде",
+            ["trailerType.opt2"]         = "Стройматериалы или садовый мусор",
+            ["trailerType.opt3"]         = "Техника или квадроцикл",
+            ["trailerType.opt4"]         = "Лодка или гидроцикл",
+            ["trailerType.opt5"]         = "Клиент пока не знает",
+            ["trailerTow.label"]         = "Фаркоп и категория прав",
+            ["trailerTow.opt1"]          = "Автомобиль с фаркопом, категория B (до 750 кг)",
+            ["trailerTow.opt2"]          = "Автомобиль с фаркопом, категория BE (свыше 750 кг)",
+            ["trailerTow.opt3"]          = "Фаркоп есть, категория прав неизвестна",
+            ["trailerTow.opt4"]          = "Фаркопа нет — нужен и автомобиль",
+            ["trailerTow.opt5"]          = "Клиент пока не знает",
+            ["vanrentalDriver.label"]    = "Водитель",
+            ["vanrentalDriver.opt1"]     = "Без водителя — клиент едет сам",
+            ["vanrentalDriver.opt2"]     = "С водителем",
+            ["vanrentalDriver.opt3"]     = "С водителем и грузчиками",
+            ["vanrentalDriver.opt4"]     = "Любой вариант — что дешевле",
+            ["vanrentalDriver.opt5"]     = "Клиент пока не знает",
+            ["vanrentalDuration.label"]  = "Срок аренды",
+            ["vanrentalDuration.opt1"]   = "Пара часов",
+            ["vanrentalDuration.opt2"]   = "Один день",
+            ["vanrentalDuration.opt3"]   = "2–3 дня",
+            ["vanrentalDuration.opt4"]   = "Неделя или больше",
+            ["vanrentalDuration.opt5"]   = "Клиент пока не знает",
+            ["vanrentalSize.label"]      = "Размер фургона",
+            ["vanrentalSize.opt1"]       = "Небольшой (до ~6 м³)",
+            ["vanrentalSize.opt2"]       = "Средний (~8–12 м³)",
+            ["vanrentalSize.opt3"]       = "Большой (~15 м³ и больше)",
+            ["vanrentalSize.opt4"]       = "Клиент пока не знает",
+            ["cleaningType.label"]       = "Тип уборки",
+            ["cleaningType.opt1"]        = "Уборка при выезде",
+            ["cleaningType.opt2"]        = "Уборка при заезде",
+            ["cleaningType.opt3"]        = "После ремонта",
+            ["cleaningType.opt4"]        = "Регулярная уборка",
+            ["cleaningType.opt5"]        = "Клиент пока не знает",
+            ["cleaningSize.label"]       = "Площадь",
+            ["cleaningSize.opt1"]        = "До 40 м² (1 комната)",
+            ["cleaningSize.opt2"]        = "40–70 м² (2 комнаты)",
+            ["cleaningSize.opt3"]        = "70–110 м² (3–4 комнаты)",
+            ["cleaningSize.opt4"]        = "Более 110 м² или дом",
+            ["cleaningSize.opt5"]        = "Клиент пока не знает",
+            ["cleaningExtras.label"]     = "Дополнительно",
+            ["cleaningExtras.opt1"]      = "Только стандартная уборка",
+            ["cleaningExtras.opt2"]      = "Окна",
+            ["cleaningExtras.opt3"]      = "Духовка",
+            ["cleaningExtras.opt4"]      = "Холодильник",
+            ["cleaningExtras.opt5"]      = "Окна, духовка и холодильник",
+            ["cleaningExtras.opt6"]      = "Клиент пока не знает",
+        });
+
+    private static readonly IReadOnlyDictionary<string, string> ScopeLv =
+        WithSharedAccessChips(new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["warehouseSize.label"]      = "Nepieciešamā platība",
+            ["warehouseSize.opt1"]       = "Dažas kastes (~1–2 m²)",
+            ["warehouseSize.opt2"]       = "Maza telpa (~3–5 m²)",
+            ["warehouseSize.opt3"]       = "Istaba (~5–10 m²)",
+            ["warehouseSize.opt4"]       = "2-ist. dzīvoklis (~10–15 m²)",
+            ["warehouseSize.opt5"]       = "Māja vai vairāk (15+ m²)",
+            ["warehouseSize.opt6"]       = "Klients vēl nezina",
+            ["warehouseDuration.label"]  = "Glabāšanas periods",
+            ["warehouseDuration.opt1"]   = "Mazāk par mēnesi",
+            ["warehouseDuration.opt2"]   = "1–3 mēneši",
+            ["warehouseDuration.opt3"]   = "3–12 mēneši",
+            ["warehouseDuration.opt4"]   = "Vairāk par gadu",
+            ["warehouseDuration.opt5"]   = "Klients vēl nezina",
+            ["warehouseGoods.label"]     = "Uzglabājamā manta",
+            ["warehouseGoods.opt1"]      = "Mājsaimniecības mantas un mēbeles",
+            ["warehouseGoods.opt2"]      = "Kastes, dokumenti vai uzņēmuma prece",
+            ["warehouseGoods.opt3"]      = "Automašīna, motocikls vai laiva",
+            ["warehouseGoods.opt4"]      = "Instrumenti, tehnika vai būvmateriāli",
+            ["warehouseGoods.opt5"]      = "Klimatam jutīgas preces (vīns, elektronika, mūzikas instrumenti)",
+            ["warehouseGoods.opt6"]      = "Klients vēl nezina",
+            ["movingSize.label"]         = "Mājokļa lielums",
+            ["movingSize.opt1"]          = "Studija vai 1 istaba",
+            ["movingSize.opt2"]          = "2 istabu dzīvoklis",
+            ["movingSize.opt3"]          = "3 istabu dzīvoklis",
+            ["movingSize.opt4"]          = "4 istabas vai vairāk",
+            ["movingSize.opt5"]          = "Birojs vai uzņēmums",
+            ["movingSize.opt6"]          = "Klients vēl nezina",
+            ["movingAccess.label"]       = "Stāvs un lifts",
+            ["movingAccess.opt1"]        = "Māja vai pirmais stāvs",
+            ["movingAccess.opt2"]        = "Stāvs ar liftu",
+            ["movingAccess.opt3"]        = "2.–3. stāvs, bez lifta",
+            ["movingAccess.opt4"]        = "4. stāvs vai augstāk, bez lifta",
+            ["movingAccess.opt5"]        = "Klients vēl nezina",
+            ["movingAccessFrom.label"]   = "Piekļuve sākuma adresē",
+            ["movingAccessTo.label"]     = "Piekļuve galamērķa adresē",
+            ["movingHeavyItems.label"]   = "Smagi vai neērti priekšmeti",
+            ["movingHeavyItems.opt1"]    = "Nekas neparasts",
+            ["movingHeavyItems.opt2"]    = "Klavieres",
+            ["movingHeavyItems.opt3"]    = "Seifs, trenažieri vai iekārta",
+            ["movingHeavyItems.opt4"]    = "Akvārijs, mākslas darbs vai kas trausls",
+            ["movingHeavyItems.opt5"]    = "Vairāki no minētajiem",
+            ["movingHeavyItems.opt6"]    = "Klients vēl nezina",
+            ["packingHelp.label"]        = "Palīdzība ar pakošanu",
+            ["packingHelp.opt1"]         = "Jā — sapakot visu",
+            ["packingHelp.opt2"]         = "Tikai trauslās un lielgabarīta lietas",
+            ["packingHelp.opt3"]         = "Tikai kastes un iepakojuma materiāli",
+            ["packingHelp.opt4"]         = "Nē — klients pakos pats",
+            ["trailerDuration.label"]    = "Nomas periods",
+            ["trailerDuration.opt1"]     = "Dažas stundas",
+            ["trailerDuration.opt2"]     = "Viena diena",
+            ["trailerDuration.opt3"]     = "2–3 dienas",
+            ["trailerDuration.opt4"]     = "Nedēļa vai ilgāk",
+            ["trailerDuration.opt5"]     = "Klients vēl nezina",
+            ["trailerType.label"]        = "Krava",
+            ["trailerType.opt1"]         = "Mēbeles vai pārvākšanās mantas",
+            ["trailerType.opt2"]         = "Būvmateriāli vai dārza atkritumi",
+            ["trailerType.opt3"]         = "Tehnika vai kvadricikls",
+            ["trailerType.opt4"]         = "Laiva vai ūdens motocikls",
+            ["trailerType.opt5"]         = "Klients vēl nezina",
+            ["trailerTow.label"]         = "Sakabes āķis un kategorija",
+            ["trailerTow.opt1"]          = "Auto ar sakabes āķi, B kategorija (līdz 750 kg)",
+            ["trailerTow.opt2"]          = "Auto ar sakabes āķi, BE kategorija (virs 750 kg)",
+            ["trailerTow.opt3"]          = "Sakabes āķis ir, kategorija nav zināma",
+            ["trailerTow.opt4"]          = "Sakabes āķa nav — vajadzīgs arī auto",
+            ["trailerTow.opt5"]          = "Klients vēl nezina",
+            ["vanrentalDriver.label"]    = "Vadītājs",
+            ["vanrentalDriver.opt1"]     = "Bez vadītāja — klients brauc pats",
+            ["vanrentalDriver.opt2"]     = "Ar vadītāju",
+            ["vanrentalDriver.opt3"]     = "Ar vadītāju un krāvējiem",
+            ["vanrentalDriver.opt4"]     = "Jebkurš variants — kas lētāk",
+            ["vanrentalDriver.opt5"]     = "Klients vēl nezina",
+            ["vanrentalDuration.label"]  = "Nomas periods",
+            ["vanrentalDuration.opt1"]   = "Dažas stundas",
+            ["vanrentalDuration.opt2"]   = "Viena diena",
+            ["vanrentalDuration.opt3"]   = "2–3 dienas",
+            ["vanrentalDuration.opt4"]   = "Nedēļa vai ilgāk",
+            ["vanrentalDuration.opt5"]   = "Klients vēl nezina",
+            ["vanrentalSize.label"]      = "Furgona izmērs",
+            ["vanrentalSize.opt1"]       = "Mazs (līdz ~6 m³)",
+            ["vanrentalSize.opt2"]       = "Vidējs (~8–12 m³)",
+            ["vanrentalSize.opt3"]       = "Liels (~15 m³ vai vairāk)",
+            ["vanrentalSize.opt4"]       = "Klients vēl nezina",
+            ["cleaningType.label"]       = "Uzkopšanas veids",
+            ["cleaningType.opt1"]        = "Uzkopšana pēc izvākšanās",
+            ["cleaningType.opt2"]        = "Uzkopšana pirms ievākšanās",
+            ["cleaningType.opt3"]        = "Pēc remonta",
+            ["cleaningType.opt4"]        = "Regulāra uzkopšana",
+            ["cleaningType.opt5"]        = "Klients vēl nezina",
+            ["cleaningSize.label"]       = "Platība",
+            ["cleaningSize.opt1"]        = "Līdz 40 m² (1 istaba)",
+            ["cleaningSize.opt2"]        = "40–70 m² (2 istabas)",
+            ["cleaningSize.opt3"]        = "70–110 m² (3–4 istabas)",
+            ["cleaningSize.opt4"]        = "Vairāk nekā 110 m² vai māja",
+            ["cleaningSize.opt5"]        = "Klients vēl nezina",
+            ["cleaningExtras.label"]     = "Papildu darbi",
+            ["cleaningExtras.opt1"]      = "Tikai standarta uzkopšana",
+            ["cleaningExtras.opt2"]      = "Logi",
+            ["cleaningExtras.opt3"]      = "Cepeškrāsns",
+            ["cleaningExtras.opt4"]      = "Ledusskapis",
+            ["cleaningExtras.opt5"]      = "Logi, cepeškrāsns un ledusskapis",
+            ["cleaningExtras.opt6"]      = "Klients vēl nezina",
+        });
+
+    private static readonly IReadOnlyDictionary<string, string> ScopeLt =
+        WithSharedAccessChips(new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["warehouseSize.label"]      = "Reikalingas plotas",
+            ["warehouseSize.opt1"]       = "Kelios dėžės (~1–2 m²)",
+            ["warehouseSize.opt2"]       = "Maža patalpa (~3–5 m²)",
+            ["warehouseSize.opt3"]       = "Kambarys (~5–10 m²)",
+            ["warehouseSize.opt4"]       = "2 kambarių butas (~10–15 m²)",
+            ["warehouseSize.opt5"]       = "Namas ar daugiau (15+ m²)",
+            ["warehouseSize.opt6"]       = "Klientas dar nežino",
+            ["warehouseDuration.label"]  = "Saugojimo laikotarpis",
+            ["warehouseDuration.opt1"]   = "Trumpiau nei mėnuo",
+            ["warehouseDuration.opt2"]   = "1–3 mėnesiai",
+            ["warehouseDuration.opt3"]   = "3–12 mėnesių",
+            ["warehouseDuration.opt4"]   = "Ilgiau nei metai",
+            ["warehouseDuration.opt5"]   = "Klientas dar nežino",
+            ["warehouseGoods.label"]     = "Saugomas turtas",
+            ["warehouseGoods.opt1"]      = "Namų apyvokos daiktai ir baldai",
+            ["warehouseGoods.opt2"]      = "Dėžės, dokumentai ar įmonės prekės",
+            ["warehouseGoods.opt3"]      = "Automobilis, motociklas ar valtis",
+            ["warehouseGoods.opt4"]      = "Įrankiai, technika ar statybinės medžiagos",
+            ["warehouseGoods.opt5"]      = "Klimatui jautrios prekės (vynas, elektronika, muzikos instrumentai)",
+            ["warehouseGoods.opt6"]      = "Klientas dar nežino",
+            ["movingSize.label"]         = "Būsto dydis",
+            ["movingSize.opt1"]          = "Studija ar 1 kambarys",
+            ["movingSize.opt2"]          = "2 kambarių butas",
+            ["movingSize.opt3"]          = "3 kambarių butas",
+            ["movingSize.opt4"]          = "4 kambariai ar daugiau",
+            ["movingSize.opt5"]          = "Biuras ar verslo patalpos",
+            ["movingSize.opt6"]          = "Klientas dar nežino",
+            ["movingAccess.label"]       = "Aukštas ir liftas",
+            ["movingAccess.opt1"]        = "Namas arba pirmas aukštas",
+            ["movingAccess.opt2"]        = "Aukštas su liftu",
+            ["movingAccess.opt3"]        = "2–3 aukštas, be lifto",
+            ["movingAccess.opt4"]        = "4 aukštas ar aukščiau, be lifto",
+            ["movingAccess.opt5"]        = "Klientas dar nežino",
+            ["movingAccessFrom.label"]   = "Patekimas pakrovimo vietoje",
+            ["movingAccessTo.label"]     = "Patekimas paskirties vietoje",
+            ["movingHeavyItems.label"]   = "Sunkūs ar nepatogūs daiktai",
+            ["movingHeavyItems.opt1"]    = "Nieko neįprasto",
+            ["movingHeavyItems.opt2"]    = "Pianinas",
+            ["movingHeavyItems.opt3"]    = "Seifas, treniruokliai ar staklės",
+            ["movingHeavyItems.opt4"]    = "Akvariumas, meno kūrinys ar kas nors trapaus",
+            ["movingHeavyItems.opt5"]    = "Keli iš išvardytų",
+            ["movingHeavyItems.opt6"]    = "Klientas dar nežino",
+            ["packingHelp.label"]        = "Pakavimo pagalba",
+            ["packingHelp.opt1"]         = "Taip — supakuoti viską",
+            ["packingHelp.opt2"]         = "Tik trapūs ir dideli daiktai",
+            ["packingHelp.opt3"]         = "Tik dėžės ir pakavimo medžiagos",
+            ["packingHelp.opt4"]         = "Ne — klientas supakuos pats",
+            ["trailerDuration.label"]    = "Nuomos laikotarpis",
+            ["trailerDuration.opt1"]     = "Kelios valandos",
+            ["trailerDuration.opt2"]     = "Viena diena",
+            ["trailerDuration.opt3"]     = "2–3 dienos",
+            ["trailerDuration.opt4"]     = "Savaitė ar ilgiau",
+            ["trailerDuration.opt5"]     = "Klientas dar nežino",
+            ["trailerType.label"]        = "Krovinys",
+            ["trailerType.opt1"]         = "Baldai ar kraustymosi daiktai",
+            ["trailerType.opt2"]         = "Statybinės medžiagos ar sodo atliekos",
+            ["trailerType.opt3"]         = "Technika ar keturratis",
+            ["trailerType.opt4"]         = "Valtis ar vandens motociklas",
+            ["trailerType.opt5"]         = "Klientas dar nežino",
+            ["trailerTow.label"]         = "Vilkimo kablys ir kategorija",
+            ["trailerTow.opt1"]          = "Automobilis su vilkimo kabliu, B kategorija (iki 750 kg)",
+            ["trailerTow.opt2"]          = "Automobilis su vilkimo kabliu, BE kategorija (virš 750 kg)",
+            ["trailerTow.opt3"]          = "Vilkimo kablys yra, kategorija nežinoma",
+            ["trailerTow.opt4"]          = "Vilkimo kablio nėra — reikia ir automobilio",
+            ["trailerTow.opt5"]          = "Klientas dar nežino",
+            ["vanrentalDriver.label"]    = "Vairuotojas",
+            ["vanrentalDriver.opt1"]     = "Be vairuotojo — klientas vairuoja pats",
+            ["vanrentalDriver.opt2"]     = "Su vairuotoju",
+            ["vanrentalDriver.opt3"]     = "Su vairuotoju ir krovėjais",
+            ["vanrentalDriver.opt4"]     = "Bet kuris variantas — kas pigiau",
+            ["vanrentalDriver.opt5"]     = "Klientas dar nežino",
+            ["vanrentalDuration.label"]  = "Nuomos laikotarpis",
+            ["vanrentalDuration.opt1"]   = "Kelios valandos",
+            ["vanrentalDuration.opt2"]   = "Viena diena",
+            ["vanrentalDuration.opt3"]   = "2–3 dienos",
+            ["vanrentalDuration.opt4"]   = "Savaitė ar ilgiau",
+            ["vanrentalDuration.opt5"]   = "Klientas dar nežino",
+            ["vanrentalSize.label"]      = "Furgono dydis",
+            ["vanrentalSize.opt1"]       = "Mažas (iki ~6 m³)",
+            ["vanrentalSize.opt2"]       = "Vidutinis (~8–12 m³)",
+            ["vanrentalSize.opt3"]       = "Didelis (~15 m³ ar daugiau)",
+            ["vanrentalSize.opt4"]       = "Klientas dar nežino",
+            ["cleaningType.label"]       = "Valymo tipas",
+            ["cleaningType.opt1"]        = "Valymas išsikraustant",
+            ["cleaningType.opt2"]        = "Valymas prieš įsikraustant",
+            ["cleaningType.opt3"]        = "Po remonto",
+            ["cleaningType.opt4"]        = "Reguliarus valymas",
+            ["cleaningType.opt5"]        = "Klientas dar nežino",
+            ["cleaningSize.label"]       = "Patalpų plotas",
+            ["cleaningSize.opt1"]        = "Iki 40 m² (1 kambarys)",
+            ["cleaningSize.opt2"]        = "40–70 m² (2 kambariai)",
+            ["cleaningSize.opt3"]        = "70–110 m² (3–4 kambariai)",
+            ["cleaningSize.opt4"]        = "Daugiau nei 110 m² arba namas",
+            ["cleaningSize.opt5"]        = "Klientas dar nežino",
+            ["cleaningExtras.label"]     = "Papildomi darbai",
+            ["cleaningExtras.opt1"]      = "Tik standartinis valymas",
+            ["cleaningExtras.opt2"]      = "Langai",
+            ["cleaningExtras.opt3"]      = "Orkaitė",
+            ["cleaningExtras.opt4"]      = "Šaldytuvas",
+            ["cleaningExtras.opt5"]      = "Langai, orkaitė ir šaldytuvas",
+            ["cleaningExtras.opt6"]      = "Klientas dar nežino",
+        });
 
     private static readonly EmailStrings Et = new(
         PasswordResetSubject:       "Ruumly — parooli taastamine",
@@ -625,7 +1238,8 @@ public static class EmailTranslations
         CategoryPacking:               "Pakkimine",
         CategoryVanRental:             "Kaubiku rent",
         CategoryInsurance:             "Kindlustus",
-        CategoryAny:                   "Teenus"
+        CategoryAny:                   "Teenus",
+        ScopeText:                     ScopeEt
     );
 
     private static readonly EmailStrings En = new(
@@ -822,7 +1436,8 @@ public static class EmailTranslations
         CategoryPacking:               "Packing",
         CategoryVanRental:             "Van rental",
         CategoryInsurance:             "Insurance",
-        CategoryAny:                   "Service"
+        CategoryAny:                   "Service",
+        ScopeText:                     ScopeEn
     );
 
     private static readonly EmailStrings Ru = new(
@@ -1017,7 +1632,8 @@ public static class EmailTranslations
         CategoryPacking:               "Упаковка",
         CategoryVanRental:             "Аренда фургона",
         CategoryInsurance:             "Страхование",
-        CategoryAny:                   "Услуга"
+        CategoryAny:                   "Услуга",
+        ScopeText:                     ScopeRu
     );
 
     private static readonly EmailStrings Lv = new(
@@ -1213,7 +1829,8 @@ public static class EmailTranslations
         CategoryPacking:               "Iepakošana",
         CategoryVanRental:             "Furgona noma",
         CategoryInsurance:             "Apdrošināšana",
-        CategoryAny:                   "Pakalpojums"
+        CategoryAny:                   "Pakalpojums",
+        ScopeText:                     ScopeLv
     );
 
     private static readonly EmailStrings Lt = new(
@@ -1409,7 +2026,8 @@ public static class EmailTranslations
         CategoryPacking:               "Pakavimas",
         CategoryVanRental:             "Furgono nuoma",
         CategoryInsurance:             "Draudimas",
-        CategoryAny:                   "Paslauga"
+        CategoryAny:                   "Paslauga",
+        ScopeText:                     ScopeLt
     );
 
     public static EmailStrings For(string? lang) =>

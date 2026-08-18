@@ -22,6 +22,9 @@ namespace Ruumly.Backend.Services.Implementations;
 /// failure every still-open request to that address is marked — the mailbox is
 /// dead, so all of them are dead. A SOFT bounce (full mailbox, greylisting) marks
 /// only the newest open row and never retires the address.
+///
+/// Also records the OPPOSITE signal — delivered and opened — but by completely
+/// different rules; see <see cref="RecordConfirmationAsync"/>.
 /// </summary>
 public sealed class EmailDeliveryTracker(
     RuumlyDbContext db,
@@ -30,6 +33,10 @@ public sealed class EmailDeliveryTracker(
     public async Task<EmailDeliveryOutcome> RecordAsync(
         string eventId, ResendWebhookEvent evt, CancellationToken ct = default)
     {
+        // Before the ledger check, because confirmations never reach the ledger.
+        if (evt.IsDeliveryConfirmation)
+            return await RecordConfirmationAsync(evt, ct);
+
         if (await db.EmailDeliveryEvents.AnyAsync(e => e.EventId == eventId, ct))
             return EmailDeliveryOutcome.DuplicateEvent;
 
@@ -127,6 +134,107 @@ public sealed class EmailDeliveryTracker(
         }
 
         return new EmailDeliveryOutcome(false, flagged, touched, rowsUpdated);
+    }
+
+    /// <summary>
+    /// email.delivered / email.opened → a timestamp on the outreach row, and
+    /// nothing else. This is the other half of the funnel: SentAt only says we
+    /// handed the mail to Resend, so until now "18 providers, zero replies" and
+    /// "18 providers, zero deliveries" were the same stored fact.
+    ///
+    /// Four things this deliberately does NOT do, each of which would be the
+    /// obvious thing to write:
+    ///
+    /// 1. It never touches <c>Status</c>. Status carries the PROVIDER's intent —
+    ///    Replied, Declined, NeedsInfo — set by a human or by the provider's own
+    ///    quote submission, and AdminLeadsController.GetLeadMetrics counts
+    ///    Replied as a supplier MATCH. A delivery receipt is a fact about the
+    ///    mail server, not about the provider; letting it write Status would
+    ///    overwrite a real reply with a receipt and quietly deflate the concierge
+    ///    north-star. That is also why rows are matched regardless of status
+    ///    (unlike the bounce path, which only touches still-open rows): a
+    ///    provider who already replied still deserves an honest delivered count,
+    ///    and there is no status this could corrupt because it writes none.
+    ///
+    /// 2. It never sets <c>ContactEmailUnusable</c> or touches the supplier at
+    ///    all. That flag means "proven undeliverable" and a delivery is its
+    ///    exact opposite.
+    ///
+    /// 3. It writes no AuditLog and no EmailDeliveryEvent row. A bounce is
+    ///    exceptional and worth a permanent row explaining why an address was
+    ///    retired; a delivery happens to every single email we send (twice, once
+    ///    the opens arrive), and one row per message would bury the bounces in
+    ///    the same tables that exist to make them findable. The signal belongs
+    ///    in the metrics endpoint, which aggregates, not in a per-event log.
+    ///
+    /// 4. An open does not backfill <c>DeliveredAt</c>, even though opening a
+    ///    mail obviously proves it was delivered. Each column records what
+    ///    Resend actually reported, so "delivered" keeps meaning "Resend
+    ///    confirmed delivery" rather than "we inferred it" — inference here is
+    ///    how a metric stops being checkable against the provider's dashboard.
+    ///
+    /// IDEMPOTENCE comes from first-write-wins on the field, not from the
+    /// EventId ledger: a redelivered receipt lands on the same row, finds the
+    /// stamp already there and changes nothing. Note that this is also why the
+    /// row choice must NOT skip rows that already carry the stamp — "stamp the
+    /// next unstamped row instead" would make Resend's retry of one event write
+    /// a second, invented, receipt onto a different lead's outreach.
+    /// </summary>
+    private async Task<EmailDeliveryOutcome> RecordConfirmationAsync(
+        ResendWebhookEvent evt, CancellationToken ct)
+    {
+        var stamped = 0;
+
+        foreach (var recipient in evt.Recipients)
+        {
+            // Same join as the bounce path — address, newest first — because the
+            // same limitation applies: Resend's email_id is not stored on the
+            // row, so the address is all we have to match on. Unlike a bounce,
+            // one receipt describes exactly one message, so exactly one row is
+            // stamped.
+            var rows = await db.ProviderOutreaches
+                .Where(o => o.SentTo.ToLower() == recipient)
+                .OrderByDescending(o => o.SentAt)
+                .ThenBy(o => o.Id)
+                .ToListAsync(ct);
+
+            // Silence is normal and not an error: customer acknowledgements,
+            // the intro campaign and every other mail we send also generate
+            // receipts, and none of them has an outreach row.
+            if (rows.Count == 0) continue;
+
+            var at = evt.OccurredAt ?? DateTime.UtcNow;
+
+            // The newest row that could actually have produced this receipt — a
+            // message cannot be delivered before it was sent. Without the bound,
+            // a receipt for Monday's request would land on Tuesday's request to
+            // the same provider. Falls back to the newest row when the event
+            // carries no timestamp, or when clock skew puts every row after it.
+            var row = rows.FirstOrDefault(r => r.SentAt <= at) ?? rows[0];
+
+            if (evt.Type == ResendWebhookEvent.DeliveredType)
+            {
+                if (row.DeliveredAt is not null) continue;
+                row.DeliveredAt = at;
+            }
+            else
+            {
+                // FIRST open only. Resend reports every open, and a provider who
+                // reopens the mail a week later must not rewrite when they first
+                // read it — that timestamp is the one that says whether the ask
+                // was seen while it was still actionable.
+                if (row.OpenedAt is not null) continue;
+                row.OpenedAt = at;
+            }
+
+            stamped++;
+        }
+
+        if (stamped > 0) await db.SaveChangesAsync(ct);
+
+        // Not a duplicate in the ledger sense — there is no ledger row to be a
+        // duplicate of. A redelivery simply reports zero rows changed.
+        return new EmailDeliveryOutcome(false, 0, 0, stamped);
     }
 
     private static string BuildNote(ResendWebhookEvent evt, DateTime at)

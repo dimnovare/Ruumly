@@ -4,8 +4,24 @@ namespace Ruumly.Backend.DTOs.Responses;
 public sealed record PublicQuoteProviderDto(string Name);
 
 /// <summary>
+/// One answered scoping question: the question's id and the 1-based position of
+/// the chip the customer tapped, e.g. <c>{ question: "movingAccess", option: 3 }</c>.
+///
+/// SLUG AND NUMBER, never a rendered sentence — the same contract
+/// <see cref="PublicQuoteInfoRequestDto"/> uses for its reasons. The quote page
+/// already owns a five-language copy deck and renders the provider's own
+/// language from it; shipping strings from here would either hard-code one
+/// language into the payload or duplicate the deck. Both ends validate against
+/// the same catalogue (<see cref="Constants.ScopeQuestions"/>), so a question
+/// one side does not know is a chip the other side simply does not draw.
+/// </summary>
+public sealed record PublicQuoteScopeDto(string Question, int Option);
+
+/// <summary>
 /// What the provider is quoting for. Deliberately excludes ALL customer PII
-/// (name/email/phone) — only the structured ask the customer submitted.
+/// (name/email/phone) — only the structured ask the customer submitted. The
+/// street address is PII too and is excluded for the same reason: until the
+/// customer accepts an offer the provider sees the city, and nothing narrower.
 /// </summary>
 public sealed record PublicQuoteLeadDto(
     string Category, string City, string? ToCity, DateTime? NeedDate, string? Details,
@@ -15,7 +31,14 @@ public sealed record PublicQuoteLeadDto(
     /// never storage keys, so the private-bucket layout is not published to
     /// anyone holding a quote token.
     /// </summary>
-    int PhotoCount = 0);
+    int PhotoCount = 0,
+    /// <summary>
+    /// The intake's scoping answers, in catalogue order, so the page can render
+    /// chips instead of re-reading them out of the free-text blob in
+    /// <c>Details</c>. Always sent (empty for a request with no answers);
+    /// nullable only so the parameter can follow one that has a default.
+    /// </summary>
+    IReadOnlyList<PublicQuoteScopeDto>? Scope = null);
 
 /// <summary>The provider's already-submitted quote (prefill for "update your quote").</summary>
 public sealed record PublicQuoteExistingDto(

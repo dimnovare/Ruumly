@@ -127,6 +127,32 @@ public static class ProviderOutreachComposer
 
         facts.Add((t.OutreachLabelLocation, route));
         facts.Add((t.OutreachLabelDate,     dateText));
+
+        // The intake's scoping answers — home size, floor and lift, how long,
+        // what is being hauled — as LOCALIZED fact lines.
+        //
+        // THIS IS THE POINT OF STORING THEM AS POSITIONS. The funnel used to
+        // render each chip to a sentence in the CUSTOMER's language and glue it
+        // into Details, which is printed verbatim below: a Russian-speaking
+        // customer's answers arrived, in Russian, in an Estonian mover's inbox.
+        // Resolving the wording here means the same lead reads Estonian to an
+        // Estonian mover and Latvian to a Latvian one.
+        //
+        // Above Details on purpose: these are the facts a price is built from,
+        // and Details is the customer's own free text, which closes the block.
+        //
+        // A question with no copy in this language is SKIPPED, never printed as
+        // an id or a bare number. LeadScope already drops ids this build does
+        // not know; this covers the narrower case of a known question whose
+        // translation has not landed yet, and it must fail the same way —
+        // quietly, one line short, with the request itself intact.
+        foreach (var answer in LeadScope.Answers(lead.ScopeJson))
+        {
+            if (t.ScopeLabel(answer.QuestionId) is not { } scopeLabel) continue;
+            if (t.ScopeOption(answer.QuestionId, answer.Option) is not { } scopeValue) continue;
+            facts.Add((scopeLabel, scopeValue));
+        }
+
         facts.Add((t.OutreachLabelDetails,  details));
 
         // Photos are NOT attached — they are pictures of somebody's home, and

@@ -516,6 +516,19 @@ public class SupportController(
         var email      = req.Email.Trim();
         var photoKeys  = LeadPhotoNormalizer.KeepIssuedKeys(req.PhotoKeys);
 
+        // The SAME answers as the ones the browser already folded into Details,
+        // kept structurally as well. Details keeps being written exactly as
+        // before — the frontend still sends it, and nothing may regress while it
+        // does — but it is a sentence in the CUSTOMER's language, so it can only
+        // ever be pasted, not translated and not queried. The structured copy is
+        // what lets the outreach email speak the provider's language and lets
+        // the admin ask "which moves have no lift".
+        //
+        // Validated against the catalogue rather than trusted: this is an
+        // anonymous public endpoint, and everything stored here is later
+        // rendered into mail we send to real businesses.
+        var scope      = ScopeQuestions.Normalize(req.Scope);
+
         // ── Duplicate submit ─────────────────────────────────────────────────
         // The submit button disables itself while the mutation is in flight, but
         // that is a client-side courtesy and the network is where this actually
@@ -591,6 +604,24 @@ public class SupportController(
             PhotoKeysJson = photoKeys.Count > 0
                 ? System.Text.Json.JsonSerializer.Serialize(photoKeys)
                 : null,
+            // Normalized above; null when nothing valid was answered, so a
+            // request with no scoping answers stores nothing rather than "{}".
+            ScopeJson = ScopeQuestions.Serialize(scope),
+            // Somebody's home. Stored so the concierge stops brokering it by
+            // hand on every job — a mover could not finalise anything without a
+            // round trip — and deliberately NOT exposed to a provider until the
+            // customer accepts an offer: neither ProviderOutreachComposer nor
+            // the public quote DTO reads these, both keep showing the city.
+            FromAddress = Clamp(req.FromAddress, 300),
+            ToAddress   = Clamp(req.ToAddress, 300),
+            // The customer's credential for their own status page. Minted for
+            // EVERY concierge request, at creation, because the gap this closes
+            // is the silence between the receipt email and the offer — a
+            // customer with no account cannot otherwise tell a slow success
+            // from a silent failure. Same generator as the per-recipient quote
+            // token: 256 bits, url-safe, unguessable, because this page shows a
+            // stranger what somebody is moving and when their home will be empty.
+            StatusToken = OfferToken.Generate(),
             Language  = lang,
             Status    = DemandLeadStatus.New,
             CreatedAt = DateTime.UtcNow,

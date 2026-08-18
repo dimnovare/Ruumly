@@ -106,8 +106,18 @@ public class QuoteController(
             new PublicQuoteProviderDto(providerName),
             new PublicQuoteLeadDto(
                 ServiceCategories.SlugFor(lead.Category),
+                // City, never FromAddress/ToAddress. The lead may now carry the
+                // customer's street address; a provider gets it only after the
+                // customer accepts their offer, and this page is open to anyone
+                // holding a token we emailed to a stranger.
                 lead.City, lead.ToCity, lead.NeedDate, lead.Details,
-                LeadPhotos.Count(lead.PhotoKeysJson)),
+                LeadPhotos.Count(lead.PhotoKeysJson),
+                // Structured, so the page can draw the answers as chips in the
+                // provider's own language instead of showing them as whatever
+                // language the customer happened to fill the form in.
+                LeadScope.Answers(lead.ScopeJson)
+                    .Select(a => new PublicQuoteScopeDto(a.QuestionId, a.Option))
+                    .ToList()),
             "EUR",
             alreadySubmitted,
             existing,

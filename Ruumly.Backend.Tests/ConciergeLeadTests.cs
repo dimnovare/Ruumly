@@ -1396,4 +1396,137 @@ public class ConciergeLeadTests
         Prop(matchRate, "matched").Should().Be(2, "offer + replied-outreach signals count; the bare Contacted and Unmatched do not");
         ((double)Prop(matchRate, "rate")!).Should().Be(0.5);
     }
+
+    // ─── Outreach delivery funnel (sent → delivered → opened) ─────────────────
+
+    [Fact]
+    public async Task GetLeadMetrics_DeliveryFunnel_DoesNotCountPreTelemetryOutreachAsUndelivered()
+    {
+        // The trap this exists to avoid: DeliveredAt is null on every row sent
+        // before the Resend webhook was configured, and those nulls mean UNKNOWN.
+        // Divide by them and the delivery rate reports a collapse that is really
+        // just our own history — permanently, since they are never backfilled.
+        var db  = TestDbContext.Create();
+        var now = DateTime.UtcNow;
+
+        var lead = new DemandLead
+        {
+            Id = Guid.NewGuid(), Email = "c@x.ee", City = "Viljandi",
+            Category = DemandLeadCategory.Warehouse, Language = "et", Source = "concierge",
+            CreatedAt = now.AddDays(-25), Status = DemandLeadStatus.Contacted,
+            ContactedAt = now.AddDays(-25).AddMinutes(20),
+        };
+        db.DemandLeads.Add(lead);
+
+        ProviderOutreach Sent(DateTime at, DateTime? delivered = null, DateTime? opened = null) => new()
+        {
+            Id = Guid.NewGuid(), DemandLeadId = lead.Id, SupplierId = Guid.NewGuid(),
+            SentTo = "p@x.ee", SentAt = at, Status = ProviderOutreachStatus.Sent,
+            DeliveredAt = delivered, OpenedAt = opened,
+        };
+
+        db.ProviderOutreaches.AddRange(
+            // Before the webhook existed — unknowable, must not be a denominator.
+            Sent(now.AddDays(-20)),
+            // The first row that ever got a receipt: telemetry starts here.
+            Sent(now.AddDays(-10), delivered: now.AddDays(-10)),
+            Sent(now.AddDays(-5),  delivered: now.AddDays(-5), opened: now.AddDays(-5).AddHours(2)),
+            // Post-telemetry and still nothing back — a genuine non-delivery.
+            Sent(now.AddDays(-3)));
+        await db.SaveChangesAsync();
+
+        var body = (await MakeAdmin(db).GetLeadMetrics())
+            .Should().BeOfType<OkObjectResult>().Subject.Value!;
+
+        var funnel = Prop(body, "outreachDelivery30d")!;
+        Prop(funnel, "sent").Should().Be(3, "the base starts at the first row that ever received a receipt");
+        Prop(funnel, "delivered").Should().Be(2);
+        Prop(funnel, "opened").Should().Be(1);
+        Prop(funnel, "unknownSent").Should().Be(1, "the pre-telemetry row is reported as unknown, not as a failure");
+        ((double?)Prop(funnel, "deliveredRate"))!.Value.Should().BeApproximately(2.0 / 3.0, 1e-9,
+            "counting the pre-telemetry row would report 50% and be wrong forever");
+        ((double?)Prop(funnel, "openRate"))!.Value.Should().BeApproximately(1.0 / 3.0, 1e-9);
+        Prop(funnel, "measuredFrom").Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task GetLeadMetrics_DeliveryFunnel_BeforeAnyReceiptEverArrives_ReportsUnknownNotZero()
+    {
+        var db  = TestDbContext.Create();
+        var now = DateTime.UtcNow;
+
+        var lead = new DemandLead
+        {
+            Id = Guid.NewGuid(), Email = "c@x.ee", City = "Viljandi",
+            Category = DemandLeadCategory.Warehouse, Language = "et", Source = "concierge",
+            CreatedAt = now.AddDays(-4), Status = DemandLeadStatus.Contacted,
+            ContactedAt = now.AddDays(-4).AddMinutes(20),
+        };
+        db.DemandLeads.Add(lead);
+        db.ProviderOutreaches.AddRange(
+            new ProviderOutreach
+            {
+                Id = Guid.NewGuid(), DemandLeadId = lead.Id, SupplierId = Guid.NewGuid(),
+                SentTo = "a@x.ee", SentAt = now.AddDays(-4), Status = ProviderOutreachStatus.Sent,
+            },
+            new ProviderOutreach
+            {
+                Id = Guid.NewGuid(), DemandLeadId = lead.Id, SupplierId = Guid.NewGuid(),
+                SentTo = "b@x.ee", SentAt = now.AddDays(-4), Status = ProviderOutreachStatus.Sent,
+            });
+        await db.SaveChangesAsync();
+
+        var body = (await MakeAdmin(db).GetLeadMetrics())
+            .Should().BeOfType<OkObjectResult>().Subject.Value!;
+
+        var funnel = Prop(body, "outreachDelivery30d")!;
+        Prop(funnel, "measuredFrom").Should().BeNull("no receipt has ever arrived, so nothing is measurable yet");
+        Prop(funnel, "sent").Should().Be(0);
+        Prop(funnel, "unknownSent").Should().Be(2);
+        Prop(funnel, "deliveredRate").Should().BeNull(
+            "0% delivered and 'we cannot say' are opposite conclusions, and this metric exists because they were confused");
+        Prop(funnel, "openRate").Should().BeNull();
+
+        // The fields the admin UI binds to are untouched by any of this.
+        Prop(body, "requests30d").Should().Be(1);
+        Prop(body, "contactRate30d").Should().Be(1d);
+    }
+
+    [Fact]
+    public async Task GetLeadMetrics_DeliveryFunnel_ExcludesNonConciergeOutreach()
+    {
+        var db  = TestDbContext.Create();
+        var now = DateTime.UtcNow;
+
+        DemandLead Lead(string? source) => new()
+        {
+            Id = Guid.NewGuid(), Email = "c@x.ee", City = "Tallinn",
+            Category = DemandLeadCategory.Any, Language = "et", Source = source,
+            CreatedAt = now.AddDays(-2), Status = DemandLeadStatus.Contacted,
+            ContactedAt = now.AddDays(-2).AddMinutes(10),
+        };
+        var concierge = Lead("concierge");
+        var routed    = Lead("routed");
+        db.DemandLeads.AddRange(concierge, routed);
+        db.ProviderOutreaches.AddRange(
+            new ProviderOutreach
+            {
+                Id = Guid.NewGuid(), DemandLeadId = concierge.Id, SupplierId = Guid.NewGuid(),
+                SentTo = "a@x.ee", SentAt = now.AddDays(-2), Status = ProviderOutreachStatus.Sent,
+                DeliveredAt = now.AddDays(-2),
+            },
+            new ProviderOutreach
+            {
+                Id = Guid.NewGuid(), DemandLeadId = routed.Id, SupplierId = Guid.NewGuid(),
+                SentTo = "b@x.ee", SentAt = now.AddDays(-2), Status = ProviderOutreachStatus.Sent,
+            });
+        await db.SaveChangesAsync();
+
+        var funnel = Prop((await MakeAdmin(db).GetLeadMetrics())
+            .Should().BeOfType<OkObjectResult>().Subject.Value!, "outreachDelivery30d")!;
+
+        Prop(funnel, "sent").Should().Be(1, "partner-direct outreach is a different channel");
+        Prop(funnel, "delivered").Should().Be(1);
+        Prop(funnel, "unknownSent").Should().Be(0);
+    }
 }
