@@ -115,7 +115,7 @@ actually needs to produce a number.
 | 6 | A concierge customer has **no status page**. `RequestDetailPage` redirects to `/account`, which a concierge customer does not have. Between the receipt email and the offer email there is silence. | `RequestDetailPage.tsx` | P1 |
 | 7 | `aboutPage.mission` claims **"kontrollitud" / "verified" partners** — a claim nothing enforces — and names only storage, moving and trailer, two services out of date. | platform settings | P1 |
 | 8 | `sitePhone` is empty everywhere. | platform settings | P2 |
-| 9 | Partner-page contact dialog promises **the partner will reply** in all five languages (`partner.contactIntro`, `partner.contactToast`), but `POST /api/contact` emails only `siteEmail`. The partner is never contacted and no lead row is created. The public profile also returns `contactEmail: null`, so this dialog is the only route to that partner — and it goes nowhere. Evidenced 2026-08-17 by the form's first real message. | `PartnerPage.tsx:95`, `SupportController.Contact` | P1 |
+| 9 | Partner-page contact dialog promises **the partner will reply** in all five languages (`partner.contactIntro`, `partner.contactToast`), but `POST /api/contact` emails only `siteEmail`. The partner is never contacted, and no lead row is created — so a storage enquiry on a partner page is not even counted as demand. Both messages the form has ever received (2026-08-16 Peetri Miniladu, 2026-08-17 GREENAS UAB) failed this way, and both partners are unclaimed `isDirectory` rows. | `PartnerPage.tsx:91`, `SupportController.Contact` | P1 |
 
 ## 5. Decisions taken
 
@@ -233,7 +233,7 @@ against outcomes before large work is committed.
 6. Street address collection.
 7. Customer status page.
 8. Remove the unenforced "verified" claim; correct the service list in `aboutPage.mission`.
-9. Partner-page contact dialog: deliver to **claimed** partners the way `POST /api/leads/quote` already does (supplier email + provider notification + routed `DemandLead`); for unclaimed directory rows, change the copy to say the Ruumly team relays the message. Cold-forwarding arbitrary mail to 1,187 rows that never signed up is not the fix.
+9. Partner-page contact dialog. A message on a partner page is **demand**, so capture it as a `DemandLead` (`Source = "partner-page"`, `SupplierId` set, category/city derived from the supplier) rather than an untracked email — `POST /api/leads/quote` already does exactly this. Then branch delivery on `isDirectory`, which the public DTO already exposes: **claimed** partners get the supplier email and provider notification, making the existing copy true; **directory rows** are answered by ops, and the copy changes to make no promise on a stranger's behalf. Cold-forwarding arbitrary mail to 1,187 imported rows is not the fix.
 
 ### 7.2 Phase 2 — automate the chase, never the send
 
