@@ -5,7 +5,20 @@ public record ContactRequest(
     string Email,
     string Subject,
     string Message,
-    string? Language = null
+    string? Language = null,
+    /// <summary>
+    /// Set only when the message was written on a partner's public page
+    /// (/{lang}/partner/{slug}) — the same slug <c>GET /api/suppliers/by-slug/{slug}</c>
+    /// resolves. It turns the message into a routed <c>DemandLead</c> with
+    /// <c>Source = "partner-page"</c> aimed at that partner instead of an
+    /// untracked note in the ops inbox.
+    ///
+    /// OPTIONAL, and it must stay that way: the plain /contact page posts without
+    /// it, as does any older bundle still served from the service-worker cache,
+    /// and a slug that no longer resolves degrades to exactly the old behaviour
+    /// rather than failing the visitor.
+    /// </summary>
+    string? PartnerSlug = null
 );
 
 /// <summary>
