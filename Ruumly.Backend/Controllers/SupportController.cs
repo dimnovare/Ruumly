@@ -556,7 +556,7 @@ public class SupportController(
             .Where(l => l.Source == "concierge"
                      && l.Email == email
                      && l.CreatedAt >= duplicateCutoff)
-            .Select(l => new { l.Id, l.City, l.ToCity, l.Category, l.NeedDate, l.Details })
+            .Select(l => new { l.Id, l.City, l.ToCity, l.Category, l.NeedDate, l.Details, l.StatusToken })
             .ToListAsync();
 
         var duplicate = recent.FirstOrDefault(l =>
@@ -571,7 +571,13 @@ public class SupportController(
             logger.LogInformation(
                 "Duplicate concierge request from {Email} within {Minutes} min — returning lead {LeadId} without a second fan-out.",
                 email, DuplicateRequestWindow.TotalMinutes, duplicate.Id);
-            return Ok(new { ok = true });
+            // The FIRST lead's token, not a new one. A double-tap is one request
+            // and must land the visitor on the request that actually exists —
+            // sending them to a freshly minted token would be a status page for
+            // a lead nobody is working, which is the failure the page exists to
+            // stop. Same shape as a fresh submit, deliberately: the customer must
+            // never be able to tell a swallowed duplicate from a first submit.
+            return Ok(new { ok = true, statusToken = duplicate.StatusToken });
         }
 
         var lead = new DemandLead
@@ -756,6 +762,20 @@ public class SupportController(
         // the customer their request was lost when it was not.
         try
         {
+            // Where they can watch this request move. /request-status/{token}
+            // shipped with nothing linking to it — the token was minted on every
+            // concierge lead and never told to anybody — so the page built to
+            // end the silence between receipt and offer could not be reached by
+            // the people waiting in it.
+            //
+            // Null when the lead somehow has no token: the composer then omits
+            // the whole block rather than mailing a link ending in
+            // "/request-status/", which would 404 the one person we were trying
+            // to reassure.
+            var statusUrl = string.IsNullOrWhiteSpace(lead.StatusToken)
+                ? null
+                : FrontendUrl.Localized(appUrl, lead.Language, $"request-status/{lead.StatusToken}");
+
             // The services the visitor actually picked, not the single Category
             // column they collapsed into. The receipt's whole job is to read the
             // request back so they can spot their own typo, and for a
@@ -766,7 +786,8 @@ public class SupportController(
             var ack = CustomerRequestAckComposer.Compose(
                 lead,
                 LeadServiceLabel.For(EmailTranslations.For(lead.Language), lead),
-                FrontendUrl.Contact(appUrl, lead.Language));
+                FrontendUrl.Contact(appUrl, lead.Language),
+                statusUrl);
 
             emailQueue.EnqueueEmail(
                 to:       lead.Email.Trim(),
@@ -789,7 +810,17 @@ public class SupportController(
                 "customer NOT acknowledged.", lead.Id);
         }
 
-        return Ok(new { ok = true });
+        // The token goes back to the browser so the success screen — the one
+        // moment the customer is definitely looking — can link straight to their
+        // own status page. The receipt email carries the same link, but a mail
+        // that lands in spam, or is simply never opened, is not a channel to
+        // depend on for the only address this request will ever have.
+        //
+        // Safe to hand to this caller and nobody else: it is a bearer credential
+        // for THIS request, returned on the response to the very submit that
+        // created it, and the page behind it shows only what the customer
+        // already told us plus the stage it reached.
+        return Ok(new { ok = true, statusToken = lead.StatusToken });
     }
 
     /// <summary>

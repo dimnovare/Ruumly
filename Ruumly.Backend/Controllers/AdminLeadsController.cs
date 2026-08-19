@@ -14,6 +14,35 @@ namespace Ruumly.Backend.Controllers;
 public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
 {
     /// <summary>
+    /// How long a request may sit with no provider answer before the queue calls
+    /// it stalled.
+    ///
+    /// A policy number, so it lives in ONE place and is echoed to the client as
+    /// <c>stalledAfterDays</c> rather than re-declared there — a queue whose
+    /// count and whose row badges disagree about the threshold is worse than no
+    /// badge at all. Three days is the founder's own chase cadence: shorter and
+    /// every request is "stalled" the morning after it arrives, longer and the
+    /// Viljandi case (18 asks, no reply of any kind, noticed weeks later) stays
+    /// invisible for exactly as long as it did.
+    /// </summary>
+    private const int StalledAfterDays = 3;
+
+    /// <summary>
+    /// Statuses that mean the PROVIDER did something. NoAnswer is deliberately
+    /// not among them: it is an admin recording silence, not a provider breaking
+    /// it, and counting it as an answer would erase the very thing this data
+    /// exists to make visible.
+    /// </summary>
+    private static bool IsProviderAnswer(ProviderOutreachStatus status) =>
+        status is ProviderOutreachStatus.Replied
+               or ProviderOutreachStatus.Declined
+               or ProviderOutreachStatus.NeedsInfo;
+
+    /// <summary>The mail provably did not reach a human (Resend webhook only).</summary>
+    private static bool IsDeliveryFailure(ProviderOutreachStatus status) =>
+        status is ProviderOutreachStatus.Bounced or ProviderOutreachStatus.Complained;
+
+    /// <summary>
     /// Admin lead queue. All filters are optional and case-insensitive
     /// (null/blank = ignore): <paramref name="status"/>, <paramref name="source"/>
     /// (e.g. "concierge" for the demand funnel, "routed"/"notify-interest" for the
@@ -22,7 +51,28 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
     /// <paramref name="needsResponse"/>=true to get the SLA view — only untouched
     /// New leads (ContactedAt == null), oldest-first, so the oldest un-worked
     /// request is at the top of the queue.
+    ///
+    /// Beside <c>items</c> the response carries two things the row shape itself
+    /// cannot hold (see <see cref="AdminMappers.MapAdminLead"/>, which is shared
+    /// and deliberately unchanged):
+    ///
+    ///   • <c>outreach</c> — per-lead provider-side summary, keyed by lead id.
+    ///     Without it "has anyone answered this request?" costs one expand per
+    ///     row, which at 11 requests a week is 11 clicks to learn that the answer
+    ///     is no. It is a sibling map rather than extra fields on each item so
+    ///     the item shape the frontend already reads stays byte-for-byte intact.
+    ///   • <c>queues</c> — honest counts for the three views an operator actually
+    ///     works from, computed over the SAME filters but over the whole result
+    ///     set rather than the current page, so a chip can carry a number without
+    ///     lying about what it counted.
+    ///
+    /// <paramref name="queue"/> selects one of those three views and orders it
+    /// oldest-first, because in all three the oldest row is the one that has been
+    /// waiting longest. <paramref name="needsResponse"/> is the older boolean
+    /// spelling of <c>queue=needsresponse</c>, kept because the admin cockpit and
+    /// the alert emails link with <c>?needsResponse=1</c>.
     /// </summary>
+    /// <param name="queue">needsresponse | blocked | stalled (unknown = ignored).</param>
     [HttpGet("leads")]
     public async Task<IActionResult> GetLeads(
         [FromQuery] string? status = null,
@@ -30,6 +80,7 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
         [FromQuery] string? category = null,
         [FromQuery] string? city = null,
         [FromQuery] bool needsResponse = false,
+        [FromQuery] string? queue = null,
         [FromQuery] int page = 1,
         [FromQuery] int limit = 50)
     {
@@ -71,13 +122,34 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
             query = query.Where(d => d.City.ToLower() == cityLower);
         }
 
-        // SLA / needs-response view: only genuinely un-worked leads, oldest first.
-        if (needsResponse)
-            query = query.Where(d => d.Status == DemandLeadStatus.New && d.ContactedAt == null);
+        // Snapshot BEFORE the queue selection is applied: the chips' counts must
+        // describe the same filtered world the operator is looking at, minus the
+        // queue they happen to have selected — otherwise "Needs first reply (3)"
+        // reads 3 only while it is already on.
+        var filtered = query;
+
+        // An unknown queue name is ignored rather than rejected — same null=ignore
+        // contract as every other filter here, so a stale bookmark shows the full
+        // list instead of a 400 the operator has to decode mid-loop.
+        var selectedQueue = queue?.Trim().ToLowerInvariant();
+        if (needsResponse && selectedQueue is null) selectedQueue = "needsresponse";
+        var stalledBefore = DateTime.UtcNow.AddDays(-StalledAfterDays);
+
+        // The very same predicates the counts use — see QueueCountsAsync. A chip
+        // reading "Stalled (4)" that filters to a different 4 is worse than no
+        // chip, so there is exactly one definition of each.
+        query = selectedQueue switch
+        {
+            "needsresponse" => query.Where(NeedsResponsePredicate),
+            "blocked"       => query.Where(BlockedPredicate()),
+            "stalled"       => query.Where(StalledPredicate(stalledBefore)),
+            _               => query,
+        };
+        var inQueue = selectedQueue is "needsresponse" or "blocked" or "stalled";
 
         var total = await query.CountAsync();
-        var ordered = needsResponse
-            ? query.OrderBy(d => d.CreatedAt)            // oldest uncontacted first
+        var ordered = inQueue
+            ? query.OrderBy(d => d.CreatedAt)            // longest-waiting first
             : query.OrderByDescending(d => d.CreatedAt); // newest first (default)
         // Two steps on purpose. The row shape is built by AdminMappers.MapAdminLead
         // in C#, because one of its fields (photoCount) is a JSON parse the
@@ -101,7 +173,151 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
 
         var leads = rows.Select(r => AdminMappers.MapAdminLead(r.Lead, r.SupplierName)).ToList();
 
-        return Ok(new { total, page, limit, items = leads });
+        return Ok(new
+        {
+            total,
+            page,
+            limit,
+            items    = leads,
+            outreach = await OutreachSummaryAsync(rows.Select(r => r.Lead).ToList()),
+            queues   = await QueueCountsAsync(filtered),
+        });
+    }
+
+    /// <summary>
+    /// Provider-side state of each lead on the current page, keyed by lead id as
+    /// a string (JSON object keys are strings; a Guid key would serialize the
+    /// same but leaves the contract to chance).
+    ///
+    /// Two queries for the whole page, not per row: the operator waits on this
+    /// list, and the point of the summary is to remove clicks, not to trade them
+    /// for latency.
+    ///
+    /// The four counts partition the asks — answered + failed + silent == asked —
+    /// so the UI never subtracts and can never render a negative. Delivery is
+    /// reported separately and NEVER folded into "silent": a row with no receipt
+    /// is UNKNOWN, not undelivered (see ProviderOutreach.DeliveredAt), and
+    /// collapsing the two would turn our own missing telemetry into an accusation
+    /// against the provider.
+    ///
+    /// <c>stalled</c> is the per-row form of the queue chip's definition, decided
+    /// HERE rather than in the browser: a badge that computes its own version of
+    /// "stalled" is a second definition, and the day the two disagree the count
+    /// and the rows it labels stop describing the same thing. The in-memory rule
+    /// below and <see cref="StalledPredicate"/> are held together by a test that
+    /// asserts the flagged rows and the count agree.
+    /// </summary>
+    private async Task<Dictionary<string, object>> OutreachSummaryAsync(List<DemandLead> pageLeads)
+    {
+        if (pageLeads.Count == 0) return [];
+        var leadIds = pageLeads.Select(l => l.Id).ToList();
+
+        var outreach = await Db.ProviderOutreaches
+            .AsNoTracking()
+            .Where(o => leadIds.Contains(o.DemandLeadId))
+            .Select(o => new { o.DemandLeadId, o.SentAt, o.Status, o.DeliveredAt })
+            .ToListAsync();
+
+        // Blocked is counted from the ASKS, not from the NeedsInfo status: the
+        // status can be moved by hand, the open ProviderInfoRequest is the thing
+        // that actually has something to resolve, and it is what the workspace
+        // will offer a button for.
+        var openAsks = await Db.ProviderInfoRequests
+            .AsNoTracking()
+            .Where(r => leadIds.Contains(r.DemandLeadId) && r.ResolvedAt == null)
+            .Select(r => r.DemandLeadId)
+            .ToListAsync();
+
+        var byLead     = outreach.GroupBy(o => o.DemandLeadId).ToDictionary(g => g.Key, g => g.ToList());
+        var asksByLead = openAsks.GroupBy(id => id).ToDictionary(g => g.Key, g => g.Count());
+        var stalledBefore = DateTime.UtcNow.AddDays(-StalledAfterDays);
+
+        var summary = new Dictionary<string, object>(pageLeads.Count);
+        foreach (var lead in pageLeads)
+        {
+            var rows     = byLead.GetValueOrDefault(lead.Id) ?? [];
+            var answered = rows.Count(o => IsProviderAnswer(o.Status));
+            var failed   = rows.Count(o => IsDeliveryFailure(o.Status));
+
+            summary[lead.Id.ToString()] = new
+            {
+                asked      = rows.Count,
+                answered,
+                failed,
+                silent     = rows.Count - answered - failed,
+                delivered  = rows.Count(o => o.DeliveredAt != null),
+                // No receipt AND no failure verdict: we simply do not know. Kept
+                // as its own number so the UI can say "unknown" in as many words.
+                deliveryUnknown = rows.Count(o => o.DeliveredAt == null && !IsDeliveryFailure(o.Status)),
+                blocked    = asksByLead.GetValueOrDefault(lead.Id),
+                // Null when nobody was ever asked — which is a different thing
+                // from "asked a long time ago" and must not render as an age.
+                lastSentAt = rows.Count == 0 ? (DateTime?)null : rows.Max(o => o.SentAt),
+                // Same rule as StalledPredicate, term for term.
+                stalled = (lead.Status == DemandLeadStatus.New
+                            || lead.Status == DemandLeadStatus.Contacted
+                            || lead.Status == DemandLeadStatus.Quoted)
+                        && lead.CreatedAt <= stalledBefore
+                        && answered == 0
+                        && !rows.Any(o => o.SentAt > stalledBefore),
+            };
+        }
+
+        return summary;
+    }
+
+    /// <summary>Untouched: still New and never contacted (the SLA view).</summary>
+    private static readonly System.Linq.Expressions.Expression<Func<DemandLead, bool>>
+        NeedsResponsePredicate = d => d.Status == DemandLeadStatus.New && d.ContactedAt == null;
+
+    /// <summary>
+    /// A provider is waiting on US. Keyed on the open <see cref="ProviderInfoRequest"/>
+    /// rather than on the NeedsInfo status: the status can be retyped by hand, the
+    /// ask is the thing that actually has something to resolve.
+    /// </summary>
+    private System.Linq.Expressions.Expression<Func<DemandLead, bool>> BlockedPredicate() =>
+        d => Db.ProviderInfoRequests.Any(r => r.DemandLeadId == d.Id && r.ResolvedAt == null);
+
+    /// <summary>
+    /// Stalled: an OPEN request that no provider has answered and where nothing
+    /// has been sent for <see cref="StalledAfterDays"/> days — including one
+    /// nobody was ever asked about.
+    ///
+    /// SILENCE, NOT AGE, and the difference is the whole point. A request sent
+    /// yesterday to fifteen providers is not stalled; one raised a week ago that
+    /// nobody was ever asked about is. Sorting by date would have surfaced the
+    /// first and buried the second, which is how five Viljandi requests sat with
+    /// no reply of any kind until somebody read the metrics by hand.
+    /// </summary>
+    private System.Linq.Expressions.Expression<Func<DemandLead, bool>> StalledPredicate(DateTime before) =>
+        d => (d.Status == DemandLeadStatus.New
+                || d.Status == DemandLeadStatus.Contacted
+                || d.Status == DemandLeadStatus.Quoted)
+            && d.CreatedAt <= before
+            && !Db.ProviderOutreaches.Any(o => o.DemandLeadId == d.Id
+                && (o.Status == ProviderOutreachStatus.Replied
+                 || o.Status == ProviderOutreachStatus.Declined
+                 || o.Status == ProviderOutreachStatus.NeedsInfo))
+            && !Db.ProviderOutreaches.Any(o => o.DemandLeadId == d.Id && o.SentAt > before);
+
+    /// <summary>
+    /// Counts for the three queues an operator actually works from, over the
+    /// whole filtered result set rather than the current page — a chip may only
+    /// carry a number if the number is true of everything behind it.
+    /// </summary>
+    private async Task<object> QueueCountsAsync(IQueryable<DemandLead> filtered)
+    {
+        var stalledBefore = DateTime.UtcNow.AddDays(-StalledAfterDays);
+
+        return new
+        {
+            needsResponse = await filtered.CountAsync(NeedsResponsePredicate),
+            blocked       = await filtered.CountAsync(BlockedPredicate()),
+            stalled       = await filtered.CountAsync(StalledPredicate(stalledBefore)),
+            // Echoed so the row badges and this count can never disagree about
+            // what "stalled" means.
+            stalledAfterDays = StalledAfterDays,
+        };
     }
 
     [HttpPatch("leads/{id:guid}")]
@@ -595,6 +811,119 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
         }
 
         return Ok(matches);
+    }
+
+    /// <summary>
+    /// The providers who have NEVER answered anything — the roll-call behind the
+    /// quote rate.
+    ///
+    /// WHY IT IS ITS OWN ENDPOINT. Every other number here describes requests;
+    /// this one describes companies, and it is the only view in which the actual
+    /// problem is legible. Five Viljandi storage requests reached 18 providers —
+    /// three of them based in Viljandi — and produced no reply of any kind. Per
+    /// request that reads as five unlucky weeks. Per company it reads as a supply
+    /// side that does not answer email, which is a different business problem
+    /// with a different fix (phone, a different ask, or a different city).
+    ///
+    /// ALL-TIME AND ALL CHANNELS, deliberately, unlike the concierge-scoped
+    /// funnel above: "has this company ever once replied to us" is a fact about
+    /// the company, and a reply to a routed request is still a reply. Narrowing
+    /// it to 30 days would also let a provider who answered once last spring
+    /// reappear here as if they had never spoken to us.
+    ///
+    /// DELIVERY IS REPORTED, NEVER INFERRED. A silent provider whose mail we
+    /// know arrived is a rejection of the ask; one whose mail bounced is a dead
+    /// address; one with no receipt at all is UNKNOWN — most of the history,
+    /// since the webhook only started stamping on 2026-08-18. Three different
+    /// actions, so they are three different columns and none of them is folded
+    /// into the others.
+    ///
+    /// Aggregated in memory for the same reason as the funnel above — outreach
+    /// volume is in the hundreds, and the arithmetic stays identical on Npgsql
+    /// and the InMemory provider.
+    /// </summary>
+    /// <param name="limit">How many silent providers to return (1-100, worst first).</param>
+    [HttpGet("leads/provider-silence")]
+    public async Task<IActionResult> GetProviderSilence([FromQuery] int limit = 20)
+    {
+        limit = Math.Clamp(limit, 1, 100);
+
+        var rows = await Db.ProviderOutreaches
+            .AsNoTracking()
+            .Select(o => new { o.SupplierId, o.SentAt, o.Status, o.DeliveredAt, o.QuotedAt })
+            .ToListAsync();
+
+        var bySupplier = rows.GroupBy(o => o.SupplierId).ToList();
+
+        // A submitted price counts as an answer even if nobody moved the status:
+        // QuotedAt is the provider typing a number into our own quote page, and
+        // listing them as never-heard-from would be flatly false.
+        var silent = bySupplier
+            .Where(g => g.All(o => !IsProviderAnswer(o.Status) && o.QuotedAt == null))
+            .Select(g => new
+            {
+                SupplierId      = g.Key,
+                Asked           = g.Count(),
+                LastAskedAt     = g.Max(o => o.SentAt),
+                Delivered       = g.Count(o => o.DeliveredAt != null),
+                Failed          = g.Count(o => IsDeliveryFailure(o.Status)),
+                DeliveryUnknown = g.Count(o => o.DeliveredAt == null && !IsDeliveryFailure(o.Status)),
+            })
+            // Worst first: the most asks wasted, then the coldest — that is the
+            // order in which the founder would drop them or pick up the phone.
+            .OrderByDescending(s => s.Asked)
+            .ThenBy(s => s.LastAskedAt)
+            .ToList();
+
+        var top   = silent.Take(limit).ToList();
+        var ids   = top.Select(s => s.SupplierId).ToList();
+        var names = await Db.Suppliers
+            .AsNoTracking()
+            .Where(s => ids.Contains(s.Id))
+            .Select(s => new
+            {
+                s.Id,
+                s.Name,
+                s.ContactEmail,
+                s.ContactEmailUnusable,
+                // Supplier itself has no city — it hangs off the locations. Worth
+                // the subquery: "three of them are IN Viljandi" is the detail that
+                // turns a list of names into a decision about a town.
+                City = Db.SupplierLocations
+                    .Where(l => l.SupplierId == s.Id && l.IsActive)
+                    .Select(l => (string?)l.City)
+                    .FirstOrDefault(),
+            })
+            .ToDictionaryAsync(s => s.Id);
+
+        return Ok(new
+        {
+            // The headline: of everyone we have ever emailed, how many have never
+            // said a word. Both numbers, never just the rate — at this volume a
+            // percentage on its own would be noise dressed as a measurement.
+            providersContacted = bySupplier.Count,
+            providersSilent    = silent.Count,
+            asksUnanswered     = silent.Sum(s => s.Asked),
+            items = top.Select(s =>
+            {
+                var supplier = names.GetValueOrDefault(s.SupplierId);
+                return new
+                {
+                    supplierId   = s.SupplierId,
+                    supplierName = supplier?.Name,
+                    city         = supplier?.City,
+                    // Surfaced because it changes the verdict: a provider with a
+                    // retired address never had the chance to answer.
+                    contactEmail         = supplier?.ContactEmail,
+                    contactEmailUnusable = supplier?.ContactEmailUnusable ?? false,
+                    asked                = s.Asked,
+                    lastAskedAt          = s.LastAskedAt,
+                    delivered            = s.Delivered,
+                    deliveryFailed       = s.Failed,
+                    deliveryUnknown      = s.DeliveryUnknown,
+                };
+            }).ToList(),
+        });
     }
 
     /// <summary>

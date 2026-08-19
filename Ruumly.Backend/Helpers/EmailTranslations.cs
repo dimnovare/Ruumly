@@ -197,6 +197,23 @@ public static class EmailTranslations
         string AckLabelDetails,
         string AckDateAsap,
         string AckWhatNext,
+        // ── The customer's own status page ───────────────────────────────────
+        // /{lang}/request-status/{token} shipped with nothing linking to it, so
+        // the page built to end the silence was itself unreachable. This is the
+        // durable half of the fix: the success screen is seen once, this mail
+        // is kept.
+        //
+        // Same discipline as the rest of this block — it says where to LOOK,
+        // never when something will happen. The page reports the stage the
+        // request actually reached; a sentence here promising a stage would be
+        // the deadline claim this mail exists without.
+        //
+        // Two strings, not one, because the two bodies need different shapes:
+        // the text body prints "{cta} → {url}" (the house pattern from
+        // OutreachQuoteCta) and the HTML puts the CTA on a button, where a raw
+        // URL would be noise.
+        string AckStatusLine,
+        string AckStatusCta,
         // The point of the whole mail: a thread they can answer. This address is
         // the only channel back from a customer and it was never exercised.
         string AckReply,
@@ -565,7 +582,7 @@ public static class EmailTranslations
             ["packingHelp.opt2"]         = "Ainult õrnad ja suured esemed",
             ["packingHelp.opt3"]         = "Ainult kastid ja pakkematerjal",
             ["packingHelp.opt4"]         = "Ei — klient pakib ise",
-            ["trailerDuration.label"]    = "Rendiperiood",
+            ["trailerDuration.label"]    = "Haagise rendiperiood",
             ["trailerDuration.opt1"]     = "Paar tundi",
             ["trailerDuration.opt2"]     = "Üks päev",
             ["trailerDuration.opt3"]     = "2–3 päeva",
@@ -589,7 +606,7 @@ public static class EmailTranslations
             ["vanrentalDriver.opt3"]     = "Koos juhi ja laadijatega",
             ["vanrentalDriver.opt4"]     = "Ükskõik kumb — kumb on odavam",
             ["vanrentalDriver.opt5"]     = "Klient ei ole kindel",
-            ["vanrentalDuration.label"]  = "Rendiperiood",
+            ["vanrentalDuration.label"]  = "Kaubiku rendiperiood",
             ["vanrentalDuration.opt1"]   = "Paar tundi",
             ["vanrentalDuration.opt2"]   = "Üks päev",
             ["vanrentalDuration.opt3"]   = "2–3 päeva",
@@ -671,7 +688,7 @@ public static class EmailTranslations
             ["packingHelp.opt2"]         = "Only fragile and bulky items",
             ["packingHelp.opt3"]         = "Just boxes and packing materials",
             ["packingHelp.opt4"]         = "No — the customer packs themselves",
-            ["trailerDuration.label"]    = "Rental period",
+            ["trailerDuration.label"]    = "Trailer rental period",
             ["trailerDuration.opt1"]     = "A few hours",
             ["trailerDuration.opt2"]     = "One day",
             ["trailerDuration.opt3"]     = "2–3 days",
@@ -695,7 +712,7 @@ public static class EmailTranslations
             ["vanrentalDriver.opt3"]     = "With a driver and loaders",
             ["vanrentalDriver.opt4"]     = "Either — whichever is cheaper",
             ["vanrentalDriver.opt5"]     = "The customer is not sure",
-            ["vanrentalDuration.label"]  = "Rental period",
+            ["vanrentalDuration.label"]  = "Van rental period",
             ["vanrentalDuration.opt1"]   = "A few hours",
             ["vanrentalDuration.opt2"]   = "One day",
             ["vanrentalDuration.opt3"]   = "2–3 days",
@@ -777,7 +794,7 @@ public static class EmailTranslations
             ["packingHelp.opt2"]         = "Только хрупкое и крупногабаритное",
             ["packingHelp.opt3"]         = "Только коробки и упаковочные материалы",
             ["packingHelp.opt4"]         = "Нет — клиент упакует сам",
-            ["trailerDuration.label"]    = "Срок аренды",
+            ["trailerDuration.label"]    = "Срок аренды прицепа",
             ["trailerDuration.opt1"]     = "Пара часов",
             ["trailerDuration.opt2"]     = "Один день",
             ["trailerDuration.opt3"]     = "2–3 дня",
@@ -801,7 +818,7 @@ public static class EmailTranslations
             ["vanrentalDriver.opt3"]     = "С водителем и грузчиками",
             ["vanrentalDriver.opt4"]     = "Любой вариант — что дешевле",
             ["vanrentalDriver.opt5"]     = "Клиент пока не знает",
-            ["vanrentalDuration.label"]  = "Срок аренды",
+            ["vanrentalDuration.label"]  = "Срок аренды фургона",
             ["vanrentalDuration.opt1"]   = "Пара часов",
             ["vanrentalDuration.opt2"]   = "Один день",
             ["vanrentalDuration.opt3"]   = "2–3 дня",
@@ -883,7 +900,7 @@ public static class EmailTranslations
             ["packingHelp.opt2"]         = "Tikai trauslās un lielgabarīta lietas",
             ["packingHelp.opt3"]         = "Tikai kastes un iepakojuma materiāli",
             ["packingHelp.opt4"]         = "Nē — klients pakos pats",
-            ["trailerDuration.label"]    = "Nomas periods",
+            ["trailerDuration.label"]    = "Piekabes nomas periods",
             ["trailerDuration.opt1"]     = "Dažas stundas",
             ["trailerDuration.opt2"]     = "Viena diena",
             ["trailerDuration.opt3"]     = "2–3 dienas",
@@ -907,7 +924,7 @@ public static class EmailTranslations
             ["vanrentalDriver.opt3"]     = "Ar vadītāju un krāvējiem",
             ["vanrentalDriver.opt4"]     = "Jebkurš variants — kas lētāk",
             ["vanrentalDriver.opt5"]     = "Klients vēl nezina",
-            ["vanrentalDuration.label"]  = "Nomas periods",
+            ["vanrentalDuration.label"]  = "Furgona nomas periods",
             ["vanrentalDuration.opt1"]   = "Dažas stundas",
             ["vanrentalDuration.opt2"]   = "Viena diena",
             ["vanrentalDuration.opt3"]   = "2–3 dienas",
@@ -989,7 +1006,7 @@ public static class EmailTranslations
             ["packingHelp.opt2"]         = "Tik trapūs ir dideli daiktai",
             ["packingHelp.opt3"]         = "Tik dėžės ir pakavimo medžiagos",
             ["packingHelp.opt4"]         = "Ne — klientas supakuos pats",
-            ["trailerDuration.label"]    = "Nuomos laikotarpis",
+            ["trailerDuration.label"]    = "Priekabos nuomos laikotarpis",
             ["trailerDuration.opt1"]     = "Kelios valandos",
             ["trailerDuration.opt2"]     = "Viena diena",
             ["trailerDuration.opt3"]     = "2–3 dienos",
@@ -1013,7 +1030,7 @@ public static class EmailTranslations
             ["vanrentalDriver.opt3"]     = "Su vairuotoju ir krovėjais",
             ["vanrentalDriver.opt4"]     = "Bet kuris variantas — kas pigiau",
             ["vanrentalDriver.opt5"]     = "Klientas dar nežino",
-            ["vanrentalDuration.label"]  = "Nuomos laikotarpis",
+            ["vanrentalDuration.label"]  = "Furgono nuomos laikotarpis",
             ["vanrentalDuration.opt1"]   = "Kelios valandos",
             ["vanrentalDuration.opt2"]   = "Viena diena",
             ["vanrentalDuration.opt3"]   = "2–3 dienos",
@@ -1185,6 +1202,16 @@ public static class EmailTranslations
         AckLabelDetails:               "Täpsustused",
         AckDateAsap:                   "esimesel võimalusel",
         AckWhatNext:                   "Mis edasi saab: võtame ühendust piirkonna pakkujatega ja saadame sulle koondatud pakkumised. Kui midagi jääb segaseks, küsime sinult üle.",
+        // Formal (teie): "näete", "hoidke", "Vaadake" — the register the rest of
+        // the Estonian mail corpus uses. The pronoun itself is left out on
+        // purpose: the four Ack strings around this one are still informal
+        // ("Sinu päring", "Mida sa küsisid"), and a bare "Teie" three lines
+        // under "sinult" is the seam a reader notices first. Dropping it keeps
+        // the formal verbs without putting the two pronouns side by side. The
+        // real fix is to make the whole Ack block formal like et's every other
+        // customer mail — that is founder copy, not a refactor.
+        AckStatusLine:                 "Päringul on oma leht, kust näete, mis seisus see parasjagu on. Link on isiklik — palun hoidke see endale.",
+        AckStatusCta:                  "Vaadake oma päringut",
         AckReply:                      "Kui midagi muutub — kuupäev, kogus, aadress — vasta lihtsalt sellele kirjale. Nii jõuab info otse meieni.",
         AckContactTpl:                 "Võid kirjutada ka siit: {url}",
         AckSignature:                  "Parimate soovidega\nRuumly meeskond\ninfo@ruumly.eu",
@@ -1382,6 +1409,8 @@ public static class EmailTranslations
         AckLabelDetails:               "Details",
         AckDateAsap:                   "as soon as possible",
         AckWhatNext:                   "What happens next: we contact providers in your area and send you their offers together. If anything is unclear, we will ask you first.",
+        AckStatusLine:                 "Your request has its own page — it shows what stage it has reached. The link is private, so please keep it to yourself.",
+        AckStatusCta:                  "See your request",
         AckReply:                      "If anything changes — the date, the amount, the address — just reply to this email. It comes straight to us.",
         AckContactTpl:                 "You can also write to us here: {url}",
         AckSignature:                  "Best regards\nThe Ruumly team\ninfo@ruumly.eu",
@@ -1579,6 +1608,8 @@ public static class EmailTranslations
         AckLabelDetails:               "Уточнения",
         AckDateAsap:                   "как можно скорее",
         AckWhatNext:                   "Что дальше: мы свяжемся с исполнителями в вашем районе и пришлём вам их предложения вместе. Если что-то будет неясно, мы спросим у вас.",
+        AckStatusLine:                 "У вашего запроса есть своя страница — на ней видно, на каком он этапе. Ссылка личная, пожалуйста, не пересылайте её.",
+        AckStatusCta:                  "Открыть страницу запроса",
         AckReply:                      "Если что-то изменится — дата, объём, адрес — просто ответьте на это письмо. Оно придёт прямо к нам.",
         AckContactTpl:                 "Также можно написать нам здесь: {url}",
         AckSignature:                  "С наилучшими пожеланиями\nКоманда Ruumly\ninfo@ruumly.eu",
@@ -1776,6 +1807,8 @@ public static class EmailTranslations
         AckLabelDetails:               "Precizējumi",
         AckDateAsap:                   "pēc iespējas drīzāk",
         AckWhatNext:                   "Kas notiks tālāk: sazināsimies ar pakalpojumu sniedzējiem jūsu apkaimē un nosūtīsim jūsu piedāvājumus kopā. Ja kaut kas būs neskaidrs, vispirms pajautāsim jums.",
+        AckStatusLine:                 "Jūsu pieprasījumam ir sava lapa — tajā redzams, kurā posmā tas ir. Saite ir personiska, lūdzu, nedodiet to tālāk.",
+        AckStatusCta:                  "Skatīt savu pieprasījumu",
         AckReply:                      "Ja kaut kas mainās — datums, apjoms, adrese — vienkārši atbildiet uz šo vēstuli. Tā nonāk tieši pie mums.",
         AckContactTpl:                 "Varat rakstīt mums arī šeit: {url}",
         AckSignature:                  "Ar cieņu\nRuumly komanda\ninfo@ruumly.eu",
@@ -1973,6 +2006,8 @@ public static class EmailTranslations
         AckLabelDetails:               "Patikslinimai",
         AckDateAsap:                   "kuo greičiau",
         AckWhatNext:                   "Kas toliau: susisieksime su jūsų rajono paslaugų teikėjais ir atsiųsime jūsų pasiūlymus kartu. Jei kas nors bus neaišku, pirmiausia paklausime jūsų.",
+        AckStatusLine:                 "Jūsų užklausa turi savo puslapį — jame matyti, kokiame etape ji yra. Nuoroda asmeninė, prašome ja nesidalyti.",
+        AckStatusCta:                  "Peržiūrėti savo užklausą",
         AckReply:                      "Jei kas nors pasikeis — data, kiekis, adresas — tiesiog atsakykite į šį laišką. Jis ateis tiesiai pas mus.",
         AckContactTpl:                 "Taip pat galite parašyti mums čia: {url}",
         AckSignature:                  "Su geriausiais linkėjimais\nRuumly komanda\ninfo@ruumly.eu",

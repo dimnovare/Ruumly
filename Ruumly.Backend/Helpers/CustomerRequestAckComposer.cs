@@ -31,6 +31,25 @@ public sealed record CustomerAckMessage(string Subject, string TextBody, string 
 /// promise. It says what happens next and invites a reply; that is all it can
 /// keep.
 ///
+/// Since 2026-08-19 it also carries the link to the customer's own status page,
+/// <c>/{lang}/request-status/{token}</c>. That page shipped with NOTHING
+/// pointing at it: the surface built to end the silence between receipt and
+/// offer was itself unreachable, and the token minted on every concierge lead
+/// was never told to anybody. The link belongs here rather than only on the
+/// success screen because the screen is seen once and this mail is kept.
+///
+/// The link changes nothing about the promise discipline above — it is "here is
+/// where you can see what is happening", never "we will have done X by Y". The
+/// page reports the stage the request has actually reached, including the stage
+/// where nobody could take it, which is exactly why it can be linked from a
+/// message that refuses to forecast.
+///
+/// The <c>statusUrl</c> argument is optional, and omitting it composes the mail
+/// exactly as it composed before this existed: a lead with no token (every row
+/// created before the column, and any future path that forgets to mint one)
+/// must produce a receipt with no link at all rather than one pointing at
+/// <c>/request-status/</c> with nothing after it.
+///
 /// Since 2026-08-14 it is sent as HTML with a plain-text fallback. It was text
 /// only, while the COLD email we send to strangers was branded HTML — so the
 /// customer's sole proof of receipt looked less legitimate than unsolicited
@@ -47,7 +66,7 @@ public static class CustomerRequestAckComposer
     private const string PageBg    = "#f5f5f5";
 
     public static CustomerAckMessage Compose(
-        DemandLead lead, string categoryLabel, string? contactUrl)
+        DemandLead lead, string categoryLabel, string? contactUrl, string? statusUrl = null)
     {
         var t    = EmailTranslations.For(lead.Language);
         var name = string.IsNullOrWhiteSpace(lead.Name) ? null : lead.Name.Trim();
@@ -68,15 +87,16 @@ public static class CustomerRequestAckComposer
 
         return new(
             t.AckSubject,
-            BuildText(t, greeting, facts, contactUrl),
-            BuildHtml(t, greeting, facts, contactUrl));
+            BuildText(t, greeting, facts, contactUrl, statusUrl),
+            BuildHtml(t, greeting, facts, contactUrl, statusUrl));
     }
 
     private static string BuildText(
         EmailTranslations.EmailStrings t,
         string greeting,
         IReadOnlyList<(string Label, string Value)> facts,
-        string? contactUrl)
+        string? contactUrl,
+        string? statusUrl)
     {
         var lines = new List<string> { greeting, "", t.AckReceived, "", t.AckSummaryHeading };
         foreach (var (label, value) in facts)
@@ -84,6 +104,19 @@ public static class CustomerRequestAckComposer
 
         lines.Add("");
         lines.Add(t.AckWhatNext);
+
+        // Directly after "what happens next", because the page is where they
+        // watch it happen. "{cta} → {url}" is the same shape the provider
+        // outreach mail uses for its quote link, so a plain-text client shows a
+        // labelled URL rather than a naked one.
+        if (!string.IsNullOrWhiteSpace(statusUrl))
+        {
+            lines.Add("");
+            lines.Add(t.AckStatusLine);
+            lines.Add("");
+            lines.Add($"{t.AckStatusCta} → {statusUrl}");
+        }
+
         lines.Add("");
         lines.Add(t.AckReply);
 
@@ -109,7 +142,8 @@ public static class CustomerRequestAckComposer
         EmailTranslations.EmailStrings t,
         string greeting,
         IReadOnlyList<(string Label, string Value)> facts,
-        string? contactUrl)
+        string? contactUrl,
+        string? statusUrl)
     {
         // Minimal escaper rather than WebUtility.HtmlEncode: that one turns
         // every non-ASCII character into a numeric entity, which would mangle
@@ -147,6 +181,23 @@ public static class CustomerRequestAckComposer
                         <p style="margin:0 0 24px;color:{BodyText};font-size:15px;line-height:1.6;">{Linkified(t.AckContact(contactUrl), contactUrl)}</p>
                """;
 
+        // The one thing this mail wants the reader to DO, so it gets the one
+        // button — a nested table because Outlook ignores padding on a bare
+        // anchor, which is the same reason ProviderOutreachComposer wraps its
+        // quote CTA. The sentence above it carries the meaning on its own, so a
+        // client that strips the button still leaves a readable paragraph, and
+        // the text body still prints the URL in full.
+        var statusHtml = string.IsNullOrWhiteSpace(statusUrl)
+            ? ""
+            : $"""
+                        <p style="margin:0 0 16px;color:{BodyText};font-size:15px;line-height:1.6;">{E(t.AckStatusLine)}</p>
+                        <table cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+                          <tr><td style="background:{Teal};border-radius:6px;">
+                            <a href="{E(statusUrl)}" style="display:inline-block;padding:13px 26px;color:#ffffff;font-size:16px;font-weight:600;text-decoration:none;">{E(t.AckStatusCta)}</a>
+                          </td></tr>
+                        </table>
+               """;
+
         return $"""
             <!DOCTYPE html>
             <html>
@@ -170,6 +221,7 @@ public static class CustomerRequestAckComposer
             {factRows}
                         </table>
                         <p style="margin:0 0 20px;color:{BodyText};font-size:15px;line-height:1.6;">{E(t.AckWhatNext)}</p>
+            {statusHtml}
                         <p style="margin:0 0 20px;color:{BodyText};font-size:15px;line-height:1.6;">{E(t.AckReply)}</p>
             {contactHtml}
                         <p style="margin:0;color:{MutedText};font-size:14px;line-height:1.6;">{Multiline(t.AckSignature)}</p>

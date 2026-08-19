@@ -386,6 +386,47 @@ public class LeadScopeTests
     }
 
     [Fact]
+    public void TheTwoRentalPeriods_AreDifferentLabels_InEveryLanguage()
+    {
+        // A trailer and a van can be asked for in the SAME request, and both
+        // services ask how long it is needed. While both labels were the bare
+        // "Rental period", one provider email printed that heading twice with
+        // different values under it — which does not read as two questions, it
+        // reads as a template that lost track of itself.
+        //
+        // Only the labels are made specific. The chips stay identical, for the
+        // same reason the two access ends share theirs: a day is a day, and a
+        // wording difference between the rows would look like a difference in
+        // what was asked.
+        foreach (var language in AllLanguages)
+        {
+            var t = EmailTranslations.For(language);
+
+            t.ScopeLabel(ScopeQuestions.TrailerDuration).Should()
+                .NotBe(t.ScopeLabel(ScopeQuestions.VanRentalDuration),
+                    $"'{language}' has to name which vehicle each rental period is about");
+
+            for (var option = 1; option <= 5; option++)
+                t.ScopeOption(ScopeQuestions.TrailerDuration, option).Should()
+                    .Be(t.ScopeOption(ScopeQuestions.VanRentalDuration, option),
+                        $"'{language}' chip {option} is the same span of time for either vehicle");
+        }
+    }
+
+    [Fact]
+    public void ATrailerAndAVanInOneRequest_RenderTwoNamedRentalPeriods()
+    {
+        // The lead that produced the duplicated heading: one customer, both
+        // vehicles, one email to one provider.
+        var lead = Lead(language: "et", scopeJson: """{"trailerDuration":2,"vanrentalDuration":4}""");
+        var text = ProviderOutreachComposer.Compose(lead, Provider("EE")).TextBody;
+        var t    = EmailTranslations.For("et");
+
+        text.Should().Contain($"{t.ScopeLabel(ScopeQuestions.TrailerDuration)}: Üks päev")
+            .And.Contain($"{t.ScopeLabel(ScopeQuestions.VanRentalDuration)}: Nädal või rohkem");
+    }
+
+    [Fact]
     public void BothAccessEnds_RenderAsTwoDistinctLines_PickupFirst()
     {
         // Ground floor out, 4th-floor walk-up in: the job a single access
