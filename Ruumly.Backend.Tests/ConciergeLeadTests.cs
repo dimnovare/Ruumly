@@ -7,6 +7,7 @@ using Ruumly.Backend.Data;
 using Ruumly.Backend.DTOs;
 using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.DTOs.Responses;
+using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
@@ -512,7 +513,12 @@ public class ConciergeLeadTests
         // auto-fanout sent to that provider.
         var outreach = ProviderEmails(queue).Should().ContainSingle().Subject;
         outreach.To.Should().Be("m@x.ee");
-        outreach.Subject.Should().Contain("Ruumly");
+        // The subject no longer opens with the brand — that is the From display
+        // name, and on a phone lock screen it displaced the two facts a provider
+        // needs (their area, their trade). It leads with the place instead and
+        // still carries the lead reference that makes their reply routable.
+        outreach.Subject.Should().StartWith("Tallinn").And.Contain("Kolimine");
+        outreach.Subject.Should().Contain($"[{ProviderOutreachComposer.Reference(leadId)}]");
         outreach.ReplyTo.Should().Be("info@ruumly.eu");
     }
 

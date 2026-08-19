@@ -15,11 +15,22 @@ using Ruumly.Backend.Services.Interfaces;
 namespace Ruumly.Backend.Controllers;
 
 /// <summary>
-/// Public "claim your profile" flow for DIRECTORY suppliers — the 1,186 rows
-/// Ruumly created from public research, each with a scraped ContactEmail and no
-/// user account. The introduction campaign tells those providers they can claim
-/// their profile to correct their details; this controller is what makes that
-/// sentence true.
+/// Public "claim your profile" flow for DIRECTORY suppliers — the ~1,187 rows
+/// Ruumly created from public research, with no user account. The introduction
+/// campaign tells those providers they can claim their profile to correct their
+/// details; this controller is what makes that sentence true.
+///
+/// FOR THE ROWS THAT HAVE AN EMAIL. As of 2026-08-19, 230 directory rows (226 of
+/// them active) carry NO ContactEmail at all, and this flow cannot let them in:
+/// <see cref="RequestLink"/> only mints a link when the typed address equals the
+/// stored one, so a blank stored address can never match anything a visitor
+/// types. There is no second door, deliberately — every alternative (phone,
+/// registry lookup, "tell us your address and we will use that") either hands
+/// the profile to whoever asks first or reveals whether we hold an address. The
+/// only path in for those rows is a human at Ruumly adding a verified address in
+/// admin, after which the provider claims it normally. The ops mail below names
+/// that case in its own subject line so it lands in a queue rather than a
+/// silence.
 ///
 /// Shape: the provider lands on /{lang}/claim/{slug}, types their business
 /// email, and — only if it matches the address already on the row — gets a
@@ -192,19 +203,53 @@ public partial class ClaimController(
         {
             // No link, no hint — a human reviews it instead. The ops inbox is
             // internal, so it is the one place the stored address may appear.
+            //
+            // The two reasons a link was withheld need different work, and until
+            // 2026-08-19 they arrived as one indistinguishable subject line:
+            //
+            //   NO ADDRESS ON FILE — the row is unclaimable by construction, and
+            //   226 active rows are in that state. Somebody walked up to a door
+            //   that has no lock fitted. This is the highest-value mail ops can
+            //   get from this controller: a real business just identified itself
+            //   AND gave us the address we were missing, so the fix is one admin
+            //   edit away and the provider is already standing there.
+            //
+            //   ADDRESS MISMATCH — we hold something else. Could be a second
+            //   mailbox at the same firm, a new owner, or somebody guessing.
+            //   Needs verification against a source we did not get from them.
+            //
+            // Subjects differ so the inbox can be filtered and the first class
+            // does not drown in the second. Nothing here changes what the CALLER
+            // is told: the response below is byte-identical on every path.
+            var noAddressOnFile = stored.Length == 0;
+            var subject = noAddressOnFile
+                ? $"Ruumly — claim blocked, no contact email on file ({supplier.Name})"
+                : $"Ruumly — profile claim needs review ({supplier.Name})";
+            var verdict = noAddressOnFile
+                ? "This directory row has NO contact email stored, so nobody can ever claim it " +
+                  "and no request we route to it can ever be delivered — it counts toward our " +
+                  "coverage numbers while being unreachable. Verify this is the business " +
+                  "(phone, registry, website), then set the contact email in admin. They can " +
+                  "claim it themselves the moment it is there, and the address they typed " +
+                  "above is the obvious candidate."
+                : "We hold a different address for this business. No link was sent and nothing " +
+                  "was changed. If this is genuinely the business, verify them by hand (phone, " +
+                  "registry, website) and update the supplier's contact email in admin — they " +
+                  "can then claim it themselves.";
+
             emailQueue.EnqueueEmail(
                 opsInbox,
-                $"Ruumly — profile claim needs review ({supplier.Name})",
+                subject,
                 $"Someone tried to claim the directory profile for {supplier.Name} " +
                 $"(/{language}/claim/{supplier.Slug}).\n\n" +
                 $"They entered: {typed}\n" +
-                $"On file:      {(stored.Length == 0 ? "— (no contact email stored)" : stored)}\n" +
+                $"On file:      {(noAddressOnFile ? "— (no contact email stored)" : stored)}\n" +
                 $"Requested at: {now:u} from {claim.RequestIp ?? "unknown IP"}\n\n" +
-                "No link was sent and nothing was changed. If this is genuinely the " +
-                "business, verify them by hand (phone, registry, website) and update " +
-                "the supplier's contact email in admin — they can then claim it themselves.");
+                verdict);
             logger.LogInformation(
-                "Claim request for supplier {SupplierId} did not match the stored contact; ops notified.",
+                noAddressOnFile
+                    ? "Claim request for supplier {SupplierId} hit a row with no stored contact email; ops notified."
+                    : "Claim request for supplier {SupplierId} did not match the stored contact; ops notified.",
                 supplier.Id);
         }
 

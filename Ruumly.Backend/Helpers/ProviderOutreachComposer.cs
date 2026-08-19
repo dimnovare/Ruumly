@@ -8,12 +8,55 @@ namespace Ruumly.Backend.Helpers;
 public static class ProviderOutreachComposer
 {
     /// <summary>
-    /// A need date at most this many days away (or already past) is flagged as
-    /// urgent — in the subject line and at the top of the body. Next-day demand
-    /// is the dominant pattern in the concierge funnel, and a provider who only
-    /// skims the subject must still see it.
+    /// A need date at most this many days away is flagged as urgent — in the
+    /// subject line and at the top of the body. Next-day demand is the dominant
+    /// pattern in the concierge funnel, and a provider who only skims the
+    /// subject must still see it.
+    ///
+    /// The window is CLOSED AT BOTH ENDS (see <c>isUrgent</c> below). It used to
+    /// be open at the past end — "anything up to today+3" — which is not the
+    /// same rule at all: outreach is re-composed every time an admin fans a lead
+    /// out to another provider, days or weeks after it arrived, so a lead whose
+    /// date had already gone by went out stamped
+    /// "URGENT: the customer needs this by {a date in the past}". That is the
+    /// one sentence in the whole email a recipient can check against their own
+    /// calendar, and getting it wrong proves the sender is a machine that does
+    /// not read its own mail. The intake rejects past dates on the way in
+    /// (SupportController), so this end of the window only ever fires on the
+    /// passage of time — which is exactly why it has to be enforced here too.
     /// </summary>
     public const int UrgentWithinDays = 3;
+
+    /// <summary>
+    /// Who is actually writing, printed once in the footer of every provider
+    /// email.
+    ///
+    /// A cold recipient's first question about an unsolicited business email is
+    /// whether there is a company behind it. "Ruumly" is a brand they have never
+    /// heard of; a registry code is something an Estonian business owner can
+    /// paste into the äriregister in five seconds and settle the question
+    /// themselves. Cheapest legitimacy signal available, and the only one in
+    /// this email that does not depend on believing us.
+    ///
+    /// Language-neutral on purpose — a legal name, a registry code and a street
+    /// address are the same string in all five languages, and translating them
+    /// would be five chances to get a legal identity wrong.
+    ///
+    /// PROVENANCE: founder-confirmed 2026-08-14. The VAT number, IBAN and phone
+    /// once associated with the old operating company are NOT verified against
+    /// this entity and must not be added here without re-confirmation.
+    /// </summary>
+    private const string OperatorLegalLine =
+        "Diip Solutions OÜ · reg 17527757 · Uus-Sadama tn 15-2, 10120 Tallinn";
+
+    /// <summary>
+    /// Longest provider name we will paste into a greeting. Directory rows are
+    /// imported from public sources and a few carry a whole legal description
+    /// rather than a trading name; a 200-character "Tere, ...!" reads as a
+    /// broken merge field, which is the exact impression the greeting exists to
+    /// avoid. Over the limit we fall back to the plain greeting.
+    /// </summary>
+    private const int MaxGreetingNameLength = 60;
 
     // Brand palette, kept in sync with the other transactional templates
     // (AuthService password reset): teal header, slate body text.
@@ -31,6 +74,16 @@ public static class ProviderOutreachComposer
     /// contains the customer's name/email/phone — the admin brokers the
     /// introduction.
     ///
+    /// THE RECIPIENT IS COLD. Almost every address this reaches belongs to a
+    /// business that has no relationship with Ruumly, did not ask to be in the
+    /// directory, and is being asked to do unpaid pricing work for a stranger.
+    /// So the letter has to answer, before the ask: who is writing, why this
+    /// company, when the request came in, what answering costs, what happens to
+    /// the price, and how to make the mail stop. Every one of those is a fact we
+    /// already hold — none of it is a promise about volume, response times or
+    /// other providers, and there is nothing here we could not show a recipient
+    /// the evidence for.
+    ///
     /// Since 2026-08 no support phone is printed: a provider with a question
     /// replies to the mail or uses the contact page (<see cref="FrontendUrl.Contact"/>).
     /// </summary>
@@ -39,7 +92,13 @@ public static class ProviderOutreachComposer
         Supplier supplier,
         string? appUrl = null,
         string? quoteToken = null)
-        => ComposeInLanguage(LanguageFor(supplier), lead, appUrl, quoteToken);
+        // The supplier's own name travels into the greeting. It used to be read
+        // for its country and then thrown away, so eighteen Viljandi storage
+        // providers received eighteen letters all opening "Tere!" about
+        // near-identical requests — addressed to nobody, from a name they did
+        // not know. We are holding the company name the whole time; not using it
+        // is the difference between a letter and a mailshot.
+        => ComposeInLanguage(LanguageFor(supplier), lead, appUrl, quoteToken, supplier.Name);
 
     /// <summary>
     /// Language of outbound provider mail — the supplier's own country, not the
@@ -59,7 +118,8 @@ public static class ProviderOutreachComposer
         string language,
         DemandLead lead,
         string? appUrl = null,
-        string? quoteToken = null)
+        string? quoteToken = null,
+        string? providerName = null)
     {
         var t = EmailTranslations.For(language);
         var route = string.IsNullOrWhiteSpace(lead.ToCity)
@@ -83,17 +143,53 @@ public static class ProviderOutreachComposer
             ? t.OutreachDetailsMissing
             : lead.Details.Trim();
 
+        var today      = DateTime.UtcNow.Date;
         var isUrgent   = lead.NeedDate is { } needDate
-                      && needDate.Date <= DateTime.UtcNow.Date.AddDays(UrgentWithinDays);
+                      && needDate.Date >= today
+                      && needDate.Date <= today.AddDays(UrgentWithinDays);
         var urgentLine = isUrgent ? t.OutreachUrgent(date!) : null;
 
-        // The lead reference is what makes a provider's REPLY usable.
+        // Who we are writing to. Trimmed and length-capped, then either a named
+        // greeting or the plain one — never "Tere, !" and never a greeting
+        // carrying half a legal description.
+        var company  = providerName?.Trim();
+        var greeting = company is { Length: > 0 } && company.Length <= MaxGreetingNameLength
+            ? t.OutreachGreetingTo(company)
+            : t.OutreachGreeting;
+
+        // When the request actually arrived, from the lead's own row.
         //
-        // Reply-To is one shared ops inbox and the subject is otherwise just
-        // "{service}, {city → city}", so two live Tallinn → Tartu moving requests
-        // produce byte-identical subjects. Replying is the primary action this
-        // email asks for, and until now an answer arrived with nothing on it that
-        // said which customer it was about — ops had to guess, or ask, on the one
+        // This replaces an assertion with a fact. The intro used to say "this is
+        // a real customer request", which is the one claim a lead-generation bot
+        // would also make and which the recipient has no way to check. A date is
+        // different in kind: it is specific, it is falsifiable against the rest
+        // of the mail, and — because outreach is re-composed on every fan-out —
+        // it is also the line that stops a three-week-old request from arriving
+        // dressed as today's news.
+        var submitted = lead.CreatedAt.ToString("yyyy-MM-dd");
+
+        // ── Subject ───────────────────────────────────────────────────────────
+        //
+        // PLACE FIRST, then service, then the word for what this is. A phone lock
+        // screen shows roughly thirty-five characters, and the template used to
+        // spend the first nine of them on "Ruumly — " before naming the request
+        // type and only then, last, the city — so a Tallinn → Tartu move arrived
+        // as "Ruumly — kliendipäring: Kolimine,…" and the recipient could not see
+        // either end of the route without opening it. The two facts that decide
+        // whether a provider opens the mail at all are "is this my area" and "is
+        // this what I do"; those now come first and both survive the truncation.
+        //
+        // Dropping the brand costs nothing: it is the From display name
+        // (Email:FromName), the HTML header, the greeting and the signature
+        // already. It was the one word in the subject that told the recipient
+        // nothing about the request.
+        //
+        // The lead reference is what makes a provider's REPLY usable. Reply-To is
+        // one shared ops inbox and the rest of the subject is only place +
+        // service, so two live Tallinn → Tartu moving requests produce
+        // byte-identical subjects. Replying is a primary action this email asks
+        // for, and an answer used to arrive with nothing on it that said which
+        // customer it was about — ops had to guess, or ask, on the one
         // interaction where speed is the entire product.
         //
         // Deliberately the smallest thing that works: eight hex characters of the
@@ -163,11 +259,19 @@ public static class ProviderOutreachComposer
         if (photoCount > 0)
             facts.Add((t.OutreachLabelPhotos, t.OutreachPhotos(photoCount)));
 
+        var copy = new OutreachCopy(
+            greeting,
+            t.OutreachProvenance(submitted),
+            urgentLine,
+            quoteUrl,
+            questions,
+            FrontendUrl.Contact(appUrl, language));
+
         return new(
             language,
             subject,
-            BuildText(t, facts, urgentLine, quoteUrl, questions),
-            BuildHtml(t, facts, urgentLine, quoteUrl, questions, FrontendUrl.Contact(appUrl, language)));
+            BuildText(t, facts, copy),
+            BuildHtml(t, facts, copy));
     }
 
     /// <summary>
@@ -178,24 +282,72 @@ public static class ProviderOutreachComposer
     public static string Reference(Guid leadId) =>
         leadId.ToString("N")[..8].ToUpperInvariant();
 
+    /// <summary>
+    /// The parts of the letter that had to be resolved against this particular
+    /// lead and recipient, as opposed to read straight off the translation
+    /// table.
+    ///
+    /// A record rather than six more positional parameters on each builder: the
+    /// text and HTML bodies must offer the SAME blocks in the SAME order — a
+    /// provider reads whichever their client renders, and a paragraph present in
+    /// one and missing from the other is a difference nobody would ever see in
+    /// review. One shared shape makes them drift together or not at all.
+    /// </summary>
+    private sealed record OutreachCopy(
+        string Greeting,
+        string Provenance,
+        string? UrgentLine,
+        string? QuoteUrl,
+        string Questions,
+        string ContactUrl);
+
+    /// <summary>
+    /// The three answers this email accepts, in descending order of what they
+    /// are worth to us, rendered after the fact table.
+    ///
+    /// WHY ALL THREE. Until now the letter asked for a price and offered no
+    /// other way to respond, so a provider who could take the job but could not
+    /// price it from what we sent — and a provider for whom the job was simply
+    /// wrong — both had exactly one available action: nothing. Eighteen Viljandi
+    /// contacts produced eighteen of them. Silence is also the one answer that
+    /// teaches us nothing: a decline retires a candidate, a question tells ops
+    /// what the intake failed to capture, and neither was reachable from here.
+    ///
+    /// Nothing here is new functionality. The "what is missing" path is the
+    /// need-info action already on the quote page
+    /// (POST /api/quote/{token}/need-info, shipped 2026-08-18 after Adduco
+    /// answered a live Haapsalu move with exactly that); the email simply never
+    /// mentioned that it existed. The decline sentence is the founder's own
+    /// wording from the introduction campaign, reused verbatim.
+    /// </summary>
+    private static IEnumerable<string> Answers(EmailTranslations.EmailStrings t, string? quoteUrl)
+    {
+        // Only when there is a page to say it on: with no token minted there is
+        // no quote page, and pointing at "the same page" would be pointing at
+        // nothing.
+        if (quoteUrl is not null) yield return t.OutreachCannotPrice;
+        yield return t.OutreachReplyAlternative;
+        yield return t.IntroIfNotSuitable;
+    }
+
     private static string BuildText(
         EmailTranslations.EmailStrings t,
         IReadOnlyList<(string Label, string Value)> facts,
-        string? urgentLine,
-        string? quoteUrl,
-        string questions)
+        OutreachCopy copy)
     {
         var lines = new List<string>
         {
-            t.OutreachGreeting,
+            copy.Greeting,
             "",
             t.OutreachIntro,
             "",
+            copy.Provenance,
+            "",
         };
 
-        if (urgentLine is not null)
+        if (copy.UrgentLine is not null)
         {
-            lines.Add($"** {urgentLine} **");
+            lines.Add($"** {copy.UrgentLine} **");
             lines.Add("");
         }
 
@@ -205,35 +357,47 @@ public static class ProviderOutreachComposer
         lines.Add("");
         lines.Add(t.OutreachAsk);
 
-        if (quoteUrl is not null)
+        if (copy.QuoteUrl is not null)
         {
             lines.Add("");
-            lines.Add($"{t.OutreachQuoteCta} → {quoteUrl}");
+            lines.Add($"{t.OutreachQuoteCta} → {copy.QuoteUrl}");
+        }
+
+        foreach (var answer in Answers(t, copy.QuoteUrl))
+        {
+            lines.Add("");
+            lines.Add(answer);
         }
 
         lines.Add("");
-        lines.Add(t.OutreachReplyAlternative);
+        lines.Add(copy.Questions);
         lines.Add("");
-        lines.Add(questions);
+        lines.Add(t.IntroOptOut(SupplierIntroComposer.OptOutKeyword));
         lines.Add("");
         lines.Add(t.OutreachSignature);
+        lines.Add("");
+        lines.Add(OperatorLegalLine);
 
         return string.Join("\n", lines);
     }
 
     /// <summary>
     /// Minimal inline-styled HTML: no external CSS, no images, no tracking
-    /// pixels — just a branded header, the request facts, one CTA and the
-    /// signature. Every interpolated value is HTML-encoded: the details field is
-    /// raw customer free text.
+    /// pixels — a branded header, who we are and why we are writing, the request
+    /// facts, one CTA plus the two lighter answers, and a footer carrying the
+    /// opt-out and the operating company. Every interpolated value is
+    /// HTML-encoded: the details field is raw customer free text and the
+    /// greeting carries an imported company name.
+    ///
+    /// The no-images rule is why the opt-out and the legal line are plain text
+    /// in a bordered block rather than a footer graphic: an email that renders
+    /// to an empty box when a client blocks remote content has no legitimacy
+    /// signal at all.
     /// </summary>
     private static string BuildHtml(
         EmailTranslations.EmailStrings t,
         IReadOnlyList<(string Label, string Value)> facts,
-        string? urgentLine,
-        string? quoteUrl,
-        string questions,
-        string contactUrl)
+        OutreachCopy copy)
     {
         // Minimal escaper rather than WebUtility.HtmlEncode: that one turns every
         // non-ASCII character into a numeric entity, which would mangle õ/ä/ü/ų and
@@ -261,11 +425,11 @@ public static class ProviderOutreachComposer
                  + E(sentence[(at + url.Length)..]);
         }
 
-        var urgentHtml = urgentLine is null
+        var urgentHtml = copy.UrgentLine is null
             ? ""
             : $"""
                      <table width="100%" cellpadding="0" cellspacing="0" style="background:#FFF8E1;border-left:4px solid #FF8F00;border-radius:4px;margin:0 0 20px;">
-                       <tr><td style="padding:12px 16px;color:#E65100;font-size:15px;font-weight:700;">{E(urgentLine)}</td></tr>
+                       <tr><td style="padding:12px 16px;color:#E65100;font-size:15px;font-weight:700;">{E(copy.UrgentLine)}</td></tr>
                      </table>
                """;
 
@@ -276,16 +440,34 @@ public static class ProviderOutreachComposer
                        </tr>
                """));
 
-        var ctaHtml = quoteUrl is null
+        var ctaHtml = copy.QuoteUrl is null
             ? ""
             : $"""
                      <table cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
                        <tr><td style="background:{Teal};border-radius:6px;">
-                         <a href="{E(quoteUrl)}" style="display:inline-block;padding:14px 28px;color:#ffffff;font-size:16px;font-weight:600;text-decoration:none;">{E(t.OutreachQuoteCta)}</a>
+                         <a href="{E(copy.QuoteUrl)}" style="display:inline-block;padding:14px 28px;color:#ffffff;font-size:16px;font-weight:600;text-decoration:none;">{E(t.OutreachQuoteCta)}</a>
                        </td></tr>
                      </table>
-                     <p style="margin:0 0 20px;color:{MutedText};font-size:13px;word-break:break-all;">{E(quoteUrl)}</p>
+                     <p style="margin:0 0 20px;color:{MutedText};font-size:13px;word-break:break-all;">{E(copy.QuoteUrl)}</p>
                """;
+
+        // The signature now carries the public site address, and it has to be
+        // clickable for exactly the reason the contact link does — most clients
+        // will not auto-link a bare URL in an HTML body, and a "check us for
+        // yourself" signal nobody can follow is not one. Linkified escapes and
+        // splits on the literal origin the signature copy hardcodes (the same
+        // one FrontendUrl falls back to), so the newline-to-<br> pass can run
+        // afterwards without touching the anchor it produced.
+        var signatureHtml =
+            Linkified(t.OutreachSignature, FrontendUrl.DefaultOrigin).Replace("\n", "<br>");
+
+        // The same three answers the text body offers, in the same order — see
+        // Answers. Rendered as ordinary body paragraphs rather than as buttons:
+        // a second and third filled CTA would compete with the price button,
+        // which is still the answer we want most.
+        var answersHtml = string.Concat(Answers(t, copy.QuoteUrl).Select(a => $"""
+                        <p style="margin:0 0 20px;color:{BodyText};font-size:15px;line-height:1.6;">{E(a)}</p>
+            """));
 
         return $"""
             <!DOCTYPE html>
@@ -303,17 +485,20 @@ public static class ProviderOutreachComposer
                     </tr>
                     <tr>
                       <td style="padding:28px;">
-                        <p style="margin:0 0 12px;color:{BodyText};font-size:16px;">{E(t.OutreachGreeting)}</p>
-                        <p style="margin:0 0 20px;color:{BodyText};font-size:15px;line-height:1.6;">{E(t.OutreachIntro)}</p>
+                        <p style="margin:0 0 12px;color:{BodyText};font-size:16px;">{E(copy.Greeting)}</p>
+                        <p style="margin:0 0 16px;color:{BodyText};font-size:15px;line-height:1.6;">{E(t.OutreachIntro)}</p>
+                        <p style="margin:0 0 20px;color:{BodyText};font-size:15px;line-height:1.6;">{E(copy.Provenance)}</p>
             {urgentHtml}
                         <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
             {factRows}
                         </table>
                         <p style="margin:0 0 20px;color:{BodyText};font-size:15px;line-height:1.6;">{E(t.OutreachAsk)}</p>
             {ctaHtml}
-                        <p style="margin:0 0 20px;color:{BodyText};font-size:15px;line-height:1.6;">{E(t.OutreachReplyAlternative)}</p>
-                        <p style="margin:0 0 24px;color:{BodyText};font-size:15px;line-height:1.6;">{Linkified(questions, contactUrl)}</p>
-                        <p style="margin:0;color:{MutedText};font-size:14px;line-height:1.6;">{Multiline(t.OutreachSignature)}</p>
+            {answersHtml}
+                        <p style="margin:0 0 24px;color:{BodyText};font-size:15px;line-height:1.6;">{Linkified(copy.Questions, copy.ContactUrl)}</p>
+                        <p style="margin:0;color:{MutedText};font-size:14px;line-height:1.6;">{signatureHtml}</p>
+                        <p style="margin:20px 0 0;padding-top:16px;border-top:1px solid #ECEFF1;color:{MutedText};font-size:12px;line-height:1.5;">{E(t.IntroOptOut(SupplierIntroComposer.OptOutKeyword))}</p>
+                        <p style="margin:8px 0 0;color:{MutedText};font-size:12px;line-height:1.5;">{E(OperatorLegalLine)}</p>
                       </td>
                     </tr>
                   </table>

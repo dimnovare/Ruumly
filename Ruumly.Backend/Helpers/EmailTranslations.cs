@@ -124,13 +124,51 @@ public static class EmailTranslations
         string OfferSignature,
         // Provider availability request (outreach_to_provider) — never contains
         // customer name/email/phone; the admin brokers the introduction
+        //
+        // "{city}: {category} — customer request". PLACE FIRST: a phone lock
+        // screen shows about thirty-five characters, and the two facts that
+        // decide whether a cold recipient opens this at all are "is this my
+        // area" and "is this what I do". The brand used to occupy the front of
+        // the line and the city the very end, where it was always truncated; the
+        // brand is the From display name anyway.
         string OutreachSubjectTpl,
+        // Fallback greeting for a recipient whose company name we do not hold,
+        // or whose stored name is too long to paste into a sentence.
         string OutreachGreeting,
-        // One-line value proposition for a COLD recipient who has never heard of
-        // Ruumly: a real customer request, free to answer, no commitment, no
-        // signup needed to quote.
+        // "Hello, {company}!" — the recipient's own company name. The single
+        // cheapest signal that a letter is not a mailshot, and we are already
+        // holding the name: outreach is composed from a Supplier row.
+        string OutreachGreetingTpl,
+        // Who we are and WHY THIS COMPANY. A cold recipient's first two
+        // questions about unsolicited business mail are "what is this" and "why
+        // me / where did you get my address", and both have honest answers: they
+        // offer this service in this area and they are in the Ruumly directory.
         string OutreachIntro,
+        // "A customer submitted this request on our website on {date}. Answering
+        // is free and non-binding, and you do not need an account to send a
+        // price."
+        //
+        // This REPLACES an assertion with evidence. The old intro said "this is
+        // a real customer request" — the one sentence a lead-generation bot
+        // would also write, and one the recipient cannot check. A submission
+        // date is specific, sits beside the need date where it can be judged,
+        // and — because outreach is re-composed on every fan-out — quietly stops
+        // a three-week-old request from arriving dressed as news.
+        string OutreachProvenanceTpl,
+        // The ask, and what the smallest useful answer looks like: whether the
+        // date works and roughly what it would cost. "Roughly" is deliberate —
+        // an approximate number is a real answer and demanding an exact one is
+        // how you get none. Closes by saying what happens to the price, because
+        // a provider handing a number to a broker is entitled to know.
         string OutreachAsk,
+        // The second answer: "I can take this, but I cannot price it from what
+        // you sent me — here is what is missing."
+        //
+        // Not new functionality. The need-info action has been on the quote page
+        // since 2026-08-18 (POST /api/quote/{token}/need-info); the email simply
+        // never said so, which left a provider who was blocked with silence as
+        // their only available move.
+        string OutreachCannotPrice,
         // Discrete field labels — the request facts are rendered as a table in
         // HTML and as "Label: value" lines in the text fallback.
         string OutreachLabelService,
@@ -170,6 +208,9 @@ public static class EmailTranslations
         // Explicit low-friction alternative to the link: Reply-To is the ops
         // inbox, so a plain reply with a price works today.
         string OutreachReplyAlternative,
+        // Carries the public site URL as well as the reply address: a recipient
+        // deciding whether to trust an unfamiliar sender should not have to
+        // guess at, or search for, where it can be checked.
         string OutreachSignature,
         // "Questions? Reply to this email, or write to us through our contact
         // page: {url}". The only two channels a provider is offered — the
@@ -255,6 +296,13 @@ public static class EmailTranslations
         // Lowers the cost of the ask to almost nothing: "not possible" is a
         // perfectly good answer. A provider who believes silence is the only
         // alternative to a full quote will choose silence.
+        //
+        // ALSO USED BY ProviderOutreachComposer, verbatim. The sentence was
+        // written for the introduction campaign, but it is the request email
+        // where the choice is actually made — and only about a quarter of the
+        // directory ever received the introduction (the 2026-08-13 send hit
+        // Resend's daily cap). Two copies would be two chances to soften one of
+        // them; editing this string edits both letters, on purpose.
         string IntroIfNotSuitable,
         // ── Section 2: why answering matters ─────────────────────────────────
         // THE behavioural target of the whole campaign. Providers who run their
@@ -309,6 +357,15 @@ public static class EmailTranslations
         // Opt-out. Legally required for B2B marketing mail in the EU
         // (ePrivacy) and simply decent: one reply with {keyword}, or one click
         // on the mailto link in the HTML body. Never a form.
+        //
+        // ALSO USED BY ProviderOutreachComposer. The request email is the one
+        // that arrives repeatedly and unbidden — a single Viljandi provider was
+        // a candidate for four storage requests inside ten days — and it shipped
+        // with no way to stop it at all. A recipient who cannot find an
+        // unsubscribe uses the one their client gives them, and a spam complaint
+        // both retires the address (EmailDeliveryTracker) and costs sending
+        // reputation for everyone else. The keyword is the same token in every
+        // language so one inbox filter catches every opt-out from either letter.
         string IntroOptOutTpl,
         string IntroOptOutLinkLabel,
         string IntroSignature,
@@ -425,6 +482,18 @@ public static class EmailTranslations
             OutreachSubjectTpl
                 .Replace("{category}", category)
                 .Replace("{city}", city);
+
+        /// <summary>"Hello, {company}!" — the recipient's own company name.</summary>
+        public string OutreachGreetingTo(string company) =>
+            OutreachGreetingTpl.Replace("{company}", company);
+
+        /// <summary>"A customer submitted this request on our website on
+        /// {date}." Pass the lead's own CreatedAt, formatted yyyy-MM-dd: the
+        /// need date in the fact table below uses the same format, and two date
+        /// formats in one short email is the kind of seam that makes a letter
+        /// look assembled rather than written.</summary>
+        public string OutreachProvenance(string date) =>
+            OutreachProvenanceTpl.Replace("{date}", date);
 
         /// <summary>"URGENT: the customer needs this by {date}" — only rendered
         /// when the lead actually carries a near-term need date.</summary>
@@ -1171,10 +1240,13 @@ public static class EmailTranslations
         OfferCta:                      "Vaadake pakkumisi ja valige sobiv:",
         OfferQuestions:                "Kui teil on küsimusi, vastake lihtsalt sellele e-kirjale.",
         OfferSignature:                "Ruumly meeskond\ninfo@ruumly.eu",
-        OutreachSubjectTpl:            "Ruumly — kliendipäring: {category}, {city}",
+        OutreachSubjectTpl:            "{city}: {category} — kliendipäring",
         OutreachGreeting:              "Tere!",
-        OutreachIntro:                 "Ruumly viib kliendid kokku kohalike teenusepakkujatega. See on päris kliendi päring — vastamine on tasuta ja mittesiduv ning hinna esitamiseks ei ole kontot vaja.",
-        OutreachAsk:                   "Kas saate selle töö vastu võtta? Esitage oma hind allolevalt lingilt ja viime teid kliendiga kokku.",
+        OutreachGreetingTpl:           "Tere, {company}!",
+        OutreachIntro:                 "Ruumly aitab inimestel leida kohalikke teenusepakkujaid. Kirjutame teile, sest teie ettevõte pakub seda teenust selles piirkonnas ja on Ruumly kataloogis kirjas.",
+        OutreachProvenanceTpl:         "Klient esitas selle päringu meie veebilehel {date}. Vastamine on tasuta ja mittesiduv ning hinna esitamiseks ei ole kontot vaja.",
+        OutreachAsk:                   "Kas saate selle töö vastu võtta? Piisab lühikesest vastusest: kas aeg sobib ja milline oleks ligikaudne hind. Kui saadate hinna, saame selle kliendile edasi anda; kui klient teie pakkumise valib, viime teid omavahel kokku.",
+        OutreachCannotPrice:           "Kui te ei saa selle info põhjal hinda anda, märkige samal lehel, mida on juurde vaja — küsime kliendilt üle.",
         OutreachLabelService:          "Teenus",
         OutreachLabelLocation:         "Asukoht",
         OutreachLabelDate:             "Soovitud aeg",
@@ -1189,7 +1261,7 @@ public static class EmailTranslations
         OutreachUrgentTpl:             "KIIRE: klient vajab teenust {date}",
         OutreachQuoteCta:              "Esitage oma hind",
         OutreachReplyAlternative:      "Või vastake lihtsalt sellele e-kirjale koos hinnaga — kiri jõuab otse meie meeskonnani.",
-        OutreachSignature:             "Ruumly meeskond\ninfo@ruumly.eu",
+        OutreachSignature:             "Ruumly meeskond\ninfo@ruumly.eu\nhttps://ruumly.eu",
         OutreachQuestionsTpl:          "Küsimused? Vastake sellele kirjale või kirjutage meile kontaktivormi kaudu: {url}",
         AckSubject:                    "Sinu päring on meil käes — Ruumly",
         AckGreetingTpl:                "Tere, {name}!",
@@ -1378,10 +1450,13 @@ public static class EmailTranslations
         OfferCta:                      "View the offers and pick the one that suits you:",
         OfferQuestions:                "Questions? Just reply to this email.",
         OfferSignature:                "The Ruumly team\ninfo@ruumly.eu",
-        OutreachSubjectTpl:            "Ruumly — customer request: {category}, {city}",
+        OutreachSubjectTpl:            "{city}: {category} — customer request",
         OutreachGreeting:              "Hello!",
-        OutreachIntro:                 "Ruumly connects customers with local providers. This is a real customer request — answering is free, there is no commitment, and you don't need an account to send a price.",
-        OutreachAsk:                   "Can you take this job? Submit your price using the link below and we'll connect you with the customer.",
+        OutreachGreetingTpl:           "Hello, {company}!",
+        OutreachIntro:                 "Ruumly helps people find local service providers. We are writing to you because your company offers this service in this area and is listed in the Ruumly directory.",
+        OutreachProvenanceTpl:         "A customer submitted this request on our website on {date}. Answering is free and non-binding, and you don't need an account to send a price.",
+        OutreachAsk:                   "Can you take this job? A short answer is enough: whether the date works for you and roughly what it would cost. If you send us a price, we can pass it to the customer; if the customer picks your offer, we put the two of you in touch.",
+        OutreachCannotPrice:           "If you can't price this from what we've sent, say on the same page what is missing — we'll ask the customer.",
         OutreachLabelService:          "Service",
         OutreachLabelLocation:         "Location",
         OutreachLabelDate:             "Preferred date",
@@ -1396,7 +1471,7 @@ public static class EmailTranslations
         OutreachUrgentTpl:             "URGENT: the customer needs this by {date}",
         OutreachQuoteCta:              "Submit your price",
         OutreachReplyAlternative:      "Or simply reply to this email with your price — it reaches our team directly.",
-        OutreachSignature:             "The Ruumly team\ninfo@ruumly.eu",
+        OutreachSignature:             "The Ruumly team\ninfo@ruumly.eu\nhttps://ruumly.eu",
         OutreachQuestionsTpl:          "Questions? Reply to this email, or write to us through our contact page: {url}",
         AckSubject:                    "We have your request — Ruumly",
         AckGreetingTpl:                "Hi {name},",
@@ -1577,10 +1652,13 @@ public static class EmailTranslations
         OfferCta:                      "Посмотрите предложения и выберите подходящее:",
         OfferQuestions:                "Если у вас есть вопросы, просто ответьте на это письмо.",
         OfferSignature:                "Команда Ruumly\ninfo@ruumly.eu",
-        OutreachSubjectTpl:            "Ruumly — запрос клиента: {category}, {city}",
+        OutreachSubjectTpl:            "{city}: {category} — запрос клиента",
         OutreachGreeting:              "Здравствуйте!",
-        OutreachIntro:                 "Ruumly соединяет клиентов с местными исполнителями. Это запрос реального клиента — ответ бесплатный, ни к чему не обязывает, и для отправки цены не нужен аккаунт.",
-        OutreachAsk:                   "Можете взять этот заказ? Отправьте вашу цену по ссылке ниже, и мы свяжем вас с клиентом.",
+        OutreachGreetingTpl:           "Здравствуйте, {company}!",
+        OutreachIntro:                 "Ruumly помогает людям находить местных исполнителей. Мы пишем вам, потому что ваша компания оказывает эту услугу в этом районе и есть в каталоге Ruumly.",
+        OutreachProvenanceTpl:         "Клиент отправил этот запрос на нашем сайте {date}. Ответ бесплатный и ни к чему не обязывает, а для отправки цены не нужен аккаунт.",
+        OutreachAsk:                   "Можете взять этот заказ? Достаточно короткого ответа: подходит ли дата и какой была бы примерная цена. Если вы пришлёте цену, мы сможем передать её клиенту; если клиент выберет ваше предложение, мы вас сведём.",
+        OutreachCannotPrice:           "Если по этим данным цену назвать нельзя, укажите на той же странице, чего не хватает, — мы уточним у клиента.",
         OutreachLabelService:          "Услуга",
         OutreachLabelLocation:         "Местоположение",
         OutreachLabelDate:             "Желаемая дата",
@@ -1595,7 +1673,7 @@ public static class EmailTranslations
         OutreachUrgentTpl:             "СРОЧНО: услуга нужна клиенту к {date}",
         OutreachQuoteCta:              "Отправьте вашу цену",
         OutreachReplyAlternative:      "Или просто ответьте на это письмо, указав свою цену — оно придёт напрямую нашей команде.",
-        OutreachSignature:             "Команда Ruumly\ninfo@ruumly.eu",
+        OutreachSignature:             "Команда Ruumly\ninfo@ruumly.eu\nhttps://ruumly.eu",
         OutreachQuestionsTpl:          "Вопросы? Ответьте на это письмо или напишите нам через форму на странице контактов: {url}",
         AckSubject:                    "Ваш запрос у нас — Ruumly",
         AckGreetingTpl:                "Здравствуйте, {name}!",
@@ -1776,10 +1854,13 @@ public static class EmailTranslations
         OfferCta:                      "Apskatiet piedāvājumus un izvēlieties piemērotāko:",
         OfferQuestions:                "Ja jums ir jautājumi, vienkārši atbildiet uz šo e-pastu.",
         OfferSignature:                "Ruumly komanda\ninfo@ruumly.eu",
-        OutreachSubjectTpl:            "Ruumly — klienta pieprasījums: {category}, {city}",
+        OutreachSubjectTpl:            "{city}: {category} — klienta pieprasījums",
         OutreachGreeting:              "Sveiki!",
-        OutreachIntro:                 "Ruumly savieno klientus ar vietējiem pakalpojumu sniedzējiem. Šis ir īsta klienta pieprasījums — atbildēt ir bez maksas un bez saistībām, un cenas nosūtīšanai konts nav vajadzīgs.",
-        OutreachAsk:                   "Vai varat uzņemties šo darbu? Iesniedziet savu cenu, izmantojot zemāk esošo saiti, un mēs jūs savienosim ar klientu.",
+        OutreachGreetingTpl:           "Sveiki, {company}!",
+        OutreachIntro:                 "Ruumly palīdz cilvēkiem atrast vietējos pakalpojumu sniedzējus. Rakstām jums, jo jūsu uzņēmums sniedz šo pakalpojumu šajā apkaimē un ir iekļauts Ruumly katalogā.",
+        OutreachProvenanceTpl:         "Klients iesniedza šo pieprasījumu mūsu vietnē {date}. Atbildēt ir bez maksas un bez saistībām, un cenas nosūtīšanai konts nav vajadzīgs.",
+        OutreachAsk:                   "Vai varat uzņemties šo darbu? Pietiek ar īsu atbildi: vai datums jums der un kāda būtu aptuvenā cena. Ja atsūtīsiet cenu, mēs to varēsim nodot klientam; ja klients izvēlēsies jūsu piedāvājumu, mēs jūs savedīsim kopā.",
+        OutreachCannotPrice:           "Ja pēc šīs informācijas cenu nosaukt nevarat, tajā pašā lapā norādiet, kas trūkst — mēs pajautāsim klientam.",
         OutreachLabelService:          "Pakalpojums",
         OutreachLabelLocation:         "Atrašanās vieta",
         OutreachLabelDate:             "Vēlamais datums",
@@ -1794,7 +1875,7 @@ public static class EmailTranslations
         OutreachUrgentTpl:             "STEIDZAMI: klientam pakalpojums nepieciešams līdz {date}",
         OutreachQuoteCta:              "Iesniedziet savu cenu",
         OutreachReplyAlternative:      "Vai vienkārši atbildiet uz šo e-pastu ar savu cenu — tas nonāks tieši pie mūsu komandas.",
-        OutreachSignature:             "Ruumly komanda\ninfo@ruumly.eu",
+        OutreachSignature:             "Ruumly komanda\ninfo@ruumly.eu\nhttps://ruumly.eu",
         OutreachQuestionsTpl:          "Jautājumi? Atbildiet uz šo e-pastu vai rakstiet mums, izmantojot kontaktu lapu: {url}",
         AckSubject:                    "Jūsu pieprasījums ir saņemts — Ruumly",
         AckGreetingTpl:                "Sveiki, {name}!",
@@ -1975,10 +2056,13 @@ public static class EmailTranslations
         OfferCta:                      "Peržiūrėkite pasiūlymus ir išsirinkite tinkamiausią:",
         OfferQuestions:                "Jei turite klausimų, tiesiog atsakykite į šį laišką.",
         OfferSignature:                "Ruumly komanda\ninfo@ruumly.eu",
-        OutreachSubjectTpl:            "Ruumly — kliento užklausa: {category}, {city}",
+        OutreachSubjectTpl:            "{city}: {category} — kliento užklausa",
         OutreachGreeting:              "Sveiki!",
-        OutreachIntro:                 "Ruumly sujungia klientus su vietos paslaugų teikėjais. Tai tikro kliento užklausa — atsakyti nemokama, be įsipareigojimų, o kainai pateikti paskyros nereikia.",
-        OutreachAsk:                   "Ar galite imtis šio darbo? Pateikite savo kainą naudodami žemiau esančią nuorodą ir mes sujungsime jus su klientu.",
+        OutreachGreetingTpl:           "Sveiki, {company}!",
+        OutreachIntro:                 "Ruumly padeda žmonėms rasti vietos paslaugų teikėjus. Rašome jums, nes jūsų įmonė teikia šią paslaugą šioje vietovėje ir yra įtraukta į Ruumly katalogą.",
+        OutreachProvenanceTpl:         "Klientas pateikė šią užklausą mūsų svetainėje {date}. Atsakyti nemokama ir be įsipareigojimų, o kainai pateikti paskyros nereikia.",
+        OutreachAsk:                   "Ar galite imtis šio darbo? Pakanka trumpo atsakymo: ar data jums tinka ir kokia būtų apytikslė kaina. Jei atsiųsite kainą, galėsime ją pateikti klientui; jei klientas pasirinks jūsų pasiūlymą, jus sujungsime.",
+        OutreachCannotPrice:           "Jei pagal šią informaciją kainos pateikti negalite, tame pačiame puslapyje nurodykite, ko trūksta — paklausime kliento.",
         OutreachLabelService:          "Paslauga",
         OutreachLabelLocation:         "Vieta",
         OutreachLabelDate:             "Pageidaujama data",
@@ -1993,7 +2077,7 @@ public static class EmailTranslations
         OutreachUrgentTpl:             "SKUBU: klientui paslauga reikalinga iki {date}",
         OutreachQuoteCta:              "Pateikite savo kainą",
         OutreachReplyAlternative:      "Arba tiesiog atsakykite į šį laišką nurodydami savo kainą — jis pasieks mūsų komandą tiesiogiai.",
-        OutreachSignature:             "Ruumly komanda\ninfo@ruumly.eu",
+        OutreachSignature:             "Ruumly komanda\ninfo@ruumly.eu\nhttps://ruumly.eu",
         OutreachQuestionsTpl:          "Klausimai? Atsakykite į šį laišką arba parašykite mums per kontaktų puslapį: {url}",
         AckSubject:                    "Jūsų užklausa gauta — Ruumly",
         AckGreetingTpl:                "Sveiki, {name}!",

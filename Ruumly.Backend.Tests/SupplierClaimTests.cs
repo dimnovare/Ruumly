@@ -253,6 +253,46 @@ public class SupplierClaimTests
         ops.TextBody.Should().Contain("attacker@evil.example");
     }
 
+    /// <summary>
+    /// 226 active directory rows carry no ContactEmail, so nothing they type can
+    /// ever match and no link can ever be sent — the profile is unclaimable
+    /// until a human adds an address. That case must reach ops under its OWN
+    /// subject (it is a one-edit fix with the provider already standing there,
+    /// not a suspicious mismatch), while the VISITOR still learns nothing: the
+    /// response has to stay byte-identical to the matched path.
+    /// </summary>
+    [Fact]
+    public async Task RequestLink_NoAddressOnFile_FlagsItToOpsWithoutTellingTheVisitor()
+    {
+        var db        = TestDbContext.Create();
+        var blank     = MakeDirectorySupplier(db, slug: "no-email-co", contactEmail: "");
+        var withEmail = MakeDirectorySupplier(db, slug: "has-email-co", contactEmail: "info@has.example");
+        var queue     = new CapturingEmailQueue();
+
+        var blankResult = await MakeController(db, queue)
+            .RequestLink(blank.Slug!, new ClaimRequestLinkRequest("owner@no-email-co.example"), default);
+
+        // No link, no token, nothing sent to the visitor's address.
+        Sent(queue).Should().NotContain(e => e.To == "owner@no-email-co.example");
+        db.SupplierClaims.Single(c => c.SupplierId == blank.Id).TokenHash.Should().BeNull();
+
+        // Ops gets a subject it can filter on, and the body says what to do.
+        var ops = Sent(queue).Single();
+        ops.To.Should().Be(OpsInbox.Fallback);
+        ops.Subject.Should().Contain("no contact email on file");
+        ops.TextBody.Should().Contain("owner@no-email-co.example");
+        ops.TextBody.Should().Contain("no contact email stored");
+
+        // The visitor is told exactly what a successful request is told.
+        var matched = await MakeController(db, new CapturingEmailQueue())
+            .RequestLink(withEmail.Slug!, new ClaimRequestLinkRequest("info@has.example"), default);
+        var blankBody   = blankResult.Should().BeOfType<AcceptedResult>().Subject;
+        var matchedBody = matched.Should().BeOfType<AcceptedResult>().Subject;
+        blankBody.StatusCode.Should().Be(matchedBody.StatusCode);
+        JsonSerializer.Serialize(blankBody.Value)
+            .Should().Be(JsonSerializer.Serialize(matchedBody.Value));
+    }
+
     [Fact]
     public async Task RequestLink_MatchingAddress_MailsTheStoredAddressAndNowhereElse()
     {

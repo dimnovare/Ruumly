@@ -39,12 +39,22 @@ public class ProviderOutreachEmailTests
         CreatedAt = DateTime.UtcNow,
     };
 
-    private static Supplier Provider(string country = "EE") => new()
+    private static Supplier Provider(string country = "EE", string name = "Kolimisabi OÜ") => new()
     {
-        Id = Guid.NewGuid(), Name = "Kolimisabi OÜ", ContactName = "C",
+        Id = Guid.NewGuid(), Name = name, ContactName = "C",
         ContactEmail = "provider@x.ee", ContactPhone = "1",
         Country = country, IsActive = true,
     };
+
+    /// <summary>
+    /// A sentence as it appears in the HTML body. Mirrors the composer's own
+    /// minimal escaper — the English copy quotes "not possible" with straight
+    /// double quotes, so asserting the raw string against the HTML body would
+    /// fail for the right reason (it was escaped) or, in a NotContain, pass for
+    /// the wrong one.
+    /// </summary>
+    private static string Html(string sentence) => sentence
+        .Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("\"", "&quot;");
 
     // ─── Localization ─────────────────────────────────────────────────────────
 
@@ -89,6 +99,51 @@ public class ProviderOutreachEmailTests
             t.OutreachQuestionsTpl.Should().NotBe(en.OutreachQuestionsTpl, because);
             t.OutreachPackingAddOn.Should().NotBe(en.OutreachPackingAddOn, because);
             t.OutreachSubjectTpl.Should().NotBe(en.OutreachSubjectTpl, because);
+            // The blocks a cold recipient reads before deciding whether to answer:
+            // who is writing, why them, when the request arrived, and what the
+            // lighter answers are. A silent English fallback in any of them is the
+            // exact credibility leak the localized fact lines exist to prevent.
+            t.OutreachGreetingTpl.Should().NotBe(en.OutreachGreetingTpl, because);
+            t.OutreachProvenanceTpl.Should().NotBe(en.OutreachProvenanceTpl, because);
+            t.OutreachCannotPrice.Should().NotBe(en.OutreachCannotPrice, because);
+            // Shared with the introduction campaign, and now rendered into THIS
+            // letter — so this test has to cover them from here too.
+            t.IntroIfNotSuitable.Should().NotBe(en.IntroIfNotSuitable, because);
+            t.IntroOptOutTpl.Should().NotBe(en.IntroOptOutTpl, because);
+        }
+    }
+
+    /// <summary>
+    /// The whole rendered letter, not just the strings behind it. A field left
+    /// out of one of the five language literals would still compile and still
+    /// pass a per-string comparison if the caller never printed it — this asserts
+    /// that what actually reaches the provider is in their own language.
+    /// </summary>
+    [Theory]
+    [InlineData("et")]
+    [InlineData("ru")]
+    [InlineData("lv")]
+    [InlineData("lt")]
+    public void NoRenderedBody_ContainsEnglishOutreachCopy(string language)
+    {
+        var en = EmailTranslations.For("en");
+        var message = ProviderOutreachComposer.ComposeInLanguage(
+            language, Lead(), "https://ruumly.eu", OfferToken.Generate(), "Kolimisabi OÜ");
+
+        var english = new[]
+        {
+            en.OutreachIntro, en.OutreachAsk, en.OutreachCannotPrice,
+            en.OutreachReplyAlternative, en.IntroIfNotSuitable,
+            en.OutreachProvenance("2026-08-19"),
+            en.OutreachGreetingTo("Kolimisabi OÜ"),
+            en.IntroOptOut("REMOVE"),
+        };
+
+        foreach (var sentence in english)
+        {
+            var because = $"'{language}' outreach must not fall back to English";
+            message.TextBody.Should().NotContain(sentence, because);
+            message.HtmlBody.Should().NotContain(Html(sentence), because);
         }
     }
 
@@ -104,15 +159,51 @@ public class ProviderOutreachEmailTests
 
         new[]
         {
-            t.OutreachGreeting, t.OutreachIntro, t.OutreachAsk,
+            t.OutreachGreeting, t.OutreachGreetingTpl,
+            t.OutreachIntro, t.OutreachProvenanceTpl, t.OutreachAsk,
             t.OutreachLabelService, t.OutreachLabelLocation,
             t.OutreachLabelDate, t.OutreachLabelDetails,
             t.OutreachDateAsap, t.OutreachDetailsMissing,
-            t.OutreachPackingAddOn,
+            t.OutreachPackingAddOn, t.OutreachCannotPrice,
             t.OutreachUrgentBadge, t.OutreachUrgentTpl,
             t.OutreachQuoteCta, t.OutreachReplyAlternative,
             t.OutreachSignature, t.OutreachQuestionsTpl,
+            t.IntroIfNotSuitable, t.IntroOptOutTpl,
         }.Should().AllSatisfy(s => s.Should().NotBeNullOrWhiteSpace());
+    }
+
+    /// <summary>
+    /// No "{company}" / "{date}" / "{keyword}" survives into a rendered body.
+    ///
+    /// The letter now carries five interpolated templates instead of two, each
+    /// filled by a different Replace call in a different helper. A placeholder
+    /// that reached a provider would not throw and would not fail any per-string
+    /// test — it would simply be the single most damning thing a cold recipient
+    /// could see, in the mail whose whole problem is looking machine-generated.
+    /// </summary>
+    [Theory]
+    [InlineData("et")]
+    [InlineData("en")]
+    [InlineData("ru")]
+    [InlineData("lv")]
+    [InlineData("lt")]
+    public void NoRenderedOutput_LeavesATemplatePlaceholderUnfilled(string language)
+    {
+        var lead = Lead(needDate: DateTime.UtcNow.Date.AddDays(1), query: PackingQuery);
+        lead.ScopeJson     = """{"movingSize":2}""";
+        lead.PhotoKeysJson = """["a.jpg"]""";
+
+        var message = ProviderOutreachComposer.ComposeInLanguage(
+            language, lead, "https://ruumly.eu", OfferToken.Generate(), "Kolimisabi OÜ");
+
+        // The HTML body is a raw string literal full of CSS braces, so it is
+        // matched for the "{word}" shape only — which is what our own templates
+        // use and what inline styles never produce.
+        foreach (var rendered in new[] { message.Subject, message.TextBody, message.HtmlBody! })
+        {
+            Regex.IsMatch(rendered, @"\{[a-zA-Z]+\}").Should().BeFalse(
+                $"'{language}' left an unfilled placeholder: {rendered}");
+        }
     }
 
     [Fact]
@@ -143,6 +234,33 @@ public class ProviderOutreachEmailTests
             message.TextBody.Should().NotContain(secret);
             message.HtmlBody.Should().NotContain(secret);
         }
+    }
+
+    /// <summary>
+    /// Same promise, every language and every block. The letter grew a greeting,
+    /// a provenance line and three answer paragraphs; each is one more template
+    /// that could interpolate the wrong field, and the guarantee that a provider
+    /// never learns who the customer is has to hold in all five renderings, not
+    /// only the Estonian one the older test happened to exercise.
+    /// </summary>
+    [Theory]
+    [InlineData("et")]
+    [InlineData("en")]
+    [InlineData("ru")]
+    [InlineData("lv")]
+    [InlineData("lt")]
+    public void NoLanguage_LeaksTheCustomersNameEmailOrPhone(string language)
+    {
+        var lead = Lead(query: "concierge: moving+warehouse +packing-addon | Tallinn→Tartu");
+        lead.ScopeJson = """{"movingSize":2,"movingAccessFrom":3}""";
+        lead.PhotoKeysJson = """["a.jpg","b.jpg"]""";
+
+        var message = ProviderOutreachComposer.ComposeInLanguage(
+            language, lead, "https://ruumly.eu", OfferToken.Generate(), "Kolimisabi OÜ");
+
+        foreach (var secret in new[] { lead.Email, lead.Name!, lead.Phone!, "Maasikas", "5555" })
+        foreach (var rendered in new[] { message.Subject, message.TextBody, message.HtmlBody! })
+            rendered.Should().NotContain(secret);
     }
 
     [Fact]
@@ -361,6 +479,129 @@ public class ProviderOutreachEmailTests
         message.TextBody.Should().NotContain(t.OutreachUrgentBadge);
     }
 
+    /// <summary>
+    /// The urgency window is closed at BOTH ends.
+    ///
+    /// Outreach is re-composed every time an admin fans a lead out to another
+    /// provider, which routinely happens days or weeks after it arrived — so a
+    /// rule of "anything up to today + 3" eventually fires on a date that has
+    /// already gone by, and the letter goes out shouting that a customer needs
+    /// something by a date in the past. That is the one claim in the whole email
+    /// a recipient can check against their own calendar, and getting it wrong
+    /// proves the sender is a machine that does not read its own mail. The
+    /// intake refuses past dates on the way in; only the passage of time can
+    /// produce this, which is precisely why the composer has to catch it.
+    /// </summary>
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(-21)]
+    [InlineData(-400)]
+    public void NeedDateAlreadyPast_IsNotFlaggedUrgent(int daysAgo)
+    {
+        var t        = EmailTranslations.For("et");
+        var needDate = DateTime.UtcNow.Date.AddDays(daysAgo);
+
+        var message = ProviderOutreachComposer.Compose(Lead(needDate: needDate), Provider());
+
+        message.Subject.Should().NotContain(t.OutreachUrgentBadge,
+            "a date that has already passed is stale, not urgent");
+        foreach (var body in new[] { message.TextBody, message.HtmlBody! })
+        {
+            body.Should().NotContain(t.OutreachUrgent(needDate.ToString("yyyy-MM-dd")));
+            body.Should().NotContain(t.OutreachUrgentBadge);
+        }
+
+        // The date itself is still reported as the fact it is — suppressing the
+        // badge must not suppress what the customer actually asked for.
+        message.TextBody.Should().Contain(needDate.ToString("yyyy-MM-dd"));
+    }
+
+    [Fact]
+    public void NeedDateToday_IsStillUrgent()
+    {
+        var today = DateTime.UtcNow.Date;
+
+        var message = ProviderOutreachComposer.Compose(Lead(needDate: today), Provider());
+
+        message.Subject.Should().StartWith(EmailTranslations.For("et").OutreachUrgentBadge,
+            "the closed window must not have cut off today, which is the most urgent day there is");
+    }
+
+    // ─── Who the letter is addressed to ───────────────────────────────────────
+
+    /// <summary>
+    /// Eighteen Viljandi providers received eighteen letters opening "Tere!"
+    /// about near-identical requests. The company name was in hand the whole
+    /// time — Compose takes the Supplier row — and was read only for its country
+    /// before being discarded.
+    /// </summary>
+    [Fact]
+    public void Greeting_NamesTheRecipientsCompany()
+    {
+        var message = ProviderOutreachComposer.Compose(
+            Lead(), Provider(name: "Lahe miniladu OÜ"), "https://ruumly.eu", OfferToken.Generate());
+
+        foreach (var body in new[] { message.TextBody, message.HtmlBody! })
+            body.Should().Contain("Tere, Lahe miniladu OÜ!");
+    }
+
+    [Fact]
+    public void Greeting_IsWrittenInTheProvidersOwnLanguage()
+    {
+        // An Estonian-language lead, a Latvian supplier: the greeting follows the
+        // recipient, like every other word in this letter.
+        var message = ProviderOutreachComposer.Compose(Lead(), Provider("LV", "SIA Noliktava"));
+
+        message.TextBody.Should().Contain("Sveiki, SIA Noliktava!");
+        message.TextBody.Should().NotContain("Tere,");
+    }
+
+    /// <summary>
+    /// A missing, blank or absurdly long name falls back to the plain greeting.
+    /// Directory rows are imported from public sources: "Tere, !" or a greeting
+    /// carrying half a legal description reads as a broken merge field, which is
+    /// worse than not naming them at all.
+    /// </summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Greeting_FallsBackWhenTheNameIsUnusable(string? name)
+    {
+        var t = EmailTranslations.For("et");
+
+        var message = ProviderOutreachComposer.ComposeInLanguage(
+            "et", Lead(), "https://ruumly.eu", OfferToken.Generate(), name);
+
+        message.TextBody.Should().StartWith(t.OutreachGreeting);
+        message.TextBody.Should().NotContain("Tere, !");
+    }
+
+    [Fact]
+    public void Greeting_FallsBackWhenTheNameIsTooLongToPasteIntoASentence()
+    {
+        var t    = EmailTranslations.For("et");
+        var huge = new string('A', 200);
+
+        var message = ProviderOutreachComposer.ComposeInLanguage(
+            "et", Lead(), "https://ruumly.eu", OfferToken.Generate(), huge);
+
+        message.TextBody.Should().StartWith(t.OutreachGreeting);
+        message.TextBody.Should().NotContain(huge);
+    }
+
+    [Fact]
+    public void Greeting_EscapesTheCompanyNameInHtml()
+    {
+        // Supplier names arrive from a bulk directory import, not from a form we
+        // control — the greeting is one more place raw text reaches an HTML body.
+        var message = ProviderOutreachComposer.Compose(
+            Lead(), Provider(name: "<b>Ladu</b> & Co \"OÜ\""), "https://ruumly.eu", OfferToken.Generate());
+
+        message.HtmlBody.Should().NotContain("<b>Ladu</b>");
+        message.HtmlBody.Should().Contain("&lt;b&gt;Ladu&lt;/b&gt; &amp; Co");
+    }
+
     // ─── Calls to action ──────────────────────────────────────────────────────
 
     [Fact]
@@ -380,6 +621,173 @@ public class ProviderOutreachEmailTests
         message.HtmlBody.Should().Contain(t.OutreachReplyAlternative);
         message.TextBody.Should().Contain(t.OutreachIntro,
             "a cold recipient has never heard of Ruumly — lead with the value proposition");
+    }
+
+    /// <summary>
+    /// Three answers, not one.
+    ///
+    /// The letter used to ask for a price and offer no other way to respond, so
+    /// a provider who could take the job but could not price it from what we
+    /// sent — and a provider for whom the job was simply wrong — both had
+    /// exactly one available action: nothing. Eighteen Viljandi contacts
+    /// produced eighteen of them, and silence is also the only answer that
+    /// teaches ops nothing.
+    /// </summary>
+    [Theory]
+    [InlineData("et")]
+    [InlineData("en")]
+    [InlineData("ru")]
+    [InlineData("lv")]
+    [InlineData("lt")]
+    public void OffersAPrice_AQuestion_AndACheapDecline(string language)
+    {
+        var t = EmailTranslations.For(language);
+
+        var message = ProviderOutreachComposer.ComposeInLanguage(
+            language, Lead(), "https://ruumly.eu", OfferToken.Generate(), "Kolimisabi OÜ");
+
+        message.TextBody.Should().Contain(t.OutreachQuoteCta, "a price is still the answer we want most");
+        message.TextBody.Should().Contain(t.OutreachReplyAlternative, "replying with one works too");
+        message.TextBody.Should().Contain(t.OutreachCannotPrice,
+            "the need-info action has been on the quote page since 2026-08-18 and the email never mentioned it");
+        message.TextBody.Should().Contain(t.IntroIfNotSuitable,
+            "a provider who believes silence is the only alternative to a full quote will choose silence");
+
+        message.HtmlBody.Should().Contain(Html(t.OutreachQuoteCta));
+        message.HtmlBody.Should().Contain(Html(t.OutreachReplyAlternative));
+        message.HtmlBody.Should().Contain(Html(t.OutreachCannotPrice));
+        message.HtmlBody.Should().Contain(Html(t.IntroIfNotSuitable),
+            "a provider reads whichever body their client renders — the answers cannot differ between them");
+    }
+
+    /// <summary>
+    /// "Say on the same page what is missing" needs a page. With no token minted
+    /// there is no quote page, and the sentence would point at nothing.
+    /// </summary>
+    [Fact]
+    public void WithoutAQuoteToken_TheWhatIsMissingLineIsOmitted()
+    {
+        var t = EmailTranslations.For("et");
+
+        var message = ProviderOutreachComposer.Compose(Lead(), Provider());
+
+        message.TextBody.Should().NotContain(t.OutreachCannotPrice);
+        message.HtmlBody.Should().NotContain(Html(t.OutreachCannotPrice));
+        message.TextBody.Should().Contain(t.OutreachReplyAlternative,
+            "the two channel-free answers survive without a token");
+        message.TextBody.Should().Contain(t.IntroIfNotSuitable);
+    }
+
+    // ─── Earning the reply: provenance, opt-out, and who is writing ───────────
+
+    /// <summary>
+    /// The intro used to assert "this is a real customer request" — the one
+    /// sentence a lead-generation bot would also write, and one the recipient
+    /// cannot check. The submission date is evidence rather than assertion: it
+    /// is specific, it sits beside the need date where it can be judged, and it
+    /// is the customer's own row, not a claim about it.
+    /// </summary>
+    [Fact]
+    public void SaysWhenTheCustomerActuallySubmittedTheRequest()
+    {
+        var t    = EmailTranslations.For("et");
+        var lead = Lead(needDate: DateTime.UtcNow.Date.AddDays(30));
+        lead.CreatedAt = new DateTime(2026, 7, 20, 9, 30, 0, DateTimeKind.Utc);
+
+        var message = ProviderOutreachComposer.Compose(
+            lead, Provider(), "https://ruumly.eu", OfferToken.Generate());
+
+        foreach (var body in new[] { message.TextBody, message.HtmlBody! })
+            body.Should().Contain(t.OutreachProvenance("2026-07-20"));
+
+        message.TextBody.Should().NotContain("2026-07-20 —",
+            "the submission date is prose, not another row in the fact table");
+    }
+
+    /// <summary>
+    /// Every provider letter must be stoppable. This is the mail that arrives
+    /// repeatedly and unbidden — one Viljandi provider was a candidate for four
+    /// storage requests inside ten days — and it shipped with no way to opt out
+    /// at all. A recipient who cannot find an unsubscribe uses the one their
+    /// client gives them, and a spam complaint retires the address and costs
+    /// sending reputation for every other provider too.
+    /// </summary>
+    [Theory]
+    [InlineData("et")]
+    [InlineData("en")]
+    [InlineData("ru")]
+    [InlineData("lv")]
+    [InlineData("lt")]
+    public void CarriesAnOptOut_UsingTheSameKeywordAsTheIntroductionCampaign(string language)
+    {
+        var t = EmailTranslations.For(language);
+
+        var message = ProviderOutreachComposer.ComposeInLanguage(
+            language, Lead(), "https://ruumly.eu", OfferToken.Generate(), "Kolimisabi OÜ");
+
+        var optOut = t.IntroOptOut(SupplierIntroComposer.OptOutKeyword);
+        message.TextBody.Should().Contain(optOut);
+        message.HtmlBody.Should().Contain(optOut);
+        // One keyword across both letters, so a single inbox filter catches every
+        // opt-out however the provider was reached.
+        message.TextBody.Should().Contain("REMOVE");
+    }
+
+    /// <summary>
+    /// A registry code is the one legitimacy signal in this letter that does not
+    /// require believing us: an Estonian business owner can settle the question
+    /// themselves in five seconds. It has to survive the no-images rule, so it is
+    /// text in both bodies.
+    /// </summary>
+    [Theory]
+    [InlineData("et")]
+    [InlineData("en")]
+    [InlineData("ru")]
+    [InlineData("lv")]
+    [InlineData("lt")]
+    public void NamesTheOperatingCompanyAndLinksTheSite(string language)
+    {
+        var message = ProviderOutreachComposer.ComposeInLanguage(
+            language, Lead(), "https://ruumly.eu", OfferToken.Generate(), "Kolimisabi OÜ");
+
+        foreach (var body in new[] { message.TextBody, message.HtmlBody! })
+        {
+            body.Should().Contain("Diip Solutions OÜ").And.Contain("17527757");
+            body.Should().Contain("https://ruumly.eu");
+        }
+
+        message.HtmlBody.Should().Contain("href=\"https://ruumly.eu\"",
+            "most clients do not auto-link a bare URL, and a signal nobody can follow is not one");
+    }
+
+    // ─── The subject line, read on a lock screen ──────────────────────────────
+
+    /// <summary>
+    /// Roughly thirty-five characters get read. The two facts that decide
+    /// whether a provider opens this at all are "is this my area" and "is this
+    /// what I do" — both used to sit behind "Ruumly — kliendipäring: ", and the
+    /// city was last, so a Tallinn → Tartu move arrived with neither end of the
+    /// route visible.
+    /// </summary>
+    [Fact]
+    public void Subject_LeadsWithThePlaceAndTheService_NotTheBrand()
+    {
+        var subject = ProviderOutreachComposer.Compose(Lead(), Provider()).Subject;
+
+        subject.Should().StartWith("Tallinn → Tartu",
+            "the route decides whether this provider can serve the job at all");
+        subject.Should().NotStartWith("Ruumly",
+            "the brand is already the From display name; in the subject it is a wasted first line");
+        subject[..35].Should().Contain("Kolimine", "the service has to survive truncation too");
+    }
+
+    [Fact]
+    public void Subject_KeepsTheReferenceLast_SoTheHumanPartIsWhatSurvivesTruncation()
+    {
+        var lead    = Lead();
+        var subject = ProviderOutreachComposer.Compose(lead, Provider()).Subject;
+
+        subject.Should().EndWith($"[{ProviderOutreachComposer.Reference(lead.Id)}]");
     }
 
     // ─── Contact channels: reply or the contact page, never a phone ───────────
