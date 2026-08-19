@@ -1,0 +1,117 @@
+[
+  {
+    "Name": "Lubja Laod",
+    "Slug": "lubja-laod",
+    "City": "Viimsi",
+    "Lat": 59.5150039,
+    "Lng": 24.8494697,
+    "ServiceTypes": [
+      "warehouse",
+      "trailer"
+    ],
+    "Address": "Lubja tee 30, Lubja küla, Viimsi vald, 74010 Harjumaa",
+    "WebsiteUrl": "https://viimsiarimaja.eu/lubjalaod/",
+    "ContactEmail": "info@viimsiarimaja.eu",
+    "ContactPhone": "+372 523 7563",
+    "LogoUrl": "https://viimsiarimaja.eu/wp-content/uploads/2021/04/Lubja-laod.png",
+    "RegistryCode": "11228321"
+  },
+  {
+    "Name": "Moving.ee",
+    "Slug": "moving-ee",
+    "City": "Tallinn",
+    "Lat": 59.4120427,
+    "Lng": 24.7377281,
+    "ServiceTypes": [
+      "warehouse",
+      "moving",
+      "packing"
+    ],
+    "Address": "Pärnu mnt 130, 11317 Tallinn",
+    "WebsiteUrl": "https://moving.ee/",
+    "ContactEmail": "info@moving.ee",
+    "ContactPhone": "+372 5800 0626",
+    "LogoUrl": "https://moving.ee/wp-content/uploads/2025/04/cropped-favI.png",
+    "RegistryCode": "11460383"
+  },
+  {
+    "Name": "Lux Puhastus",
+    "Slug": "lux-puhastus",
+    "City": "Tallinn",
+    "Lat": 59.4263379,
+    "Lng": 24.8189876,
+    "ServiceTypes": [
+      "cleaning"
+    ],
+    "Address": "Peterburi tee 46, 11415 Tallinn",
+    "WebsiteUrl": "https://www.luxpuhastus.ee/",
+    "ContactEmail": "info@luxpuhastus.ee",
+    "ContactPhone": "+372 5836 0116",
+    "LogoUrl": "https://www.luxpuhastus.ee/wp-content/uploads/2021/08/LOGO-LUX-Koristusteenused-Hoolduskoristus-Koristusfirma-koristaja-koristus-Koristusteenused-Tallinnas.svg",
+    "RegistryCode": "11461520"
+  },
+  {
+    "Name": "CoralClean",
+    "Slug": "coralclean",
+    "City": "Tallinn",
+    "Lat": 59.4119123,
+    "Lng": 24.6923991,
+    "ServiceTypes": [
+      "cleaning"
+    ],
+    "Address": "Mustamäe tee 141-38, 12918 Tallinn",
+    "WebsiteUrl": "https://coralclean.ee/et",
+    "ContactEmail": "info@coralclean.ee",
+    "ContactPhone": "+372 5843 2023",
+    "LogoUrl": "https://coralclean.ee/img/coralclean/logo1.png",
+    "RegistryCode": "17277094"
+  },
+  {
+    "Name": "Pansib Cleaner",
+    "Slug": "pansib-cleaner",
+    "City": "Tallinn",
+    "Lat": 59.4447367,
+    "Lng": 24.8710828,
+    "ServiceTypes": [
+      "cleaning"
+    ],
+    "Address": "Kivila 13, 13917 Tallinn",
+    "WebsiteUrl": "https://www.pansib.ee/et/",
+    "ContactEmail": "cleaner@pansib.ee",
+    "ContactPhone": "+372 5517 195",
+    "LogoUrl": "https://www.pansib.ee/apple-touch-icon.png",
+    "RegistryCode": "17020745"
+  },
+  {
+    "Name": "Balcia",
+    "Slug": "balcia",
+    "City": "Tallinn",
+    "Lat": 59.4200505,
+    "Lng": 24.8060957,
+    "ServiceTypes": [
+      "insurance"
+    ],
+    "Address": "Valukoja 10, 11415 Tallinn",
+    "WebsiteUrl": "https://www.balcia.ee/et/kodukindlustus",
+    "ContactEmail": "info@balcia.ee",
+    "ContactPhone": "+372 5777 9090",
+    "LogoUrl": "https://www.balcia.ee/build/assets/images/logo_balcia.webp",
+    "RegistryCode": "16783777"
+  },
+  {
+    "Name": "BTA",
+    "Slug": "bta",
+    "City": "Tallinn",
+    "Lat": 59.4227404,
+    "Lng": 24.8011108,
+    "ServiceTypes": [
+      "insurance"
+    ],
+    "Address": "Lõõtsa 2B, 11415 Tallinn",
+    "WebsiteUrl": "https://www.bta.ee/era/kodukindlustus",
+    "ContactEmail": "bta@bta.ee",
+    "ContactPhone": "+372 5686 8668",
+    "LogoUrl": "https://www.bta.ee/images/one/social/bta-open-graph-logo.jpeg",
+    "RegistryCode": "11223507"
+  }
+]

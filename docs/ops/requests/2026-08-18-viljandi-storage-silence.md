@@ -131,8 +131,21 @@ a reply from a business that got it.
 **230 of 1,187 suppliers have no email address at all, and 226 of those are
 active.** Nineteen percent of the directory is businesses no one can contact by
 any means. They are returned by the candidate finder, they inflate every coverage
-number the site publishes — the 124 trailer city hubs, the per-city counts — and
+number the site publishes — the trailer city hubs, the per-city counts — and
 the fan-out skips them silently.
 
 That is a supply number that is not what it appears to be, and it is worth
 deciding what an uncontactable directory row is actually for.
+
+
+## Correction, 2026-08-19: the hub counts in this entry were miscounted
+
+Where this entry cites sitemap hub counts as Estonian, they are not. `/et/` is the
+LANGUAGE prefix, and `/et/trailer/*`, `/lv/trailer/*` and `/lt/trailer/*` resolve to
+the same 124 city slugs — Ādaži, Aizkraukle, Alytus, Daugavpils among them. Estonian
+trailer coverage is 20 hubs, cleaning 13, warehouse 22, moving 19, van rental 10.
+
+The error was mine and it was made in the session's first data-gathering command:
+filtering the sitemap on `/et/` and reading a language segment as a country. It then
+propagated into the masterplan spec and several agent briefs before the directory
+audit caught it. Full figures in docs/ops/supplier-directory-audit-2026-08-19.md.

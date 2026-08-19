@@ -1,0 +1,61 @@
+{
+  "verifiedAt": "2026-07-29",
+  "environment": "production",
+  "baselineDirectoryCount": 163,
+  "finalDirectoryCount": 170,
+  "requestedCount": 7,
+  "createdCount": 7,
+  "skippedCount": 0,
+  "errorCount": 0,
+  "createdSlugs": [
+    "lubja-laod",
+    "moving-ee",
+    "lux-puhastus",
+    "coralclean",
+    "pansib-cleaner",
+    "balcia",
+    "bta"
+  ],
+  "checks": {
+    "productionDryRunRolledBackCleanly": true,
+    "databasePayloadFieldMatches": 7,
+    "publicLocationMatches": 7,
+    "publicProfileMatches": 7,
+    "candidateFinderMatches": 7,
+    "finalLogoHttpImageMatches": 7,
+    "categoryRoutes": {
+      "warehouse": [
+        "lubja-laod",
+        "moving-ee"
+      ],
+      "trailer": [
+        "lubja-laod"
+      ],
+      "moving": [
+        "moving-ee"
+      ],
+      "packing": [
+        "moving-ee"
+      ],
+      "cleaning": [
+        "coralclean",
+        "lux-puhastus",
+        "pansib-cleaner"
+      ],
+      "insurance": [
+        "balcia",
+        "bta"
+      ]
+    }
+  },
+  "finalLogoOverrides": {
+    "moving-ee": "https://moving.ee/wp-content/uploads/2025/04/cropped-favI.png",
+    "coralclean": "https://coralclean.ee/img/coralclean/logo1.png",
+    "pansib-cleaner": "https://www.pansib.ee/apple-touch-icon.png"
+  },
+  "warnings": [
+    "Poolsaare Ärimaja OÜ is entered in the register, but its 2025 annual report was due 2026-06-30 and remains overdue.",
+    "Balcia and BTA public support contacts may need to route partnership enquiries internally.",
+    "Moving and trailer launch feature toggles were not changed."
+  ]
+}

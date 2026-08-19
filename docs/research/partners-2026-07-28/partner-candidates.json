@@ -1,0 +1,930 @@
+{
+  "generatedAt": "2026-07-28",
+  "lastVerifiedAt": "2026-07-29",
+  "scope": {
+    "country": "EE",
+    "baselineProductionDirectoryCount": 163,
+    "currentProductionDirectoryCount": 170,
+    "importedCandidateCount": 7,
+    "serviceTypes": [
+      "warehouse",
+      "moving",
+      "cleaning",
+      "trailer",
+      "vanrental",
+      "packing",
+      "insurance"
+    ],
+    "dedupeKeys": [
+      "normalized brand and legal name",
+      "website domain",
+      "registry code",
+      "lowercase public email",
+      "digits-only public phone"
+    ]
+  },
+  "statusDefinitions": {
+    "outreach_now": "Net-new, active service evidence, public business contact, and identifiable legal entity. Registry status must still be rechecked immediately before import.",
+    "conditional": "Net-new and contactable, but specialized, lower-fit, or carrying an identity/status issue that should be resolved before normal routing.",
+    "quarantine": "Do not import or automatically contact until the stated legal, ownership, closure, or provenance issue is resolved."
+  },
+  "candidates": [
+    {
+      "status": "conditional",
+      "priority": 1,
+      "name": "Box Moving",
+      "legalEntity": "Box Moving OÜ",
+      "registryCode": "16722250",
+      "registryStatus": "Entered in register; 2024 report valid; 2025 report overdue and deletion notice displayed",
+      "serviceTypes": [
+        "warehouse",
+        "moving",
+        "packing"
+      ],
+      "city": "Tallinn",
+      "address": "Kadaka pst 60, 10913 Tallinn",
+      "coverage": "Tallinn, Harjumaa, and nationwide",
+      "websiteUrl": "https://www.boxmoving.ee/",
+      "contactEmail": "info@boxmoving.ee",
+      "contactPhone": "+372 512 3178",
+      "secondaryPhone": "+372 5551 0285",
+      "logoUrl": "https://www.boxmoving.ee/wp-content/uploads/elementor/thumbs/logo-new-222-q90w9fivqyq4e0jxlbmj3xtw3erna0zbcucu17us5g.png",
+      "logoSourceUrl": "https://www.boxmoving.ee/",
+      "socials": {
+        "facebook": "https://www.facebook.com/profile.php?id=100095018473558",
+        "instagram": null,
+        "linkedin": "https://www.linkedin.com/company/box-moving/"
+      },
+      "evidenceUrls": [
+        "https://www.boxmoving.ee/",
+        "https://www.boxmoving.ee/laoteenus/",
+        "https://www.boxmoving.ee/kontakt/",
+        "https://ariregister.rik.ee/eng/company/16722250"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Best combined storage, moving, and packing lead. Recheck the registry notice before import."
+    },
+    {
+      "status": "outreach_now",
+      "priority": 2,
+      "name": "Lubja Laod",
+      "legalEntity": "Poolsaare Ärimaja OÜ",
+      "registryCode": "11228321",
+      "registryStatus": "Entered in register",
+      "serviceTypes": [
+        "warehouse",
+        "trailer"
+      ],
+      "city": "Viimsi",
+      "address": "Lubja tee 30, Lubja küla, Viimsi vald, 74010 Harjumaa",
+      "coverage": "Viimsi and northern Harjumaa",
+      "websiteUrl": "https://viimsiarimaja.eu/lubjalaod/",
+      "contactEmail": "info@viimsiarimaja.eu",
+      "contactPhone": "+372 523 7563",
+      "secondaryPhone": null,
+      "logoUrl": "https://viimsiarimaja.eu/wp-content/uploads/2021/04/Lubja-laod.png",
+      "logoSourceUrl": "https://viimsiarimaja.eu/lubjalaod/",
+      "socials": {
+        "facebook": null,
+        "instagram": null,
+        "linkedin": null
+      },
+      "evidenceUrls": [
+        "https://viimsiarimaja.eu/lubjalaod/",
+        "https://viimsiarimaja.eu/",
+        "https://ariregister.rik.ee/eng/company/11228321"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Strong consumer self-storage fit: 72 heated and ventilated mini-storages with 24/7 access."
+    },
+    {
+      "status": "conditional",
+      "priority": 3,
+      "name": "Movers24",
+      "legalEntity": "Dem & Partners OÜ",
+      "registryCode": "16932958",
+      "registryStatus": "Entered in register; 2024 and 2025 reports valid; deletion notice displayed",
+      "serviceTypes": [
+        "warehouse",
+        "moving",
+        "packing"
+      ],
+      "city": "Tallinn",
+      "address": "Tartu mnt 84a-130, 10112 Tallinn",
+      "coverage": "Estonia and Europe",
+      "websiteUrl": "https://www.movers24.ee/",
+      "contactEmail": "info@movers24.ee",
+      "contactPhone": "+372 5800 2827",
+      "secondaryPhone": null,
+      "logoUrl": "https://www.movers24.ee/assets/og-card.jpg",
+      "logoSourceUrl": "https://www.movers24.ee/",
+      "socials": {
+        "facebook": null,
+        "instagram": null,
+        "linkedin": null
+      },
+      "evidenceUrls": [
+        "https://www.movers24.ee/",
+        "https://ariregister.rik.ee/eng/company/16932958"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Active 2026 site, public quote path, and reported 2025 revenue of EUR 310,814. Recheck the registry notice before import."
+    },
+    {
+      "status": "outreach_now",
+      "priority": 4,
+      "name": "Moving.ee",
+      "legalEntity": "Platon OÜ",
+      "registryCode": "11460383",
+      "registryStatus": "Entered in register",
+      "serviceTypes": [
+        "warehouse",
+        "moving",
+        "packing"
+      ],
+      "city": "Tallinn",
+      "address": "Pärnu mnt 130, 11317 Tallinn",
+      "coverage": "Estonia and international moves",
+      "websiteUrl": "https://moving.ee/",
+      "contactEmail": "info@moving.ee",
+      "contactPhone": "+372 5800 0626",
+      "secondaryPhone": null,
+      "logoUrl": "https://moving.ee/wp-content/uploads/2025/04/cropped-favI.png",
+      "logoSourceUrl": "https://moving.ee/",
+      "socials": {
+        "facebook": null,
+        "instagram": null,
+        "linkedin": null
+      },
+      "evidenceUrls": [
+        "https://moving.ee/",
+        "https://moving.ee/en/contacts/",
+        "https://moving.ee/privaatsuspoliitika/",
+        "https://ariregister.rik.ee/eng/company/11460383"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Offers household and business moving, packing, installation, and short- or long-term storage."
+    },
+    {
+      "status": "outreach_now",
+      "priority": 5,
+      "name": "Rapla Hoonegrupp",
+      "legalEntity": "Osaühing RAPLA HOONE Grupp",
+      "registryCode": "10343646",
+      "registryStatus": "Entered in register",
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "city": "Rapla",
+      "address": "Koidu tn 25/3, Rapla",
+      "coverage": "Rapla and Kohila",
+      "websiteUrl": "https://hoonegrupp.ee/",
+      "contactEmail": "info@hoonegrupp.ee",
+      "contactPhone": "+372 527 6527",
+      "secondaryPhone": "+372 524 7857",
+      "logoUrl": null,
+      "logoSourceUrl": "https://hoonegrupp.ee/",
+      "socials": {
+        "facebook": null,
+        "instagram": null,
+        "linkedin": null
+      },
+      "evidenceUrls": [
+        "https://hoonegrupp.ee/",
+        "https://ariregister.rik.ee/eng/company/10343646"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Good local cleaning lead; direct standalone logo asset was not exposed by the official site."
+    },
+    {
+      "status": "outreach_now",
+      "priority": 6,
+      "name": "Lux Puhastus",
+      "legalEntity": "Lux Puhastus OÜ",
+      "registryCode": "11461520",
+      "registryStatus": "Entered in register",
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "city": "Tallinn",
+      "address": "Peterburi tee 46, 11415 Tallinn",
+      "coverage": "Tallinn",
+      "websiteUrl": "https://www.luxpuhastus.ee/",
+      "contactEmail": "info@luxpuhastus.ee",
+      "contactPhone": "+372 5836 0116",
+      "secondaryPhone": null,
+      "logoUrl": "https://www.luxpuhastus.ee/wp-content/uploads/2021/08/LOGO-LUX-Koristusteenused-Hoolduskoristus-Koristusfirma-koristaja-koristus-Koristusteenused-Tallinnas.svg",
+      "logoSourceUrl": "https://www.luxpuhastus.ee/",
+      "socials": {
+        "facebook": "https://www.facebook.com/luxpuhastus",
+        "instagram": null,
+        "linkedin": null
+      },
+      "evidenceUrls": [
+        "https://www.luxpuhastus.ee/",
+        "https://www.luxpuhastus.ee/kontakt/",
+        "https://ariregister.rik.ee/eng/company/11461520"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Established commercial and specialist cleaning provider; better for business or large-property requests than ordinary residential move-out cleaning."
+    },
+    {
+      "status": "outreach_now",
+      "priority": 7,
+      "name": "CoralClean",
+      "legalEntity": "Puhastus KORAL OÜ",
+      "registryCode": "17277094",
+      "registryStatus": "Entered in register; 2025 report valid",
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "city": "Tallinn",
+      "address": "Mustamäe tee 141-38, 12918 Tallinn",
+      "coverage": "Tallinn and Harjumaa",
+      "websiteUrl": "https://coralclean.ee/et",
+      "contactEmail": "info@coralclean.ee",
+      "contactPhone": "+372 5843 2023",
+      "secondaryPhone": null,
+      "logoUrl": "https://coralclean.ee/img/coralclean/logo1.png",
+      "logoSourceUrl": "https://coralclean.ee/et",
+      "socials": {
+        "facebook": null,
+        "instagram": null,
+        "linkedin": null
+      },
+      "evidenceUrls": [
+        "https://coralclean.ee/et",
+        "https://coralclean.ee/et/services",
+        "https://ariregister.rik.ee/eng/company/17277094"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Excellent move-in, move-out, deep, and post-renovation cleaning fit; young company established in 2025."
+    },
+    {
+      "status": "outreach_now",
+      "priority": 8,
+      "name": "Pansib Cleaner",
+      "legalEntity": "PansibCleaner OÜ",
+      "registryCode": "17020745",
+      "registryStatus": "Entered in register",
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "city": "Tallinn",
+      "address": "Kivila 13, 13917 Tallinn",
+      "coverage": "Tallinn and Harjumaa",
+      "websiteUrl": "https://www.pansib.ee/et/",
+      "contactEmail": "cleaner@pansib.ee",
+      "contactPhone": "+372 5517 195",
+      "secondaryPhone": null,
+      "logoUrl": "https://www.pansib.ee/apple-touch-icon.png",
+      "logoSourceUrl": "https://www.pansib.ee/et/",
+      "socials": {
+        "facebook": null,
+        "instagram": null,
+        "linkedin": null
+      },
+      "evidenceUrls": [
+        "https://www.pansib.ee/et/",
+        "https://ariregister.rik.ee/eng/company/17020745"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Live July/August 2026 promotion and explicit move-in/move-out service. Likely smaller capacity."
+    },
+    {
+      "status": "outreach_now",
+      "priority": 9,
+      "name": "Balcia",
+      "legalEntity": "Balcia Insurance SE Eesti filiaal",
+      "registryCode": "16783777",
+      "registryStatus": "Entered in register",
+      "serviceTypes": [
+        "insurance"
+      ],
+      "city": "Tallinn",
+      "address": "Valukoja 10, 11415 Tallinn",
+      "coverage": "Estonia-wide",
+      "websiteUrl": "https://www.balcia.ee/et/kodukindlustus",
+      "contactEmail": "info@balcia.ee",
+      "contactPhone": "+372 5777 9090",
+      "secondaryPhone": null,
+      "logoUrl": "https://www.balcia.ee/build/assets/images/logo_balcia.webp",
+      "logoSourceUrl": "https://www.balcia.ee/et/",
+      "socials": {
+        "facebook": null,
+        "instagram": null,
+        "linkedin": "https://www.linkedin.com/company/balcia-insurance-se/"
+      },
+      "evidenceUrls": [
+        "https://www.balcia.ee/et/kodukindlustus",
+        "https://www.balcia.ee/en/about",
+        "https://ariregister.rik.ee/eng/company/16783777"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Public contact is general customer support; partnership outreach may need internal routing."
+    },
+    {
+      "status": "outreach_now",
+      "priority": 10,
+      "name": "BTA",
+      "legalEntity": "AAS BTA Baltic Insurance Company Eesti filiaal",
+      "registryCode": "11223507",
+      "registryStatus": "Entered in register",
+      "serviceTypes": [
+        "insurance"
+      ],
+      "city": "Tallinn",
+      "address": "Lõõtsa 2B, 11415 Tallinn",
+      "coverage": "Estonia-wide",
+      "websiteUrl": "https://www.bta.ee/era/kodukindlustus",
+      "contactEmail": "bta@bta.ee",
+      "contactPhone": "+372 5686 8668",
+      "secondaryPhone": null,
+      "logoUrl": "https://www.bta.ee/images/one/social/bta-open-graph-logo.jpeg",
+      "logoSourceUrl": "https://www.bta.ee/",
+      "socials": {
+        "facebook": null,
+        "instagram": null,
+        "linkedin": "https://www.linkedin.com/company/btakindlustus/"
+      },
+      "evidenceUrls": [
+        "https://www.bta.ee/era/kodukindlustus",
+        "https://www.bta.ee/en/contacts/pre-contractual-information",
+        "https://ariregister.rik.ee/eng/company/11223507"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Public contact is general support and may need routing to partnerships."
+    },
+    {
+      "status": "outreach_now",
+      "priority": 11,
+      "name": "Kolmestar",
+      "legalEntity": "osaühing KOLMESTAR",
+      "registryCode": "10480596",
+      "registryStatus": "Entered in register",
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "city": "Türi",
+      "address": "Mäekalda tn 2, 72213 Türi",
+      "coverage": "Järva county",
+      "websiteUrl": "https://www.kolmestar.ee/",
+      "contactEmail": "kolmestar@kolmestar.ee",
+      "contactPhone": "+372 501 5328",
+      "secondaryPhone": "+372 503 5585",
+      "logoUrl": null,
+      "logoSourceUrl": "https://www.kolmestar.ee/",
+      "socials": {
+        "facebook": null,
+        "instagram": null,
+        "linkedin": null
+      },
+      "evidenceUrls": [
+        "https://www.kolmestar.ee/",
+        "https://ariregister.rik.ee/eng/company/10480596"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Fills a Järva geography gap, but spaces start around 130 m² and are mainly B2B."
+    },
+    {
+      "status": "outreach_now",
+      "priority": 12,
+      "name": "4U Logistics",
+      "legalEntity": "4U Logistics OÜ",
+      "registryCode": "11518177",
+      "registryStatus": "Entered in register; 2025 report valid",
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "city": "Loo",
+      "address": "Niidu tee 6, 74201 Loo",
+      "coverage": "Loo/Harjumaa and Rakvere/Lääne-Virumaa",
+      "websiteUrl": "https://4ul.ee/",
+      "contactEmail": "info@4ul.ee",
+      "contactPhone": "+372 636 3095",
+      "secondaryPhone": "+372 325 5391",
+      "logoUrl": "https://framerusercontent.com/modules/XdkID0xG6ofY1u699Ut5/AwO3puX3JBmgEpX40SSm/assets/qScCNajw5MhMkx7T4EeDkJC3hs.png",
+      "logoSourceUrl": "https://4ul.ee/",
+      "socials": {
+        "facebook": null,
+        "instagram": null,
+        "linkedin": "https://www.linkedin.com/company/4u-logistics-o%C3%BC"
+      },
+      "evidenceUrls": [
+        "https://4ul.ee/teenused",
+        "https://4ul.ee/kontaktid",
+        "https://ariregister.rik.ee/est/company/11518177"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Active customs and B2B warehouse provider, not consumer self-storage."
+    },
+    {
+      "status": "conditional",
+      "priority": 13,
+      "name": "ABEMI Laoteenused",
+      "legalEntity": "ABEMI Laoteenused OÜ",
+      "registryCode": "11078057",
+      "registryStatus": "Entered in register",
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "city": "Maardu",
+      "address": "Paemurru 6A, Maardu",
+      "coverage": "Maardu/Harjumaa",
+      "websiteUrl": "http://www.abemi.ee/",
+      "contactEmail": "abemi@abemi.ee",
+      "contactPhone": "+372 637 9479",
+      "secondaryPhone": "+372 509 3013",
+      "logoUrl": null,
+      "logoSourceUrl": "http://www.abemi.ee/",
+      "socials": {
+        "facebook": null,
+        "instagram": null,
+        "linkedin": null
+      },
+      "evidenceUrls": [
+        "https://ariregister.rik.ee/eng/company/11078057/pdf",
+        "https://www.1182.ee/abemi-laoteenused-ou"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Active legal entity and public contacts, but website did not respond and the operating/legal address split needs confirmation."
+    },
+    {
+      "status": "conditional",
+      "priority": 14,
+      "name": "Tellikolimine",
+      "legalEntity": "Tellikolimine Consulting OÜ",
+      "registryCode": "11623342",
+      "registryStatus": "Entered in register; missing annual reports and deletion notice displayed",
+      "serviceTypes": [
+        "warehouse",
+        "moving",
+        "packing"
+      ],
+      "city": "Jüri",
+      "address": "Kesk tee 36, 75301 Jüri",
+      "coverage": "Estonia-wide",
+      "websiteUrl": "https://tellikolimine.ee/",
+      "contactEmail": "info@tellikolimine.ee",
+      "contactPhone": "+372 5698 7980",
+      "secondaryPhone": null,
+      "logoUrl": null,
+      "logoSourceUrl": "https://tellikolimine.ee/",
+      "socials": {
+        "facebook": null,
+        "instagram": null,
+        "linkedin": null
+      },
+      "evidenceUrls": [
+        "https://tellikolimine.ee/",
+        "https://ariregister.rik.ee/eng/company/11623342"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Contact directly to confirm the company remains operational before onboarding."
+    },
+    {
+      "status": "conditional",
+      "priority": 15,
+      "name": "Kaubikute-Rent.ee",
+      "legalEntity": "Eesti Autorent OÜ",
+      "registryCode": "12523134",
+      "registryStatus": "Entered in register",
+      "serviceTypes": [
+        "vanrental"
+      ],
+      "city": "Tallinn",
+      "address": "Kotka 44A, 11312 Tallinn",
+      "coverage": "Tallinn",
+      "websiteUrl": "https://www.kaubikute-rent.ee/",
+      "contactEmail": "info@kaubikute-rent.ee",
+      "contactPhone": "+372 517 0707",
+      "secondaryPhone": null,
+      "logoUrl": null,
+      "logoSourceUrl": "https://www.kaubikute-rent.ee/",
+      "socials": {
+        "facebook": null,
+        "instagram": null,
+        "linkedin": null
+      },
+      "evidenceUrls": [
+        "https://www.kaubikute-rent.ee/",
+        "https://ariregister.rik.ee/eng/company/12523134"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Older site material references Halkitec OÜ while the current contact page identifies Eesti Autorent OÜ. Obtain written domain/enquiry ownership confirmation."
+    },
+    {
+      "status": "conditional",
+      "priority": 16,
+      "name": "Vikatimees",
+      "legalEntity": "Vikatimees OÜ",
+      "registryCode": "11999998",
+      "registryStatus": "Entered in register; 2025 report valid",
+      "serviceTypes": [
+        "trailer"
+      ],
+      "city": "Reola",
+      "address": "Nirgi tee 8, Reola/Uhti, Tartu maakond",
+      "coverage": "Tartu area",
+      "websiteUrl": "https://vikatimees.ee/",
+      "contactEmail": "info@vikatimees.eu",
+      "contactPhone": "+372 5666 7776",
+      "secondaryPhone": null,
+      "logoUrl": null,
+      "logoSourceUrl": "https://vikatimees.ee/",
+      "socials": {
+        "facebook": "https://www.facebook.com/vikatimees.ee",
+        "instagram": "https://www.instagram.com/vikatimees_eesti/",
+        "linkedin": null
+      },
+      "evidenceUrls": [
+        "https://vikatimees.ee/pood/seadme-rent/kallutav-kerghaagis-rent-tartu/",
+        "https://ariregister.rik.ee/eng/company/11999998"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Trailer rental is a secondary product with a small local selection."
+    },
+    {
+      "status": "quarantine",
+      "priority": 17,
+      "name": "KLC Minilaod",
+      "legalEntity": "KLC Kinnisvara OÜ",
+      "registryCode": "10134842",
+      "registryStatus": "Entered in register; deletion notice displayed; latest listed report is 2024 valid",
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "city": "Põltsamaa",
+      "address": "Viljandi mnt 2, Põltsamaa",
+      "coverage": "Põltsamaa/Jõgevamaa",
+      "websiteUrl": "https://klc.ee/",
+      "contactEmail": "klckinnisvara@gmail.com",
+      "contactPhone": "+372 503 8773",
+      "secondaryPhone": null,
+      "logoUrl": "https://cdn.prod.website-files.com/68515fada92a4bdf6f313955/6851736de0900e813f5fca0f_klc-kinnisvara-logo-r.png",
+      "logoSourceUrl": "https://klc.ee/",
+      "socials": {
+        "facebook": null,
+        "instagram": null,
+        "linkedin": null
+      },
+      "evidenceUrls": [
+        "https://klc.ee/",
+        "https://klc.ee/ettevottest",
+        "https://klc.ee/tingimused",
+        "https://ariregister.rik.ee/est/company/10134842"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Excellent 2–16 m², heated, 24/7 storage fit if the deletion notice is resolved."
+    },
+    {
+      "status": "quarantine",
+      "priority": 18,
+      "name": "KolimisTiim",
+      "legalEntity": "Kaevetek OÜ",
+      "registryCode": "14142270",
+      "registryStatus": "Entered in register; deletion notice displayed; reports missing and 2024 revenue reported as zero",
+      "serviceTypes": [
+        "warehouse",
+        "moving"
+      ],
+      "city": "Viljandi",
+      "address": "Lõmsi-Tööstushoone, Pinska, Viljandi vald",
+      "coverage": "Viljandimaa, South Estonia, and nationwide",
+      "websiteUrl": "https://kolimistiim.ee/",
+      "contactEmail": "kaevetek@gmail.com",
+      "contactPhone": "+372 5551 3306",
+      "secondaryPhone": null,
+      "logoUrl": "https://kolimistiim.ee/wp-content/uploads/2026/02/logo3-220x91.png",
+      "logoSourceUrl": "https://kolimistiim.ee/",
+      "socials": {
+        "facebook": null,
+        "instagram": null,
+        "linkedin": null
+      },
+      "evidenceUrls": [
+        "https://kolimistiim.ee/",
+        "https://kolimistiim.ee/turvaline-hoiustamisteenus/",
+        "https://kolimistiim.ee/kontakt/",
+        "https://ariregister.rik.ee/est/company/14142270"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Strong service fit but the highest legal/financial risk in the shortlist."
+    },
+    {
+      "status": "quarantine",
+      "priority": 19,
+      "name": "Haapsalu Miniladu",
+      "legalEntity": "Probable operator: SVI VARAD OÜ",
+      "registryCode": "16922345",
+      "registryStatus": "Probable operator entered in register; deletion notice displayed; 2024 and 2025 reports valid",
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "city": "Haapsalu",
+      "address": "Kooli tee 3, Uuemõisa",
+      "coverage": "Haapsalu/Läänemaa",
+      "websiteUrl": "https://www.miil.ee/toode/miniladu-haapsalu/",
+      "contactEmail": "johannessaarevali@gmail.com",
+      "contactPhone": "+372 518 2618",
+      "secondaryPhone": null,
+      "logoUrl": null,
+      "logoSourceUrl": "https://www.facebook.com/p/Haapsalu-konteinerlaod-61564632134746/?locale=et_EE",
+      "socials": {
+        "facebook": "https://www.facebook.com/p/Haapsalu-konteinerlaod-61564632134746/?locale=et_EE",
+        "instagram": null,
+        "linkedin": null
+      },
+      "evidenceUrls": [
+        "https://www.miil.ee/toode/miniladu-haapsalu/",
+        "https://www.kv.ee/uurile-anda-uued-konteinerlaod-tegemist-on-uute-14-3692931.html",
+        "https://ariregister.rik.ee/eng/company/16922345"
+      ],
+      "duplicateCheck": "The facility is net-new, but Miil is already present in production",
+      "notes": "Do not import until the actual contracting/operator entity confirms ownership. Miil describes it as partner-operated."
+    },
+    {
+      "status": "quarantine",
+      "priority": 20,
+      "name": "Kobrit",
+      "legalEntity": "Kobrit OÜ",
+      "registryCode": "14021655",
+      "registryStatus": "Entered in register; deletion notice displayed; 2025 report valid",
+      "serviceTypes": [
+        "moving"
+      ],
+      "city": "Jõgeva",
+      "address": "Service starts from Jõgeva",
+      "coverage": "Jõgeva, Mustvee, Põltsamaa, Tartu, and nationwide",
+      "websiteUrl": "https://kobrit.ee/",
+      "contactEmail": "teodor.toks@gmail.com",
+      "contactPhone": "+372 5822 0022",
+      "secondaryPhone": null,
+      "logoUrl": "https://kobrit.ee/favicon.ico?favicon.1dabbd8f.ico",
+      "logoSourceUrl": "https://kobrit.ee/",
+      "socials": {
+        "facebook": null,
+        "instagram": null,
+        "linkedin": null
+      },
+      "evidenceUrls": [
+        "https://kobrit.ee/",
+        "https://ariregister.rik.ee/est/company/14021655"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Domain-to-entity mapping is supported externally but the legal entity is not disclosed on the service page."
+    },
+    {
+      "status": "quarantine",
+      "priority": 21,
+      "name": "MLM Trans",
+      "legalEntity": "MLM Trans OÜ",
+      "registryCode": "16066076",
+      "registryStatus": "Entered in register; deletion notice displayed; 2025 report valid",
+      "serviceTypes": [
+        "moving"
+      ],
+      "city": "Pärnu",
+      "address": "Aia tn 7, Sindi, Tori vald",
+      "coverage": "Pärnu and longer routes on request",
+      "websiteUrl": "https://www.mlm.ee/",
+      "contactEmail": "info@mlm.ee",
+      "contactPhone": "+372 5351 9105",
+      "secondaryPhone": null,
+      "logoUrl": "https://www.mlm.ee/assets/img/logo.svg",
+      "logoSourceUrl": "https://www.mlm.ee/",
+      "socials": {
+        "facebook": "https://www.facebook.com/mlmtrans",
+        "instagram": null,
+        "linkedin": null
+      },
+      "evidenceUrls": [
+        "https://www.mlm.ee/",
+        "https://ariregister.rik.ee/est/company/16066076"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Clear public contact but very low reported 2025 turnover and a deletion notice."
+    },
+    {
+      "status": "quarantine",
+      "priority": 22,
+      "name": "Töömesilased24",
+      "legalEntity": "Töömesilased24 OÜ",
+      "registryCode": "14701924",
+      "registryStatus": "Entered in register; deletion notice displayed",
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "city": "Kärdla",
+      "address": "Rahu tn 2/2, Kärdla",
+      "coverage": "Hiiumaa, with Läänemaa and Harjumaa by arrangement",
+      "websiteUrl": "https://toomesilased.ee/",
+      "contactEmail": "info@toomesilased.ee",
+      "contactPhone": "+372 5197 0921",
+      "secondaryPhone": "+372 5697 6240",
+      "logoUrl": "https://toomesilased.ee/wp-content/uploads/2019/05/toomesilased_logo_horisontal_2-e1556996034285.png",
+      "logoSourceUrl": "https://toomesilased.ee/",
+      "socials": {
+        "facebook": "https://www.facebook.com/toomesilased/",
+        "instagram": "https://www.instagram.com/toomesilased/",
+        "linkedin": null
+      },
+      "evidenceUrls": [
+        "https://toomesilased.ee/",
+        "https://toomesilased.ee/kontakt/",
+        "https://hiiumaa.ee/objekt/toomesilased24-ou/",
+        "https://ariregister.rik.ee/est/company/14701924"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Strong geography and service fit, but recheck the deletion notice before any use."
+    },
+    {
+      "status": "quarantine",
+      "priority": 23,
+      "name": "Puhastus Pro",
+      "legalEntity": "Unverified; third-party history points to A&A Construction Baltic OÜ",
+      "registryCode": "12742356",
+      "registryStatus": "Legal identity not disclosed by the active service site",
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "city": "Tallinn",
+      "address": "Pelguranna 5, Tallinn",
+      "coverage": "Tallinn and Tartu",
+      "websiteUrl": "https://puhastuspro.ee/",
+      "contactEmail": "info@puhastuspro.ee",
+      "contactPhone": "+372 528 9490",
+      "secondaryPhone": null,
+      "logoUrl": null,
+      "logoSourceUrl": "https://puhastuspro.ee/",
+      "socials": {
+        "facebook": null,
+        "instagram": null,
+        "linkedin": null
+      },
+      "evidenceUrls": [
+        "https://puhastuspro.ee/",
+        "https://puhastuspro.ee/kontakt/",
+        "https://puhastuspro.ee/kolimiskoristus/"
+      ],
+      "duplicateCheck": "No name/domain/contact match; legal identity remains unverified",
+      "notes": "Do not import until the company controlling the site and enquiries is confirmed."
+    },
+    {
+      "status": "quarantine",
+      "priority": 24,
+      "name": "Haagiserent123",
+      "legalEntity": "AVT OÜ",
+      "registryCode": "10823754",
+      "registryStatus": "Entered in register",
+      "serviceTypes": [
+        "trailer"
+      ],
+      "city": "Tallinn",
+      "address": "Veerme 27, Tallinn",
+      "coverage": "Tallinn",
+      "websiteUrl": "https://www.haagiserent123.ee/",
+      "contactEmail": "haagiserent123@gmail.com",
+      "contactPhone": "+372 506 2680",
+      "secondaryPhone": null,
+      "logoUrl": null,
+      "logoSourceUrl": "https://www.haagiserent123.ee/",
+      "socials": {
+        "facebook": null,
+        "instagram": null,
+        "linkedin": null
+      },
+      "evidenceUrls": [
+        "https://www.haagiserent123.ee/",
+        "https://www.haagiserent123.ee/kontakt/",
+        "https://ariregister.rik.ee/eng/company/10823754"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Official site indicates temporary closure or unavailable trailers."
+    },
+    {
+      "status": "quarantine",
+      "priority": 25,
+      "name": "Kaubiku rent Tallinnas",
+      "legalEntity": "HPH INVEST OÜ",
+      "registryCode": "16146970",
+      "registryStatus": "Entered in register; 2025 report missing; deletion notice displayed; registry activity does not align cleanly",
+      "serviceTypes": [
+        "vanrental"
+      ],
+      "city": "Tallinn",
+      "address": "A. H. Tammsaare tee 92, Tallinn",
+      "coverage": "Tallinn",
+      "websiteUrl": "https://kaubikurenttallinnas.ee/",
+      "contactEmail": "info@kaubikurenttallinnas.ee",
+      "contactPhone": "+372 5307 9279",
+      "secondaryPhone": null,
+      "logoUrl": null,
+      "logoSourceUrl": "https://kaubikurenttallinnas.ee/",
+      "socials": {
+        "facebook": null,
+        "instagram": null,
+        "linkedin": null
+      },
+      "evidenceUrls": [
+        "https://kaubikurenttallinnas.ee/",
+        "https://ariregister.rik.ee/eng/company/16146970"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Fresh 2026 site, but the legal and reporting signals are too weak for import."
+    },
+    {
+      "status": "quarantine",
+      "priority": 26,
+      "name": "Clean Partner",
+      "legalEntity": "Clean Partner OÜ",
+      "registryCode": "16323314",
+      "registryStatus": "Entered in register; registry/report warnings and a small public tax debt were observed",
+      "serviceTypes": [
+        "cleaning"
+      ],
+      "city": "Tallinn",
+      "address": null,
+      "coverage": "Tallinn and Harjumaa",
+      "websiteUrl": "https://cleanpartner.ee/",
+      "contactEmail": null,
+      "contactPhone": null,
+      "secondaryPhone": null,
+      "logoUrl": null,
+      "logoSourceUrl": "https://cleanpartner.ee/",
+      "socials": {
+        "facebook": null,
+        "instagram": null,
+        "linkedin": null
+      },
+      "evidenceUrls": [
+        "https://cleanpartner.ee/",
+        "https://ariregister.rik.ee/eng/company/16323314"
+      ],
+      "duplicateCheck": "No match across the 163-row production snapshot",
+      "notes": "Recheck tax, registry, and public contacts before advancing."
+    },
+    {
+      "status": "quarantine",
+      "priority": 27,
+      "name": "Narva Logistics",
+      "legalEntity": "Website names deleted Narva Logistics OÜ; likely successor Febest Europe Distribution OÜ",
+      "registryCode": "11935337 / possible successor 12368952",
+      "registryStatus": "Narva Logistics OÜ deleted in 2019; successor entity inference requires confirmation",
+      "serviceTypes": [
+        "warehouse"
+      ],
+      "city": "Narva",
+      "address": "Kadastiku 23a, Narva",
+      "coverage": "Narva/Ida-Virumaa",
+      "websiteUrl": "https://narvalogistics.com/",
+      "contactEmail": "info@narvalogistics.com",
+      "contactPhone": "+372 337 0170",
+      "secondaryPhone": null,
+      "logoUrl": null,
+      "logoSourceUrl": "https://narvalogistics.com/",
+      "socials": {
+        "facebook": null,
+        "instagram": null,
+        "linkedin": null
+      },
+      "evidenceUrls": [
+        "https://narvalogistics.com/",
+        "https://ariregister.rik.ee/eng/company/11935337",
+        "https://ariregister.rik.ee/eng/company/12368952"
+      ],
+      "duplicateCheck": "No production match, but the contracting entity is unresolved",
+      "notes": "Do not import until the current contracting entity confirms control of the site and warehouse."
+    }
+  ],
+  "excludedAsExistingOrDuplicate": [
+    {
+      "candidate": "Kolimisabi Tartus",
+      "reason": "Fastway Move OÜ registry code 12953515 is already in production as Kolimisprofid."
+    },
+    {
+      "candidate": "Kolimisteenus24",
+      "reason": "Alternate site for Transit Expert OÜ registry code 14007922, already in production as Uksest Ukseni."
+    },
+    {
+      "candidate": "Konteinerladu.ee",
+      "reason": "Domain is connected to Blackline OÜ, already in production; Konteinerladu OÜ is also already present."
+    },
+    {
+      "candidate": "Haagisemaailm.ee",
+      "reason": "Same legal operator/brand family as Haagise Rent OÜ, already in production."
+    },
+    {
+      "candidate": "Plasticbox.ee / Pakkemeister Hillman OÜ",
+      "reason": "Same operator/contact family as Packpros, already in production."
+    },
+    {
+      "candidate": "Miil, Blackline, ESPAK, KLIN, and Rokk regional pages",
+      "reason": "Existing production suppliers or location-expansion opportunities, not net-new partners."
+    },
+    {
+      "candidate": "Compensa non-life insurance",
+      "reason": "Operates under the Seesam brand in Estonia; Seesam is already in production."
+    }
+  ]
+}

@@ -75,10 +75,17 @@ actually needs to produce a number.
 - **Gaps:** nothing establishes the customer **can tow**. No tow bar, no towing vehicle, no
   licence category — category B covers trailers up to 750 kg, BE is required above it. We
   can currently route a request that no provider is able to lawfully fulfil.
-- **Supply problem, separate from intake:** 124 Estonian trailer city hubs, the widest
-  footprint of any service, but the rows behind them are petrol-station chains — Viada (35
-  branch rows), VIADA Baltija (27), Baltic Petroleum (25). A head-office inbox does not
-  answer a concierge request about one trailer.
+- **Supply problem, separate from intake:** the rows behind the trailer hubs are largely
+  petrol-station chains — Viada (35 branch rows), VIADA Baltija (27), Baltic Petroleum (25).
+  A head-office inbox does not answer a concierge request about one trailer.
+
+  **Corrected 2026-08-19.** This section originally read "124 Estonian trailer city hubs,
+  the widest footprint of any service". That was wrong. `/et/` in the sitemap is the
+  LANGUAGE prefix, not a country: `/et/trailer/*`, `/lv/trailer/*` and `/lt/trailer/*` are
+  the same 124 slugs, and the cities include Ādaži, Aizkraukle, Alytus and Daugavpils.
+  Estonian trailer coverage is **20** city hubs, not 124 — the widest footprint claim was an
+  artefact of counting Baltic cities and calling them Estonian. See
+  docs/ops/supplier-directory-audit-2026-08-19.md.
 - **Verdict:** unfulfillable as currently asked, and matched against supply that will not
   reply. Both halves need a decision; see §7.3.
 
