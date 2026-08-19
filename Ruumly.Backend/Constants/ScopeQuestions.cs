@@ -12,10 +12,76 @@ namespace Ruumly.Backend.Constants;
 /// <param name="Id">Matches the frontend's <c>SCOPE_QUESTIONS</c> id exactly (camelCase, ordinal).</param>
 /// <param name="Service">The <see cref="ServiceCategories"/> slug this question belongs to.</param>
 /// <param name="Options">Chip count. The LAST option always means "not sure".</param>
-public sealed record ScopeQuestion(string Id, string Service, int Options);
+/// <param name="Multi">
+/// Tick-all-that-apply: this question accepts SEVERAL chip positions, so its
+/// stored value may be an array as well as a bare number.
+///
+/// Two questions genuinely are lists — "anything heavy or awkward?" and
+/// "windows, oven or fridge as well?" — and squeezing them into one answer cost
+/// exactly the fact that decides the price. A customer with a piano AND an
+/// aquarium could only reach for the catch-all chip ("several of these"), and a
+/// mover pricing "several of these" is guessing at the specialist gear the whole
+/// question exists to surface: a real mover refused to quote a live Haapsalu
+/// move until it knew what was in it.
+///
+/// A DEFAULT OF FALSE IS THE SAFE DIRECTION. Marking a question Multi only ever
+/// WIDENS what is accepted — a bare number stays a valid answer to it, which is
+/// what every row already in production carries. A question left single-choice
+/// keeps rejecting arrays exactly as it did before.
+///
+/// The intake also greys out combinations that contradict each other ("nothing
+/// unusual" alongside a piano). That is a UI affordance and deliberately NOT
+/// enforced here: the browser is not the only thing that can POST, and dropping
+/// an answer a customer really gave because it disagrees with another one is a
+/// worse outcome than storing a contradiction an admin can read.
+/// </param>
+public sealed record ScopeQuestion(string Id, string Service, int Options, bool Multi = false);
 
-/// <summary>One answered question, already validated against the catalogue.</summary>
-public sealed record ScopeAnswer(string QuestionId, int Option);
+/// <summary>
+/// One answered question, already validated against the catalogue: the chip
+/// positions the customer picked, in ascending catalogue order.
+///
+/// A LIST EVEN THOUGH ALMOST EVERY QUESTION TAKES ONE ANSWER. The alternative —
+/// one <c>ScopeAnswer</c> per selection — would put the same question id on two
+/// rows, and every consumer downstream (the email's fact table, the quote page's
+/// definition list, an admin filter) would have to re-group them to say anything
+/// useful. Grouping once, here, is what keeps "one question, one line" true for
+/// all of them.
+/// </summary>
+public sealed record ScopeAnswer(string QuestionId, IReadOnlyList<int> Options)
+{
+    /// <summary>The overwhelmingly common case: a question with one answer.</summary>
+    public ScopeAnswer(string questionId, int option) : this(questionId, new[] { option }) { }
+
+    /// <summary>
+    /// The first selection — the compatibility view for callers that can only
+    /// carry one position (the public quote DTO's legacy <c>option</c> field).
+    ///
+    /// Falls back to 0 rather than throwing on an empty list. Normalize never
+    /// builds one, so this can only be reached by a hand-constructed answer, and
+    /// 0 is a position the catalogue rejects everywhere — it degrades to "no
+    /// chip" instead of to an exception on the path that carries the request.
+    /// </summary>
+    public int Option => Options.Count > 0 ? Options[0] : 0;
+
+    // Value semantics, written out because the compiler's would be wrong here.
+    // A positional record compares its members with EqualityComparer<T>.Default,
+    // and for IReadOnlyList<int> that is REFERENCE equality — so two answers
+    // naming the same chips would be unequal, silently, wherever this type is
+    // compared or used as a key. A list of small ints is a value if anything is.
+    public bool Equals(ScopeAnswer? other) =>
+        other is not null
+        && string.Equals(QuestionId, other.QuestionId, StringComparison.Ordinal)
+        && Options.SequenceEqual(other.Options);
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(QuestionId, StringComparer.Ordinal);
+        foreach (var option in Options) hash.Add(option);
+        return hash.ToHashCode();
+    }
+}
 
 /// <summary>
 /// The scoping questions the intake asks, as the BACKEND understands them.
@@ -54,6 +120,16 @@ public sealed record ScopeAnswer(string QuestionId, int Option);
 /// category" would silently discard the answers of every multi-service request
 /// — the ones that need scoping most. <see cref="ScopeQuestion.Service"/> is
 /// there to describe a question, not to police an answer.
+///
+/// TWO STORED SHAPES, AND BOTH ARE CURRENT. <c>DemandLead.ScopeJson</c> holds
+/// <c>{"movingSize":3}</c> for a single-choice question and
+/// <c>{"movingHeavyItems":[2,4]}</c> for one that takes several
+/// (<see cref="ScopeQuestion.Multi"/>). The bare number is not a legacy shape to
+/// be migrated away from: it is what every row written before 2026-08 carries,
+/// AND what a tick-all-that-apply question still writes when exactly one chip is
+/// ticked. So the array in the column always means the same thing — the customer
+/// really did pick more than one — and nothing about how an existing row renders
+/// changed when the second shape arrived. No migration: the column is JSON text.
 /// </summary>
 public static class ScopeQuestions
 {
@@ -116,7 +192,13 @@ public static class ScopeQuestions
         new(MovingAccess,      Moving,    5),   // legacy — see the note above
         new(MovingAccessFrom,  Moving,    5),
         new(MovingAccessTo,    Moving,    5),
-        new(MovingHeavyItems,  Moving,    6),
+        // Multi — a home can hold a piano AND an aquarium, and which of the two
+        // it is decides the sub-crew. Still SIX positions: option 5 was the
+        // single-choice era's escape hatch ("several of these") and the intake
+        // has stopped offering it, but leads taken before that carry it and
+        // their outreach is re-composed on every fan-out. Renumbering to close
+        // the gap would silently turn those rows into a different answer.
+        new(MovingHeavyItems,  Moving,    6, Multi: true),
         new(PackingHelp,       Moving,    4),
         new(TrailerDuration,   Trailer,   5),
         new(TrailerType,       Trailer,   5),
@@ -130,7 +212,9 @@ public static class ScopeQuestions
         new(VanRentalSize,     VanRental, 4),
         new(CleaningType,      Cleaning,  5),
         new(CleaningSize,      Cleaning,  5),
-        new(CleaningExtras,    Cleaning,  6),
+        // Multi, and retaining its own retired position 5 ("all three") for the
+        // same reason movingHeavyItems retains its own — see the note there.
+        new(CleaningExtras,    Cleaning,  6, Multi: true),
     ];
 
     private static readonly IReadOnlyDictionary<string, ScopeQuestion> ById =
@@ -144,14 +228,10 @@ public static class ScopeQuestions
     public static ScopeQuestion? Find(string? id) =>
         id is not null && ById.TryGetValue(id, out var q) ? q : null;
 
-    /// <summary>True when <paramref name="option"/> is a chip this question actually has.</summary>
-    public static bool IsAnswer(string? id, int option) =>
-        Find(id) is { } q && option >= 1 && option <= q.Options;
-
     /// <summary>
     /// Validate a submitted (or stored) set of answers: keep the ids this build
-    /// knows, whose value is a whole number inside that question's chip range,
-    /// and return them in catalogue order.
+    /// knows, whose value names chip positions that question actually has, and
+    /// return them in catalogue order.
     ///
     /// Takes <see cref="JsonElement"/> values rather than <c>int</c> so that a
     /// junk value is DROPPED rather than rejected. Binding straight to
@@ -168,15 +248,18 @@ public static class ScopeQuestions
     {
         if (raw is null) return [];
 
-        var kept = new Dictionary<string, int>(StringComparer.Ordinal);
+        var kept = new Dictionary<string, IReadOnlyList<int>>(StringComparer.Ordinal);
         foreach (var (id, value) in raw)
         {
-            if (value.ValueKind != JsonValueKind.Number) continue;
-            // TryGetInt32 fails on 2.5 and on anything outside int range, which
-            // is exactly right: an option is a chip position, not a measurement.
-            if (!value.TryGetInt32(out var option)) continue;
-            if (!IsAnswer(id, option)) continue;
-            kept[id] = option;                       // duplicate property → last one wins
+            if (Find(id) is not { } question) continue;
+            var options = Selections(question, value);
+            // No surviving chip is NO ANSWER, not a broken one — the same
+            // outcome as never sending the key. That covers the empty array a
+            // multi-select question sends when the visitor unticks their last
+            // box, which must leave the question unanswered rather than stored
+            // as an answer nothing can be rendered from.
+            if (options.Count == 0) continue;
+            kept[id] = options;                      // duplicate property → last one wins
             if (kept.Count == All.Count) break;      // nothing else can be added
         }
 
@@ -187,14 +270,81 @@ public static class ScopeQuestions
     }
 
     /// <summary>
+    /// The chip positions one JSON value names for one question: a bare number,
+    /// or — only for a <see cref="ScopeQuestion.Multi"/> question — an array of
+    /// them.
+    ///
+    /// AN ARRAY ON A SINGLE-CHOICE QUESTION IS DROPPED, not truncated to its
+    /// first element. Nothing we ship sends one, so it can only arrive from a
+    /// hand-rolled POST, and picking one of the positions a caller sent would be
+    /// inventing an answer the customer never gave — on a fact a provider is
+    /// about to price. "Wrong type for this question" is the same class of junk
+    /// as <c>{"movingSize":"3"}</c> and is treated the same way.
+    ///
+    /// The other direction is deliberately NOT symmetric: a bare number is
+    /// always valid, on a multi question as much as a single one. It is what
+    /// every stored row carries and what a tick-all-that-apply question writes
+    /// when one box is ticked.
+    /// </summary>
+    private static List<int> Selections(ScopeQuestion question, JsonElement value)
+    {
+        if (value.ValueKind == JsonValueKind.Number)
+            return Chip(question, value) is { } single ? [single] : [];
+
+        if (value.ValueKind != JsonValueKind.Array || !question.Multi) return [];
+
+        var picked = new List<int>();
+        foreach (var element in value.EnumerateArray())
+        {
+            // Junk inside the array costs that element and nothing else — the
+            // same rule the object level already follows for its values.
+            if (Chip(question, element) is not { } option) continue;
+            if (!picked.Contains(option)) picked.Add(option);
+        }
+
+        // Chip order, not tap order. Two customers who ticked the same two boxes
+        // in the opposite order have said the same thing, and the provider email
+        // is composed fresh on every fan-out — so the order has to come from the
+        // catalogue rather than from whichever box a thumb reached first, for
+        // exactly the reason the QUESTIONS are sorted by Rank below.
+        picked.Sort();
+        return picked;
+    }
+
+    /// <summary>One chip position, or null when this value is not one.</summary>
+    private static int? Chip(ScopeQuestion question, JsonElement value)
+    {
+        if (value.ValueKind != JsonValueKind.Number) return null;
+        // TryGetInt32 fails on 2.5 and on anything outside int range, which is
+        // exactly right: an option is a chip position, not a measurement.
+        if (!value.TryGetInt32(out var option)) return null;
+        return option >= 1 && option <= question.Options ? option : null;
+    }
+
+    /// <summary>
     /// Serializes normalized answers for <c>DemandLead.ScopeJson</c>:
-    /// <c>{"movingSize":2,"movingAccess":3}</c>. NULL for an empty set, so a
-    /// request with no scoping answers stores nothing at all rather than an
+    /// <c>{"movingSize":2,"movingHeavyItems":[2,4]}</c>. NULL for an empty set,
+    /// so a request with no scoping answers stores nothing at all rather than an
     /// empty object that later has to be told apart from one.
+    ///
+    /// ONE SELECTION IS WRITTEN AS A BARE NUMBER, whether or not the question
+    /// accepts several. Writing <c>[2]</c> would give the column a second shape
+    /// meaning exactly what the first one already means, and would change what
+    /// gets stored for questions whose answers are not changing at all. As it
+    /// stands an array in the column carries information — the customer ticked
+    /// more than one box — and every other row looks precisely as it always did.
     /// </summary>
     public static string? Serialize(IEnumerable<ScopeAnswer> answers)
     {
-        var map = answers.ToDictionary(a => a.QuestionId, a => a.Option, StringComparer.Ordinal);
+        var map = new Dictionary<string, object>(StringComparer.Ordinal);
+        foreach (var answer in answers)
+        {
+            if (answer.Options.Count == 0) continue;
+            map[answer.QuestionId] = answer.Options.Count == 1
+                ? answer.Options[0]
+                : answer.Options.ToArray();
+        }
+
         return map.Count == 0 ? null : JsonSerializer.Serialize(map);
     }
 }

@@ -526,7 +526,10 @@ public class SupportController(
         //
         // Validated against the catalogue rather than trusted: this is an
         // anonymous public endpoint, and everything stored here is later
-        // rendered into mail we send to real businesses.
+        // rendered into mail we send to real businesses. That validation now
+        // covers two value shapes — a chip position, and an ARRAY of them for
+        // the two tick-all-that-apply questions — and the catalogue decides
+        // which question may use which; see ScopeQuestions.Selections.
         var scope      = ScopeQuestions.Normalize(req.Scope);
 
         // ── Duplicate submit ─────────────────────────────────────────────────

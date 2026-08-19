@@ -242,11 +242,28 @@ public static class ProviderOutreachComposer
         // not know; this covers the narrower case of a known question whose
         // translation has not landed yet, and it must fail the same way —
         // quietly, one line short, with the request itself intact.
+        //
+        // ONE LINE PER QUESTION, even when the customer ticked several boxes.
+        // Two questions are tick-all-that-apply — "a piano AND an aquarium" is a
+        // sentence a mover needs to be able to read, and it was previously
+        // flattened to "several of these", which is a guess dressed as an
+        // answer. A second row under the same heading would read as the template
+        // losing track of itself, so the chips are joined in the recipient's own
+        // language instead (ScopeJoin).
         foreach (var answer in LeadScope.Answers(lead.ScopeJson))
         {
             if (t.ScopeLabel(answer.QuestionId) is not { } scopeLabel) continue;
-            if (t.ScopeOption(answer.QuestionId, answer.Option) is not { } scopeValue) continue;
-            facts.Add((scopeLabel, scopeValue));
+
+            // An option with no wording drops out of the list rather than
+            // taking the line with it: three ticked boxes and one retired chip
+            // must still tell the provider about the other two.
+            var worded = answer.Options
+                .Select(option => t.ScopeOption(answer.QuestionId, option))
+                .OfType<string>()
+                .ToList();
+            if (worded.Count == 0) continue;
+
+            facts.Add((scopeLabel, t.ScopeJoin(worded)));
         }
 
         facts.Add((t.OutreachLabelDetails,  details));

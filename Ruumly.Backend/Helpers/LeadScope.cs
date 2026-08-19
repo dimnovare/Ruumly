@@ -19,6 +19,14 @@ public static class LeadScope
     /// The lead's answers, validated and in catalogue order, or empty. Never
     /// throws.
     ///
+    /// READS BOTH STORED SHAPES, and neither is a legacy to be migrated away
+    /// from. <c>{"movingSize":3}</c> is a single-choice answer and is what every
+    /// row written before tick-all-that-apply arrived carries;
+    /// <c>{"movingHeavyItems":[2,4]}</c> is a question that takes several. A
+    /// question that accepts a list still stores a bare number when one box is
+    /// ticked, so the shape of an existing row — and what it renders — is
+    /// untouched by the second shape existing.
+    ///
     /// Re-validated on the way OUT as well as in. The column is written by us
     /// today, but a stored row outlives the build that wrote it: a question we
     /// have since retired, or a chip count we have since shortened, would
@@ -32,16 +40,16 @@ public static class LeadScope
 
         try
         {
-            // JsonDocument rather than a Dictionary&lt;string,int&gt; deserialize:
-            // one junk value ("movingSize": null) must cost that one answer, not
-            // the whole object. Normalize inspects each value itself and keeps
-            // the ones that are whole numbers in range.
+            // JsonDocument rather than a Dictionary&lt;string,JsonElement&gt;
+            // deserialize: one junk value ("movingSize": null) must cost that
+            // one answer, not the whole object. Normalize inspects each value
+            // itself and keeps the chip positions that are in range.
             using var doc = JsonDocument.Parse(scopeJson);
             if (doc.RootElement.ValueKind != JsonValueKind.Object) return [];
 
             // Materialized INSIDE the using: JsonElement is a window into the
             // document's buffer and is invalid once it is disposed. Normalize
-            // returns ints, so nothing borrowed escapes this scope.
+            // returns lists of ints, so nothing borrowed escapes this scope.
             return ScopeQuestions.Normalize(
                 doc.RootElement.EnumerateObject()
                    .Select(p => KeyValuePair.Create(p.Name, p.Value)));

@@ -206,7 +206,18 @@ public class LeadScopeTests
     [InlineData("""{"movingSize":2.5}""")]
     [InlineData("""{"movingSize":true}""")]
     [InlineData("""{"movingSize":{"a":1}}""")]
+    // An array against a SINGLE-choice question is the wrong type for it, and is
+    // dropped exactly like the other wrong types above. Picking one of the
+    // positions would be inventing an answer on a fact a provider will price.
     [InlineData("""{"movingSize":[1]}""")]
+    [InlineData("""{"movingSize":[1,2]}""")]
+    // The empty array a tick-all-that-apply question sends when the visitor
+    // unticks their last box. NO ANSWER, not a broken one — identical to never
+    // having sent the key.
+    [InlineData("""{"movingHeavyItems":[]}""")]
+    // …and an array whose every element is junk collapses to the same thing.
+    [InlineData("""{"movingHeavyItems":[0,7,"2",null,2.5,[2],{"a":2}]}""")]
+    [InlineData("""{"movingHeavyItems":{}}""")]
     public void BadScopeJson_IsDropped_AndLeavesTheEmailByteIdenticalToNoScopeAtAll(string stored)
     {
         // ONE lead instance throughout: the subject carries a reference derived
@@ -488,6 +499,285 @@ public class LeadScopeTests
         driver.Should().BeGreaterThan(-1);
         duration.Should().BeGreaterThan(driver, "the provider learns what is being asked for before how long");
         size.Should().BeGreaterThan(duration);
+    }
+
+    // ─── Tick-all-that-apply, without disturbing anything already stored ──────
+    //
+    // Two questions genuinely are lists — "anything heavy or awkward?" and
+    // "windows, oven or fridge as well?" — and were squeezed into single choice
+    // to match the shape of the rest. Both paid for it with a chip describing
+    // the CONTROL rather than the job ("several of these", "all three"), which
+    // is a guess dressed as an answer on the one fact that decides the price.
+    //
+    // The stored column now carries either a number or an array. THE HARD
+    // REQUIREMENT IS THAT NOTHING ALREADY IN IT MOVED: outreach is re-composed
+    // from the stored row every time an admin fans a lead out to one more
+    // provider, so a change in how an old row renders is a change to mail about
+    // requests that were taken months ago.
+
+    /// <summary>The one fact line a question produced, or null when it produced none.</summary>
+    private static string? FactLine(string text, string label) =>
+        text.Split('\n').FirstOrDefault(l => l.StartsWith($"{label}: ", StringComparison.Ordinal));
+
+    [Fact]
+    public void EveryStoredSingleNumber_StillRendersExactlyTheOptionWording()
+    {
+        // The whole catalogue, every chip, every language: a lead stored in the
+        // single-number shape renders the option's wording and NOTHING else —
+        // no separator, no conjunction, no bracket. That is what "existing rows
+        // render exactly as they did" means, stated as something a machine can
+        // check rather than as an intention.
+        foreach (var language in AllLanguages)
+        {
+            var t = EmailTranslations.For(language);
+            foreach (var question in ScopeQuestions.All)
+            {
+                for (var option = 1; option <= question.Options; option++)
+                {
+                    var lead = Lead(scopeJson: $$"""{"{{question.Id}}":{{option}}}""");
+                    var text = ProviderOutreachComposer.ComposeInLanguage(language, lead).TextBody;
+
+                    FactLine(text, t.ScopeLabel(question.Id)!).Should()
+                        .Be($"{t.ScopeLabel(question.Id)}: {t.ScopeOption(question.Id, option)}",
+                            $"'{question.Id}' option {option} in '{language}'");
+                }
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData("movingHeavyItems", 2)]
+    [InlineData("cleaningExtras", 3)]
+    public void OneSelection_ComposesIdentically_WhetherStoredAsANumberOrAOneItemArray(
+        string questionId, int option)
+    {
+        // The two shapes are the same answer, so they have to produce the same
+        // letter — subject, text and HTML. Anything else would mean the day a
+        // question became tick-all-that-apply, every lead already holding a
+        // single answer to it started reading differently.
+        var supplier = Provider("EE");
+        var lead     = Lead(language: "ru", scopeJson: $$"""{"{{questionId}}":{{option}}}""");
+        var asNumber = ProviderOutreachComposer.Compose(lead, supplier);
+
+        lead.ScopeJson = $$"""{"{{questionId}}":[{{option}}]}""";
+        var asArray = ProviderOutreachComposer.Compose(lead, supplier);
+
+        asArray.Subject.Should().Be(asNumber.Subject);
+        asArray.TextBody.Should().Be(asNumber.TextBody);
+        asArray.HtmlBody.Should().Be(asNumber.HtmlBody);
+    }
+
+    [Theory]
+    [InlineData("movingHeavyItems", "Mitu neist")]
+    [InlineData("cleaningExtras",   "Aknad, ahi ja külmik")]
+    public void TheRetiredCatchAllChip_StillRenders_ForTheLeadsThatCarryIt(
+        string questionId, string estonianWording)
+    {
+        // Position 5 of both questions was the single-choice era's escape hatch.
+        // The intake has stopped offering it, and the catalogue deliberately did
+        // NOT renumber to close the gap: the position is the identity of the
+        // answer, so shifting "not sure" down into 5 would rewrite what every
+        // lead already taken said.
+        var lead = Lead(language: "ru", scopeJson: $$"""{"{{questionId}}":5}""");
+        var text = ProviderOutreachComposer.Compose(lead, Provider("EE")).TextBody;
+
+        text.Should().Contain(estonianWording);
+    }
+
+    [Fact]
+    public void SeveralSelections_RenderOnOneFactLine_JoinedInTheProvidersLanguage()
+    {
+        // A piano AND an aquarium — the request "several of these" could only
+        // gesture at. One row, because two rows under one heading reads as a
+        // template that lost track of itself.
+        var lead = Lead(language: "ru", scopeJson: """{"movingHeavyItems":[2,4]}""");
+
+        var estonian = ProviderOutreachComposer.Compose(lead, Provider("EE")).TextBody;
+        var latvian  = ProviderOutreachComposer.Compose(lead, Provider("LV")).TextBody;
+        var english  = ProviderOutreachComposer.Compose(lead, Provider("FI")).TextBody;
+
+        FactLine(estonian, "Rasked või keerukad esemed").Should()
+            .Be("Rasked või keerukad esemed: Klaver ja Akvaarium, kunstiteos või muu õrn ese");
+        FactLine(latvian, "Smagi vai neērti priekšmeti").Should()
+            .Be("Smagi vai neērti priekšmeti: Klavieres un Akvārijs, mākslas darbs vai kas trausls");
+        FactLine(english, "Heavy or awkward items").Should()
+            .Be("Heavy or awkward items: A piano and An aquarium, artwork or something fragile");
+    }
+
+    [Fact]
+    public void ThreeSelections_UseTheSeparatorForAllButTheLastPair()
+    {
+        // Windows, oven and fridge — which is what the retired "all three" chip
+        // meant, now said by the customer rather than inferred by us.
+        var lead = Lead(language: "et", scopeJson: """{"cleaningExtras":[2,3,4]}""");
+        var text = ProviderOutreachComposer.Compose(lead, Provider("EE")).TextBody;
+
+        FactLine(text, "Lisatööd").Should().Be("Lisatööd: Aknad, Ahi ja Külmik");
+    }
+
+    [Fact]
+    public void EveryLanguage_JoinsSeveralAnswers_WithItsOwnWordAndNotWithAComma()
+    {
+        foreach (var language in AllLanguages)
+        {
+            var t = EmailTranslations.For(language);
+
+            t.ScopeJoin(["Aknad"]).Should().Be("Aknad",
+                $"'{language}' must leave a single answer exactly as it was — every row " +
+                "stored before this feature has one, and none of them may change");
+
+            t.ScopeJoin(["A", "B"]).Should().NotBe("A, B",
+                $"'{language}' joins with a real conjunction; a bare comma is punctuation " +
+                "we chose, not language, and it reads as machine output in a cold email");
+        }
+
+        // …and it is a DIFFERENT word in each, which is the reason it is copy
+        // rather than a constant in the composer.
+        var conjunctions = AllLanguages
+            .Select(l => EmailTranslations.For(l).ScopeJoin(["A", "B"]))
+            .ToList();
+        conjunctions.Should().OnlyHaveUniqueItems(
+            "no language may be left sitting on another's conjunction");
+    }
+
+    [Fact]
+    public void AnUnwordedChip_CostsThatChipOnly_NotTheWholeFactLine()
+    {
+        // A chip retired between the build that took the request and the build
+        // reading it. Three ticked boxes minus one wording is still two facts a
+        // mover needs — dropping the line would tell them about none of them.
+        var answer = new ScopeAnswer(ScopeQuestions.CleaningExtras, new[] { 2, 4 });
+        var stored = ScopeQuestions.Serialize([answer]);
+        var lead   = Lead(language: "et", scopeJson: stored);
+
+        FactLine(ProviderOutreachComposer.Compose(lead, Provider("EE")).TextBody, "Lisatööd")
+            .Should().Be("Lisatööd: Aknad ja Külmik");
+    }
+
+    [Fact]
+    public void SelectionsAreReadInChipOrder_Deduplicated_AndJunkCostsOnlyItsOwnElement()
+    {
+        // Tap order is chosen by a thumb, not by us, and outreach is re-composed
+        // on every fan-out — so two customers who ticked the same boxes have to
+        // produce the same letter, exactly as two customers who answered the
+        // same QUESTIONS already do.
+        LeadScope.Answers("""{"movingHeavyItems":[4,2,4,"x",99,0,null,2]}""")
+            .Should().BeEquivalentTo(
+                new[] { new ScopeAnswer("movingHeavyItems", new[] { 2, 4 }) },
+                o => o.WithStrictOrdering());
+    }
+
+    [Fact]
+    public void MixedShapes_InOneObject_BothSurvive()
+    {
+        LeadScope.Answers("""{"movingSize":3,"movingHeavyItems":[2,4],"cleaningExtras":2}""")
+            .Should().BeEquivalentTo(
+                new[]
+                {
+                    new ScopeAnswer("movingSize", 3),
+                    new ScopeAnswer("movingHeavyItems", new[] { 2, 4 }),
+                    new ScopeAnswer("cleaningExtras", 2),
+                },
+                o => o.WithStrictOrdering());
+    }
+
+    [Fact]
+    public void Serialize_WritesABareNumberForOneSelection_AndAnArrayOnlyForSeveral()
+    {
+        // What lands in the column. One selection stays a bare number whether or
+        // not the question accepts several, so an array in ScopeJson always
+        // means the same thing — the customer really did tick more than one box
+        // — and every other row looks precisely as it always did.
+        ScopeQuestions.Serialize([
+            new ScopeAnswer("movingSize", 3),
+            new ScopeAnswer("movingHeavyItems", new[] { 2 }),
+            new ScopeAnswer("cleaningExtras", new[] { 2, 4 }),
+        ]).Should().Be("""{"movingSize":3,"movingHeavyItems":2,"cleaningExtras":[2,4]}""");
+
+        ScopeQuestions.Serialize([]).Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ArrayAnswers_RoundTripThroughIntake_AndReachTheProviderLocalized()
+    {
+        // The whole path, on the shape that could not be expressed at all
+        // before: browser payload → Normalize → ScopeJson → LeadScope → an
+        // Estonian mover's inbox, for a request filled in on the Russian site.
+        var db = TestDbContext.Create();
+
+        var result = await MakeSupport(db, new CapturingEmailQueue()).RequestConcierge(new ConciergeRequest(
+            Email: "olga@example.com", City: "Tallinn", ToCity: "Tartu",
+            Categories: ["moving"], Language: "ru",
+            Scope: Submitted("""
+                {"movingSize":3,"movingHeavyItems":[4,2],"cleaningExtras":[]}
+                """)));
+
+        result.Should().BeOfType<OkObjectResult>();
+
+        var lead = db.DemandLeads.Single();
+        lead.ScopeJson.Should().Be("""{"movingSize":3,"movingHeavyItems":[2,4]}""",
+            "the empty array is no answer at all, and the chips are stored in catalogue order");
+
+        var message = ProviderOutreachComposer.Compose(lead, Provider("EE"));
+        foreach (var body in new[] { message.TextBody, message.HtmlBody! })
+            body.Should().Contain("Klaver ja Akvaarium, kunstiteos või muu õrn ese")
+                .And.NotContain("Пианино");
+    }
+
+    [Fact]
+    public async Task PublicQuoteDto_CarriesEveryChipOfAMultiSelectAnswer_AndStillNoPii()
+    {
+        var db  = TestDbContext.Create();
+        var pub = MakeQuote(db, new CapturingEmailQueue());
+
+        var lead = Lead(
+            language: "ru",
+            scopeJson: """{"movingSize":3,"movingHeavyItems":[2,4]}""",
+            fromAddress: "Lihula mnt 10-3, Haapsalu",
+            toAddress: "Riia 12-4, Tartu");
+        db.DemandLeads.Add(lead);
+
+        var supplier = Provider("EE");
+        db.Suppliers.Add(supplier);
+
+        var token = OfferToken.Generate();
+        db.ProviderOutreaches.Add(new ProviderOutreach
+        {
+            Id = Guid.NewGuid(), DemandLeadId = lead.Id, SupplierId = supplier.Id,
+            SentTo = supplier.ContactEmail!, SentAt = DateTime.UtcNow,
+            Status = ProviderOutreachStatus.Sent, QuoteToken = token,
+        });
+        await db.SaveChangesAsync();
+
+        var dto = (await pub.GetQuote(token))
+            .Should().BeOfType<OkObjectResult>().Subject.Value
+            .Should().BeOfType<PublicQuoteDto>().Subject;
+
+        dto.Lead.Scope.Should().BeEquivalentTo(
+            new[]
+            {
+                // A single answer puts exactly the bytes on the wire it always
+                // did — a quote page served from a service-worker cache predates
+                // the list and reads only `option`.
+                new PublicQuoteScopeDto("movingSize", 3),
+                // …and where there IS more than one chip, the legacy field
+                // carries the first of them rather than nothing.
+                new PublicQuoteScopeDto("movingHeavyItems", 2, new[] { 2, 4 }),
+            },
+            o => o.WithStrictOrdering());
+
+        var json = JsonSerializer.Serialize(dto);
+        json.Should().NotContain("Lihula").And.NotContain("Riia 12").And.NotContain("10-3");
+        json.Should().NotContain("olga@example.com").And.NotContain("Olga Ivanova").And.NotContain("+372 5555 1234");
+        // Slugs and positions, never our wording — the page owns the copy deck.
+        // (`Details` is the customer's own free text and is carried verbatim by
+        // design, so the chips checked here are ones it does not contain.)
+        json.Should().NotContain("Akvaarium").And.NotContain("Пианино");
+
+        // The single answer is on the wire exactly as it was before the list
+        // existed: a null would be a new field for a service-worker-cached page
+        // to trip over, so it is simply absent.
+        json.Should().Contain("""{"Question":"movingSize","Option":3}""");
     }
 
     // ─── The intake persists structure, not just prose ────────────────────────

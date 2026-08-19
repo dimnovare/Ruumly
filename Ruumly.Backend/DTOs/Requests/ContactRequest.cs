@@ -101,8 +101,16 @@ public record ConciergeRequest(
     /// storage: unknown ids and out-of-range positions are dropped, never
     /// trusted, and never 400 the request.
     ///
+    /// A value may also be an ARRAY of positions —
+    /// <c>{"movingHeavyItems":[2,4]}</c> — for the two questions the catalogue
+    /// marks tick-all-that-apply. Only for those: an array against any other
+    /// question is the wrong type for it and is dropped like any other junk
+    /// value, because choosing one of the positions on the caller's behalf would
+    /// invent an answer the customer never gave.
+    ///
     /// Bound as <see cref="JsonElement"/> values rather than <c>int</c> on
-    /// purpose. A <c>Dictionary&lt;string,int&gt;</c> makes ONE malformed value
+    /// purpose — which is also why accepting the array form needed no change
+    /// here. A <c>Dictionary&lt;string,int&gt;</c> makes ONE malformed value
     /// ("movingSize": null, from a stale service-worker-cached bundle or a
     /// hand-rolled POST) a model-binding 400 that loses the entire request —
     /// and the scoping answers are an extra on a request, never worth the

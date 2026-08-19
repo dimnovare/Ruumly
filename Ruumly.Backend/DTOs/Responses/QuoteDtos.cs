@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Ruumly.Backend.DTOs.Responses;
 
 /// <summary>Provider display name — the only party detail the quote page shows.</summary>
@@ -15,7 +17,30 @@ public sealed record PublicQuoteProviderDto(string Name);
 /// the same catalogue (<see cref="Constants.ScopeQuestions"/>), so a question
 /// one side does not know is a chip the other side simply does not draw.
 /// </summary>
-public sealed record PublicQuoteScopeDto(string Question, int Option);
+/// <param name="Option">
+/// The FIRST chip of the answer, and the only field an older bundle reads.
+/// Kept — rather than replaced by the list below — because the quote page is
+/// served through a service worker: a provider who opened the link we emailed
+/// them may be running a bundle from before the list existed, and for that
+/// bundle this field is the difference between one true fact and a row it drops
+/// on the floor.
+/// </param>
+/// <param name="Options">
+/// Every chip of the answer, for the two tick-all-that-apply questions — "a
+/// piano AND an aquarium" is what a mover has to be able to read.
+///
+/// PRESENT ONLY WHEN THERE IS MORE THAN ONE, which is precisely when
+/// <paramref name="Option"/> alone would be a half-truth — hence the
+/// <c>JsonIgnore</c>, which keeps null OFF the wire rather than on it. Every
+/// single-answer question therefore puts exactly the same bytes on the wire as
+/// it did before this field existed, and the field's absence is a fact rather
+/// than a shrug: it means the compatibility field above already says everything.
+/// </param>
+public sealed record PublicQuoteScopeDto(
+    string Question,
+    int Option,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    IReadOnlyList<int>? Options = null);
 
 /// <summary>
 /// What the provider is quoting for. Deliberately excludes ALL customer PII

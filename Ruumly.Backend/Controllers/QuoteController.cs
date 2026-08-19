@@ -115,8 +115,14 @@ public class QuoteController(
                 // Structured, so the page can draw the answers as chips in the
                 // provider's own language instead of showing them as whatever
                 // language the customer happened to fill the form in.
+                //
+                // The list rides along only where it says something the single
+                // Option cannot — see PublicQuoteScopeDto. That keeps the wire
+                // shape of every single-answer question byte-for-byte what a
+                // service-worker-cached quote page already knows how to read.
                 LeadScope.Answers(lead.ScopeJson)
-                    .Select(a => new PublicQuoteScopeDto(a.QuestionId, a.Option))
+                    .Select(a => new PublicQuoteScopeDto(
+                        a.QuestionId, a.Option, a.Options.Count > 1 ? a.Options : null))
                     .ToList()),
             "EUR",
             alreadySubmitted,

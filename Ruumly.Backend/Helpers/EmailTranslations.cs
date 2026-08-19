@@ -426,7 +426,22 @@ public static class EmailTranslations
         // "movingSize.opt3") so the two catalogues can be diffed by eye. A
         // question with no entry here renders NO line at all — never a raw id
         // and never a bare number, which is worse than silence in a cold email.
-        IReadOnlyDictionary<string, string> ScopeText
+        IReadOnlyDictionary<string, string> ScopeText,
+        // ── Joining several answers to ONE question onto one fact line ────────
+        // Two questions are tick-all-that-apply ("a piano AND an aquarium"), so
+        // one row of the fact table can now carry two or three chips.
+        //
+        // TRANSLATED, not a hardcoded ", ". Punctuation is copy: the conjunction
+        // before the last item is a different word in each of the five languages
+        // and is the one thing that makes the line read as written by a person
+        // rather than assembled by a machine — which is the entire question a
+        // cold recipient is asking about this email. The separator travels with
+        // it because we do not get to assume the comma is universal either.
+        //
+        // Both include their own spacing, so joining is concatenation and there
+        // is no rule about who owns the space between two strings.
+        string ScopeListSeparator,
+        string ScopeListLast
     )
     {
         public string SupplierWelcomeBody(string name) =>
@@ -473,6 +488,33 @@ public static class EmailTranslations
         /// </summary>
         public string? ScopeOption(string questionId, int option) =>
             ScopeText.GetValueOrDefault($"{questionId}.opt{option}");
+
+        /// <summary>
+        /// Several chips of one question as one readable value:
+        /// "Windows, Oven and Fridge".
+        ///
+        /// A SINGLE ITEM COMES BACK UNTOUCHED, and that is load-bearing rather
+        /// than merely tidy: every scoping answer stored before this existed has
+        /// exactly one chip, and every one of those rows has to keep producing
+        /// the byte-identical fact line it produced before — outreach is
+        /// re-composed from the stored row on every fan-out, so a change here
+        /// would rewrite mail about requests that were taken months ago.
+        ///
+        /// The items keep the capitalisation the chip catalogue gave them, so
+        /// "A piano and An aquarium…" is possible. Deliberate: recasing another
+        /// language's copy by machine is how a proper noun ends up lowercase in
+        /// a cold business email, and no test we can write would catch it in a
+        /// language nobody here reads. A capital after the conjunction costs the
+        /// reader nothing.
+        /// </summary>
+        public string ScopeJoin(IReadOnlyList<string> values) => values.Count switch
+        {
+            0 => "",
+            1 => values[0],
+            _ => string.Join(ScopeListSeparator, values.Take(values.Count - 1))
+                 + ScopeListLast
+                 + values[^1],
+        };
 
         /// <summary>"The customer attached N photos — view them on the quote page."</summary>
         public string OutreachPhotos(int count) =>
@@ -571,6 +613,15 @@ public static class EmailTranslations
     //
     // Every option is the SAME answer the customer tapped, in the recipient's
     // language. Nothing here is ever rendered to the customer.
+    //
+    // TWO OPTIONS ARE NO LONGER OFFERED AND MUST NOT BE DELETED:
+    // movingHeavyItems.opt5 ("several of these") and cleaningExtras.opt5 ("all
+    // three"). Both were single-choice escape hatches, replaced by letting the
+    // customer tick the actual boxes — but the position is the identity of an
+    // answer, so every lead taken before the change still stores a 5 there, and
+    // outreach for those leads is re-composed whenever an admin fans one out to
+    // another provider. Removing the wording would not remove the answer; it
+    // would drop the fact line and tell the mover nothing about the piano.
 
     /// <summary>
     /// Fills in the chips of <c>movingAccessFrom</c> and <c>movingAccessTo</c>
@@ -1338,7 +1389,9 @@ public static class EmailTranslations
         CategoryVanRental:             "Kaubiku rent",
         CategoryInsurance:             "Kindlustus",
         CategoryAny:                   "Teenus",
-        ScopeText:                     ScopeEt
+        ScopeText:                     ScopeEt,
+        ScopeListSeparator:            ", ",
+        ScopeListLast:                 " ja "
     );
 
     private static readonly EmailStrings En = new(
@@ -1541,7 +1594,9 @@ public static class EmailTranslations
         CategoryVanRental:             "Van rental",
         CategoryInsurance:             "Insurance",
         CategoryAny:                   "Service",
-        ScopeText:                     ScopeEn
+        ScopeText:                     ScopeEn,
+        ScopeListSeparator:            ", ",
+        ScopeListLast:                 " and "
     );
 
     private static readonly EmailStrings Ru = new(
@@ -1742,7 +1797,9 @@ public static class EmailTranslations
         CategoryVanRental:             "Аренда фургона",
         CategoryInsurance:             "Страхование",
         CategoryAny:                   "Услуга",
-        ScopeText:                     ScopeRu
+        ScopeText:                     ScopeRu,
+        ScopeListSeparator:            ", ",
+        ScopeListLast:                 " и "
     );
 
     private static readonly EmailStrings Lv = new(
@@ -1944,7 +2001,9 @@ public static class EmailTranslations
         CategoryVanRental:             "Furgona noma",
         CategoryInsurance:             "Apdrošināšana",
         CategoryAny:                   "Pakalpojums",
-        ScopeText:                     ScopeLv
+        ScopeText:                     ScopeLv,
+        ScopeListSeparator:            ", ",
+        ScopeListLast:                 " un "
     );
 
     private static readonly EmailStrings Lt = new(
@@ -2146,7 +2205,9 @@ public static class EmailTranslations
         CategoryVanRental:             "Furgono nuoma",
         CategoryInsurance:             "Draudimas",
         CategoryAny:                   "Paslauga",
-        ScopeText:                     ScopeLt
+        ScopeText:                     ScopeLt,
+        ScopeListSeparator:            ", ",
+        ScopeListLast:                 " ir "
     );
 
     public static EmailStrings For(string? lang) =>
