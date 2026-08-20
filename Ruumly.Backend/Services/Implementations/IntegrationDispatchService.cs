@@ -116,7 +116,12 @@ public class IntegrationDispatchService(
                 client.DefaultRequestHeaders.Add("X-API-Key", plainToken);
         }
 
-        if (!OutboundEndpointValidator.IsAllowed(supplier.ApiEndpoint))
+        // IsAllowedAsync, not IsAllowed: this runs immediately before an outbound
+        // request that ATTACHES the supplier's bearer token, so a hostname that
+        // resolves to 169.254.169.254 (cloud metadata) or a private range must be
+        // caught by the DNS-resolving pass. The sync check only inspects IP
+        // LITERALS and would wave a malicious hostname straight through.
+        if (!await OutboundEndpointValidator.IsAllowedAsync(supplier.ApiEndpoint))
         {
             logger.LogWarning(
                 "Refusing to dispatch order {OrderId} to supplier {SupplierId} — endpoint failed SSRF validation: {Endpoint}",

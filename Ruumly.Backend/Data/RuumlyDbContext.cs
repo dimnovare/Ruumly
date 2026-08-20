@@ -427,6 +427,14 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
             e.HasIndex(d => d.Email);
             // Partner-facing leads view filters by SupplierId; generic leads have it null.
             e.HasIndex(d => d.SupplierId);
+            // The admin lead queue — the founder's most-hit screen — filters on
+            // Status and orders by CreatedAt DESC (AdminLeadsController.GetLeads).
+            // Without this it is a seq scan + in-memory sort of the whole table on
+            // every load, degrading as leads accumulate. Composite so the filter
+            // and the sort are one index seek; CreatedAt descending to match the
+            // query's order so Postgres reads it forward.
+            e.HasIndex(d => new { d.Status, d.CreatedAt })
+                .HasDatabaseName("IX_DemandLeads_Status_CreatedAt");
             e.Property(d => d.Category).HasConversion<string>();
             e.Property(d => d.Status).HasConversion<string>();
         });

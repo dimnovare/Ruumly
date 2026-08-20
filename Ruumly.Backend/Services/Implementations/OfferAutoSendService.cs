@@ -36,6 +36,7 @@ public class OfferAutoSendService(
     RuumlyDbContext db,
     IBackgroundEmailQueue emailQueue,
     IConfiguration config,
+    IProviderOutcomeNotifier outcomeNotifier,
     ILogger<OfferAutoSendService> logger) : IOfferAutoSendService
 {
     public const string EnabledSetting      = "offerAutoSend";
@@ -111,6 +112,27 @@ public class OfferAutoSendService(
         emailQueue.EnqueueEmail(
             lead.Email.Trim(), email.Subject, email.TextBody,
             htmlBody: null, replyTo: await OpsInbox.ResolveAsync(db));
+
+        // The providers inside this offer are owed the same "your price went to
+        // the customer" note the admin send produces. Wired here even though this
+        // path is default-OFF: the day someone flips `offerAutoSend` on, the
+        // difference between the two send paths must not be that one of them
+        // silently stops telling providers anything.
+        //
+        // The notifier re-loads the offer with its own Includes, so it does not
+        // depend on this method's narrower query (which omits Supplier).
+        // Isolated: the offer is committed and the customer's mail is queued, so
+        // a courtesy-mail failure must not turn a completed send into an error.
+        try
+        {
+            await outcomeNotifier.NotifyOfferSentAsync(offer.Id, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex,
+                "Provider 'offer sent' notification failed for auto-sent offer {OfferId} — the send succeeded.",
+                offer.Id);
+        }
 
         logger.LogInformation(
             "Offer {OfferId} auto-sent for lead {LeadId} ({Options} option(s), {Quoted} quoted).",

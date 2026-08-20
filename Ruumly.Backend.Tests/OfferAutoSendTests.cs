@@ -32,6 +32,7 @@ public class OfferAutoSendTests
             new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string?> { ["AppUrl"] = "https://ruumly.eu" })
                 .Build(),
+            TestServices.OutcomeNotifier(db, queue),
             NullLogger<OfferAutoSendService>.Instance);
 
     private static async Task<(RuumlyDbContext Db, Offer Offer)> SeedAsync(

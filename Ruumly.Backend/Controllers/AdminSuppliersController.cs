@@ -593,9 +593,11 @@ public class AdminSuppliersController(
         if (supplier.IntegrationType == IntegrationType.Api &&
             !string.IsNullOrWhiteSpace(supplier.ApiEndpoint))
         {
-            // SSRF guard — refuse to probe loopback, private ranges, cloud metadata,
-            // Railway internal, or non-HTTP(S) schemes via an admin-supplied endpoint.
-            if (!OutboundEndpointValidator.IsAllowed(supplier.ApiEndpoint))
+            // IsAllowedAsync (DNS-resolving), not IsAllowed: this is the request-
+            // time guard for a probe that attaches the supplier's auth token, so
+            // a hostname resolving to loopback / a private range / cloud metadata
+            // must be rejected here — the sync check only catches IP literals.
+            if (!await OutboundEndpointValidator.IsAllowedAsync(supplier.ApiEndpoint))
             {
                 logger.LogWarning(
                     "SSRF guard blocked test for supplier {SupplierId} — endpoint '{Endpoint}' not allowed",

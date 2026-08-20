@@ -24,6 +24,16 @@ internal static class TestServices
             NullLogger<ConciergeOutreachService>.Instance);
 
     /// <summary>
+    /// The real provider-outcome notifier, wired to the same DbContext and email
+    /// queue as the controller under test. Deliberately NOT a no-op fake: the
+    /// "offer sent" and "customer chose" paths now enqueue provider mail, and a
+    /// test that stubs it out would stop noticing whether they do.
+    /// </summary>
+    public static IProviderOutcomeNotifier OutcomeNotifier(
+        RuumlyDbContext db, IBackgroundEmailQueue queue) =>
+        new ProviderOutcomeNotifier(db, queue, NullLogger<ProviderOutcomeNotifier>.Instance);
+
+    /// <summary>
     /// Storage that stores nothing. Several controllers and the cleanup job now
     /// take IStorageService only because of the request-photo feature; tests that
     /// exercise anything else should not need a bucket to do it.

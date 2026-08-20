@@ -13,6 +13,7 @@ using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Ruumly.Backend.Tests.Integration;
 
@@ -194,7 +195,8 @@ public class OfferSelectionNpgsqlTests(PostgresIntegrationFixture pg)
 
     private static OffersController MakePublic(
         RuumlyDbContext db, IBackgroundEmailQueue queue) =>
-        new(db, queue)
+        new(db, queue, TestServices.OutcomeNotifier(db, queue),
+            NullLogger<OffersController>.Instance)
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },
         };
@@ -203,7 +205,9 @@ public class OfferSelectionNpgsqlTests(PostgresIntegrationFixture pg)
     {
         var queue = new CapturingEmailQueue();
         return new(db, queue, new ConfigurationBuilder().Build(),
-            TestServices.Outreach(db, queue))
+            TestServices.Outreach(db, queue),
+            TestServices.OutcomeNotifier(db, queue),
+            NullLogger<AdminOffersController>.Instance)
         {
             ControllerContext = new ControllerContext
             {

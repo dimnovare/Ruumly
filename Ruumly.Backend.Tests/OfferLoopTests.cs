@@ -13,6 +13,7 @@ using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Ruumly.Backend.Tests;
 
@@ -35,7 +36,9 @@ public class OfferLoopTests
     }
 
     private static AdminOffersController MakeAdmin(RuumlyDbContext db, IBackgroundEmailQueue queue) =>
-        new(db, queue, TestServices.Config(), TestServices.Outreach(db, queue, TestServices.Config()))
+        new(db, queue, TestServices.Config(), TestServices.Outreach(db, queue, TestServices.Config()),
+            TestServices.OutcomeNotifier(db, queue),
+            NullLogger<AdminOffersController>.Instance)
         {
             ControllerContext = new ControllerContext
             {
@@ -52,7 +55,8 @@ public class OfferLoopTests
         };
 
     private static OffersController MakePublic(RuumlyDbContext db, IBackgroundEmailQueue queue) =>
-        new(db, queue)
+        new(db, queue, TestServices.OutcomeNotifier(db, queue),
+            NullLogger<OffersController>.Instance)
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },
         };
@@ -212,9 +216,18 @@ public class OfferLoopTests
         queue.Emails.Should().BeEmpty();
 
         await admin.SendOffer(id);
-        var email = queue.Emails.Should().ContainSingle().Subject;
+        // Sending now writes to the provider as well as the customer ("your price
+        // went to the customer"), so this picks the CUSTOMER's letter out of the
+        // queue rather than assuming it is the only one. Selecting by recipient
+        // keeps the assertion about what it was always about — that the preview
+        // and the real send are composed by the same code.
+        var email = queue.Emails.Should().ContainSingle(e => e.To == lead.Email).Subject;
         preview.Email.Subject.Should().Be(email.Subject);
         preview.Email.TextBody.Should().Be(email.TextBody);
+
+        // And the provider behind the option really is told, in the same send.
+        queue.Emails.Should().ContainSingle(e => e.To == "private@provider.ee",
+            "a provider whose quote is inside a sent offer is owed the news that it went out");
 
         var publicDto = (await MakePublic(db, new CapturingEmailQueue())
                 .GetOffer(db.Offers.Single().Token))

@@ -72,4 +72,23 @@ public class ProviderOutreach
     [MaxLength(200)]  public string? QuotedAvailability { get; set; }
     [MaxLength(2000)] public string? QuotedNote { get; set; }
     public DateTime? QuotedAt { get; set; }
+
+    // ── Recorded decline (2026-08-20) ─────────────────────────────────────────
+    // The outreach email has offered "a short 'not possible' is a perfectly good
+    // answer" since 2026-08-18 — but the only way to give that answer was a
+    // free-text reply into a shared inbox that nothing parsed, so every real
+    // "no" was recorded as silence: it kept feeding the provider-silence metric,
+    // and the same provider kept receiving the next lead in range. One tap on
+    // the quote page now lands here instead.
+
+    /// <summary>
+    /// Why the provider said no — a <see cref="Constants.DeclineReasons"/> slug,
+    /// or null for a bare decline (which is itself a complete answer).
+    /// </summary>
+    [MaxLength(40)] public string? DeclineReason { get; set; }
+
+    /// <summary>Optional free-text detail the provider added to the decline.</summary>
+    [MaxLength(2000)] public string? DeclineNote { get; set; }
+
+    public DateTime? DeclinedAt { get; set; }
 }

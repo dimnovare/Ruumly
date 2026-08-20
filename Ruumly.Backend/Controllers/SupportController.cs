@@ -400,7 +400,10 @@ public class SupportController(
     /// </summary>
     [HttpPost("leads/request")]
     [AllowAnonymous]
-    [EnableRateLimiting("public-email")]
+    // Own bucket ("lead-request", 15/10min) — NOT "public-email" (5/10min shared
+    // with the contact form and notify-interest): a shared office/CGNAT IP must
+    // never 429 a first-time customer out of the submit the product exists for.
+    [EnableRateLimiting("lead-request")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> RequestConcierge([FromBody] ConciergeRequest req)

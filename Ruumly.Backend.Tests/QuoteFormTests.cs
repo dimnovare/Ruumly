@@ -12,6 +12,7 @@ using Ruumly.Backend.DTOs.Responses;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Ruumly.Backend.Tests;
 
@@ -35,7 +36,9 @@ public class QuoteFormTests
     }
 
     private static AdminOffersController MakeAdmin(RuumlyDbContext db, IBackgroundEmailQueue queue) =>
-        new(db, queue, TestServices.Config(), TestServices.Outreach(db, queue, TestServices.Config()))
+        new(db, queue, TestServices.Config(), TestServices.Outreach(db, queue, TestServices.Config()),
+            TestServices.OutcomeNotifier(db, queue),
+            NullLogger<AdminOffersController>.Instance)
         {
             ControllerContext = new ControllerContext
             {
@@ -59,6 +62,7 @@ public class QuoteFormTests
             new Ruumly.Backend.Services.Implementations.OfferAutoSendService(
                 db, queue,
                 new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(),
+                TestServices.OutcomeNotifier(db, queue),
                 Microsoft.Extensions.Logging.Abstractions.NullLogger<
                     Ruumly.Backend.Services.Implementations.OfferAutoSendService>.Instance),
             new TestServices.NoStorage(),

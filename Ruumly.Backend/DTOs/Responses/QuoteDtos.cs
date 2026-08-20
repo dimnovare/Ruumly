@@ -95,7 +95,16 @@ public sealed record PublicQuoteDto(
     PublicQuoteExistingDto? Existing,
     bool Closed,
     bool InfoRequested = false,
-    PublicQuoteInfoRequestDto? InfoRequest = null);
+    PublicQuoteInfoRequestDto? InfoRequest = null,
+    /// <summary>
+    /// The provider already said no through this page. Mirrors the
+    /// AlreadySubmitted pattern: the page renders the recorded decline instead
+    /// of the price form, so a second visit does not invite a second answer.
+    /// </summary>
+    bool Declined = false);
+
+/// <summary>POST /api/quote/{token}/decline — echo of the recorded decline.</summary>
+public sealed record QuoteDeclinedDto(bool Ok, string? Reason, string? Note);
 
 /// <summary>POST /api/quote/{token} — thank-you echo of the stored quote.</summary>
 public sealed record QuoteSubmittedDto(

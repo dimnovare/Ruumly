@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using NpgsqlTypes;
@@ -13,9 +14,11 @@ using Ruumly.Backend.Data;
 namespace Ruumly.Backend.Migrations
 {
     [DbContext(typeof(RuumlyDbContext))]
-    partial class RuumlyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260820101324_AddProviderOutreachDecline")]
+    partial class AddProviderOutreachDecline
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -389,9 +392,6 @@ namespace Ruumly.Backend.Migrations
                         .HasFilter("\"StatusToken\" IS NOT NULL");
 
                     b.HasIndex("SupplierId");
-
-                    b.HasIndex("Status", "CreatedAt")
-                        .HasDatabaseName("IX_DemandLeads_Status_CreatedAt");
 
                     b.ToTable("DemandLeads");
                 });
@@ -1021,12 +1021,6 @@ namespace Ruumly.Backend.Migrations
                     b.Property<string>("PriceUnit")
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)");
-
-                    b.Property<DateTime?>("ProviderNotifiedOutcomeAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("ProviderNotifiedSentAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("SortOrder")
                         .HasColumnType("integer");
