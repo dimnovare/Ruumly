@@ -78,6 +78,35 @@ Both clarification emails were sent from info@ruumly.eu:
 Both carry the `[DE37E39D]` lead reference in the subject, so replies thread with
 the original outreach. **The offer stays in Draft until both answer.**
 
+## 17:40 EEST — CVN replied, and it exposes a real intake gap
+
+Artis Galdiņš (CVN) came back within the hour:
+
+> *"Labvakar! Lai iedotu precīzu summu, vajadzētu zināt precīzas adreses."*
+
+He is right, and he cannot be answered — **this lead carries no addresses at
+all.** `FromAddress` and `ToAddress` are both empty, and there is no phone
+either; the only channel to the customer is email.
+
+That is not a one-off. The intake asks for a city (required) and street
+addresses (optional), and this is the optional field costing a real quote on a
+real job. It matches finding **C7** in `RUUMLY_FULL_AUDIT.md` — the from/to
+address block is offered but never required, including for moving, where a
+mover's price is a function of the distance and the parking at both ends.
+
+**Recommendation for the funnel:** for `moving` (and `vanrental` with a driver),
+either require both addresses or ask for them on the confirmation screen while
+the customer is still engaged. Asking four hours later by email costs a day.
+
+Actions taken:
+
+| To | Gmail id | What |
+|---|---|---|
+| `agensa@gmail.com` (customer) | `1a01fa78ea36301f` | asked for the exact pickup and drop-off addresses, in Latvian; stated the address goes only to the provider they choose |
+| `info@cvn.lv` (reply in thread) | `1a01fa7c8dc494da` | acknowledged, told them we are getting the addresses, nothing needed from them meanwhile |
+
+RIX Freight has **not** replied yet — the 160 €/hour question is still open.
+
 ## After the replies
 
 Update the two options in the admin offer editor, then send. Once the provider

@@ -701,6 +701,18 @@ public class AdminOffersController(
         quotedAvailability = o.QuotedAvailability,
         quotedNote         = o.QuotedNote,
         quotedAt           = o.QuotedAt,
+        // The provider's recorded NO, from the quote page's decline action.
+        //
+        // Carried here for the same reason the info-request is: the row's status
+        // already says `declined`, and the reason is what that word means. Two of
+        // the five reasons (wrong_area, not_our_service) are not about this lead
+        // at all — they say the DIRECTORY ROW is mis-filed and every future
+        // fan-out to this provider is wasted until someone fixes it. That is
+        // worth more than the decline itself, and it is invisible unless the
+        // workspace prints it.
+        declineReason = o.DeclineReason,
+        declineNote   = o.DeclineNote,
+        declinedAt    = o.DeclinedAt,
         // The provider's OPEN "I cannot price this yet" (ProviderInfoRequest),
         // null once ops resolves it.
         //
