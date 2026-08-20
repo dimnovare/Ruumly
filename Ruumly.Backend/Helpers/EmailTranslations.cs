@@ -217,6 +217,34 @@ public static class EmailTranslations
         // support phone was retired in 2026-08 (the founder does not take
         // provider calls), so no number is printed anywhere in outbound mail.
         string OutreachQuestionsTpl,
+        // ── Provider outcome mail (2026-08-20) ────────────────────
+        // The three moments a provider who QUOTED deserves to hear about, and
+        // which the system previously kept to itself: the quote reached the
+        // customer, the customer picked them, the customer picked somebody else.
+        //
+        // Until now a provider did unpaid pricing work on a cold request and
+        // then heard nothing, ever — only the ops inbox learned the outcome
+        // (OffersController.ChooseOption). Nothing suppresses a second quote
+        // faster than never learning the result of the first.
+        //
+        // DELIBERATELY NO COMPETITOR PRICE AND NO CUSTOMER IDENTITY. The losing
+        // note says somebody else was chosen, never who or for how much: the
+        // winning number is that provider's confidential commercial data, and
+        // feeding it to the people they beat trains the whole panel either to
+        // lowball or to stop quoting honestly. The concierge model likewise
+        // keeps the customer's identity from providers until a confirmed booking.
+        string ProviderOfferSentSubjectTpl,
+        string ProviderOfferSentIntro,
+        string ProviderOfferSentWaiting,
+        string ProviderOfferSentNoAction,
+        string ProviderWonSubjectTpl,
+        string ProviderWonIntro,
+        string ProviderWonNext,
+        string ProviderLostSubjectTpl,
+        string ProviderLostIntro,
+        string ProviderLostThanks,
+        string ProviderLostNext,
+        string ProviderOutcomeQuoteLabel,
         // ── Customer request acknowledgement (concierge_ack) ──────────────────
         // Sent the instant a request is submitted. Before this existed the
         // customer heard nothing until an offer arrived days later, from an
@@ -1314,6 +1342,18 @@ public static class EmailTranslations
         OutreachReplyAlternative:      "Või vastake lihtsalt sellele e-kirjale koos hinnaga — kiri jõuab otse meie meeskonnani.",
         OutreachSignature:             "Ruumly meeskond\ninfo@ruumly.eu\nhttps://ruumly.eu",
         OutreachQuestionsTpl:          "Küsimused? Vastake sellele kirjale või kirjutage meile kontaktivormi kaudu: {url}",
+        ProviderOfferSentSubjectTpl:   "{city}: teie hind on kliendile edastatud",
+        ProviderOfferSentIntro:        "Edastasime teie hinna kliendile koos teiste selle piirkonna pakkumistega.",
+        ProviderOfferSentWaiting:      "Nüüd on valik kliendi teha. Anname teile teada, kui ta on otsustanud.",
+        ProviderOfferSentNoAction:     "Praegu ei ole vaja midagi ette võtta.",
+        ProviderWonSubjectTpl:         "{city}: klient valis teie pakkumise",
+        ProviderWonIntro:              "Hea uudis — klient valis teie pakkumise.",
+        ProviderWonNext:               "Võtame teiega lähiajal ühendust ja lepime kliendiga üksikasjad kokku.",
+        ProviderLostSubjectTpl:        "{city}: klient valis teise pakkuja",
+        ProviderLostIntro:             "Klient valis seekord teise teenusepakkuja.",
+        ProviderLostThanks:            "Aitäh, et võtsite aega ja saatsite meile hinna.",
+        ProviderLostNext:              "Anname teile teada, kui järgmine sobiv päring teie piirkonda tuleb.",
+        ProviderOutcomeQuoteLabel:     "Teie hind",
         AckSubject:                    "Sinu päring on meil käes — Ruumly",
         AckGreetingTpl:                "Tere, {name}!",
         AckGreetingNoName:             "Tere!",
@@ -1526,6 +1566,18 @@ public static class EmailTranslations
         OutreachReplyAlternative:      "Or simply reply to this email with your price — it reaches our team directly.",
         OutreachSignature:             "The Ruumly team\ninfo@ruumly.eu\nhttps://ruumly.eu",
         OutreachQuestionsTpl:          "Questions? Reply to this email, or write to us through our contact page: {url}",
+        ProviderOfferSentSubjectTpl:   "{city}: your price has been sent to the customer",
+        ProviderOfferSentIntro:        "We have passed your price on to the customer, alongside the other quotes for this area.",
+        ProviderOfferSentWaiting:      "The choice is now the customer’s. We will let you know once they decide.",
+        ProviderOfferSentNoAction:     "Nothing is needed from you right now.",
+        ProviderWonSubjectTpl:         "{city}: the customer chose your quote",
+        ProviderWonIntro:              "Good news — the customer chose your quote.",
+        ProviderWonNext:               "We will be in touch shortly to arrange the details with the customer.",
+        ProviderLostSubjectTpl:        "{city}: the customer chose another provider",
+        ProviderLostIntro:             "The customer went with another provider this time.",
+        ProviderLostThanks:            "Thank you for taking the time to send us a price.",
+        ProviderLostNext:              "We will let you know when the next fitting request comes up in your area.",
+        ProviderOutcomeQuoteLabel:     "Your price",
         AckSubject:                    "We have your request — Ruumly",
         AckGreetingTpl:                "Hi {name},",
         AckGreetingNoName:             "Hello,",
@@ -1730,6 +1782,18 @@ public static class EmailTranslations
         OutreachReplyAlternative:      "Или просто ответьте на это письмо, указав свою цену — оно придёт напрямую нашей команде.",
         OutreachSignature:             "Команда Ruumly\ninfo@ruumly.eu\nhttps://ruumly.eu",
         OutreachQuestionsTpl:          "Вопросы? Ответьте на это письмо или напишите нам через форму на странице контактов: {url}",
+        ProviderOfferSentSubjectTpl:   "{city}: ваша цена отправлена клиенту",
+        ProviderOfferSentIntro:        "Мы передали вашу цену клиенту вместе с другими предложениями по этому району.",
+        ProviderOfferSentWaiting:      "Теперь выбор за клиентом. Мы сообщим вам, когда он примет решение.",
+        ProviderOfferSentNoAction:     "Сейчас от вас ничего не требуется.",
+        ProviderWonSubjectTpl:         "{city}: клиент выбрал ваше предложение",
+        ProviderWonIntro:              "Хорошая новость — клиент выбрал ваше предложение.",
+        ProviderWonNext:               "Мы свяжемся с вами в ближайшее время и согласуем детали с клиентом.",
+        ProviderLostSubjectTpl:        "{city}: клиент выбрал другого поставщика",
+        ProviderLostIntro:             "В этот раз клиент выбрал другого поставщика услуг.",
+        ProviderLostThanks:            "Спасибо, что нашли время прислать нам цену.",
+        ProviderLostNext:              "Мы сообщим вам, когда появится следующая подходящая заявка в вашем районе.",
+        ProviderOutcomeQuoteLabel:     "Ваша цена",
         AckSubject:                    "Ваш запрос у нас — Ruumly",
         AckGreetingTpl:                "Здравствуйте, {name}!",
         AckGreetingNoName:             "Здравствуйте!",
@@ -1934,6 +1998,18 @@ public static class EmailTranslations
         OutreachReplyAlternative:      "Vai vienkārši atbildiet uz šo e-pastu ar savu cenu — tas nonāks tieši pie mūsu komandas.",
         OutreachSignature:             "Ruumly komanda\ninfo@ruumly.eu\nhttps://ruumly.eu",
         OutreachQuestionsTpl:          "Jautājumi? Atbildiet uz šo e-pastu vai rakstiet mums, izmantojot kontaktu lapu: {url}",
+        ProviderOfferSentSubjectTpl:   "{city}: jūsu cena ir nosūtīta klientam",
+        ProviderOfferSentIntro:        "Mēs nodevām jūsu cenu klientam kopā ar citiem šī reģiona piedāvājumiem.",
+        ProviderOfferSentWaiting:      "Tagad izvēle ir klienta ziņā. Mēs jums paziņosim, tiklīdz viņš izlems.",
+        ProviderOfferSentNoAction:     "Šobrīd no jums nekas nav nepieciešams.",
+        ProviderWonSubjectTpl:         "{city}: klients izvēlējās jūsu piedāvājumu",
+        ProviderWonIntro:              "Labas ziņas — klients izvēlējās jūsu piedāvājumu.",
+        ProviderWonNext:               "Tuvākajā laikā sazināsimies ar jums un saskaņosim detaļas ar klientu.",
+        ProviderLostSubjectTpl:        "{city}: klients izvēlējās citu pakalpojumu sniedzēju",
+        ProviderLostIntro:             "Šoreiz klients izvēlējās citu pakalpojumu sniedzēju.",
+        ProviderLostThanks:            "Paldies, ka veltījāt laiku un atsūtījāt mums cenu.",
+        ProviderLostNext:              "Mēs jums paziņosim, kad jūsu reģionā parādīsies nākamais piemērots pieprasījums.",
+        ProviderOutcomeQuoteLabel:     "Jūsu cena",
         AckSubject:                    "Jūsu pieprasījums ir saņemts — Ruumly",
         AckGreetingTpl:                "Sveiki, {name}!",
         AckGreetingNoName:             "Sveiki!",
@@ -2138,6 +2214,18 @@ public static class EmailTranslations
         OutreachReplyAlternative:      "Arba tiesiog atsakykite į šį laišką nurodydami savo kainą — jis pasieks mūsų komandą tiesiogiai.",
         OutreachSignature:             "Ruumly komanda\ninfo@ruumly.eu\nhttps://ruumly.eu",
         OutreachQuestionsTpl:          "Klausimai? Atsakykite į šį laišką arba parašykite mums per kontaktų puslapį: {url}",
+        ProviderOfferSentSubjectTpl:   "{city}: jūsų kaina išsiųsta klientui",
+        ProviderOfferSentIntro:        "Perdavėme jūsų kainą klientui kartu su kitais šio regiono pasiūlymais.",
+        ProviderOfferSentWaiting:      "Dabar pasirinkimas priklauso klientui. Pranešime jums, kai jis apsispręs.",
+        ProviderOfferSentNoAction:     "Šiuo metu iš jūsų nieko nereikia.",
+        ProviderWonSubjectTpl:         "{city}: klientas pasirinko jūsų pasiūlymą",
+        ProviderWonIntro:              "Geros naujienos — klientas pasirinko jūsų pasiūlymą.",
+        ProviderWonNext:               "Netrukus susisieksime su jumis ir suderinsime detales su klientu.",
+        ProviderLostSubjectTpl:        "{city}: klientas pasirinko kitą paslaugų teikėją",
+        ProviderLostIntro:             "Šį kartą klientas pasirinko kitą paslaugų teikėją.",
+        ProviderLostThanks:            "Ačiū, kad skyrėte laiko ir atsiuntėte mums kainą.",
+        ProviderLostNext:              "Pranešime jums, kai jūsų regione atsiras kita tinkama užklausa.",
+        ProviderOutcomeQuoteLabel:     "Jūsų kaina",
         AckSubject:                    "Jūsų užklausa gauta — Ruumly",
         AckGreetingTpl:                "Sveiki, {name}!",
         AckGreetingNoName:             "Sveiki!",

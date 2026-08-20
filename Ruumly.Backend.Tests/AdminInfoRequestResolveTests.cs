@@ -14,6 +14,7 @@ using Ruumly.Backend.Helpers;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Ruumly.Backend.Tests;
 
@@ -59,7 +60,9 @@ public class AdminInfoRequestResolveTests
         new(db) { ControllerContext = AdminContext() };
 
     private static AdminOffersController MakeOffers(RuumlyDbContext db, IBackgroundEmailQueue queue) =>
-        new(db, queue, TestServices.Config(), TestServices.Outreach(db, queue, TestServices.Config()))
+        new(db, queue, TestServices.Config(), TestServices.Outreach(db, queue, TestServices.Config()),
+            TestServices.OutcomeNotifier(db, queue),
+            NullLogger<AdminOffersController>.Instance)
         {
             ControllerContext = AdminContext(),
         };
@@ -69,6 +72,7 @@ public class AdminInfoRequestResolveTests
             new Ruumly.Backend.Services.Implementations.OfferAutoSendService(
                 db, queue,
                 new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(),
+                TestServices.OutcomeNotifier(db, queue),
                 Microsoft.Extensions.Logging.Abstractions.NullLogger<
                     Ruumly.Backend.Services.Implementations.OfferAutoSendService>.Instance),
             new TestServices.NoStorage(),

@@ -37,4 +37,39 @@ public class OfferOption
     /// admin-authored option for the same supplier.
     /// </summary>
     public Guid? CreatedFromOutreachId { get; set; }
+
+    // ── Provider outcome notifications (2026-08-20) ───────────────────────────
+    //
+    // EXACTLY-ONCE MARKERS, and they live HERE rather than on Offer or on
+    // ProviderOutreach for three reasons:
+    //
+    //   • The option IS the per-provider-per-offer row, which is exactly the
+    //     grain these notifications have. Offer is too coarse (one offer, N
+    //     providers) and ProviderOutreach is not present for an admin-authored
+    //     option that carries only a SupplierId.
+    //   • POST /admin/offers/{id}/send is REPEATABLE — it refreshes SentAt and
+    //     bumps Version every time, and an admin who fixes a price and re-sends
+    //     is doing something ordinary. Without a marker each re-send would tell
+    //     every provider again that their quote had just gone out.
+    //   • A row-level timestamp survives the option being edited in place: PATCH
+    //     matches on Id and updates, so the marker is not lost the way a
+    //     derived-from-status guess would be.
+    //
+    // Nullable and never backfilled: options that predate this feature genuinely
+    // were never notified, and stamping them "now" would be a lie that suppresses
+    // the first real notification they are due.
+
+    /// <summary>
+    /// When this option's provider was told their quote had been forwarded to
+    /// the customer. Null = not yet told.
+    /// </summary>
+    public DateTime? ProviderNotifiedSentAt { get; set; }
+
+    /// <summary>
+    /// When this option's provider was told the outcome (won or lost). Null =
+    /// not yet told. One column for both verdicts because a provider receives
+    /// exactly one of them, and which one is derivable from
+    /// <see cref="Offer.ChosenOptionId"/>.
+    /// </summary>
+    public DateTime? ProviderNotifiedOutcomeAt { get; set; }
 }

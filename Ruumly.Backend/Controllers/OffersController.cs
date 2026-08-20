@@ -22,7 +22,9 @@ namespace Ruumly.Backend.Controllers;
 [Route("api/offers")]
 public class OffersController(
     RuumlyDbContext db,
-    IBackgroundEmailQueue emailQueue) : ControllerBase
+    IBackgroundEmailQueue emailQueue,
+    IProviderOutcomeNotifier outcomeNotifier,
+    ILogger<OffersController> logger) : ControllerBase
 {
     /// <summary>
     /// Sanitized offer for the public page. The first successful GET of a
@@ -109,6 +111,35 @@ public class OffersController(
                 (option.Supplier is { } s ? $"Partner: {s.Name} <{s.ContactEmail}>\n" : "") +
                 $"Pakkumine: {offer.Id}\n\n" +
                 $"Kinnita partneriga ja anna kliendile teada.");
+
+        // Tell EVERY provider in the offer the outcome — the winner that they
+        // were picked, the others that somebody else was.
+        //
+        // FOUNDER DECISION, 2026-08-20. The first cut told only the winner here
+        // and held the losing notes back until ops confirmed the booking, on the
+        // reasoning that a customer's click is not yet a job and a fallback panel
+        // should not be dismissed early. The founder chose the opposite trade:
+        // when the customer chooses, everyone hears. A provider left waiting on a
+        // quote they have already lost is the cost that was judged higher.
+        //
+        // ConfirmBooking runs the same pass again as a catch-up; it is idempotent
+        // per option, so anything that failed here is picked up there and nothing
+        // is ever said twice.
+        //
+        // Isolated on purpose. This runs after the transaction has committed, and
+        // a failure to send a courtesy email must never turn the customer's
+        // successful choice into an error response — their pick really is
+        // recorded, and a 500 here would invite them to click again.
+        try
+        {
+            await outcomeNotifier.NotifyOutcomeAsync(offer.Id, OutcomeAudience.All);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex,
+                "Outcome notifications failed for offer {OfferId} — the choice itself is committed.",
+                offer.Id);
+        }
 
         return Ok(new { ok = true, chosenOptionId = option.Id, chosenAt = offer.ChosenAt });
     }

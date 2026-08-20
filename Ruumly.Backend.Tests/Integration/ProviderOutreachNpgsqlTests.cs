@@ -12,6 +12,7 @@ using Ruumly.Backend.DTOs.Requests;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Models.Enums;
 using Ruumly.Backend.Services.Interfaces;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Ruumly.Backend.Tests.Integration;
 
@@ -139,7 +140,9 @@ public class ProviderOutreachNpgsqlTests(PostgresIntegrationFixture pg)
 
     private static AdminOffersController MakeAdmin(
         RuumlyDbContext db, IBackgroundEmailQueue queue) =>
-        new(db, queue, new ConfigurationBuilder().Build(), TestServices.Outreach(db, queue))
+        new(db, queue, new ConfigurationBuilder().Build(), TestServices.Outreach(db, queue),
+            TestServices.OutcomeNotifier(db, queue),
+            NullLogger<AdminOffersController>.Instance)
         {
             ControllerContext = new ControllerContext
             {

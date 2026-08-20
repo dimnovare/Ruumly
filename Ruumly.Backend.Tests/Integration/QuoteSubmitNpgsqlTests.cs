@@ -44,6 +44,7 @@ public class QuoteSubmitNpgsqlTests(PostgresIntegrationFixture pg)
             new Ruumly.Backend.Services.Implementations.OfferAutoSendService(
                 db, queue,
                 new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(),
+                TestServices.OutcomeNotifier(db, queue),
                 Microsoft.Extensions.Logging.Abstractions.NullLogger<
                     Ruumly.Backend.Services.Implementations.OfferAutoSendService>.Instance),
             new TestServices.NoStorage(),

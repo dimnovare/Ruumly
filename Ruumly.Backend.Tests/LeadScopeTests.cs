@@ -69,6 +69,7 @@ public class LeadScopeTests
         new(db, queue,
             new Ruumly.Backend.Services.Implementations.OfferAutoSendService(
                 db, queue, TestServices.Config(),
+                TestServices.OutcomeNotifier(db, queue),
                 Microsoft.Extensions.Logging.Abstractions.NullLogger<
                     Ruumly.Backend.Services.Implementations.OfferAutoSendService>.Instance),
             new TestServices.NoStorage(),

@@ -25,7 +25,9 @@ public class AdminOffersController(
     RuumlyDbContext db,
     IBackgroundEmailQueue emailQueue,
     IConfiguration config,
-    IConciergeOutreachService outreachService) : AdminBaseController(db)
+    IConciergeOutreachService outreachService,
+    IProviderOutcomeNotifier outcomeNotifier,
+    ILogger<AdminOffersController> logger) : AdminBaseController(db)
 {
     // Reply-To on customer/provider correspondence — matches the info@ address
     // printed in the email signatures (EmailTranslations). This is NOT the ops
@@ -325,6 +327,24 @@ public class AdminOffersController(
             lead.Email.Trim(), email.Subject, email.TextBody,
             htmlBody: null, replyTo: OpsReplyTo);
 
+        // Tell every provider inside this offer that their price is now in front
+        // of the customer. Idempotent per option, so the re-send path above
+        // (which deliberately refreshes SentAt) does not re-announce it.
+        //
+        // Isolated: the offer has been saved and the customer's email queued, so
+        // a failure here must not present the admin with an error for an action
+        // that in fact succeeded — they would send it a second time.
+        try
+        {
+            await outcomeNotifier.NotifyOfferSentAsync(offer.Id);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex,
+                "Provider 'offer sent' notification failed for offer {OfferId} — the send itself succeeded.",
+                offer.Id);
+        }
+
         return Ok(MapOffer(offer));
     }
 
@@ -356,6 +376,25 @@ public class AdminOffersController(
 
         if (transaction is not null)
             await transaction.CommitAsync();
+
+        // CATCH-UP, not the primary trigger. Every provider in the offer was told
+        // the outcome the moment the customer chose (OffersController.ChooseOption
+        // — founder decision 2026-08-20). This second pass exists because that one
+        // is isolated behind a try/catch: if the mail queue was down at the click,
+        // the letters would otherwise never be sent at all.
+        //
+        // Idempotent per option, so on the ordinary path this does nothing.
+        try
+        {
+            await outcomeNotifier.NotifyOutcomeAsync(offer.Id, OutcomeAudience.All);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex,
+                "Outcome catch-up failed for offer {OfferId} — the booking is confirmed regardless.",
+                offer.Id);
+        }
+
         return Ok(MapOffer(offer));
     }
 
