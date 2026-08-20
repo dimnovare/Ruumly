@@ -131,7 +131,10 @@ public class QuoteController(
             // discovering it when the submit 409s.
             Closed: TerminalLeadStatuses.Contains(lead.Status),
             InfoRequested: infoRequest is not null,
-            InfoRequest: infoRequest));
+            InfoRequest: infoRequest,
+            // A recorded "no" outranks the price form: re-opening the link shows
+            // the decline we hold instead of asking the same question again.
+            Declined: outreach.Status == ProviderOutreachStatus.Declined));
     }
 
     /// <summary>
@@ -398,6 +401,129 @@ public class QuoteController(
         await EnqueueNeedInfoOpsAlertAsync(lead, outreach, storedReasons, request.Note);
 
         return Ok(new NeedInfoSubmittedDto(true, storedReasons, request.Note));
+    }
+
+    /// <summary>
+    /// The provider says NO — the third answer the outreach email has offered
+    /// since 2026-08-18 ("a short 'not possible' is a perfectly good answer"),
+    /// which until now had nowhere to land: the only way to give it was a
+    /// free-text reply into a shared inbox that nothing parsed. So every real
+    /// decline was recorded as SILENCE — it kept feeding the provider-silence
+    /// metric as evidence the outreach was failing, and the same provider kept
+    /// receiving the next lead in range with no memory of their answer.
+    ///
+    /// A bare decline is a COMPLETE answer (unlike need-info, where an empty
+    /// payload says nothing) — reason and note are welcome but optional.
+    ///
+    /// Same contract as the rest of this controller: unknown token is
+    /// indistinguishable from missing, a closed lead 409s with a reason, and a
+    /// provider who already QUOTED cannot silently retract the price this way —
+    /// that price is live on a draft offer an admin may be about to send, so
+    /// withdrawing it is a conversation, not a button.
+    /// </summary>
+    [HttpPost("{token}/decline")]
+    [AllowAnonymous]
+    // Same bucket as the price submit and need-info: same provider, same page,
+    // one outbound ops email per call.
+    [EnableRateLimiting("provider-quote")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Decline(string token, [FromBody] DeclineQuoteRequest? req)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+            return NotFound(new { error = "Quote not found." });
+
+        if (req is not null && HasAngle(req.Note))
+            return BadRequest(new { error = "Text fields contain invalid characters." });
+
+        var outreach = await db.ProviderOutreaches
+            .FirstOrDefaultAsync(o => o.QuoteToken == token);
+        if (outreach is null)
+            return NotFound(new { error = "Quote not found." });
+
+        var lead = await db.DemandLeads.FirstOrDefaultAsync(d => d.Id == outreach.DemandLeadId);
+        if (lead is null)
+            return NotFound(new { error = "Quote not found." });
+
+        if (TerminalLeadStatuses.Contains(lead.Status))
+        {
+            return Conflict(new
+            {
+                error  = "This request is already closed.",
+                reason = "lead_closed",
+            });
+        }
+
+        // A submitted price is a stronger fact than a later "no", and it is
+        // already seeded on the lead's draft offer — silently flipping the
+        // outreach to Declined would leave a live option whose provenance row
+        // says the provider refused. Distinct reason so the page can say
+        // "you already sent a price — write to us to withdraw it".
+        if (outreach.QuotedAt is not null)
+        {
+            return Conflict(new
+            {
+                error  = "A price was already submitted for this request.",
+                reason = "already_quoted",
+            });
+        }
+
+        var reason = DeclineReasons.Normalize(req?.Reason);
+        var note   = Clamp(req?.Note, 2000);
+
+        // Idempotent by design: a second press updates the reason/note rather
+        // than erroring — the provider changing "no capacity" to "wrong area"
+        // is them being MORE helpful, not a conflict. A blank note on a repeat
+        // press keeps the earlier text, same as the quote-note rule.
+        outreach.Status        = ProviderOutreachStatus.Declined;
+        outreach.DeclineReason = reason;
+        if (note is not null) outreach.DeclineNote = note;
+        outreach.DeclinedAt  ??= DateTime.UtcNow;
+
+        await db.SaveChangesAsync();
+
+        // After the commit, same ordering rule as every alert in this file.
+        await EnqueueDeclineOpsAlertAsync(lead, outreach, reason, outreach.DeclineNote);
+
+        return Ok(new QuoteDeclinedDto(true, reason, outreach.DeclineNote));
+    }
+
+    /// <summary>
+    /// Tells ops a provider said no — with the reason, because two of the five
+    /// reasons (wrong area, not our service) mean the DIRECTORY ROW is wrong
+    /// and every future fan-out to this provider is wasted until it is fixed.
+    /// Reference in the subject, same threading rule as the other alerts.
+    /// </summary>
+    private async Task EnqueueDeclineOpsAlertAsync(
+        DemandLead lead, ProviderOutreach outreach, string? reason, string? note)
+    {
+        var supplierName = await db.Suppliers
+            .Where(s => s.Id == outreach.SupplierId)
+            .Select(s => s.Name)
+            .FirstOrDefaultAsync() ?? "Provider";
+
+        var reference = ProviderOutreachComposer.Reference(lead.Id);
+        var route     = string.IsNullOrWhiteSpace(lead.ToCity)
+            ? lead.City
+            : $"{lead.City} → {lead.ToCity}";
+        var category  = ServiceCategories.SlugFor(lead.Category);
+        var reasonLine = reason is null
+            ? "No reason given — a bare no."
+            : DeclineReasons.OpsLabel(reason);
+
+        var opsInbox = await OpsInbox.ResolveAsync(db);
+        emailQueue.EnqueueEmail(
+            opsInbox,
+            $"Ruumly — provider declined ({route}) [{reference}]",
+            $"Provider {supplierName} declined the {category} request in {route}.\n\n" +
+            $"Reason: {reasonLine}\n" +
+            $"Their note: {note ?? "—"}\n\n" +
+            $"Lead reference: {reference}\n\n" +
+            "No action needed for this provider — the decline is recorded and the quote " +
+            "page shows it. If the reason says wrong area or wrong service, fix the " +
+            "supplier row so the next fan-out skips them.");
     }
 
     /// <summary>

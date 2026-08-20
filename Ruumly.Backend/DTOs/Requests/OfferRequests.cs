@@ -81,3 +81,13 @@ public record SubmitQuoteRequest(
 public record NeedInfoRequest(
     List<string>? Reasons = null,
     string? Note = null);
+
+/// <summary>
+/// POST /api/quote/{token}/decline — the provider says no to this request.
+/// <c>Reason</c> is a <see cref="Constants.DeclineReasons"/> slug; unknown ones
+/// collapse to null rather than 400, because — unlike need-info — an EMPTY
+/// decline is a complete answer: "no" needs no itemisation to be recorded.
+/// </summary>
+public record DeclineQuoteRequest(
+    string? Reason = null,
+    string? Note = null);
