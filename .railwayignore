@@ -1,0 +1,42 @@
+# What `railway up` must NOT upload.
+#
+# The Dockerfile does `COPY . .`, so the upload IS the build context. A git-
+# triggered deploy only ever sees tracked files, but `railway up` sends the
+# working directory — including untracked scratch dirs that have no business in
+# a production image and make the upload slow enough to look hung.
+#
+# Everything listed here is provably unnecessary to
+# `dotnet publish Ruumly.Backend/Ruumly.Backend.csproj`, which is the only thing
+# the Dockerfile builds.
+
+# The frontend is a separate repo with its own Vercel deploy. It is also by far
+# the largest thing in this directory (node_modules + dist).
+estonia-space-hub/
+
+# Cloudflare Worker — deployed with wrangler, not with the API.
+workers/
+
+# Scratch and staging directories that live in the working tree untracked.
+.codex-video-staging/
+_screens_backup/
+.tmp-kling-login.err
+.tmp-kling-login.out
+
+# Local-only compose file; Railway provides its own Postgres.
+docker-compose.yml
+
+# Docs and audit reports — read by people, not by the runtime.
+docs/
+*.md
+
+# Build output. Uploading these risks shipping a stale binary into the image,
+# which is the exact failure mode `dotnet clean` exists to undo locally.
+**/bin/
+**/obj/
+
+# Agent/session scratch.
+.claude/
+
+.git/
+.vs/
+.vscode/
