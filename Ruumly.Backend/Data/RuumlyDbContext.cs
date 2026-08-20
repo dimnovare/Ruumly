@@ -42,6 +42,7 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
     public DbSet<Offer>            Offers             => Set<Offer>();
     public DbSet<OfferOption>      OfferOptions       => Set<OfferOption>();
     public DbSet<ProviderOutreach> ProviderOutreaches => Set<ProviderOutreach>();
+    public DbSet<LeadMessage>     LeadMessages       => Set<LeadMessage>();
     public DbSet<ProviderInfoRequest> ProviderInfoRequests => Set<ProviderInfoRequest>();
     public DbSet<SupplierClaim>    SupplierClaims     => Set<SupplierClaim>();
     public DbSet<EmailDeliveryEvent> EmailDeliveryEvents => Set<EmailDeliveryEvent>();
@@ -435,8 +436,20 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
             // query's order so Postgres reads it forward.
             e.HasIndex(d => new { d.Status, d.CreatedAt })
                 .HasDatabaseName("IX_DemandLeads_Status_CreatedAt");
+            // Operator correspondence hangs off the lead and is read every time
+            // the workspace opens one, newest first.
+            e.HasMany<LeadMessage>()
+                .WithOne(m => m.DemandLead)
+                .HasForeignKey(m => m.DemandLeadId)
+                .OnDelete(DeleteBehavior.Cascade);
             e.Property(d => d.Category).HasConversion<string>();
             e.Property(d => d.Status).HasConversion<string>();
+        });
+
+        // ─── Operator correspondence ───
+        model.Entity<LeadMessage>(e =>
+        {
+            e.HasIndex(m => new { m.DemandLeadId, m.SentAt });
         });
 
         // ─── Offer loop (concierge) ───

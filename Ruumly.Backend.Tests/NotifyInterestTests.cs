@@ -66,7 +66,7 @@ public class NotifyInterestTests
                     "test"));
         }
 
-        return new AdminLeadsController(db)
+        return new AdminLeadsController(db, TestServices.NoEmail())
         {
             ControllerContext = new ControllerContext { HttpContext = httpContext }
         };

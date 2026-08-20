@@ -57,7 +57,7 @@ public class AdminInfoRequestResolveTests
         new() { HttpContext = new DefaultHttpContext { User = Principal("Admin") } };
 
     private static AdminLeadsController MakeLeads(RuumlyDbContext db) =>
-        new(db) { ControllerContext = AdminContext() };
+        new(db, TestServices.NoEmail()) { ControllerContext = AdminContext() };
 
     private static AdminOffersController MakeOffers(RuumlyDbContext db, IBackgroundEmailQueue queue) =>
         new(db, queue, TestServices.Config(), TestServices.Outreach(db, queue, TestServices.Config()),

@@ -11,7 +11,9 @@ using Ruumly.Backend.Services.Interfaces;
 namespace Ruumly.Backend.Controllers;
 
 [Route("api/admin")]
-public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
+public class AdminLeadsController(
+    RuumlyDbContext db,
+    IBackgroundEmailQueue emailQueue) : AdminBaseController(db)
 {
     /// <summary>
     /// How long a request may sit with no provider answer before the queue calls
@@ -1134,6 +1136,135 @@ public class AdminLeadsController(RuumlyDbContext db) : AdminBaseController(db)
             medianFirstResponseMinutes,
         });
     }
+
+    // ─── Operator correspondence ──────────────────────────────────────────────
+
+    /// <summary>
+    /// Send a message about this lead — to the customer, or to a provider already
+    /// contacted for it — FROM the Ruumly sender, and record that it happened.
+    ///
+    /// WHY THIS ENDPOINT EXISTS. The concierge loop is a conversation, but the
+    /// product could only ever send the letters it composed itself. Every other
+    /// message an operator actually needs to send — "what is the exact address?",
+    /// "is that price per hour or for the job?", "nobody in your area can take
+    /// this" — had no path, so it went from a personal mailbox instead. On
+    /// 2026-08-20 four such messages about one live Latvian request, including
+    /// one to the customer, left from the founder's personal Gmail signed as
+    /// Ruumly; both provider replies then landed where the ops loop cannot see
+    /// them. The missing endpoint was the cause, so this is the fix.
+    ///
+    /// THE RECIPIENT IS NEVER SUPPLIED BY THE CALLER. That is the whole safety
+    /// design: this is an authenticated "send arbitrary text to an email address"
+    /// endpoint, which is a spam cannon if the address is a parameter. The caller
+    /// names a ROLE — the customer, or a supplier id — and the address is
+    /// resolved from the lead's own data: the customer's own email, or a supplier
+    /// that has a ProviderOutreach row FOR THIS LEAD. A provider we never wrote
+    /// to about this request cannot be reached through here at all.
+    ///
+    /// Reply-To is the ops inbox, not the sender, so an answer lands where the
+    /// team reads rather than in one person's mail.
+    /// </summary>
+    [HttpPost("leads/{id:guid}/messages")]
+    public async Task<IActionResult> SendLeadMessage(Guid id, [FromBody] SendLeadMessageRequest body)
+    {
+        var lead = await Db.DemandLeads.FindAsync(id);
+        if (lead is null) return NotFound(Error("Lead not found."));
+
+        if (body is null) return BadRequest(Error("Nothing to send."));
+
+        var subject = (body.Subject ?? "").Trim();
+        var text    = (body.Body ?? "").Trim();
+        if (subject.Length == 0) return BadRequest(Error("Subject is required."));
+        if (text.Length == 0)    return BadRequest(Error("Message body is required."));
+        if (subject.Length > 300)   return BadRequest(Error("Subject is too long."));
+        if (text.Length > 10_000)   return BadRequest(Error("Message is too long."));
+        // Same rule the public text fields use: no angle brackets anywhere, so a
+        // pasted signature cannot smuggle markup into a mail we send.
+        if (subject.Contains('<') || subject.Contains('>') ||
+            text.Contains('<')    || text.Contains('>'))
+            return BadRequest(Error("Text fields contain invalid characters."));
+
+        // ── Resolve the recipient from the LEAD, never from the request body ──
+        string recipient;
+        Guid?  supplierId = null;
+
+        if (body.SupplierId is { } wanted)
+        {
+            // Only a provider we actually wrote to about THIS lead.
+            var outreach = await Db.ProviderOutreaches
+                .Where(o => o.DemandLeadId == id && o.SupplierId == wanted)
+                .OrderByDescending(o => o.SentAt)
+                .FirstOrDefaultAsync();
+            if (outreach is null)
+                return BadRequest(Error("That provider was not contacted for this request."));
+
+            // The address on the supplier row today, falling back to the one the
+            // outreach actually went to — a contact email may have been corrected
+            // since, and the current one is the one that will reach them.
+            var supplier = await Db.Suppliers.FindAsync(wanted);
+            recipient = (supplier?.ContactEmail ?? "").Trim() is { Length: > 0 } current
+                ? current
+                : outreach.SentTo.Trim();
+            if (recipient.Length == 0)
+                return BadRequest(Error("That provider has no contact email."));
+            supplierId = wanted;
+        }
+        else
+        {
+            recipient = (lead.Email ?? "").Trim();
+            if (recipient.Length == 0)
+                return BadRequest(Error("This request has no customer email."));
+        }
+
+        var message = new LeadMessage
+        {
+            Id           = Guid.NewGuid(),
+            DemandLeadId = lead.Id,
+            SupplierId   = supplierId,
+            SentTo       = recipient,
+            Subject      = subject,
+            Body         = text,
+            SentAt       = DateTime.UtcNow,
+            SentByUserId = User.GetUserId(),
+        };
+        Db.LeadMessages.Add(message);
+
+        Audit("lead.message_sent", User.GetUserId().ToString(), lead.Id.ToString(),
+              $"To: {recipient}{(supplierId is null ? " (customer)" : " (provider)")}");
+
+        // Save BEFORE queueing, the house rule everywhere in this codebase:
+        // Hangfire commits the job on its own connection, so a failed save must
+        // never leave a sent message with no record of having been sent.
+        await Db.SaveChangesAsync();
+
+        emailQueue.EnqueueEmail(
+            recipient, subject, text,
+            htmlBody: null, replyTo: await OpsInbox.ResolveAsync(Db));
+
+        return Ok(MapLeadMessage(message));
+    }
+
+    /// <summary>Everything an operator sent by hand about this lead, newest first.</summary>
+    [HttpGet("leads/{id:guid}/messages")]
+    public async Task<IActionResult> GetLeadMessages(Guid id)
+    {
+        var rows = await Db.LeadMessages
+            .AsNoTracking()
+            .Where(m => m.DemandLeadId == id)
+            .OrderByDescending(m => m.SentAt)
+            .ToListAsync();
+        return Ok(rows.Select(MapLeadMessage));
+    }
+
+    private static object MapLeadMessage(LeadMessage m) => new
+    {
+        id         = m.Id,
+        supplierId = m.SupplierId,
+        sentTo     = m.SentTo,
+        subject    = m.Subject,
+        body       = m.Body,
+        sentAt     = m.SentAt,
+    };
 }
 
 public record UpdateLeadRequest(
@@ -1151,3 +1282,14 @@ public record UpdateLeadRequest(
     // empty-clears convention of the other editable fields (DateTime? can't bind "").
     string? NeedDate = null,
     string? Details = null);
+
+/// <summary>
+/// POST /admin/leads/{id}/messages. <c>SupplierId</c> null = send to the
+/// CUSTOMER; set = send to that provider, which is accepted only if they were
+/// actually contacted for this lead. There is deliberately no recipient-address
+/// field — see the endpoint.
+/// </summary>
+public record SendLeadMessageRequest(
+    string? Subject = null,
+    string? Body = null,
+    Guid? SupplierId = null);

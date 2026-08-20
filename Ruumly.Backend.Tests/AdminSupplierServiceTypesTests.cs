@@ -414,7 +414,7 @@ public class AdminSupplierServiceTypesTests
             new NoopEmailQueue()));
     }
 
-    private static AdminLeadsController MakeLeads(RuumlyDbContext db) => WithAdmin(new AdminLeadsController(db));
+    private static AdminLeadsController MakeLeads(RuumlyDbContext db) => WithAdmin(new AdminLeadsController(db, TestServices.NoEmail()));
 
     private static LocationsController MakeLocations(RuumlyDbContext db) => WithAdmin(new LocationsController(db));
 

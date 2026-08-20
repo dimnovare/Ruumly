@@ -141,7 +141,7 @@ public class ProviderCandidateTests
     }
 
     private static AdminLeadsController MakeAdminLeads(RuumlyDbContext db) =>
-        new(db)
+        new(db, TestServices.NoEmail())
         {
             ControllerContext = new ControllerContext
             {

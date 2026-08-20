@@ -34,6 +34,21 @@ internal static class TestServices
         new ProviderOutcomeNotifier(db, queue, NullLogger<ProviderOutcomeNotifier>.Instance);
 
     /// <summary>
+    /// A queue that swallows everything — for the many AdminLeadsController tests
+    /// that predate the operator-message endpoint and assert nothing about mail.
+    /// A test that DOES care about what was sent should capture instead (see
+    /// LeadMessageTests), not reach for this.
+    /// </summary>
+    public static IBackgroundEmailQueue NoEmail() => new NoOpEmailQueue();
+
+    private sealed class NoOpEmailQueue : IBackgroundEmailQueue
+    {
+        public void EnqueueEmail(string to, string subject, string textBody, string? htmlBody = null) { }
+        public void EnqueueEmail(string to, string subject, string textBody, string? htmlBody, string? replyTo) { }
+        public void EnqueueVerificationEmail(Guid userId) { }
+    }
+
+    /// <summary>
     /// Storage that stores nothing. Several controllers and the cleanup job now
     /// take IStorageService only because of the request-photo feature; tests that
     /// exercise anything else should not need a bucket to do it.

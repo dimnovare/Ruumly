@@ -21,7 +21,7 @@ namespace Ruumly.Backend.Tests.Integration;
 public class LeadDeleteNpgsqlTests(PostgresIntegrationFixture pg)
 {
     private static AdminLeadsController MakeAdmin(RuumlyDbContext db) =>
-        new(db)
+        new(db, TestServices.NoEmail())
         {
             ControllerContext = new ControllerContext
             {

@@ -17,7 +17,7 @@ namespace Ruumly.Backend.Tests;
 public class AdminLeadStatusValidationTests
 {
     private static AdminLeadsController MakeAdmin(RuumlyDbContext db) =>
-        new(db)
+        new(db, TestServices.NoEmail())
         {
             ControllerContext = new ControllerContext
             {
