@@ -26,28 +26,52 @@ public static class CorsPolicySetup
     /// </summary>
     private static readonly string[] ExposedHeaders = ["Retry-After"];
 
-    public static void AddFrontendPolicy(CorsOptions options, string[] allowedOrigins) =>
+    public static void AddFrontendPolicy(CorsOptions options, string[] allowedOrigins, string? vercelTeamSlug = null) =>
         options.AddPolicy(PolicyName, policy => policy
-            .SetIsOriginAllowed(origin => IsOriginAllowed(origin, allowedOrigins))
+            .SetIsOriginAllowed(origin => IsOriginAllowed(origin, allowedOrigins, vercelTeamSlug))
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials()
             .WithExposedHeaders(ExposedHeaders));
 
-    internal static bool IsOriginAllowed(string origin, string[] allowedOrigins)
+    internal static bool IsOriginAllowed(string origin, string[] allowedOrigins, string? vercelTeamSlug = null)
     {
         if (allowedOrigins.Contains(origin)) return true;
 
         if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri)) return false;
         if (!uri.Host.EndsWith(".vercel.app")) return false;
 
-        // Only allow exact Ruumly Vercel project slugs.
-        // Preview URLs follow the pattern: {projectName}-{hash}-{teamSlug}.vercel.app
-        // Using a broad prefix like "ruumly-" would let any attacker register
-        // "ruumly-evil.vercel.app" and make credentialed cross-origin requests.
         var host = uri.Host;
-        return host.StartsWith("estonia-space-hub-") ||
-               host == "estonia-space-hub.vercel.app";
-        // Add future project slugs explicitly — never use a short prefix alone.
+
+        // The project's OWN production alias is a fixed, globally-unique host that
+        // only this project can own — safe to match exactly.
+        if (host == "estonia-space-hub.vercel.app") return true;
+
+        // The OLD rule matched any host STARTING WITH `estonia-space-hub-`, which
+        // also matches `estonia-space-hub-evil.vercel.app` — a project ANYONE can
+        // register, giving an attacker a credentialed cross-origin foothold (the
+        // paired /auth/refresh CSRF skip trusts this very allow-list).
+        //
+        // It was ALSO wrong about the shape, which is why nobody noticed. Real
+        // deployment hosts, observed via `vercel ls` on 2026-08-20:
+        //     estonia-space-e0ijg6mxw-dimnovare-9994s-projects.vercel.app
+        // Vercel TRUNCATES the project name, so `estonia-space-hub-` matched none
+        // of our own deployments. The rule was simultaneously unsafe against
+        // attackers and ineffective for us.
+        //
+        // What an attacker cannot forge is the TRAILING TEAM SLUG: Vercel issues
+        // `-{ourSlug}.vercel.app` only to deployments inside our own team. That
+        // suffix is the real security boundary. The project prefix is kept as a
+        // cheap narrowing but is deliberately NOT load-bearing — every project
+        // under our team slug is ours anyway — and it is matched against the
+        // truncated form so it actually fires.
+        //
+        // FAIL CLOSED: with no slug configured, NO wildcard preview host is
+        // trusted and only the explicit AllowedOrigins list applies. Set
+        // `Cors:VercelTeamSlug` (env `Cors__VercelTeamSlug`) to enable it.
+        if (string.IsNullOrWhiteSpace(vercelTeamSlug)) return false;
+
+        return host.StartsWith("estonia-space", StringComparison.Ordinal) &&
+               host.EndsWith($"-{vercelTeamSlug}.vercel.app", StringComparison.Ordinal);
     }
 }

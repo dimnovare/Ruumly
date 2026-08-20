@@ -267,6 +267,24 @@ builder.Services.AddRateLimiter(options =>
             QueueLimit  = 0,
         }));
 
+    // The customer request funnel (POST /leads/request). NOT "public-email":
+    // that bucket is 5/10min shared with the contact form, notify-interest and
+    // apply-provider-public — behind one office NAT or Estonian mobile CGNAT,
+    // strangers burn each other's permits and a FIRST-TIME CUSTOMER gets a 429
+    // on the submit the whole product exists for. Same reasoning that gave the
+    // provider quote its own bucket below; the ask side deserves it at least
+    // as much as the answer side. 15/10min per IP still bounds email
+    // amplification (each submit fans out real mail) far below "auth"'s
+    // 10/min while letting a shared-IP household or office file several
+    // genuine requests.
+    options.AddPolicy("lead-request", ctx =>
+        RateLimitPartition.GetFixedWindowLimiter(IpKey(ctx), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 15,
+            Window      = TimeSpan.FromMinutes(10),
+            QueueLimit  = 0,
+        }));
+
     // Provider quote submits (POST /api/quote/{token}). NOT "public-email": that
     // bucket is keyed by (policy, IP) and shared with /leads/request and the
     // contact form, so a provider quoting could exhaust the permits a CUSTOMER
@@ -367,7 +385,11 @@ builder.Services.AddRateLimiter(options =>
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()!;
 // Policy body lives in Helpers/CorsPolicySetup so the origin allow-list and the
 // exposed headers (Retry-After) are unit-testable.
-builder.Services.AddCors(options => CorsPolicySetup.AddFrontendPolicy(options, allowedOrigins));
+// Optional: the Vercel TEAM SLUG that credentialed preview URLs must end with
+// (`estonia-space-hub-{hash}-{slug}.vercel.app`). Unset ⇒ no preview host is
+// trusted (fail closed) and only AllowedOrigins applies. See CorsPolicySetup.
+var vercelTeamSlug = builder.Configuration["Cors:VercelTeamSlug"];
+builder.Services.AddCors(options => CorsPolicySetup.AddFrontendPolicy(options, allowedOrigins, vercelTeamSlug));
 
 // ─── FluentValidation ───
 builder.Services.AddFluentValidationAutoValidation();
@@ -423,6 +445,10 @@ builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IFeaturedPartnersService, FeaturedPartnersService>();
 builder.Services.AddScoped<IConciergeOutreachService, ConciergeOutreachService>();
 builder.Services.AddScoped<IOfferAutoSendService, OfferAutoSendService>();
+// Tells the providers inside an offer what happened to their quote (sent / won /
+// lost). Scoped: it shares the request's DbContext so its exactly-once stamps
+// commit against the same connection the caller just used.
+builder.Services.AddScoped<IProviderOutcomeNotifier, ProviderOutcomeNotifier>();
 builder.Services.AddScoped<IEmailDeliveryTracker, EmailDeliveryTracker>();
 builder.Services.AddScoped<ISupplierProfileService, SupplierProfileService>();
 builder.Services.AddScoped<IPaymentService, MontonioPaymentService>();
