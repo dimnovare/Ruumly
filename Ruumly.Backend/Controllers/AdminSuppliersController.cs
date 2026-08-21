@@ -267,6 +267,13 @@ public class AdminSuppliersController(
         if (body.PartnerDiscountRate.HasValue) supplier.PartnerDiscountRate = body.PartnerDiscountRate.Value;
         if (body.ClientDiscountRate.HasValue)  supplier.ClientDiscountRate = body.ClientDiscountRate.Value;
         if (body.Notes is not null)            supplier.Notes = body.Notes;
+        // Recorded from what a provider told us, never inferred. Both gate the
+        // fan-out (skip reasons "business_only" / "no_recurring"), so an
+        // accidental false quietly costs a provider every future request —
+        // which is exactly why the candidate row carries them where an operator
+        // can see them.
+        if (body.ServesConsumers.HasValue)     supplier.ServesConsumers = body.ServesConsumers.Value;
+        if (body.ServesRecurring.HasValue)     supplier.ServesRecurring = body.ServesRecurring.Value;
         if (body.Iban is not null)             supplier.Iban = body.Iban;
         if (body.BankAccountName is not null)  supplier.BankAccountName = body.BankAccountName;
         if (body.BankName is not null)         supplier.BankName = body.BankName;

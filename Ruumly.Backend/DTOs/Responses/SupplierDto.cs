@@ -75,6 +75,10 @@ public record SupplierDto(
     // Email deliverability — written by the Resend bounce webhook. True means the
     // address is dead: outreach skips this partner until an admin saves a new one.
     bool      ContactEmailUnusable = false,
+    // Who this provider will work for — see Supplier. Both true unless a
+    // refusal has been recorded; both gate the fan-out.
+    bool      ServesConsumers = true,
+    bool      ServesRecurring = true,
     DateTime? ContactEmailBouncedAt = null,
     string?   ContactEmailBounceType = null,    // "hard" | "soft" | "complaint"
     string?   ContactEmailBounceReason = null,

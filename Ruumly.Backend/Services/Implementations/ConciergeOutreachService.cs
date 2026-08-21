@@ -109,6 +109,10 @@ public sealed class ConciergeOutreachService(
             if (s.ContactEmail.Trim() is { Length: > 0 } address) seenEmails.Add(address);
         }
 
+        // Read once: whether this customer asked for an ongoing arrangement
+        // rather than a single job. Decides whether ServesRecurring applies.
+        var wantsRecurring = LeadScope.WantsRecurringService(lead.ScopeJson);
+
         IDbContextTransaction? transaction = null;
 
         try
@@ -138,6 +142,29 @@ public sealed class ConciergeOutreachService(
                 {
                     Reserve(supplier);
                     skipped.Add(new(supplierId, supplier.Name, "opted_out"));
+                    continue;
+                }
+                // A service slug says what a company does, never who for.
+                // Every request Ruumly generates comes from a private person,
+                // so a business-only provider cannot be sent any of them — and
+                // being asked anyway is what earns a refusal and costs goodwill.
+                // Reserved like opted_out: a sibling branch row behind the same
+                // inbox must not inherit the freed slot and deliver the very
+                // email this row was refused.
+                if (!supplier.ServesConsumers)
+                {
+                    Reserve(supplier);
+                    skipped.Add(new(supplierId, supplier.Name, "business_only"));
+                    continue;
+                }
+                // Only bites when the CUSTOMER asked for something ongoing.
+                // A provider who takes one-off work but not a contract is still
+                // the right match for a move-out clean, so this is not a blanket
+                // exclusion from the service.
+                if (!supplier.ServesRecurring && wantsRecurring)
+                {
+                    Reserve(supplier);
+                    skipped.Add(new(supplierId, supplier.Name, "no_recurring"));
                     continue;
                 }
                 if (string.IsNullOrWhiteSpace(supplier.ContactEmail))

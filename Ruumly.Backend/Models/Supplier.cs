@@ -204,6 +204,48 @@ public class Supplier
     /// </summary>
     public bool ContactEmailUnusable { get; set; } = false;
 
+    // ── Who this provider will actually work for (2026-08-21) ────────────────
+    //
+    // A service slug says WHAT a company does, never WHO for. "cleaning" turned
+    // out to cover at least three businesses that do not substitute for each
+    // other — domestic recurring upkeep, domestic one-off specialist work
+    // (suurpuhastus, windows, floor oiling), and commercial/B2B — and
+    // ProviderCandidateFinder could not tell them apart, so one Viimsi
+    // customer's weekly home clean was sent to seventeen providers of which
+    // four replied and three said, in different words, "not for someone like
+    // you".
+    //
+    // Both DEFAULT TO TRUE, so nothing changes until somebody records an actual
+    // refusal. A default of false would silently empty the fan-out for 1,187
+    // rows nobody has classified.
+    //
+    // These are NOT enforced in the candidate finder. They follow
+    // ContactEmailUnusable rather than MarketingOptOutAt: the provider stays
+    // visible to the admin with the reason attached, and the send is what
+    // refuses. A supplier that vanishes from the list teaches an operator
+    // nothing, and this codebase has already been bitten by "safe" behaviour
+    // that turns a real loss into silence.
+
+    /// <summary>
+    /// False when the provider serves BUSINESS customers only. Lux Puhastus:
+    /// "Pakume teenust vaid äriklientidele." Every Ruumly request today comes
+    /// from a private person, so a false here means no request we currently
+    /// generate is worth their inbox.
+    /// </summary>
+    public bool ServesConsumers { get; set; } = true;
+
+    /// <summary>
+    /// False when the provider takes one-off jobs but not a RECURRING
+    /// arrangement. Kendra: "regulaarset hoolduskoristust eraklientidele ei
+    /// paku… teostame ainult ühekordseid eritöid."
+    ///
+    /// Deliberately not the same thing as <see cref="ServesConsumers"/>: such a
+    /// provider is a perfectly good match for a move-out clean and a bad one
+    /// for a weekly contract, so this gate only bites when the LEAD is
+    /// recurring (see LeadScope.WantsRecurringService).
+    /// </summary>
+    public bool ServesRecurring { get; set; } = true;
+
     /// <summary>When the most recent bounce/complaint for this address arrived.</summary>
     public DateTime? ContactEmailBouncedAt { get; set; }
 

@@ -98,6 +98,8 @@ internal static class AdminMappers
         PollingEndpoint:          s.PollingEndpoint,
         // Deliverability (Resend bounce webhook)
         ContactEmailUnusable:     s.ContactEmailUnusable,
+        ServesConsumers:          s.ServesConsumers,
+        ServesRecurring:          s.ServesRecurring,
         ContactEmailBouncedAt:    s.ContactEmailBouncedAt,
         ContactEmailBounceType:   s.ContactEmailBounceType,
         ContactEmailBounceReason: s.ContactEmailBounceReason,

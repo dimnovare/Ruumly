@@ -60,6 +60,11 @@ public record UpdateSupplierRequest(
     string? Iban = null,
     string? BankAccountName = null,
     string? BankName = null,
+    // Who this provider will work for. Null leaves it unchanged; both default
+    // to true on the row, so an untouched supplier keeps receiving everything.
+    // Set from what a provider actually TELLS us in a refusal, never guessed.
+    bool? ServesConsumers = null,
+    bool? ServesRecurring = null,
     // Optional commerce capabilities
     bool? BookingEnabled = null,
     bool? ContractSigningEnabled = null,

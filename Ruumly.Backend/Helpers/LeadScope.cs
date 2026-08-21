@@ -62,4 +62,29 @@ public static class LeadScope
 
     /// <summary>How many scoping questions this lead actually answered.</summary>
     public static int Count(string? scopeJson) => Answers(scopeJson).Count;
+
+    /// <summary>
+    /// Does this request want an ONGOING arrangement rather than a single job?
+    ///
+    /// Only <c>cleaningFrequency</c> can say so — nothing else Ruumly sells
+    /// recurs. Position 1 is "just once"; 2, 3 and 4 are weekly, fortnightly
+    /// and monthly.
+    ///
+    /// FALSE IS THE ANSWER FOR EVERYTHING IT CANNOT READ, and that direction is
+    /// deliberate. The only caller is a gate that REFUSES to email a provider
+    /// who does not take recurring work, so an unreadable or absent answer must
+    /// mean "do not withhold the request" rather than "withhold it". Leads
+    /// created before cleaningFrequency existed — including the Viimsi request
+    /// that prompted all of this — carry no such answer at all, and silently
+    /// dropping providers from those would be the worse failure by far.
+    ///
+    /// Position 5 ("not sure") is likewise false: a customer who has not
+    /// decided has not asked for a contract.
+    /// </summary>
+    public static bool WantsRecurringService(string? scopeJson)
+    {
+        var answer = Answers(scopeJson)
+            .FirstOrDefault(a => a.QuestionId == ScopeQuestions.CleaningFrequency);
+        return answer is not null && answer.Options.Any(o => o is 2 or 3 or 4);
+    }
 }

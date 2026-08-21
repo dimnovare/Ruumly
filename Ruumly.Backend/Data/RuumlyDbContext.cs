@@ -69,6 +69,15 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
         // ─── Enums as strings ───
         model.Entity<User>().Property(e => e.Role).HasConversion<string>();
         model.Entity<User>().Property(e => e.Status).HasConversion<string>();
+        // TRUE, stated here and not merely as a C# initializer. EF reads the
+        // CLR default for a value type when it scaffolds a migration, so
+        // `public bool ServesConsumers { get; set; } = true;` produced
+        // `defaultValue: false` — which on apply would have set both columns
+        // false for all 1,187 existing suppliers and made every fan-out skip
+        // every provider as "business_only". Saying it here is what stops the
+        // next scaffold regenerating that.
+        model.Entity<Supplier>().Property(e => e.ServesConsumers).HasDefaultValue(true);
+        model.Entity<Supplier>().Property(e => e.ServesRecurring).HasDefaultValue(true);
         model.Entity<Supplier>().Property(e => e.IntegrationType).HasConversion<string>();
         model.Entity<Supplier>().Property(e => e.IntegrationHealth).HasConversion<string>();
         model.Entity<Supplier>().Property(e => e.Tier).HasConversion<string>();
