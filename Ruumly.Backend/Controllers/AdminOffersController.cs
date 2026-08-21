@@ -783,7 +783,27 @@ public class AdminOffersController(
     private static void CopyInto(OfferOption target, OfferOptionInput input, int index)
     {
         var title = input.Title.Trim();
-        target.SupplierId         = input.SupplierId;
+        // A QUOTE-SEEDED OPTION CANNOT LOSE ITS SUPPLIER BY OMISSION.
+        //
+        // PATCH is a replace-set, so every field the payload leaves out is
+        // written as null — which is right for a title or a note and wrong for
+        // the identity of the provider whose submission CREATED this row. An
+        // admin editing a price in one option and re-sending the array without
+        // `supplierId` silently unlinked a provider from their own quote. That
+        // is not cosmetic: the option stops matching a supplier, so
+        // ProviderOutcomeNotifier skips it as "no_supplier" and the provider is
+        // never told their price reached the customer, never told they won, and
+        // shows up nowhere in the workspace. It happened on a live Viimsi offer
+        // on 2026-08-21 and had to be repaired by hand.
+        //
+        // So for a row that carries CreatedFromOutreachId — proof it came from a
+        // real provider quote — an omitted supplier means "unchanged", not
+        // "none". Naming a DIFFERENT supplier still works: this only refuses the
+        // silent erasure, never a deliberate reassignment. Admin-authored
+        // options (no provenance) keep the plain replace-set behaviour, because
+        // there the field genuinely is the admin's to clear.
+        target.SupplierId         = input.SupplierId
+            ?? (target.CreatedFromOutreachId is not null ? target.SupplierId : null);
         target.SupplierLocationId = input.SupplierLocationId;
         target.Title              = title.Length > 200 ? title[..200] : title;
         target.PriceAmount        = input.PriceAmount;

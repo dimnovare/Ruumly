@@ -435,6 +435,83 @@ public class OfferLoopTests
         options.Select(o => o.Id).Should().OnlyHaveUniqueItems();
     }
 
+    /// <summary>
+    /// An option a provider's own quote created cannot lose that provider just
+    /// because a later payload left the field out.
+    ///
+    /// PATCH is a replace-set, so an omitted field is written as null. For a
+    /// title that is right; for the identity of the provider whose submission
+    /// CREATED the row it is silent data loss with consequences — the option
+    /// stops matching a supplier, ProviderOutcomeNotifier skips it as
+    /// "no_supplier", and that provider is never told their price reached the
+    /// customer nor that they won. It happened on a live Viimsi offer on
+    /// 2026-08-21 while an admin was only editing a note.
+    /// </summary>
+    [Fact]
+    public async Task UpdateOffer_AQuoteSeededOption_KeepsItsSupplier_WhenThePayloadOmitsIt()
+    {
+        var db       = TestDbContext.Create();
+        var lead     = MakeLead(db);
+        var supplier = MakeSupplier(db, "Pansib Cleaner", "cleaner@pansib.ee");
+        var admin    = MakeAdmin(db, new CapturingEmailQueue());
+
+        var created = await admin.CreateOffer(lead.Id, new CreateOfferRequest(
+            Options: [new OfferOptionInput("Pansib Cleaner", SupplierId: supplier.Id, PriceAmount: 80m)]));
+        var offerId  = (Guid)Prop(created.Should().BeOfType<OkObjectResult>().Subject.Value!, "id")!;
+        var optionId = db.OfferOptions.Single(o => o.OfferId == offerId).Id;
+
+        // Provenance: this row came from a real provider quote.
+        db.OfferOptions.Single(o => o.Id == optionId).CreatedFromOutreachId = Guid.NewGuid();
+        await db.SaveChangesAsync();
+
+        // The admin edits the NOTE and re-sends the array — no supplierId on it,
+        // which is exactly what a client that rebuilt the payload by hand does.
+        (await admin.UpdateOffer(offerId, new UpdateOfferRequest(Options:
+        [
+            new OfferOptionInput("Pansib Cleaner", PriceAmount: 80m,
+                Notes: "Quoted as a one-off; weekly terms still to confirm.", Id: optionId),
+        ]))).Should().BeOfType<OkObjectResult>();
+
+        var saved = db.OfferOptions.Single(o => o.Id == optionId);
+        saved.SupplierId.Should().Be(supplier.Id,
+            "the provider who submitted this quote must not be unlinked by omission");
+        saved.Notes.Should().Contain("weekly terms", "the edit the admin actually made still applies");
+    }
+
+    [Fact]
+    public async Task UpdateOffer_NamingADifferentSupplier_StillReassigns_AndAdminOptionsCanStillBeCleared()
+    {
+        var db    = TestDbContext.Create();
+        var lead  = MakeLead(db);
+        var first = MakeSupplier(db, "First", "first@x.ee");
+        var other = MakeSupplier(db, "Other", "other@x.ee");
+        var admin = MakeAdmin(db, new CapturingEmailQueue());
+
+        var created = await admin.CreateOffer(lead.Id, new CreateOfferRequest(Options:
+        [
+            new OfferOptionInput("From a quote", SupplierId: first.Id),
+            new OfferOptionInput("Typed by an admin", SupplierId: first.Id),
+        ]));
+        var offerId = (Guid)Prop(created.Should().BeOfType<OkObjectResult>().Subject.Value!, "id")!;
+        var quoted  = db.OfferOptions.Single(o => o.Title == "From a quote");
+        var authored = db.OfferOptions.Single(o => o.Title == "Typed by an admin");
+        quoted.CreatedFromOutreachId = Guid.NewGuid();   // only this one has provenance
+        await db.SaveChangesAsync();
+
+        (await admin.UpdateOffer(offerId, new UpdateOfferRequest(Options:
+        [
+            // A DELIBERATE reassignment is still honoured — the guard refuses
+            // silent erasure, not an admin who names a different company.
+            new OfferOptionInput("From a quote", SupplierId: other.Id, Id: quoted.Id),
+            // No provenance, so clearing the supplier is the admin's to do.
+            new OfferOptionInput("Typed by an admin", Id: authored.Id),
+        ]))).Should().BeOfType<OkObjectResult>();
+
+        db.OfferOptions.Single(o => o.Id == quoted.Id).SupplierId.Should().Be(other.Id);
+        db.OfferOptions.Single(o => o.Id == authored.Id).SupplierId.Should().BeNull(
+            "an admin-authored option has no provenance to protect");
+    }
+
     [Fact]
     public async Task UpdateOffer_ExplicitSortOrders_InclZero_DriveOrdering_AdminAndPublic()
     {
