@@ -149,8 +149,12 @@ public static class ScopeQuestions
     public const string VanRentalDuration = "vanrentalDuration";
     public const string VanRentalSize     = "vanrentalSize";
     public const string CleaningType      = "cleaningType";
-    public const string CleaningSize      = "cleaningSize";
+    public const string CleaningSize      = "cleaningSize";   // legacy — see All
+    public const string CleaningArea      = "cleaningArea";
+    public const string CleaningFrequency = "cleaningFrequency";
+    public const string CleaningCondition = "cleaningCondition";
     public const string CleaningExtras    = "cleaningExtras";
+    public const string CleaningHousehold = "cleaningHousehold";
 
     // Service slugs derived from the enum rather than typed as literals: a
     // question that claims a service which does not exist would be invisible
@@ -211,10 +215,33 @@ public static class ScopeQuestions
         new(VanRentalDuration, VanRental, 5),
         new(VanRentalSize,     VanRental, 4),
         new(CleaningType,      Cleaning,  5),
+        // CleaningSize IS RETAINED THOUGH THE FUNNEL NO LONGER ASKS IT — same
+        // rule as MovingAccess above. Its band 3 was "70–110 m²", a 57% spread,
+        // and a real Viimsi request (2026-08-20) had to be chased by hand
+        // because no cleaner can price "somewhere between 70 and 110". The
+        // bands are finer in CleaningArea, but positions are what the column
+        // stores, so renumbering this question would silently rewrite the
+        // answer every historical row gave. It stays, and outreach for an old
+        // lead keeps rendering the band the customer actually picked.
         new(CleaningSize,      Cleaning,  5),
+        new(CleaningArea,      Cleaning,  7),
+        // How often, asked separately from WHAT KIND — because CleaningType
+        // conflated the two and customers noticed before we did. The same
+        // Viimsi request ticked "Regular cleaning" and then wrote "ühekordne"
+        // (one-time) in the free text: the chip row had no way to say "a
+        // one-off deep clean of a 4-room house", so the answer contradicted
+        // itself and an operator had to write and ask which was true.
+        new(CleaningFrequency, Cleaning,  5),
+        // The other half of a cleaning price. A well-kept flat and one that has
+        // not been touched in six months are the same square metres and not
+        // remotely the same job, and nothing in the intake distinguished them.
+        new(CleaningCondition, Cleaning,  4),
         // Multi, and retaining its own retired position 5 ("all three") for the
         // same reason movingHeavyItems retains its own — see the note there.
         new(CleaningExtras,    Cleaning,  6, Multi: true),
+        // Pets and small children decide which products a cleaner may use, and
+        // some firms price or refuse on it. Multi because a home can have both.
+        new(CleaningHousehold, Cleaning,  4, Multi: true),
     ];
 
     private static readonly IReadOnlyDictionary<string, ScopeQuestion> ById =
