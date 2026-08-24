@@ -148,6 +148,7 @@ public static class ScopeQuestions
     public const string VanRentalDriver   = "vanrentalDriver";
     public const string VanRentalDuration = "vanrentalDuration";
     public const string VanRentalSize     = "vanrentalSize";
+    public const string VanRentalLicence  = "vanrentalLicence";
     public const string CleaningType      = "cleaningType";
     public const string CleaningSize      = "cleaningSize";   // legacy — see All
     public const string CleaningArea      = "cleaningArea";
@@ -214,6 +215,17 @@ public static class ScopeQuestions
         new(VanRentalDriver,   VanRental, 5),
         new(VanRentalDuration, VanRental, 5),
         new(VanRentalSize,     VanRental, 4),
+        // WHO IS ALLOWED TO DRIVE IT. A Parnu rental died at the counter on
+        // 2026-08-22 - not on price, not on availability: the customer held an
+        // esmane juhiluba (Estonian provisional licence, first two years) and
+        // the rental company does not rent to that. Nobody had asked, so the
+        // request reached a company whose conditions the customer could not
+        // meet and both sides found out on the forecourt.
+        //
+        // Position 4 is "taking a driver", which is why this needs no
+        // conditional machinery in the funnel: the answer is meaningful whether
+        // or not the customer intends to drive.
+        new(VanRentalLicence,  VanRental, 5),
         new(CleaningType,      Cleaning,  5),
         // CleaningSize IS RETAINED THOUGH THE FUNNEL NO LONGER ASKS IT — same
         // rule as MovingAccess above. Its band 3 was "70–110 m²", a 57% spread,
