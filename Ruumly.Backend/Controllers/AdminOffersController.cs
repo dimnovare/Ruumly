@@ -582,8 +582,51 @@ public class AdminOffersController(
         if (body.Note is not null)
             row.Note = Clamp(body.Note, 2000);
 
+        // ── A price that arrived by email ────────────────────────────────────
+        //
+        // The tokenized quote page is the happy path, but a real share of
+        // providers simply reply to the outreach — and they are the ones least
+        // likely to click a link. Before this, their status could be recorded
+        // and their NUMBER could not, so every such quote counted as silence in
+        // the metric built to measure silence, and the price statistics were
+        // biased against email repliers specifically.
+        //
+        // Recording a price does NOT seed a draft offer, unlike the quote page.
+        // That is the point: an operator writing down a four-day-old email —
+        // often on a request that has since closed — must not resurrect dead
+        // work into the ops queue. Adding the option to an offer stays a
+        // deliberate act.
+        if (body.QuotedAmount is { } amount)
+        {
+            if (amount <= 0)
+                return BadRequest(Error("A quoted price must be greater than zero."));
+            if (amount > 1_000_000m)
+                return BadRequest(Error("That quoted price is out of range."));
+            row.QuotedAmount = amount;
+
+            // Recording a price IS the answer, so the row stops reading as
+            // waiting — unless the caller named a status explicitly.
+            if (string.IsNullOrEmpty(body.Status))
+                row.Status = ProviderOutreachStatus.Replied;
+
+            // Stamp only on FIRST record: a correction to the amount must not
+            // move the moment the provider actually answered.
+            if (row.QuotedAt is null)
+            {
+                var quotedAt = body.QuotedAt ?? DateTime.UtcNow;
+                if (quotedAt > DateTime.UtcNow.AddMinutes(5))
+                    return BadRequest(Error("A quote cannot have answered in the future."));
+                row.QuotedAt = quotedAt.ToUniversalTime();
+            }
+        }
+
+        if (body.QuotedUnit is not null)         row.QuotedUnit         = Clamp(body.QuotedUnit, 40);
+        if (body.QuotedAvailability is not null) row.QuotedAvailability = Clamp(body.QuotedAvailability, 200);
+        if (body.QuotedNote is not null)         row.QuotedNote         = Clamp(body.QuotedNote, 2000);
+
         Audit("lead.outreach_updated", User.GetUserId().ToString(), row.Id.ToString(),
-              $"Status: {row.Status}");
+              $"Status: {row.Status}" +
+              (body.QuotedAmount is { } recorded ? $", quoted {recorded} by hand" : ""));
         await Db.SaveChangesAsync();
 
         var supplierName = await Db.Suppliers

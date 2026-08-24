@@ -55,7 +55,32 @@ public record OutreachPreviewRequest(List<Guid> SupplierIds);
 public record OutreachRequest(List<Guid> SupplierIds, bool Resend = false);
 
 /// <summary>PATCH /api/admin/outreach/{id} — manual status/note update.</summary>
-public record UpdateOutreachRequest(string? Status = null, string? Note = null);
+/// <summary>
+/// PATCH /api/admin/outreach/{id}.
+///
+/// The quote FIELDS are here because providers do not all use the tokenized
+/// quote page. Several answer the outreach by plain email — and they are
+/// disproportionately the ones who never click links — so their price had no
+/// way into the product at all. Status could be set, the number could not, and
+/// the quote statistics undercounted exactly that group. Two of seven repliers
+/// on one Latvian moving request answered by mail; one carried a real price.
+///
+/// Every field is null-means-UNCHANGED. There is deliberately no way to CLEAR a
+/// recorded price here: a provider quote is evidence, and an accidental empty
+/// field on a partial payload must not erase it.
+/// </summary>
+public record UpdateOutreachRequest(
+    string? Status = null,
+    string? Note = null,
+    decimal? QuotedAmount = null,
+    string? QuotedUnit = null,
+    string? QuotedAvailability = null,
+    string? QuotedNote = null,
+    // When the provider actually answered, not when an operator got round to
+    // typing it in. A reply that sat unread in a spam folder for four days
+    // would otherwise be stamped "now" and quietly wreck the median-response
+    // metric it is meant to feed. Omitted = now, on first record only.
+    DateTime? QuotedAt = null);
 
 /// <summary>POST /api/offers/{token}/choose — the customer picks an option.</summary>
 public record ChooseOptionRequest(Guid OptionId);
