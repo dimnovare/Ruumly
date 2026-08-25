@@ -139,6 +139,18 @@ internal static class AdminMappers
         d.AdminNotes,
         // Concierge intake context (null for legacy/routed leads)
         d.ToCity,
+        // The street addresses the customer typed, ADMIN-ONLY. A provider gets
+        // them only after the customer accepts their offer — see the comment on
+        // PublicQuoteLeadDto in QuoteController, which passes City and never
+        // these. They are emitted here because until now they were WRITE-ONLY:
+        // collected by the intake, stored, and read back by nobody. That is how
+        // a request whose City field held an entire trip
+        // ("Daugavpils- RIGA- DAUGAVPILS") could only be decoded by querying
+        // Postgres by hand — the one field that disambiguated it
+        // ("Kurzemes prospekts 164 Riga - Akademika Graftio 29 D-pils") was
+        // invisible in the workspace the operator actually works from.
+        d.FromAddress,
+        d.ToAddress,
         d.NeedDate,
         d.Details,
         d.Source,

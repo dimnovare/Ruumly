@@ -868,6 +868,7 @@ public class ConciergeLeadTests
         var result = await MakeAdmin(db).UpdateLead(lead.Id, new UpdateLeadRequest(
             Name: "New Name", Email: "new@x.ee", Phone: "+372 9999",
             Category: "moving", City: "Pärnu", ToCity: "Narva",
+            FromAddress: "Aia 3-12", ToAddress: "Kesk tee 8",
             NeedDate: "2026-09-01",
             Details: "3-room flat, 2nd floor, no lift"));
 
@@ -880,9 +881,56 @@ public class ConciergeLeadTests
         saved.Category.Should().Be(DemandLeadCategory.Moving);
         saved.City.Should().Be("Pärnu");
         saved.ToCity.Should().Be("Narva");
+        saved.FromAddress.Should().Be("Aia 3-12");
+        saved.ToAddress.Should().Be("Kesk tee 8");
         saved.Details.Should().Be("3-room flat, 2nd floor, no lift");
         saved.NeedDate.Should().NotBeNull();
         saved.NeedDate!.Value.Should().Be(new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc));
+    }
+
+    // The addresses were WRITE-ONLY before this: collected by the intake, stored,
+    // and editable by nobody. A real trailer request arrived with the customer's
+    // whole trip crammed into one address box
+    // ("Kurzemes prospekts 164 Riga-Akademika Graftio 29 D-pils") and an operator
+    // could read it only by querying the database directly, then had no way to
+    // split it. Both halves of that — see it, fix it — are asserted here.
+    [Fact]
+    public async Task UpdateLead_Addresses_SetAndClear()
+    {
+        var db    = TestDbContext.Create();
+        var lead  = await SeedConciergeLead(db);
+        var admin = MakeAdmin(db);
+
+        // A crammed value goes in, then gets split across the two fields.
+        (await admin.UpdateLead(lead.Id, new UpdateLeadRequest(
+            FromAddress: "Kurzemes prospekts 164, Riga",
+            ToAddress:   "Akademika Graftio 29, Daugavpils")))
+            .Should().BeOfType<OkObjectResult>();
+        db.DemandLeads.Single().FromAddress.Should().Be("Kurzemes prospekts 164, Riga");
+        db.DemandLeads.Single().ToAddress.Should().Be("Akademika Graftio 29, Daugavpils");
+
+        // Empty clears, matching every other optional field on this endpoint.
+        await admin.UpdateLead(lead.Id, new UpdateLeadRequest(FromAddress: "   ", ToAddress: ""));
+        db.DemandLeads.Single().FromAddress.Should().BeNull();
+        db.DemandLeads.Single().ToAddress.Should().BeNull();
+
+        // The angle-bracket guard for these two is asserted with every other text
+        // field in UpdateLead_AngleBracketsInTextFields_Rejected.
+    }
+
+    // Over-long input is clamped, not rejected: DemandLead caps both columns at
+    // 300, and a paste one character too long should still be a saved edit.
+    [Fact]
+    public async Task UpdateLead_Addresses_ClampedTo300()
+    {
+        var db   = TestDbContext.Create();
+        var lead = await SeedConciergeLead(db);
+
+        await MakeAdmin(db).UpdateLead(lead.Id, new UpdateLeadRequest(
+            FromAddress: new string('x', 400), ToAddress: new string('y', 301)));
+
+        db.DemandLeads.Single().FromAddress.Should().HaveLength(300);
+        db.DemandLeads.Single().ToAddress.Should().HaveLength(300);
     }
 
     [Fact]
@@ -987,6 +1035,8 @@ public class ConciergeLeadTests
             new UpdateLeadRequest(Name:    "<script>alert(1)</script>"),
             new UpdateLeadRequest(City:    "Tallinn<b>"),
             new UpdateLeadRequest(ToCity:  "Tartu>"),
+            new UpdateLeadRequest(FromAddress: "Aia 3<script>"),
+            new UpdateLeadRequest(ToAddress:   "Kesk tee 8>"),
             new UpdateLeadRequest(Details: "a < b"),
         })
         {

@@ -388,6 +388,8 @@ public class AdminLeadsController(
 
         if (body.Name    is not null && HasAngle(body.Name))    return BadRequest(Error("Name contains invalid characters."));
         if (body.ToCity  is not null && HasAngle(body.ToCity))  return BadRequest(Error("Destination contains invalid characters."));
+        if (body.FromAddress is not null && HasAngle(body.FromAddress)) return BadRequest(Error("Pickup address contains invalid characters."));
+        if (body.ToAddress   is not null && HasAngle(body.ToAddress))   return BadRequest(Error("Delivery address contains invalid characters."));
         if (body.Details is not null && HasAngle(body.Details)) return BadRequest(Error("Details contain invalid characters."));
 
         // needDate is a string like every other editable field ("" clears, a valid
@@ -415,6 +417,10 @@ public class AdminLeadsController(
         if (body.Name is not null)    { lead.Name    = ClampOpt(body.Name, 120);   requestEdited = true; }
         if (body.Phone is not null)   { lead.Phone   = ClampOpt(body.Phone, 40);   requestEdited = true; }
         if (body.ToCity is not null)  { lead.ToCity  = ClampOpt(body.ToCity, 100); requestEdited = true; }
+        // 300 = DemandLead's own MaxLength on both columns; clamping here keeps a
+        // long paste a successful edit rather than a database error.
+        if (body.FromAddress is not null) { lead.FromAddress = ClampOpt(body.FromAddress, 300); requestEdited = true; }
+        if (body.ToAddress is not null)   { lead.ToAddress   = ClampOpt(body.ToAddress, 300);   requestEdited = true; }
         if (body.Details is not null) { lead.Details = ClampOpt(body.Details, 2000); requestEdited = true; }
         if (body.NeedDate is not null)
         {
@@ -448,6 +454,8 @@ public class AdminLeadsController(
             lead.City,
             category   = lead.Category.ToString().ToLower(),
             lead.ToCity,
+            lead.FromAddress,
+            lead.ToAddress,
             lead.NeedDate,
             lead.Details,
             status     = lead.Status.ToString().ToLower(),
@@ -1278,6 +1286,13 @@ public record UpdateLeadRequest(
     string? Category = null,
     string? City = null,
     string? ToCity = null,
+    // Street addresses, editable for exactly the reason City is: the customer
+    // types them free-hand, and a free-hand box collects whatever the customer
+    // thinks the question means — sometimes the whole trip in one field. An
+    // operator who can see a wrong value but not correct it is left doing the
+    // rest of the job around it.
+    string? FromAddress = null,
+    string? ToAddress = null,
     // A string (not DateTime?): "" JSON-binds fine and means "clear", matching the
     // empty-clears convention of the other editable fields (DateTime? can't bind "").
     string? NeedDate = null,
