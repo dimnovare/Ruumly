@@ -1245,9 +1245,14 @@ public class AdminLeadsController(
         // never leave a sent message with no record of having been sent.
         await Db.SaveChangesAsync();
 
+        // The stored Body and the plain-text part stay exactly what the operator
+        // typed; the HTML is DERIVED from it here rather than accepted over the
+        // wire, so the no-angle-brackets guard above still holds and a customer
+        // still gets a readable letter in a client that refuses HTML.
         emailQueue.EnqueueEmail(
             recipient, subject, text,
-            htmlBody: null, replyTo: await OpsInbox.ResolveAsync(Db));
+            htmlBody: LeadMessageComposer.BuildHtml(text),
+            replyTo: await OpsInbox.ResolveAsync(Db));
 
         return Ok(MapLeadMessage(message));
     }
