@@ -5,6 +5,20 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>9f85d24a-8056-4c58-806b-d5e74d6f8448</UserSecretsId>
+    <!--
+      Workstation GC, not ASP.NET Core's default Server GC.
+
+      Server GC keeps one heap per CPU core the container can see and sizes each
+      for throughput. This API averages ~0.005 vCPU, so on Railway that bought
+      nothing and cost ~0.7 GB of idle RAM, billed by the GB-minute around the
+      clock; RAM was 96% of the account's bill. Rentaro already runs this way
+      and idles at ~0.24 GB.
+
+      Background (concurrent) GC is deliberately LEFT ON: switching it off saves
+      little more and makes full collections block requests, which is the one
+      part of this that a user could actually feel.
+    -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
   </PropertyGroup>
 
   <ItemGroup>
