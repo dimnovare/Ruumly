@@ -27,6 +27,7 @@ public static class ServiceCategories
     public const string Packing   = "packing";
     public const string Moving    = "moving";
     public const string Insurance = "insurance";
+    public const string Trailer   = "trailer";
 
     /// <summary>
     /// RETAINED FOR DATA, NOT FOR SALE. These slugs stay fully valid on the supply
@@ -53,14 +54,51 @@ public static class ServiceCategories
         new HashSet<string>(StringComparer.Ordinal) { Packing, Insurance };
 
     /// <summary>
+    /// BROWSABLE BUT NOT SOLD — the THIRD state, and the one that is easy to get wrong.
+    ///
+    /// A slug here is still a first-class DIRECTORY citizen: a visitor may browse it, filter
+    /// the map by it, land on its city hub from Google, and an admin may still add it to a
+    /// supplier. What it may NOT do is enter the concierge funnel — no intake option, no
+    /// auto fan-out, no "we will bring you 2-3 offers".
+    ///
+    /// This is NOT <see cref="RetainedNotSoldSlugs"/>. That set means "supplier metadata only",
+    /// and it additionally (a) refuses the slug as a NEW admin service-type in
+    /// <see cref="TryNormalizeOfferable"/> and (b) rewrites the slug away in
+    /// <see cref="PublicAliasFor"/>. Putting a browsable slug in there would stop admins
+    /// creating partners for the very vertical we are keeping visible, and would make
+    /// ?type={slug} on /api/locations silently widen to EVERY provider.
+    ///
+    /// Empty in this commit — naming the state before anything moves into it.
+    /// </summary>
+    public static readonly IReadOnlySet<string> BrowsableNotSoldSlugs =
+        new HashSet<string>(StringComparer.Ordinal);
+
+    /// <summary>
+    /// The DIRECTORY catalogue: everything a visitor may browse and an admin may tag a
+    /// supplier with. Excludes only the retained-for-data slugs.
+    /// </summary>
+    public static readonly IReadOnlyList<string> BrowsableSlugs =
+        BySlug.Keys.Where(s => !RetainedNotSoldSlugs.Contains(s)).ToList();
+
+    /// <summary>
     /// Slugs a consumer may actually choose: the public concierge intake, public
     /// search filters and the sitemap's service×city hubs all read from this.
     /// </summary>
     public static readonly IReadOnlyList<string> ConsumerSlugs =
-        BySlug.Keys.Where(s => !RetainedNotSoldSlugs.Contains(s)).ToList();
+        BySlug.Keys.Where(s => !RetainedNotSoldSlugs.Contains(s)
+                            && !BrowsableNotSoldSlugs.Contains(s)).ToList();
 
-    /// <summary>True when a visitor is allowed to pick this slug as a service.</summary>
+    /// <summary>True when a visitor is allowed to BUY this slug as a service (sales catalogue).</summary>
     public static bool IsConsumerSlug(string? slug) =>
+        slug is not null && BySlug.ContainsKey(slug)
+        && !RetainedNotSoldSlugs.Contains(slug) && !BrowsableNotSoldSlugs.Contains(slug);
+
+    /// <summary>
+    /// True when a visitor may BROWSE this slug and an admin may tag a supplier with it
+    /// (directory catalogue). Supply-side and directory-side predicates must read THIS,
+    /// never <see cref="IsConsumerSlug"/>.
+    /// </summary>
+    public static bool IsBrowsableSlug(string? slug) =>
         slug is not null && BySlug.ContainsKey(slug) && !RetainedNotSoldSlugs.Contains(slug);
 
     /// <summary>
@@ -79,6 +117,27 @@ public static class ServiceCategories
         Insurance                => null,
         _ when IsConsumerSlug(slug) => slug,
         _                        => null,
+    };
+
+    /// <summary>
+    /// What a slug arriving on a DIRECTORY surface should be served as — the browse-side
+    /// twin of <see cref="PublicAliasFor"/>:
+    ///   browsable slug (incl. anything in <see cref="BrowsableNotSoldSlugs"/>) → ITSELF
+    ///   "packing" / "insurance"                                                → as PublicAliasFor
+    ///   unknown slug                                                           → null
+    ///
+    /// WHY THIS EXISTS. <see cref="PublicAliasFor"/> is named "public" but is really
+    /// "sellable": it resolves through <see cref="IsConsumerSlug"/>. The moment a slug stops
+    /// being sellable it returns null there, and LocationsController's ?type= filter treats
+    /// null as "no filter" — so the map would answer a request for ONE vertical with EVERY
+    /// provider. A de-sold vertical must keep filtering exactly as before.
+    /// </summary>
+    public static string? DirectoryAliasFor(string? slug) => slug switch
+    {
+        Packing                      => Moving,
+        Insurance                    => null,
+        _ when IsBrowsableSlug(slug) => slug,
+        _                            => null,
     };
 
     /// <summary>Slug for a concrete category ("cleaning"); Any → "any".</summary>

@@ -43,7 +43,10 @@ public class LocationsController(RuumlyDbContext db) : ControllerBase
         var slug = type?.Trim().ToLowerInvariant();
         if (string.IsNullOrEmpty(slug)) return null;
         return Constants.ServiceCategories.BySlug.ContainsKey(slug)
-            ? Constants.ServiceCategories.PublicAliasFor(slug)
+            // DIRECTORY surface: must resolve a browsable-but-not-sold slug to ITSELF.
+            // PublicAliasFor would return null for it, and null here means "no filter" —
+            // ?type=x would then answer with every provider instead of x's.
+            ? Constants.ServiceCategories.DirectoryAliasFor(slug)
             : slug;
     }
 
