@@ -136,11 +136,21 @@ public class BookingIdempotencyTests
         return (supplier, listing, customer);
     }
 
+    // Relative to today, never a calendar date. These were hardcoded to
+    // 2026-09-01..2026-10-01; BookingService rightly refuses a start in the past,
+    // so on 1 September every test here began failing on the date rather than
+    // on the behaviour it exists to check, and master went red on an unrelated
+    // commit six weeks later. Two months out keeps clear of any lead-time rule.
+    // The request and the seeded cancelled booking share these so they still
+    // overlap, which CancelledBooking_DoesNotBlockRebooking depends on.
+    private static readonly DateTime Start = DateTime.UtcNow.Date.AddMonths(2);
+    private static readonly DateTime End   = Start.AddMonths(1);
+
     private static CreateBookingRequest MakeRequest(Guid listingId, string? idempotencyKey = null) => new()
     {
         ListingId      = listingId,
-        StartDate      = "2026-09-01",
-        EndDate        = "2026-10-01",
+        StartDate      = Start.ToString("yyyy-MM-dd"),
+        EndDate        = End.ToString("yyyy-MM-dd"),
         Duration       = "1 kuu",
         Extras         = [],
         ContactName    = "Test Customer",
@@ -254,8 +264,8 @@ public class BookingIdempotencyTests
             UserId     = customer.Id,
             ListingId  = listing.Id,
             SupplierId = supplier.Id,
-            StartDate  = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc),
-            EndDate    = new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc),
+            StartDate  = Start,
+            EndDate    = End,
             Duration   = "1 kuu",
             Status     = BookingStatus.Cancelled,
         });
