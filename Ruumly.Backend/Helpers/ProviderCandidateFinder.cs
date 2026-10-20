@@ -79,7 +79,18 @@ public static class ProviderCandidateFinder
             .Select(g => g.First())
             .ToList();
 
-        var anchor = BuildAnchor(matchingSuppliers, locations, lead.City);
+        // The anchor answers "where IS this town?", which has nothing to do with
+        // what the customer wants done there — so it is built from EVERY active
+        // provider located in the town, not only the ones offering this service.
+        // Built from matching suppliers only, a town with no in-town provider of
+        // the requested service had no anchor at all, and with no anchor the
+        // nearby search keeps nothing at ANY radius: the 25 -> 50 -> 100 km ladder
+        // re-searched around nothing three times. That is how two Valga requests
+        // (2026-09-29 warehouse, 2026-10-19 van rental) reached zero providers
+        // while twelve van rentals sat within 100 km. Candidates are still drawn
+        // only from matchingSuppliers below; this widens where we look FROM,
+        // never who we ask.
+        var anchor = BuildAnchor(suppliers, locations, lead.City);
         var candidates = matchingSuppliers
             .Select(s => BuildCandidate(
                 s,
