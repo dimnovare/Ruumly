@@ -63,9 +63,9 @@ removing any of them.
 ## The 80 re-engagement mails already sent (2026-11-13)
 
 Checked against this scan after sending:
-- 61 went to `target` providers.
-- 7 went to `review` providers (real businesses, weak wording).
-- 12 went to `unverified` providers (no website).
+- 62 went to `target` providers.
+- 8 went to `review` providers (real businesses, weak wording).
+- 10 went to `unverified` providers (no website).
 - **0 went to `b2b_logistics` providers.**
 
 ## The 45 mails still on hold
