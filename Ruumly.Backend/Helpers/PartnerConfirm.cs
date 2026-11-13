@@ -89,7 +89,9 @@ public static class PartnerConfirm
             ? [supplier]
             : (await db.Suppliers
                 .Where(s => s.Id == supplier.Id
-                         || (s.PartnerConfirmInbox == inbox && s.PartnerConfirmSentAt != null))
+                         // A revoked token (admin removal) takes the row out of the group.
+                         || (s.PartnerConfirmInbox == inbox && s.PartnerConfirmSentAt != null
+                             && s.PartnerConfirmToken != null))
                 .ToListAsync(ct))
                 .Where(s => s.Id == supplier.Id || InboxKey(s) == inbox)
                 .ToList();

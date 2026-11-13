@@ -198,6 +198,27 @@ public class PartnerConfirmTests
     }
 
     [Fact]
+    public async Task An_admin_removed_sibling_is_not_revived_by_another_branchs_yes()
+    {
+        var db = TestDbContext.Create();
+        var q = new Queue();
+        var a = Provider("Kept OÜ", "shared@two.ee");
+        var b = Provider("Removed OÜ", "shared@two.ee");
+        foreach (var s in new[] { a, b })
+        {
+            s.PartnerConfirmSentAt = DateTime.UtcNow; s.PartnerConfirmToken = PartnerConfirm.NewToken();
+            s.PartnerConfirmInbox = "shared@two.ee"; s.PartnerConfirmExpiredAt = DateTime.UtcNow; s.IsActive = false;
+        }
+        b.PartnerConfirmToken = null;   // what DeleteSupplier does
+        db.Suppliers.AddRange(a, b);
+        await db.SaveChangesAsync();
+
+        await Public(db, q).Confirm(a.PartnerConfirmToken!, "yes", default);
+        (await db.Suppliers.FindAsync(a.Id))!.IsActive.Should().BeTrue();
+        (await db.Suppliers.FindAsync(b.Id))!.IsActive.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task Opening_the_button_link_records_nothing_but_the_post_does_and_answers_for_the_whole_inbox()
     {
         var db = TestDbContext.Create();
