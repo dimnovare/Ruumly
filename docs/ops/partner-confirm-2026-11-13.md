@@ -1,6 +1,16 @@
 # Partner confirmation: automatic "do you want our requests?" loop (2026-11-13)
 
-**Status: built and tested on branch `claude/nice-golick-b75e7e`. Not deployed, nothing sent.**
+**Status (2026-11-13 evening): LIVE.** Deployed to master (last commit 7f25785). Founder approved the
+button letter. 297 letters (306 suppliers; LT 178, LV 74, ET 45) are scheduled in daily batches to fit
+the Resend free tier: 14.11 08:00 UTC 55, 15.11 / 16.11 / 17.11 07:00 UTC 75 each, 18.11 07:00 UTC 17.
+`partnerConfirmAutomation = on`, `partnerConfirmDailyCap = 70`. Reminders start on 28.11, removals on 05.12.
+Consent is re-checked when each letter goes out (PartnerConfirmLetterJob). A row that opts out, is
+deactivated, bounces or changes its e-mail before its day gets no letter.
+Maksten OÜ's "JAH" was recorded as yes.
+
+Same evening (founder decisions):
+- "No e-mail = no listing": the 214 active directory rows without an e-mail were soft-deleted.
+- 302 registry codes were applied, each read back. 125 more belonged to rows being removed and were skipped.
 
 ## What it does
 
@@ -66,7 +76,9 @@ sites, and confirmed partners rose from 544 to 574.
 
 ### Draft reply to Sipelgas Veod (ET)
 
-Questions 2 and 3 need the founder's answer. Nothing has been sent.
+SUPERSEDED. The founder answered: no commission and no fees, and requests are free; optional paid extras
+exist. The final branded version is `tools/supplier_scan/out/sipelgas-reply.html`. It is waiting for the
+founder's yes on that exact version. The text below is the old draft.
 
 > Tere, Aleksei!
 >
