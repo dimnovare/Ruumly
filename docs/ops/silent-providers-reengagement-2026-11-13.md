@@ -3,6 +3,46 @@
 **Status: drafts only. Nothing was sent.** Send via Resend from info@ruumly.eu (never from a personal
 Gmail). One mail per provider, only to rows ticked `approve=y`.
 
+## Update: enriched, validated, final drafts
+
+Pipeline: `scan.py silent` → `enrich` → `mail`. Outputs land in `out/`, which is gitignored.
+
+**Enrichment (135 providers).** Sources:
+- each provider's own website: home, contact and price pages, with robots.txt honoured
+- the EE e-Business Register
+- web search for the rows with no website
+
+Facebook and Instagram links are recorded but not crawled: the pages are behind a login wall and
+their terms forbid scraping.
+
+| signal | rows |
+|---|---:|
+| e-mail **verified**: appears on their own site or in the register, and the domain has MX | 118 |
+| e-mail deliverable (MX ok) but not seen anywhere public | 17 |
+| a valid phone number found (EE/LV/LT format check) | 128 |
+| prices found on their site (kept in `prices_seen` for offer drafting) | 66 |
+| Facebook or Instagram page linked from their site | 58 |
+
+**Web-search findings** (applied as overrides in `mail.py`):
+- Aikerauto OÜ is the same business as AK Rent. Both go to info@akrent.ee, which gets 16 requests
+  and is the biggest silent inbox.
+- Hekkari Veod's registered address is hekkariveod@gmail.com, not the hot.ee address we hold.
+- Vervo SIA is an international freight forwarder, so it is skipped.
+
+**Mail list: 125 mails** (ET 89, LV 35, LT 1). A chain's branches share one inbox and get one
+mail. Approved health fixes are used for the address.
+- 112 go to a verified address.
+- 13 go to an address that is deliverable but unconfirmed.
+
+**Skipped (4):**
+- Motorsport OÜ and RK Trans OÜ: approved for removal
+- Vervo SIA
+- Lux Puhastus: its site has business-only wording, so check it by hand
+
+The final copy is generated per inbox in `out/silent-mail.csv` (columns `subject` and `body`). It
+uses the real request count and the provider's own services, and it states that the requests are
+free for the provider. Each row also carries `prices_seen`, `phones` and `social` for ops use.
+
 ## Who
 
 `tools/supplier_scan/out/silent-providers.csv` (`scan.py silent`): providers that got at least one

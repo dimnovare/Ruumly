@@ -75,6 +75,8 @@ def main(argv=None):
     pl2.add_argument("--registry-codes", action="store_true")
 
     sub.add_parser("silent", help="providers that never answered lead mail -> out/silent-providers.csv")
+    sub.add_parser("enrich", help="web + register enrichment and validation of silent-providers.csv")
+    sub.add_parser("mail", help="silent-enriched.csv -> out/silent-mail.csv drafts (nothing is sent)")
     sub.add_parser("analytics", help="read-only demand/service aggregates -> out/analytics.md")
     e = sub.add_parser("emit-import")
     e.add_argument("--review", type=Path)
@@ -108,6 +110,14 @@ def main(argv=None):
     elif a.cmd == "silent":
         import plan
         plan.silent(a)
+    elif a.cmd == "enrich":
+        import enrich
+        enrich.run(a)
+        sys.stdout.flush()
+        os._exit(0)
+    elif a.cmd == "mail":
+        import mail
+        mail.run(a)
     elif a.cmd == "analytics":
         import analytics
         analytics.run(a)
