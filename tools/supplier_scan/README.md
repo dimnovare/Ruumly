@@ -39,6 +39,12 @@ python -X utf8 tools/supplier_scan/scan.py plan --actions fix_contact,remove [--
 # 7. Providers that got lead mail and never answered -> out/silent-providers.csv
 python -X utf8 tools/supplier_scan/scan.py silent
 
+# 8b. Does each provider really offer what we list? Exact quotes from its own site
+python -X utf8 tools/supplier_scan/scan.py services --only-active   # -> out/service-verification.csv (fit column)
+
+# 8c. Branded HTML letters for the remaining silent providers + one sample per language (nothing is sent)
+python -X utf8 tools/supplier_scan/scan.py mail-html
+
 # 8. Demand + service aggregates (READ ONLY, no customer PII leaves the DB) -> out/analytics.md
 railway run --service Postgres -- python -X utf8 tools/supplier_scan/scan.py analytics
 ```

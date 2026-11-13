@@ -78,6 +78,10 @@ def main(argv=None):
     sub.add_parser("enrich", help="web + register enrichment and validation of silent-providers.csv")
     sub.add_parser("mail", help="silent-enriched.csv -> out/silent-mail.csv drafts (nothing is sent)")
     sub.add_parser("analytics", help="read-only demand/service aggregates -> out/analytics.md")
+    sub.add_parser("mail-html", help="branded HTML letters + one sample per language (nothing is sent)")
+    sv = sub.add_parser("services", help="verify listed services on each provider's own site -> out/service-verification.csv")
+    sv.add_argument("--source", choices=("suppliers", "discovery"), default="suppliers")
+    sv.add_argument("--only-active", action="store_true")
     e = sub.add_parser("emit-import")
     e.add_argument("--review", type=Path)
 
@@ -115,6 +119,14 @@ def main(argv=None):
         enrich.run(a)
         sys.stdout.flush()
         os._exit(0)
+    elif a.cmd == "services":
+        import services
+        services.run(a)
+        sys.stdout.flush()
+        os._exit(0)
+    elif a.cmd == "mail-html":
+        import mail_html
+        mail_html.run(a)
     elif a.cmd == "mail":
         import mail
         mail.run(a)
