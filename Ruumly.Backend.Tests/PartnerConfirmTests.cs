@@ -22,8 +22,14 @@ namespace Ruumly.Backend.Tests;
 /// </summary>
 public class PartnerConfirmTests
 {
-    private sealed class Queue : IBackgroundEmailQueue
+    private sealed class Queue : IBackgroundEmailQueue, IPartnerConfirmLetterQueue
     {
+        public List<Guid> LetterSupplierIds { get; } = [];
+        public void Schedule(TimeSpan delay, Guid supplierId, string to, PartnerConfirm.Message msg, string? replyTo)
+        {
+            LetterSupplierIds.Add(supplierId);
+            Emails.Add((delay, to, msg.Subject, msg.TextBody, msg.HtmlBody));
+        }
         public List<(TimeSpan Delay, string To, string Subject, string Text, string? Html)> Emails { get; } = [];
         public void EnqueueEmail(string to, string subject, string textBody, string? htmlBody = null)
             => Emails.Add((TimeSpan.Zero, to, subject, textBody, htmlBody));
@@ -69,7 +75,7 @@ public class PartnerConfirmTests
         };
 
     private static PartnerConfirmFollowUpJob Job(TestDbContext db, Queue q) =>
-        new(db, q, Config, NullLogger<PartnerConfirmFollowUpJob>.Instance);
+        new(db, q, q, Config, NullLogger<PartnerConfirmFollowUpJob>.Instance);
 
     private static async Task TurnOn(TestDbContext db)
     {
@@ -147,6 +153,48 @@ public class PartnerConfirmTests
         await Admin(db, q).Campaign(new PartnerConfirmCampaignRequest([a.Id], false, null, at), default);
         q.Emails.Should().ContainSingle().Which.Delay.Should().BeCloseTo(TimeSpan.FromDays(2), TimeSpan.FromMinutes(1));
         (await db.Suppliers.FindAsync(a.Id))!.PartnerConfirmSentAt.Should().BeCloseTo(at, TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public async Task A_scheduled_letter_is_dropped_at_send_time_if_consent_changed_meanwhile()
+    {
+        var db = TestDbContext.Create();
+        var q = new Queue();
+        var a = Provider("Changed OÜ", "c@changed.ee");
+        var b = Provider("Fine OÜ", "f@fine.ee");
+        db.Suppliers.AddRange(a, b);
+        await db.SaveChangesAsync();
+        await Admin(db, q).Campaign(new PartnerConfirmCampaignRequest([a.Id, b.Id], false, null, DateTime.UtcNow.AddDays(2)), default);
+        q.LetterSupplierIds.Should().BeEquivalentTo([a.Id, b.Id]);
+
+        (await PartnerConfirmLetterJob.SkipReasonAsync(db, b.Id, "f@fine.ee")).Should().BeNull();
+
+        a.MarketingOptOutAt = DateTime.UtcNow;   // opts out before the letter's day
+        await db.SaveChangesAsync();
+        (await PartnerConfirmLetterJob.SkipReasonAsync(db, a.Id, "c@changed.ee")).Should().Be("opted out");
+
+        b.ContactEmail = "new@fine.ee";
+        await db.SaveChangesAsync();
+        (await PartnerConfirmLetterJob.SkipReasonAsync(db, b.Id, "f@fine.ee")).Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task Token_dies_when_the_email_changes_or_an_admin_removes_the_row()
+    {
+        var db = TestDbContext.Create();
+        var q = new Queue();
+        var a = Provider("Moved OÜ", "old@moved.ee");
+        a.PartnerConfirmSentAt = DateTime.UtcNow; a.PartnerConfirmToken = PartnerConfirm.NewToken();
+        a.PartnerConfirmInbox = "old@moved.ee";
+        db.Suppliers.Add(a);
+        await db.SaveChangesAsync();
+        var token = a.PartnerConfirmToken!;
+
+        a.ContactEmail = "new@moved.ee";
+        await db.SaveChangesAsync();
+        (await Public(db, q).Show(token, "no", default)).Should().BeOfType<ContentResult>().Which.StatusCode.Should().Be(404);
+        await Public(db, q).Confirm(token, "no", default);
+        (await db.Suppliers.FindAsync(a.Id))!.MarketingOptOutAt.Should().BeNull();
     }
 
     [Fact]

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Ruumly.Backend.Data;
 using Ruumly.Backend.Helpers;
+using Ruumly.Backend.Jobs;
 using Ruumly.Backend.Models;
 using Ruumly.Backend.Services.Interfaces;
 
@@ -36,7 +37,7 @@ public sealed record PartnerConfirmAnswerRequest(string Answer, string? Note = n
 [Route("api/admin/suppliers/partner-confirm")]
 public class AdminPartnerConfirmController(
     RuumlyDbContext db,
-    IBackgroundEmailQueue emailQueue,
+    IPartnerConfirmLetterQueue letterQueue,
     IMailDomainVerifier mailDomains,
     IConfiguration config,
     ILogger<AdminPartnerConfirmController> logger) : AdminBaseController(db)
@@ -137,9 +138,9 @@ public class AdminPartnerConfirmController(
 
             for (var i = 0; i < letters.Count; i++)
             {
-                var (to, _, msg) = letters[i];
-                emailQueue.EnqueueEmailAfter(startDelay + AdminSupplierIntroController.DelayFor(i), to,
-                    msg.Subject, msg.TextBody, msg.HtmlBody, replyTo);
+                var (to, primary, msg) = letters[i];
+                // Consent is re-checked when the letter actually goes out.
+                letterQueue.Schedule(startDelay + AdminSupplierIntroController.DelayFor(i), primary.Id, to, msg, replyTo);
             }
             logger.LogInformation("Partner confirm campaign: queued {Count} letter(s) for {Suppliers} supplier(s).",
                 letters.Count, supplierIds.Count);

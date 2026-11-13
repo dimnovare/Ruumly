@@ -29,6 +29,7 @@ namespace Ruumly.Backend.Jobs;
 public class PartnerConfirmFollowUpJob(
     RuumlyDbContext db,
     IBackgroundEmailQueue emailQueue,
+    IPartnerConfirmLetterQueue letterQueue,
     IConfiguration config,
     ILogger<PartnerConfirmFollowUpJob> logger)
 {
@@ -86,7 +87,7 @@ public class PartnerConfirmFollowUpJob(
             .ToDictionaryAsync(x => x.Key, x => x.N, ct);
 
         int reminded = 0, dead = 0, deferred = 0;
-        var queued = new List<(string To, PartnerConfirm.Message Msg)>();
+        var queued = new List<(Guid SupplierId, string To, PartnerConfirm.Message Msg)>();
         foreach (var group in dueReminder)
         {
             var primary = group.First();
@@ -108,7 +109,7 @@ public class PartnerConfirmFollowUpJob(
             primary.PartnerConfirmToken ??= PartnerConfirm.NewToken();
             var msg = PartnerConfirm.Compose(primary, primary.PartnerConfirmToken, apiUrl,
                 group.Sum(s => counts.GetValueOrDefault(s.Id)), primary.PartnerConfirmSentAt);
-            queued.Add((group.Key, msg));
+            queued.Add((primary.Id, group.Key, msg));
             foreach (var s in group) s.PartnerConfirmReminderSentAt = now;
             reminded++;
         }
@@ -136,8 +137,8 @@ public class PartnerConfirmFollowUpJob(
         // Stamps are committed before mail is queued (stamped-but-unsent is the safe failure).
         await db.SaveChangesAsync(ct);
         for (var i = 0; i < queued.Count; i++)
-            emailQueue.EnqueueEmailAfter(AdminSupplierIntroController.DelayFor(i), queued[i].To,
-                queued[i].Msg.Subject, queued[i].Msg.TextBody, queued[i].Msg.HtmlBody, replyTo);
+            letterQueue.Schedule(AdminSupplierIntroController.DelayFor(i), queued[i].SupplierId,
+                queued[i].To, queued[i].Msg, replyTo);
 
         var result = new Result(true, autoYes, reminded, dead, expired.Count, deferred);
         logger.LogInformation("Partner confirm follow-up: {@Result}", result);

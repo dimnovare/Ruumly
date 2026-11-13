@@ -433,6 +433,8 @@ builder.Services.AddScoped<BackgroundCleanupService>();
 // ─── Application services ───
 builder.Services.AddScoped<IPricingConfigService, PricingConfigService>();
 builder.Services.AddScoped<IBackgroundEmailQueue, HangfireBackgroundEmailQueue>();
+builder.Services.AddScoped<Ruumly.Backend.Jobs.IPartnerConfirmLetterQueue, Ruumly.Backend.Jobs.HangfirePartnerConfirmLetterQueue>();
+builder.Services.AddScoped<Ruumly.Backend.Jobs.PartnerConfirmLetterJob>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IListingService, ListingService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();

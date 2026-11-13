@@ -82,10 +82,15 @@ public class PartnerConfirmController(
         return Done(t, lang, answer);
     }
 
-    private Task<Supplier?> Find(string token, CancellationToken ct) =>
-        string.IsNullOrWhiteSpace(token) || token.Length > 64
-            ? Task.FromResult<Supplier?>(null)
-            : db.Suppliers.FirstOrDefaultAsync(s => s.PartnerConfirmToken == token, ct);
+    // A token is bound to the inbox it was mailed to: once the row's e-mail
+    // changes, the old link (in the old inbox) no longer works.
+    private async Task<Supplier?> Find(string token, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(token) || token.Length > 64) return null;
+        var s = await db.Suppliers.FirstOrDefaultAsync(x => x.PartnerConfirmToken == token, ct);
+        if (s is null) return null;
+        return s.PartnerConfirmInbox is { } sent && PartnerConfirm.InboxKey(s) != sent ? null : s;
+    }
 
     // ─── HTML ───────────────────────────────────────────────────────────────
 

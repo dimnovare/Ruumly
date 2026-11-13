@@ -391,6 +391,9 @@ public class AdminSuppliersController(
         supplier.PollingEnabled         = false;
         supplier.NextPollAt             = null;
         supplier.UpdatedAt              = now;
+        // An admin removal is final for the public partner-confirm link: revoke
+        // the token so a later "yes" click cannot reactivate the row.
+        supplier.PartnerConfirmToken    = null;
 
         await Db.SupplierLocations
             .Where(l => l.SupplierId == id && l.IsActive)
