@@ -670,6 +670,13 @@ using (var scope = app.Services.CreateScope())
         x => x.ExecuteAsync(),
         "*/5 * * * *");   // every 5 minutes — per-supplier interval governs actual cadence
 
+    // 07:00 UTC = 09:00/10:00 in the Baltics, so reminders land in office hours.
+    // A no-op until the partnerConfirmAutomation setting is "on".
+    recurringJobManager.AddOrUpdate<PartnerConfirmFollowUpJob>(
+        "partner-confirm-follow-up",
+        x => x.ExecuteAsync(),
+        "0 7 * * *");
+
     recurringJobManager.AddOrUpdate<BackgroundCleanupService>(
         "prune-polling-logs",
         x => x.PruneOldPollingLogsAsync(),

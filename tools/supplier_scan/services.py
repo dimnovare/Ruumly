@@ -295,3 +295,48 @@ def run(a):
         w.writerows(out)
     print(f"wrote {name}: {Counter(o['verdict'] for o in out)}")
     print("by country:", Counter((o["country"], o["verdict"]) for o in out))
+
+
+def confirm_list(a):
+    """service-verification.csv -> who gets the partner-confirm letter, who is removed.
+
+    out/partner-confirm-list.csv + .json (supplierIds for POST /api/admin/suppliers/partner-confirm/campaign):
+      fit review/unverified, active, has a usable e-mail, not opted out, inbox not mailed in the last 7 days.
+    out/remove-b2b.json: fit b2b_logistics (founder-approved removal, soft delete).
+    out/unreachable-no-email.csv: unsure rows with no e-mail at all (Places or manual).
+    """
+    rows = list(csv.DictReader(open(a.out / "service-verification.csv", encoding="utf-8-sig")))
+    sup = {s["id"]: s for s in json.loads((a.out / "suppliers.json").read_text(encoding="utf-8"))}
+    recent = set()
+    log = a.out / "silent-mail-sent.csv"
+    if log.exists():
+        recent = {r["send_to"].lower() for r in csv.DictReader(open(log, encoding="utf-8-sig"))}
+    mail, nomail, held = [], [], []
+    for r in rows:
+        if r["fit"] not in ("review", "unverified"):
+            continue
+        s = sup[r["id"]]
+        if s.get("opt_out_at") or not s["is_active"]:
+            continue
+        e = (s.get("email") or "").strip().lower()
+        row = {"id": r["id"], "name": r["name"], "country": r["country"], "city": r["city"], "email": e,
+               "phone": s.get("phone") or "", "fit": r["fit"], "verdict": r["verdict"],
+               "listed_services": r["listed_services"], "website": r["website"]}
+        if not e or s.get("email_unusable"):
+            nomail.append(row)
+        elif e in recent:
+            held.append(row)
+        else:
+            mail.append(row)
+    for name, data in (("partner-confirm-list.csv", mail), ("unreachable-no-email.csv", nomail),
+                       ("partner-confirm-held-recently-mailed.csv", held)):
+        with open(a.out / name, "w", newline="", encoding="utf-8-sig") as f:
+            w = csv.DictWriter(f, fieldnames=list((data or [{"id": ""}])[0]))
+            w.writeheader()
+            w.writerows(data)
+    (a.out / "partner-confirm-list.json").write_text(json.dumps({"supplierIds": [m["id"] for m in mail]}), encoding="utf-8")
+    b2b = [{"id": r["id"], "name": r["name"], "country": r["country"]} for r in rows if r["fit"] == "b2b_logistics"]
+    (a.out / "remove-b2b.json").write_text(json.dumps(b2b, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"confirm letters: {len(mail)} rows ({len({m['email'] for m in mail})} inboxes) "
+          f"{Counter(m['country'] for m in mail)}; no e-mail: {len(nomail)} {Counter(m['country'] for m in nomail)}; "
+          f"held (mailed this week): {len(held)}; remove b2b: {len(b2b)}")

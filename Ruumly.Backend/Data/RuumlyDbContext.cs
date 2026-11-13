@@ -130,6 +130,13 @@ public class RuumlyDbContext(DbContextOptions<RuumlyDbContext> options)
             .IsUnique()
             .HasFilter("\"Slug\" IS NOT NULL");
 
+        // The partner-confirm buttons look a supplier up by this token, and the
+        // token IS the credential.
+        model.Entity<Supplier>()
+            .HasIndex(e => e.PartnerConfirmToken)
+            .IsUnique()
+            .HasFilter("\"PartnerConfirmToken\" IS NOT NULL");
+
         // The customer's status page looks a lead up by this token on every visit,
         // and the token IS the credential -- so the database, not app code, is
         // where "no two leads share one" has to be true. Filtered because every

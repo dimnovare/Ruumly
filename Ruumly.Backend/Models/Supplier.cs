@@ -246,6 +246,31 @@ public class Supplier
     /// </summary>
     public bool ServesRecurring { get; set; } = true;
 
+    // ─── Partner confirmation (see PartnerConfirmController) ─────────────────
+    // A directory row we could not verify gets ONE e-mail with three buttons
+    // (yes / business only / no). No answer in 14 days → one reminder; no answer
+    // 7 days after that → the row is deactivated (NOT opted out: a late "yes"
+    // brings it back). Opt-outs are never mailed and never touched by this flow.
+
+    /// <summary>Per-supplier 256-bit credential behind the e-mail buttons.</summary>
+    [MaxLength(64)]
+    public string? PartnerConfirmToken { get; set; }
+
+    /// <summary>When the first confirmation e-mail was queued.</summary>
+    public DateTime? PartnerConfirmSentAt { get; set; }
+
+    /// <summary>When the single reminder was queued (or skipped for a dead inbox).</summary>
+    public DateTime? PartnerConfirmReminderSentAt { get; set; }
+
+    /// <summary>"yes" | "business" | "no" — null while waiting.</summary>
+    [MaxLength(20)]
+    public string? PartnerConfirmAnswer { get; set; }
+
+    public DateTime? PartnerConfirmAnsweredAt { get; set; }
+
+    /// <summary>Set when the row was deactivated for not answering either e-mail.</summary>
+    public DateTime? PartnerConfirmExpiredAt { get; set; }
+
     /// <summary>When the most recent bounce/complaint for this address arrived.</summary>
     public DateTime? ContactEmailBouncedAt { get; set; }
 

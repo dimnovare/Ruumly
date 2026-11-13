@@ -78,6 +78,7 @@ def main(argv=None):
     sub.add_parser("enrich", help="web + register enrichment and validation of silent-providers.csv")
     sub.add_parser("mail", help="silent-enriched.csv -> out/silent-mail.csv drafts (nothing is sent)")
     sub.add_parser("analytics", help="read-only demand/service aggregates -> out/analytics.md")
+    sub.add_parser("confirm-list", help="partner-confirm recipients, b2b removals, unreachable rows (from service-verification.csv)")
     sub.add_parser("mail-html", help="branded HTML letters + one sample per language (nothing is sent)")
     sv = sub.add_parser("services", help="verify listed services on each provider's own site -> out/service-verification.csv")
     sv.add_argument("--source", choices=("suppliers", "discovery"), default="suppliers")
@@ -124,6 +125,9 @@ def main(argv=None):
         services.run(a)
         sys.stdout.flush()
         os._exit(0)
+    elif a.cmd == "confirm-list":
+        import services
+        services.confirm_list(a)
     elif a.cmd == "mail-html":
         import mail_html
         mail_html.run(a)

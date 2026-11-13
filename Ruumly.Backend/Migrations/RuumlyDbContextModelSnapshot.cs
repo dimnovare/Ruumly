@@ -19,7 +19,7 @@ namespace Ruumly.Backend.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.28")
+                .HasAnnotation("ProductVersion", "8.0.34")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -1994,6 +1994,26 @@ namespace Ruumly.Backend.Migrations
                     b.Property<DateTime?>("OnboardingStartedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("PartnerConfirmAnswer")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime?>("PartnerConfirmAnsweredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("PartnerConfirmExpiredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("PartnerConfirmReminderSentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("PartnerConfirmSentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PartnerConfirmToken")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<decimal>("PartnerDiscountRate")
                         .HasColumnType("numeric(18,4)");
 
@@ -2070,6 +2090,10 @@ namespace Ruumly.Backend.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PartnerConfirmToken")
+                        .IsUnique()
+                        .HasFilter("\"PartnerConfirmToken\" IS NOT NULL");
 
                     b.HasIndex("RegistryCode")
                         .IsUnique()

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import csv
 import html
+import re
 from pathlib import Path
 
 from mail import SVC, _brand
@@ -163,6 +164,10 @@ def run(a):
             continue
         lang = r["language"]
         brand = _brand(r["names"].split(" | ")[0])
+        # Directory names sometimes carry a branch address ("X degalinė, Sarakiškės, Vytauto g. 61").
+        brand = re.sub(r",\s[^,]*\d.*$", "", brand)
+        brand = re.sub(r",\s*\w+,?$", "", brand) if re.search(r"degalinė|DUS", brand) else brand
+        brand = re.sub(r"\s+(degalinė|DUS)\b.*$", "", brand)
         svc = r["subject"].split(": ", 1)[-1].rsplit(" (", 1)[0]
         subject, body = render(lang, brand, int(r["lead_mails"] or 0), svc)
         fits = sorted({fit.get(i, "?") for i in r["supplier_ids"].split()})
