@@ -44,6 +44,7 @@ ZONES = {
                            "kiili", "harku", "laagri", "peetri", "paldiski", "kose", "kuusalu", "loksa", "jõelähtme",
                            "joelahtme", "anija", "kehra", "raasiku", "saku", "tabasalu", "lagedi", "padise",
                            "lääne-harju", "kiisa", "saue", "loo")},
+    "viljandi": {"center": (58.364, 25.590), "km": 25, "names": ("viljandi",)},
     "parnu": {"center": (58.385, 24.497), "km": 25, "names": ("pärnu", "parnu", "sindi", "paikuse", "audru")},
     "tartu": {"center": (58.378, 26.729), "km": 25, "names": ("tartu", "ülenurme", "ulenurme", "tõrvandi",
                                                               "torvandi", "kõrveküla", "korvekula", "elva")},
@@ -102,8 +103,12 @@ def classify(row, reg, site, mx, reg_index=None):
     # A SOFT bounce (mailbox full, greylisting) is not a dead address; only a
     # hard bounce, the Unusable flag, or a domain that cannot take mail is.
     soft = (row.get("bounce_type") or "").lower() == "soft"
+    # Outreach bounces only count against the CURRENT address: once the address
+    # has been corrected, the old bounces are history, not evidence.
+    sent_to = set((o.get("sent_to") or "").lower().split())
+    outreach_bounced = o.get("bounced", 0) and email in sent_to
     bounced = bool(row.get("email_unusable") or (row.get("bounced_at") and not soft)
-                   or (o.get("bounced", 0) and not soft))
+                   or (outreach_bounced and not soft))
     mail_dead = bool(bounced or (edom and edom not in FREEMAIL and mx in ("no", "nxdomain")))
     if bounced:
         reasons.append(f"email bounced ({row.get('bounce_type') or 'outreach status Bounced'})")
@@ -239,9 +244,16 @@ def classify(row, reg, site, mx, reg_index=None):
             prop["phone"] = alt_phone
             return "fix_contact", "medium", reasons, prop
 
+    # The site moved to another domain and our (current) address is on it:
+    # only the website URL is stale.
+    if site.get("site_redirect_domain") and email and             web.reg_domain(edom) == site["site_redirect_domain"]:
+        prop["website"] = site["site_final_url"]
+        return "fix_contact", "high", reasons + [f"site moved to {site['site_final_url']}"], prop
+
     # Open tracking records nothing (0 opens on 270 sends, 21 of them quoted),
-    # so silence is judged on answers only.
-    if sent >= 3 and not responded:
+    # so silence is judged on answers only — and only for mail sent to the
+    # CURRENT address (requests to a since-corrected address prove nothing).
+    if sent >= 3 and not responded and email in sent_to:
         return "call", "low", reasons + [f"{sent} requests, never answered"], prop
 
     return "keep", "", reasons, prop

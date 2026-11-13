@@ -32,7 +32,24 @@ python -X utf8 tools/supplier_scan/scan.py discover
 python -X utf8 tools/supplier_scan/scan.py emit-import
 #    -> out/import/import-EE-discovery-<date>.json, then a human runs
 #       ./scripts/import-directory.ps1 -Token (Get-Clipboard) -DataDir tools/supplier_scan/out/import -WhatIf
+
+# 6. Approved health rows -> out/apply-plan.json (a file to read; no API calls)
+python -X utf8 tools/supplier_scan/scan.py plan --actions fix_contact,remove [--registry-codes]
+
+# 7. Providers that got lead mail and never answered -> out/silent-providers.csv
+python -X utf8 tools/supplier_scan/scan.py silent
+
+# 8. Demand + service aggregates (READ ONLY, no customer PII leaves the DB) -> out/analytics.md
+railway run --service Postgres -- python -X utf8 tools/supplier_scan/scan.py analytics
 ```
+
+Discovery review columns worth reading before ticking `approve`: `site_brand` (the
+name customers see, from og:site_name / `<title>`; use it as `name` when the legal
+name differs), `household_hits` (household-facing words on the homepage, ET/RU/LV/LT/EN)
+and `b2b_hits` (B2B-only phrasing: skip those rows).
+
+The registry stage re-downloads the raw register files each run; after indexing only
+`out/registry/index.json` and `ee_general.jsonl` are needed, so the raw files can be deleted.
 
 Paid, opt-in only (prints worst-case cost, refuses without `--i-accept-cost`):
 
@@ -48,7 +65,7 @@ railway run --service Ruumly -- python tools/supplier_scan/scan.py discover --so
 | `keep` | nothing to change | — |
 | `fix_contact` | proposed email / phone / website / registry code + evidence URL | `PATCH /api/admin/suppliers/{id}` (a new `contactEmail` also clears the bounce flags) |
 | `remove` | registry struck off/bankrupt/liquidating, or site AND mailbox both dead | soft delete: `DELETE /api/admin/suppliers/{id}` |
-| `call` | conflicting or partial evidence | phone the provider |
+| `call` | conflicting or partial evidence | phone, or the reply-coded mail in `docs/ops/silent-providers-reengagement-*.md` |
 | `skip_opt_out` | `MarketingOptOutAt` set — not probed, never proposed for change | — |
 | `skip_inactive` | already `IsActive = false` | — |
 

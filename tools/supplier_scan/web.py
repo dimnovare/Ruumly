@@ -12,6 +12,7 @@ import html
 import ipaddress
 import json
 import re
+from html import unescape
 import socket
 import time
 import urllib.parse
@@ -215,11 +216,47 @@ def _robots_ok(session, url) -> bool:
         return True
 
 
+_OG = re.compile(r"""<meta[^>]+property=["']og:site_name["'][^>]+content=["']([^"']{2,80})""", re.I)
+_OG2 = re.compile(r"""<meta[^>]+content=["']([^"']{2,80})["'][^>]+property=["']og:site_name""", re.I)
+_TITLE = re.compile(r"<title[^>]*>([^<]{2,160})</title>", re.I)
+
+
+def site_brand(html: str) -> str:
+    """The name a customer sees: og:site_name, else the <title> part that is
+    not a page description ("Kolimine Tallinnas | Home Storage" -> the shorter
+    side of the separator)."""
+    m = _OG.search(html) or _OG2.search(html)
+    if m:
+        return unescape(m.group(1)).strip()
+    m = _TITLE.search(html)
+    if not m:
+        return ""
+    parts = [p.strip() for p in re.split(r"\s[|\-–—:·]\s", unescape(m.group(1))) if p.strip()]
+    # No separator = the title is one phrase, usually a description
+    # ("Veo ja kolimisteenus"), not a name.
+    return min(parts, key=len)[:80] if len(parts) >= 2 else ""
+
+
+# Words a household-facing site uses (ET/RU/LV/LT/EN), and B2B-only phrasing.
+HOUSEHOLD = re.compile(
+    r"eraklient|eraisik|korteri|kodu(?:kolim|ne)|kolimine|переезд|квартир|частн(?:ым|ых) лиц|"
+    r"privātperson|dzīvokļ|pārvākšan|privatiems|buto |perkraustym|household|private customer|home move|"
+    r"apartment|flat move", re.I)
+B2B = re.compile(r"ainult äriklient|vaid äriklient|only (?:for )?business|b2b only|tikai uzņēmum|"
+                 r"tik įmonėm|только (?:для )?юр", re.I)
+
+
+def audience_hits(html: str) -> tuple[int, int]:
+    text = re.sub(r"<[^>]+>", " ", html)
+    return len(HOUSEHOLD.findall(text)), len(B2B.findall(text))
+
+
 def probe(url: str | None) -> dict:
     res = {"site_input": url or "", "site_host": host_of(url), "site_dns": "", "site_status": "",
            "site_final_url": "", "site_redirect_domain": "", "site_parked": "", "site_error": "",
            "site_emails": [], "site_phones": [], "site_pages": 0,
-           "site_root_status": "", "site_root_url": ""}
+           "site_root_status": "", "site_root_url": "", "site_brand": "", "site_meta_v": 2,
+           "site_household_hits": 0, "site_b2b_hits": 0}
     if not url:
         res["site_status"] = "no_website"
         return res
@@ -278,6 +315,7 @@ def probe(url: str | None) -> dict:
     # A tiny page that mentions a hint is parked; a real site that says "coming soon" in a footer is not.
     if hits and len(re.sub(r"<[^>]+>", "", text)) < 6000:
         res["site_parked"] = hits[0]
+    res["site_brand"] = site_brand(text)
     emails, phones = extract_contacts(text)
     pages = 1
     if r.status_code < 400:
@@ -293,6 +331,7 @@ def probe(url: str | None) -> dict:
                     pages += 1
             except Exception:
                 pass
+    res["site_household_hits"], res["site_b2b_hits"] = audience_hits(text)
     res["site_emails"] = sorted(emails)
     res["site_phones"] = sorted(phones)
     res["site_pages"] = pages

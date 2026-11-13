@@ -13,6 +13,55 @@ outreach history in `ProviderOutreaches`. The 2026-08-19 audit
 rows; this scan checks whether each business still exists and whether we hold its
 current contact details.
 
+## Update, same day: founder decisions and second pass
+
+The founder approved **all Part 1 fixes and removals**. Calls are dropped: silent and unclear
+providers get a reply-coded e-mail instead. That mail is drafted in
+`silent-providers-reengagement-2026-11-13.md` and has not been sent. Demand analytics are in
+`demand-analytics-2026-11-13.md`.
+
+**Classifier fixes after the first run.** The tables below are from the first run. The current
+counts are: keep 1,094, fix_contact 45, call 21, remove 3, opt-out 17, inactive 9.
+
+- A bounce or "silence" counts only when it went to the address we hold *now*. One row was flagged
+  for an e-mail that had already been corrected.
+- When the website redirects to the e-mail's own domain, the redirect target is proposed as the
+  website.
+
+**Apply plan** (`scan.py plan`, then `out/apply-plan.json`):
+
+- 45 contact fixes (PATCH)
+- 3 soft deletes: Motorsport OÜ, RK Trans OÜ, SIA Rīgas saldētava
+- 427 registry codes found by unique name match
+
+14 codes were held back because two rows share them (chain branches) or another row already uses
+them; RegistryCode is unique. **Not applied yet:** the admin API needs a logged-in ruumly.eu
+session.
+
+**Opt-outs (17: LV 15, all KABI branches; LT 2).** All of them are `IsActive=false`, so they are
+hidden from every public surface: the partner page, sitemap and search all require `IsActive`. No
+outreach was sent after any opt-out date. The rows are left untouched.
+
+**Inactive rows (9 besides the opt-outs)** are already soft-deleted and invisible. A hard purge is
+irreversible, and it would also remove the dedupe key that stops discovery or import from
+re-adding the same company. It is not done without an explicit yes. Opt-out rows must never be
+purged.
+
+**Discovery second pass.**
+
+- Viljandi was added as a zone. It sent 8 of the 40 requests and was not covered before.
+- The shortlist is now 94 rows across 4 zones.
+- The review CSV has 3 new columns:
+  - `site_brand`: og:site_name, or the brand part of the title. It is a hint only, because some
+    sites put a description there.
+  - `household_hits`: household-facing words on the homepage, in 5 languages.
+  - `b2b_hits`: B2B-only phrasing.
+- **The register cannot fill the cells that matter.** Warehouse and van rental are 70% of demand,
+  yet the register finds 0 to 3 candidates per zone, because storage and van hire hide under
+  generic real-estate and rental EMTAK codes. Places Text Search is the right source for exactly
+  those cells: warehouse, trailer and van rental × 4 zones × 3 pages = 36 calls. The worst case
+  is **$1.26**, and it costs $0 inside the free cap. It still needs your OK.
+
 ## The answer in six lines
 
 1. **Dead businesses are rare.** Across 1,163 active rows, only **3** are provably
@@ -208,7 +257,7 @@ first tier, with the free monthly cap in brackets:
 If you approve, run this:
 
 ```bash
-railway run --service Ruumly -- python -X utf8 tools/supplier_scan/scan.py discover --source places --services warehouse,trailer,vanrental --i-accept-cost --max-calls 27
+railway run --service Ruumly -- python -X utf8 tools/supplier_scan/scan.py discover --source places --towns harjumaa,parnu,tartu,viljandi --services warehouse,trailer,vanrental --i-accept-cost --max-calls 36
 ```
 
 ## What this scan does not cover

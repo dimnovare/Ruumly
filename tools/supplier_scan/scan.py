@@ -70,6 +70,12 @@ def main(argv=None):
 
     sub.add_parser("report", help="markdown approval tables from the latest CSVs")
 
+    pl2 = sub.add_parser("plan", help="approved health rows -> out/apply-plan.json (no API calls)")
+    pl2.add_argument("--actions", default="fix_contact,remove")
+    pl2.add_argument("--registry-codes", action="store_true")
+
+    sub.add_parser("silent", help="providers that never answered lead mail -> out/silent-providers.csv")
+    sub.add_parser("analytics", help="read-only demand/service aggregates -> out/analytics.md")
     e = sub.add_parser("emit-import")
     e.add_argument("--review", type=Path)
 
@@ -96,6 +102,15 @@ def main(argv=None):
         # exit; all output is already flushed to disk at this point.
         sys.stdout.flush()
         os._exit(0)
+    elif a.cmd == "plan":
+        import plan
+        plan.run(a)
+    elif a.cmd == "silent":
+        import plan
+        plan.silent(a)
+    elif a.cmd == "analytics":
+        import analytics
+        analytics.run(a)
     elif a.cmd == "report":
         import report
         report.run(a)

@@ -60,7 +60,8 @@ WAREHOUSE_CODES = {"52101", "68201", "77399"}
 VAN_CODES = {"77111", "7711", "77121"}
 TRAILER_CODES = {"77399", "77511", "77111", "77121", "7739"}
 
-ZONE_COUNTIES = {"harjumaa": ("Harju maakond",), "parnu": ("Pärnu maakond",), "tartu": ("Tartu maakond",)}
+ZONE_COUNTIES = {"harjumaa": ("Harju maakond",), "parnu": ("Pärnu maakond",), "tartu": ("Tartu maakond",),
+                 "viljandi": ("Viljandi maakond",)}
 
 
 def services_for(rec) -> list[str]:
@@ -195,7 +196,8 @@ def _probe_all(urls, cache_path, deadline_s=90):
     otherwise freeze the whole run."""
     cache = json.loads(cache_path.read_text(encoding="utf-8")) if cache_path.exists() else {}
     key = lambda u: (u or "").strip().rstrip("/").lower()
-    todo = sorted({key(u) for u in urls if u and key(u) not in cache})
+    # Entries cached before the brand/audience fields existed are re-probed.
+    todo = sorted({key(u) for u in urls if u and cache.get(key(u), {}).get("site_meta_v") != 2})
     print(f"probing {len(todo)} websites…", flush=True)
     ex = ThreadPoolExecutor(8)
     futs = {u: ex.submit(web.probe, u) for u in todo}
@@ -262,7 +264,7 @@ def from_file(path):
 REVIEW_FIELDS = [
     "approve", "zone", "rank", "name", "serviceTypes", "contactEmail", "contactPhone", "websiteUrl",
     "registryCode", "city", "address", "lat", "lng", "country", "slug", "tagline",
-    "site_status", "site_emails", "employees", "last_report", "evidence", "source", "source_ref", "coords_note"]
+    "site_status", "site_emails", "site_brand", "household_hits", "b2b_hits", "employees", "last_report", "evidence", "source", "source_ref", "coords_note"]
 
 
 def run(a):
@@ -365,6 +367,8 @@ def run(a):
             "lat": f"{lat:.6f}" if lat else "", "lng": f"{lng:.6f}" if lng else "", "country": "EE",
             "slug": slugify(name, city, taken), "tagline": "",
             "site_status": st, "site_emails": " ".join(site_emails[:5]),
+            "site_brand": site.get("site_brand", ""), "household_hits": site.get("site_household_hits", ""),
+            "b2b_hits": site.get("site_b2b_hits", ""),
             "employees": c.get("employees", ""), "last_report": c.get("last_report", ""),
             "evidence": c.get("evidence", ""), "source": c["source"], "source_ref": c.get("source_ref", ""),
             "coords_note": note,
