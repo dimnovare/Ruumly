@@ -132,6 +132,24 @@ public class PartnerConfirmTests
     }
 
     [Fact]
+    public async Task StartAt_schedules_the_batch_and_starts_the_reminder_clock_then()
+    {
+        var db = TestDbContext.Create();
+        var q = new Queue();
+        var a = Provider("Later OÜ", "later@later.ee");
+        db.Suppliers.Add(a);
+        await db.SaveChangesAsync();
+
+        (await Admin(db, q).Campaign(new PartnerConfirmCampaignRequest([a.Id], false, null, DateTime.UtcNow.AddDays(9)), default))
+            .Should().BeOfType<BadRequestObjectResult>();
+
+        var at = DateTime.UtcNow.AddDays(2);
+        await Admin(db, q).Campaign(new PartnerConfirmCampaignRequest([a.Id], false, null, at), default);
+        q.Emails.Should().ContainSingle().Which.Delay.Should().BeCloseTo(TimeSpan.FromDays(2), TimeSpan.FromMinutes(1));
+        (await db.Suppliers.FindAsync(a.Id))!.PartnerConfirmSentAt.Should().BeCloseTo(at, TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
     public async Task Opening_the_button_link_records_nothing_but_the_post_does_and_answers_for_the_whole_inbox()
     {
         var db = TestDbContext.Create();

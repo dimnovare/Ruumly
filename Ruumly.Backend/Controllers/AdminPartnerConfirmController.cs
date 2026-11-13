@@ -11,8 +11,14 @@ using Ruumly.Backend.Services.Interfaces;
 namespace Ruumly.Backend.Controllers;
 
 public sealed record PartnerConfirmCampaignRequest(
-    List<Guid>? SupplierIds, bool? DryRun = null, int? Limit = null)
+    List<Guid>? SupplierIds, bool? DryRun = null, int? Limit = null, DateTime? StartAt = null)
 {
+    /// <summary>
+    /// Optional UTC send time (at most 7 days ahead) so a list bigger than the
+    /// mail provider's daily quota can be split into day-by-day batches in one
+    /// sitting: rows are stamped now with SentAt = StartAt, the mail is queued
+    /// to go out then.
+    /// </summary>
     public bool IsDryRun => DryRun ?? true;
 }
 
@@ -46,6 +52,11 @@ public class AdminPartnerConfirmController(
             return BadRequest(Error("supplierIds is required: this campaign never targets the whole directory."));
         if (request.Limit is { } l && (l < 1 || l > MaxLimit))
             return BadRequest(Error($"limit must be between 1 and {MaxLimit}."));
+        var clock = DateTime.UtcNow;
+        var startAt = request.StartAt is { } sa ? DateTime.SpecifyKind(sa.ToUniversalTime(), DateTimeKind.Utc) : clock;
+        if (startAt < clock.AddMinutes(-5) || startAt > clock.AddDays(7))
+            return BadRequest(Error("startAt must be in the next 7 days (UTC)."));
+        var startDelay = startAt > clock ? startAt - clock : TimeSpan.Zero;
 
         var dryRun = request.IsDryRun;
         IDbContextTransaction? tx = null;
@@ -93,7 +104,7 @@ public class AdminPartnerConfirmController(
 
             var apiUrl = PartnerConfirm.ApiUrl(config);
             var replyTo = await OpsInbox.ResolveAsync(Db);
-            var now = DateTime.UtcNow;
+            var now = startAt;   // the clock the reminder timeline runs from
             var letters = new List<(string To, Supplier Primary, PartnerConfirm.Message Msg)>();
             foreach (var (inbox, g) in groups)
             {
@@ -127,7 +138,7 @@ public class AdminPartnerConfirmController(
             for (var i = 0; i < letters.Count; i++)
             {
                 var (to, _, msg) = letters[i];
-                emailQueue.EnqueueEmailAfter(AdminSupplierIntroController.DelayFor(i), to,
+                emailQueue.EnqueueEmailAfter(startDelay + AdminSupplierIntroController.DelayFor(i), to,
                     msg.Subject, msg.TextBody, msg.HtmlBody, replyTo);
             }
             logger.LogInformation("Partner confirm campaign: queued {Count} letter(s) for {Suppliers} supplier(s).",
