@@ -107,7 +107,9 @@ public class PartnerConfirmFollowUpJob(
 
         // 3. Expire the silent.
         var expired = new List<Supplier>();
-        foreach (var s in pending.Where(s => s.PartnerConfirmReminderSentAt is not null
+        // Only rows still active: a row an admin already deactivated must not be
+        // stamped Expired, or a later "yes" would silently reverse the admin's call.
+        foreach (var s in pending.Where(s => s.IsActive && s.PartnerConfirmReminderSentAt is not null
                      && s.PartnerConfirmReminderSentAt <= now.AddDays(-PartnerConfirm.ExpireAfterReminderDays)))
         {
             s.PartnerConfirmExpiredAt = now;

@@ -259,6 +259,14 @@ public class Supplier
     /// <summary>When the first confirmation e-mail was queued.</summary>
     public DateTime? PartnerConfirmSentAt { get; set; }
 
+    /// <summary>
+    /// The lower-cased inbox the letter actually went to. One click answers only
+    /// for rows mailed to this same inbox that still carry it, so editing a row's
+    /// ContactEmail later never pulls it into another provider's answer.
+    /// </summary>
+    [MaxLength(320)]
+    public string? PartnerConfirmInbox { get; set; }
+
     /// <summary>When the single reminder was queued (or skipped for a dead inbox).</summary>
     public DateTime? PartnerConfirmReminderSentAt { get; set; }
 

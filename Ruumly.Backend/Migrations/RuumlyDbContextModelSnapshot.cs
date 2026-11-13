@@ -2004,6 +2004,10 @@ namespace Ruumly.Backend.Migrations
                     b.Property<DateTime?>("PartnerConfirmExpiredAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("PartnerConfirmInbox")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
+
                     b.Property<DateTime?>("PartnerConfirmReminderSentAt")
                         .HasColumnType("timestamp with time zone");
 

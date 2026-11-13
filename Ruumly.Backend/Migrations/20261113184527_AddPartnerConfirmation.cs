@@ -30,6 +30,13 @@ namespace Ruumly.Backend.Migrations
                 type: "timestamp with time zone",
                 nullable: true);
 
+            migrationBuilder.AddColumn<string>(
+                name: "PartnerConfirmInbox",
+                table: "Suppliers",
+                type: "character varying(320)",
+                maxLength: 320,
+                nullable: true);
+
             migrationBuilder.AddColumn<DateTime>(
                 name: "PartnerConfirmReminderSentAt",
                 table: "Suppliers",
@@ -74,6 +81,10 @@ namespace Ruumly.Backend.Migrations
 
             migrationBuilder.DropColumn(
                 name: "PartnerConfirmExpiredAt",
+                table: "Suppliers");
+
+            migrationBuilder.DropColumn(
+                name: "PartnerConfirmInbox",
                 table: "Suppliers");
 
             migrationBuilder.DropColumn(

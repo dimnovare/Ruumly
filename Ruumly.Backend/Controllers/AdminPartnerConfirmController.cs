@@ -111,10 +111,11 @@ public class AdminPartnerConfirmController(
                 return Ok(new { dryRun, matched = rows.Count, wouldSend = letters.Count,
                                 suppliersCovered = supplierIds.Count, byLanguage, skipped = skips, samples });
 
-            foreach (var g in groups.Values)
+            foreach (var (inbox, g) in groups)
                 foreach (var s in g)
                 {
                     s.PartnerConfirmSentAt = now;
+                    s.PartnerConfirmInbox = inbox.ToLowerInvariant();
                     s.UpdatedAt = now;
                 }
             Audit("supplier.partner_confirm_campaign", User.GetUserEmail() ?? "admin", $"{letters.Count} inboxes",

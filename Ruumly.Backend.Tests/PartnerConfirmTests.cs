@@ -119,7 +119,8 @@ public class PartnerConfirmTests
         mail.Html.Should().Contain("17527757");
         (await db.Suppliers.FindAsync(a.Id))!.PartnerConfirmSentAt.Should().NotBeNull();
         (await db.Suppliers.FindAsync(b.Id))!.PartnerConfirmSentAt.Should().NotBeNull();
-        var o = (await db.Suppliers.FindAsync(opted.Id))!;
+        (await db.Suppliers.FindAsync(b.Id))!.PartnerConfirmInbox.Should().Be("info@viada.lv");
+        var o =(await db.Suppliers.FindAsync(opted.Id))!;
         o.PartnerConfirmSentAt.Should().BeNull();
         o.PartnerConfirmToken.Should().BeNull();
         (await db.Suppliers.FindAsync(inactive.Id))!.PartnerConfirmSentAt.Should().BeNull();
@@ -137,7 +138,11 @@ public class PartnerConfirmTests
         var q = new Queue();
         var a = Provider("Branch A", "one@inbox.ee");
         var b = Provider("Branch B", "one@inbox.ee");
-        foreach (var s in new[] { a, b }) { s.PartnerConfirmSentAt = DateTime.UtcNow; s.PartnerConfirmToken = PartnerConfirm.NewToken(); }
+        foreach (var s in new[] { a, b })
+        {
+            s.PartnerConfirmSentAt = DateTime.UtcNow; s.PartnerConfirmToken = PartnerConfirm.NewToken();
+            s.PartnerConfirmInbox = "one@inbox.ee";
+        }
         db.Suppliers.AddRange(a, b);
         await db.SaveChangesAsync();
 
@@ -236,6 +241,59 @@ public class PartnerConfirmTests
         s = (await db.Suppliers.FindAsync(a.Id))!;
         s.IsActive.Should().BeTrue();
         s.PartnerConfirmExpiredAt.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task A_click_never_reaches_a_row_that_was_not_mailed_that_inbox()
+    {
+        var db = TestDbContext.Create();
+        var q = new Queue();
+        var holder = Provider("Holder OÜ", "shared@inbox.ee");
+        holder.PartnerConfirmSentAt = DateTime.UtcNow; holder.PartnerConfirmToken = PartnerConfirm.NewToken();
+        holder.PartnerConfirmInbox = "shared@inbox.ee";
+        // Mailed a DIFFERENT inbox, then an admin edited its e-mail to collide.
+        var edited = Provider("Victim OÜ", "shared@inbox.ee");
+        edited.PartnerConfirmSentAt = DateTime.UtcNow; edited.PartnerConfirmToken = PartnerConfirm.NewToken();
+        edited.PartnerConfirmInbox = "victim@victim.ee";
+        // Mailed this inbox, then moved away from it.
+        var moved = Provider("Moved OÜ", "new@moved.ee");
+        moved.PartnerConfirmSentAt = DateTime.UtcNow; moved.PartnerConfirmToken = PartnerConfirm.NewToken();
+        moved.PartnerConfirmInbox = "shared@inbox.ee";
+        db.Suppliers.AddRange(holder, edited, moved);
+        await db.SaveChangesAsync();
+
+        await Public(db, q).Confirm(holder.PartnerConfirmToken!, "no", default);
+
+        (await db.Suppliers.FindAsync(holder.Id))!.MarketingOptOutAt.Should().NotBeNull();
+        foreach (var id in new[] { edited.Id, moved.Id })
+        {
+            var s = (await db.Suppliers.FindAsync(id))!;
+            s.MarketingOptOutAt.Should().BeNull();
+            s.IsActive.Should().BeTrue();
+            s.PartnerConfirmAnswer.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public async Task Job_never_expires_an_admin_deactivated_row_so_a_yes_cannot_revive_it()
+    {
+        var db = TestDbContext.Create();
+        var q = new Queue();
+        await TurnOn(db);
+        var start = new DateTime(2026, 11, 14, 7, 0, 0, DateTimeKind.Utc);
+        var a = Provider("Removed OÜ", "rm@removed.ee");
+        a.PartnerConfirmSentAt = start; a.PartnerConfirmToken = PartnerConfirm.NewToken();
+        a.PartnerConfirmInbox = "rm@removed.ee";
+        a.PartnerConfirmReminderSentAt = start.AddDays(14);
+        a.IsActive = false;   // soft-deleted by an admin
+        db.Suppliers.Add(a);
+        await db.SaveChangesAsync();
+
+        (await Job(db, q).RunAsync(start.AddDays(22))).Expired.Should().Be(0);
+        (await db.Suppliers.FindAsync(a.Id))!.PartnerConfirmExpiredAt.Should().BeNull();
+
+        await Public(db, q).Confirm(a.PartnerConfirmToken!, "yes", default);
+        (await db.Suppliers.FindAsync(a.Id))!.IsActive.Should().BeFalse();
     }
 
     [Fact]

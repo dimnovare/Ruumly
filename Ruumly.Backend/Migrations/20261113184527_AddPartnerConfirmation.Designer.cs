@@ -14,7 +14,7 @@ using Ruumly.Backend.Data;
 namespace Ruumly.Backend.Migrations
 {
     [DbContext(typeof(RuumlyDbContext))]
-    [Migration("20261113183545_AddPartnerConfirmation")]
+    [Migration("20261113184527_AddPartnerConfirmation")]
     partial class AddPartnerConfirmation
     {
         /// <inheritdoc />
@@ -2006,6 +2006,10 @@ namespace Ruumly.Backend.Migrations
 
                     b.Property<DateTime?>("PartnerConfirmExpiredAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PartnerConfirmInbox")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
 
                     b.Property<DateTime?>("PartnerConfirmReminderSentAt")
                         .HasColumnType("timestamp with time zone");

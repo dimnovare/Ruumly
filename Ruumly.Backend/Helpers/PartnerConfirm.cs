@@ -79,13 +79,18 @@ public static class PartnerConfirm
         answer = Normalize(answer);
         if (answer.Length == 0) throw new ArgumentException("answer must be yes, business or no", nameof(answer));
 
-        var inbox = InboxKey(supplier);
+        // Siblings = rows the SAME letter went to (stamped inbox) that still use
+        // that inbox. A row whose e-mail was edited after the send is left alone,
+        // and a row edited TO this inbox was never mailed it, so it is not included.
+        var inbox = supplier.PartnerConfirmInbox ?? "";
         var group = inbox.Length == 0
             ? [supplier]
-            : await db.Suppliers
+            : (await db.Suppliers
                 .Where(s => s.Id == supplier.Id
-                         || (s.ContactEmail.ToLower().Trim() == inbox && s.PartnerConfirmSentAt != null))
-                .ToListAsync(ct);
+                         || (s.PartnerConfirmInbox == inbox && s.PartnerConfirmSentAt != null))
+                .ToListAsync(ct))
+                .Where(s => s.Id == supplier.Id || InboxKey(s) == inbox)
+                .ToList();
         if (!group.Contains(supplier)) group.Add(supplier);
 
         foreach (var s in group)
