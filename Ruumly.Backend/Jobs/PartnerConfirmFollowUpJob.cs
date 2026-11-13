@@ -97,6 +97,14 @@ public class PartnerConfirmFollowUpJob(
                 continue;
             }
             if (queued.Count >= cap) { deferred++; continue; }
+            // The reminder goes to the CURRENT inbox. A row whose e-mail changed since
+            // the first letter is re-stamped with a fresh token, so the new recipient's
+            // link can never answer for the old inbox (or its siblings).
+            foreach (var s in group.Where(s => s.PartnerConfirmInbox != group.Key))
+            {
+                s.PartnerConfirmInbox = group.Key;
+                s.PartnerConfirmToken = PartnerConfirm.NewToken();
+            }
             primary.PartnerConfirmToken ??= PartnerConfirm.NewToken();
             var msg = PartnerConfirm.Compose(primary, primary.PartnerConfirmToken, apiUrl,
                 group.Sum(s => counts.GetValueOrDefault(s.Id)), primary.PartnerConfirmSentAt);

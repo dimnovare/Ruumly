@@ -82,8 +82,10 @@ public static class PartnerConfirm
         // Siblings = rows the SAME letter went to (stamped inbox) that still use
         // that inbox. A row whose e-mail was edited after the send is left alone,
         // and a row edited TO this inbox was never mailed it, so it is not included.
+        // If the clicked row itself has moved off the stamped inbox, the click
+        // speaks only for that row: it must not answer for the old inbox's siblings.
         var inbox = supplier.PartnerConfirmInbox ?? "";
-        var group = inbox.Length == 0
+        var group = inbox.Length == 0 || InboxKey(supplier) != inbox
             ? [supplier]
             : (await db.Suppliers
                 .Where(s => s.Id == supplier.Id

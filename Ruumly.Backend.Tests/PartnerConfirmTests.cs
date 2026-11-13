@@ -275,6 +275,35 @@ public class PartnerConfirmTests
     }
 
     [Fact]
+    public async Task A_holder_whose_email_changed_answers_only_for_itself_and_its_reminder_gets_a_fresh_token()
+    {
+        var db = TestDbContext.Create();
+        var q = new Queue();
+        await TurnOn(db);
+        var start = new DateTime(2026, 11, 14, 7, 0, 0, DateTimeKind.Utc);
+        var holder = Provider("Holder OÜ", "new@owner.ee");   // edited after the send
+        holder.PartnerConfirmSentAt = start; holder.PartnerConfirmToken = PartnerConfirm.NewToken();
+        holder.PartnerConfirmInbox = "old@inbox.ee";
+        var sibling = Provider("Sibling OÜ", "old@inbox.ee");
+        sibling.PartnerConfirmSentAt = start; sibling.PartnerConfirmToken = PartnerConfirm.NewToken();
+        sibling.PartnerConfirmInbox = "old@inbox.ee";
+        db.Suppliers.AddRange(holder, sibling);
+        await db.SaveChangesAsync();
+        var oldToken = holder.PartnerConfirmToken;
+
+        await Job(db, q).RunAsync(start.AddDays(14));
+        var h = (await db.Suppliers.FindAsync(holder.Id))!;
+        h.PartnerConfirmInbox.Should().Be("new@owner.ee");
+        h.PartnerConfirmToken.Should().NotBe(oldToken);
+        q.Emails.Should().Contain(e => e.To == "new@owner.ee" && e.Html!.Contains(h.PartnerConfirmToken!));
+
+        await Public(db, q).Confirm(h.PartnerConfirmToken!, "no", default);
+        var s = (await db.Suppliers.FindAsync(sibling.Id))!;
+        s.MarketingOptOutAt.Should().BeNull();
+        s.PartnerConfirmAnswer.Should().BeNull();
+    }
+
+    [Fact]
     public async Task Job_never_expires_an_admin_deactivated_row_so_a_yes_cannot_revive_it()
     {
         var db = TestDbContext.Create();
