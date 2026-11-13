@@ -79,6 +79,8 @@ sites, and confirmed partners rose from 544 to 574.
 SUPERSEDED. The founder answered: no commission and no fees, and requests are free; optional paid extras
 exist. The final branded version is `tools/supplier_scan/out/sipelgas-reply.html`. It is waiting for the
 founder's yes on that exact version. The text below is the old draft.
+**SENT 2026-11-13** with founder approval: Resend id 01a1d65e-a6d8-76b2-afe6-4bae4c4355b0, from info@ruumly.eu to
+sipelgasveod@gmail.com, delivered.
 
 > Tere, Aleksei!
 >
