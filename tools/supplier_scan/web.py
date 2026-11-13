@@ -107,9 +107,41 @@ def has_mx(domain: str) -> str:
         return "error"
 
 
+class BlockedHost(Exception):
+    """A hop (first URL or any redirect) resolved to a non-public address."""
+
+
+MAX_HOPS = 8
+
+
+def _guarded_request(session, url, timeout=TIMEOUT, stream=True):
+    """GET with redirects followed BY HAND so every hop — not just the first
+    URL — is checked: http(s) only, and the host must resolve to public IPs.
+    A provider's site redirecting to http://192.168.1.1/ is refused.
+
+    Residual risk, accepted for a local one-shot report script: DNS can change
+    between our check and requests' own resolution (rebinding). The response is
+    only regex-scanned for e-mails/phones, never executed or forwarded.
+    """
+    for _ in range(MAX_HOPS + 1):
+        parts = urllib.parse.urlsplit(url)
+        if parts.scheme not in ("http", "https") or not parts.hostname:
+            raise BlockedHost(f"scheme/host not allowed: {url[:80]}")
+        ok, info = _public_ip(parts.hostname)
+        if not ok:
+            raise BlockedHost(info)
+        r = session.get(url, timeout=timeout, allow_redirects=False, stream=stream,
+                        headers={"User-Agent": UA, "Accept-Language": "et,en;q=0.8,ru;q=0.5,lv;q=0.5,lt;q=0.5"})
+        if r.is_redirect and r.headers.get("location"):
+            url = urllib.parse.urljoin(url, r.headers["location"])
+            r.close()
+            continue
+        return r
+    raise requests.exceptions.TooManyRedirects(url)
+
+
 def _get(session, url):
-    r = session.get(url, timeout=TIMEOUT, allow_redirects=True, stream=True,
-                    headers={"User-Agent": UA, "Accept-Language": "et,en;q=0.8,ru;q=0.5,lv;q=0.5,lt;q=0.5"})
+    r = _guarded_request(session, url)
     body = b""
     started = time.monotonic()
     for chunk in r.iter_content(65536):
@@ -174,7 +206,7 @@ def _robots_ok(session, url) -> bool:
     try:
         parts = urllib.parse.urlsplit(url)
         rp = urllib.robotparser.RobotFileParser()
-        r = session.get(f"{parts.scheme}://{parts.netloc}/robots.txt", timeout=8, headers={"User-Agent": UA})
+        r = _guarded_request(session, f"{parts.scheme}://{parts.netloc}/robots.txt", timeout=8, stream=False)
         if r.status_code >= 400:
             return True
         rp.parse(r.text.splitlines())
@@ -192,20 +224,25 @@ def probe(url: str | None) -> dict:
         res["site_status"] = "no_website"
         return res
     host = res["site_host"]
-    ok, info = _public_ip(host)
+    start = url.strip() if "://" in url else "http://" + url.strip()
+    ok, info = _public_ip(urllib.parse.urlsplit(start).hostname or host)
     if not ok:
-        # Retry with www. — some sites only answer there.
+        # Retry with www. — some sites only answer there. Fetch the host that
+        # was actually validated, not the original one.
         ok2, info2 = _public_ip("www." + host)
         if not ok2:
             res["site_dns"] = info
             res["site_status"] = "dns_fail" if info.startswith("dns_fail") else "blocked_ip"
             return res
-        info = info2
+        p = urllib.parse.urlsplit(start)
+        start = urllib.parse.urlunsplit((p.scheme, "www." + host, p.path, p.query, p.fragment))
     res["site_dns"] = "ok"
-    start = url.strip() if "://" in url else "http://" + url.strip()
     s = requests.Session()
     try:
         r, text = _get(s, start)
+    except BlockedHost as e:
+        res["site_status"], res["site_error"] = "blocked_ip", str(e)[:120]
+        return res
     except requests.exceptions.SSLError:
         try:
             r, text = _get(s, start.replace("https://", "http://"))

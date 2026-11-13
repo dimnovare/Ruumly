@@ -66,7 +66,7 @@ railway run --service Ruumly -- python tools/supplier_scan/scan.py discover --so
 - **Website.** 401/403/429 = bot wall, not evidence. 5xx retried once. A 404 on a
   deep link with a live root proposes the root URL. Hosts resolving to private IPs
   are never fetched (stand-in for the backend's OutboundEndpointValidator).
-  robots.txt is honoured for the extra contact pages.
+  robots.txt is honoured for the extra contact pages. Redirects are followed by hand and every hop is re-checked (http(s) only, public IPs only); DNS rebinding between check and connect is an accepted residual risk for a local report script.
 - **Email proposals** must have a deliverable domain (MX or A via DNS-over-HTTPS)
   and are not form placeholders — this drops ROT13-obfuscated and typo'd addresses.
 - **Outreach.** `OpenedAt` is never set in production (0 opens on 270 sends, 21 of
