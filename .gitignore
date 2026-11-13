@@ -384,3 +384,7 @@ secrets.json
 
 # Cloudflare wrangler local state
 .wrangler/
+
+# supplier directory scan working files (prod data)
+tools/supplier_scan/out/
+tools/supplier_scan/__pycache__/
