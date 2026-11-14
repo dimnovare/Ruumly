@@ -102,3 +102,19 @@ sipelgasveod@gmail.com, delivered.
 >
 > Lugupidamisega
 > Ruumly meeskond · info@ruumly.eu
+
+## Google Places website lookup (2026-11-14)
+
+- Guardrails: budget "My First Project 30 EUR alert (Places)", scoped to My First Project only (ProcuLink
+  excluded), with alerts at 50/90/100%. Places is not eligible for a hard spend cap, so the real cap is the
+  daily quota: SearchTextRequest is 600/day (was 75,000) and GetPlaceRequest is 200/day (was 125,000).
+- Run: `tools/supplier_scan/site_lookup.py`. It looked up the 214 ACTIVE "unverified / no_site" rows
+  (the other 211 of the 425 were already deactivated, mostly for having no e-mail). 214 Text Search calls,
+  worst case $7.49 before Google's monthly free tier.
+- Result in `out/places-lookup-2026-11-14.csv`: 38 target (website quotes confirm the service), 29 review,
+  4 b2b_logistics (Smart group lt, Arseka, Gamma SP, Venta Transports), 143 still unverified (100 with no
+  website on Google either, 37 sites blocked or down).
+- 2 rows are CLOSED_PERMANENTLY on Google with an exact name match: ALDOSA UAB and Industry Cleaning UAB.
+  Two other "closed" hits had name match 0.0, so they are a different business. Ignore them.
+- Nothing has been applied to prod. Proposed: remove the 4 b2b and 2 closed rows; PATCH websiteUrl for
+  the target and review rows with a name match of at least 0.7.
