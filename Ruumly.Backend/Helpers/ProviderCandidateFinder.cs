@@ -106,6 +106,22 @@ public static class ProviderCandidateFinder
             .Where(c => MatchesQuery(c, search.Query))
             .ToList();
 
+        // A provider's own service area beats any search radius, including the
+        // all-Estonia view: it is a promise made to the provider, not a ranking
+        // preference. In-town requests always pass; without a measurable
+        // distance a limited provider is left out rather than guessed in.
+        var maxDistance = matchingSuppliers
+            .Where(s => s.MaxServiceDistanceKm is > 0)
+            .ToDictionary(s => s.Id, s => (double)s.MaxServiceDistanceKm!.Value);
+        if (maxDistance.Count > 0)
+        {
+            candidates = candidates
+                .Where(c => !maxDistance.TryGetValue(c.Item.SupplierId, out var limit)
+                            || c.Item.IsExactCity
+                            || (c.Item.DistanceKm is { } km && km <= limit))
+                .ToList();
+        }
+
         if (!search.AllEstonia)
         {
             candidates = anchor is not null

@@ -246,6 +246,18 @@ public class Supplier
     /// </summary>
     public bool ServesRecurring { get; set; } = true;
 
+    /// <summary>
+    /// The furthest a customer request may be from this provider's locations,
+    /// in km. Null = no limit (the fan-out's own 25 → 50 → 100 km widening
+    /// decides). A request in the provider's own town always passes.
+    ///
+    /// Recorded from what a provider TELLS us, never guessed. Ants Viljandi
+    /// (2026-11-25): "renditehnikat väljastame Viljandis ja vastu võtame ka
+    /// Viljandis" — yet 10 of the 11 requests it had received were from Pärnu,
+    /// ~95 km away, reached only because Pärnu's thin supply widened the search.
+    /// </summary>
+    public int? MaxServiceDistanceKm { get; set; }
+
     // ─── Partner confirmation (see PartnerConfirmController) ─────────────────
     // A directory row we could not verify gets ONE e-mail with three buttons
     // (yes / business only / no). No answer in 14 days → one reminder; no answer

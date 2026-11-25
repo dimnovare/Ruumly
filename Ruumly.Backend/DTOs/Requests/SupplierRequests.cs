@@ -65,6 +65,9 @@ public record UpdateSupplierRequest(
     // Set from what a provider actually TELLS us in a refusal, never guessed.
     bool? ServesConsumers = null,
     bool? ServesRecurring = null,
+    // Furthest a request may be from the provider, in km. Null leaves it
+    // unchanged; 0 clears the limit. See Supplier.MaxServiceDistanceKm.
+    int? MaxServiceDistanceKm = null,
     // Optional commerce capabilities
     bool? BookingEnabled = null,
     bool? ContractSigningEnabled = null,

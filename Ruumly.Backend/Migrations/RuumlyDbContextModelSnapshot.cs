@@ -19,7 +19,7 @@ namespace Ruumly.Backend.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.34")
+                .HasAnnotation("ProductVersion", "8.0.32")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -1977,6 +1977,9 @@ namespace Ruumly.Backend.Migrations
 
                     b.Property<string>("MarketingOptOutReason")
                         .HasColumnType("text");
+
+                    b.Property<int?>("MaxServiceDistanceKm")
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("MonthlyFee")
                         .HasColumnType("numeric(18,4)");

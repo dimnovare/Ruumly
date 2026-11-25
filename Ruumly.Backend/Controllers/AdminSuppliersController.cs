@@ -274,6 +274,12 @@ public class AdminSuppliersController(
         // can see them.
         if (body.ServesConsumers.HasValue)     supplier.ServesConsumers = body.ServesConsumers.Value;
         if (body.ServesRecurring.HasValue)     supplier.ServesRecurring = body.ServesRecurring.Value;
+        if (body.MaxServiceDistanceKm is { } maxKm)
+        {
+            if (maxKm < 0 || maxKm > 1000)
+                return BadRequest(Error("Max service distance must be between 0 and 1000 km (0 clears it)."));
+            supplier.MaxServiceDistanceKm = maxKm == 0 ? null : maxKm;
+        }
         if (body.Iban is not null)             supplier.Iban = body.Iban;
         if (body.BankAccountName is not null)  supplier.BankAccountName = body.BankAccountName;
         if (body.BankName is not null)         supplier.BankName = body.BankName;
