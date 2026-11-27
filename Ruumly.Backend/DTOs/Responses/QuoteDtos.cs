@@ -108,7 +108,11 @@ public sealed record QuoteDeclinedDto(bool Ok, string? Reason, string? Note);
 
 /// <summary>POST /api/quote/{token} — thank-you echo of the stored quote.</summary>
 public sealed record QuoteSubmittedDto(
-    bool Ok, decimal Amount, string? Unit, string? Availability, string? Note);
+    bool Ok, decimal Amount, string? Unit, string? Availability, string? Note,
+    // True when the "price" was really a no — the availability field said only
+    // "not possible" (see NotPossibleAnswer) — and it was recorded as a decline.
+    // The page then shows its declined screen instead of the price thank-you.
+    bool Declined = false);
 
 /// <summary>
 /// POST /api/quote/{token}/need-info — echo of what was recorded. Reasons come

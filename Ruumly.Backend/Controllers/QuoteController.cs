@@ -488,6 +488,26 @@ public class QuoteController(
         // must take that price back out, or the draft keeps offering a provider
         // who has just refused. Only a DRAFT is edited: once the offer has gone
         // to the customer, withdrawing an option is ops' call, so say so loudly.
+        var stillOffered = await RemoveSeededOptionsAsync(outreach);
+
+        await db.SaveChangesAsync();
+
+        // After the commit, same ordering rule as every alert in this file.
+        EnqueueOps(await BuildDeclineOpsAlertAsync(lead, outreach, reason, outreach.DeclineNote, stillOffered));
+
+        return Ok(new QuoteDeclinedDto(true, reason, outreach.DeclineNote));
+    }
+
+    /// <summary>
+    /// Takes a declining provider's own option back out of the lead's DRAFT
+    /// offer. Only reachable while QuotedAt is null, so any option keyed to this
+    /// outreach is a standing-price seed (see StandingPrice) — without this the
+    /// draft would keep offering a provider who has just refused. A non-draft
+    /// offer is the customer's already and is left alone; the return value says
+    /// so, and the ops alert opens with ACTION NEEDED.
+    /// </summary>
+    private async Task<bool> RemoveSeededOptionsAsync(ProviderOutreach outreach)
+    {
         var seeded = await db.OfferOptions
             .Include(o => o.Offer)
             .Where(o => o.CreatedFromOutreachId == outreach.Id)
@@ -505,13 +525,7 @@ public class QuoteController(
                 stillOffered = true;
             }
         }
-
-        await db.SaveChangesAsync();
-
-        // After the commit, same ordering rule as every alert in this file.
-        await EnqueueDeclineOpsAlertAsync(lead, outreach, reason, outreach.DeclineNote, stillOffered);
-
-        return Ok(new QuoteDeclinedDto(true, reason, outreach.DeclineNote));
+        return stillOffered;
     }
 
     /// <summary>
@@ -520,7 +534,7 @@ public class QuoteController(
     /// and every future fan-out to this provider is wasted until it is fixed.
     /// Reference in the subject, same threading rule as the other alerts.
     /// </summary>
-    private async Task EnqueueDeclineOpsAlertAsync(
+    private async Task<(string To, string Subject, string Body)> BuildDeclineOpsAlertAsync(
         DemandLead lead, ProviderOutreach outreach, string? reason, string? note, bool stillOffered = false)
     {
         var supplierName = await db.Suppliers
@@ -542,7 +556,7 @@ public class QuoteController(
             : "";
 
         var opsInbox = await OpsInbox.ResolveAsync(db);
-        emailQueue.EnqueueEmail(
+        return (
             opsInbox,
             $"Ruumly — provider declined ({route}) [{reference}]",
             warning +
@@ -624,6 +638,26 @@ public class QuoteController(
         var unit = Clamp(req.PriceUnit, 40);
         var availability = Clamp(req.Availability, 200);
         var note = Clamp(req.Note, 2000);
+
+        // "Ei ole võimalik" typed into the availability field is a NO, whatever
+        // number sits in the price box. AKM Rent answered a Keila request exactly
+        // that way on 2026-11-27 (15 €, "Ei ole võimalik", "our trailers are only
+        // in Tallinn") and it landed on the draft as a 15 € offer. Recorded as a
+        // decline instead — same effect as the page's own decline button. Only
+        // for a first answer: a provider who already priced this job and now
+        // writes "not possible" is changing a live quote, which stays a human
+        // conversation (the decline endpoint's already_quoted rule).
+        if (outreach.QuotedAt is null && NotPossibleAnswer.Matches(availability))
+        {
+            outreach.Status = ProviderOutreachStatus.Declined;
+            if (note is not null) outreach.DeclineNote = note;
+            outreach.DeclinedAt ??= DateTime.UtcNow;
+            var stillOffered = await RemoveSeededOptionsAsync(outreach);
+            await db.SaveChangesAsync();
+
+            var alert = await BuildDeclineOpsAlertAsync(lead, outreach, null, outreach.DeclineNote, stillOffered);
+            return (Ok(new QuoteSubmittedDto(true, amount, unit, availability, note, Declined: true)), alert, null);
+        }
 
         // 1. Record the answer on the outreach row. A blank note leaves any
         //    previously submitted note intact — never destroys text on a re-submit.
