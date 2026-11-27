@@ -482,10 +482,34 @@ public class QuoteController(
         if (note is not null) outreach.DeclineNote = note;
         outreach.DeclinedAt  ??= DateTime.UtcNow;
 
+        // A provider with a standing price has an option on the draft from the
+        // moment the request reached them (see StandingPrice) — and QuotedAt is
+        // null, so the already_quoted guard above does not stop them. Their "no"
+        // must take that price back out, or the draft keeps offering a provider
+        // who has just refused. Only a DRAFT is edited: once the offer has gone
+        // to the customer, withdrawing an option is ops' call, so say so loudly.
+        var seeded = await db.OfferOptions
+            .Include(o => o.Offer)
+            .Where(o => o.CreatedFromOutreachId == outreach.Id)
+            .ToListAsync();
+        var stillOffered = false;
+        foreach (var option in seeded)
+        {
+            if (option.Offer!.Status == OfferStatus.Draft)
+            {
+                db.OfferOptions.Remove(option);
+                option.Offer.Version++;
+            }
+            else
+            {
+                stillOffered = true;
+            }
+        }
+
         await db.SaveChangesAsync();
 
         // After the commit, same ordering rule as every alert in this file.
-        await EnqueueDeclineOpsAlertAsync(lead, outreach, reason, outreach.DeclineNote);
+        await EnqueueDeclineOpsAlertAsync(lead, outreach, reason, outreach.DeclineNote, stillOffered);
 
         return Ok(new QuoteDeclinedDto(true, reason, outreach.DeclineNote));
     }
@@ -497,7 +521,7 @@ public class QuoteController(
     /// Reference in the subject, same threading rule as the other alerts.
     /// </summary>
     private async Task EnqueueDeclineOpsAlertAsync(
-        DemandLead lead, ProviderOutreach outreach, string? reason, string? note)
+        DemandLead lead, ProviderOutreach outreach, string? reason, string? note, bool stillOffered = false)
     {
         var supplierName = await db.Suppliers
             .Where(s => s.Id == outreach.SupplierId)
@@ -512,11 +536,16 @@ public class QuoteController(
         var reasonLine = reason is null
             ? "No reason given — a bare no."
             : DeclineReasons.OpsLabel(reason);
+        var warning = stillOffered
+            ? "ACTION NEEDED: this provider's profile price is on an offer the customer has " +
+              "ALREADY been sent. Withdraw that option or tell the customer it is unavailable.\n\n"
+            : "";
 
         var opsInbox = await OpsInbox.ResolveAsync(db);
         emailQueue.EnqueueEmail(
             opsInbox,
             $"Ruumly — provider declined ({route}) [{reference}]",
+            warning +
             $"Provider {supplierName} declined the {category} request in {route}.\n\n" +
             $"Reason: {reasonLine}\n" +
             $"Their note: {note ?? "—"}\n\n" +
@@ -611,34 +640,13 @@ public class QuoteController(
             .FirstOrDefaultAsync() ?? "Provider";
 
         // 2. Find-or-create the lead's newest Draft offer.
-        var offer = await db.Offers
-            .Include(o => o.Options)
-            .Where(o => o.DemandLeadId == lead.Id && o.Status == OfferStatus.Draft)
-            .OrderByDescending(o => o.CreatedAt)
-            .ThenByDescending(o => o.Id)
-            .FirstOrDefaultAsync();
-        if (offer is null)
-        {
-            offer = new Offer
-            {
-                Id           = Guid.NewGuid(),
-                DemandLeadId = lead.Id,
-                Token        = OfferToken.Generate(),
-                Status       = OfferStatus.Draft,
-                Language     = lead.Language is "et" or "en" or "ru" or "lv" or "lt" ? lead.Language : "et",
-                CreatedAt    = DateTime.UtcNow,
-                // Authorship only (no admin is behind this draft); the per-option
-                // "from provider quote" badge comes from CreatedFromOutreachId.
-                CreatedBy    = "provider-quote",
-            };
-            db.Offers.Add(offer);
-        }
+        var offer = await DraftOffers.FindOrCreateAsync(db, lead, "provider-quote");
 
         // 3. Add-or-update THIS outreach's own option (re-submit updates it, never
         //    duplicates). Keyed on CreatedFromOutreachId rather than SupplierId so
         //    the quote can never overwrite an admin-authored option for the same
         //    supplier — if one exists, this adds a separate option beside it.
-        var title = Clamp($"{supplierName} — {lead.City}", 200)!;
+        var title = DraftOffers.OptionTitle(supplierName, lead);
 
         // The provider typed their unit in THEIR language; this option is read by
         // the CUSTOMER. A Latvian yard answering an English-speaking customer

@@ -84,6 +84,18 @@ public static class PriceUnitNormalizer
     public static string? ToCustomerLanguage(string? providerUnit, string language)
     {
         if (string.IsNullOrWhiteSpace(providerUnit)) return providerUnit;
+        if (Parse(providerUnit) is not { } unit) return providerUnit;
+
+        var lang = Rendered[unit].ContainsKey(language) ? language : "en";
+        return Rendered[unit][lang];
+    }
+
+    /// <summary>True when the unit is a recognised per-day (24 h) rate.</summary>
+    public static bool IsPerDay(string? providerUnit) => Parse(providerUnit) == Unit.Day;
+
+    private static Unit? Parse(string? providerUnit)
+    {
+        if (string.IsNullOrWhiteSpace(providerUnit)) return null;
 
         var key = providerUnit.Trim().TrimStart('/', '\\', ' ').Trim();
         // "per day", "a 24h" — drop a leading preposition before matching.
@@ -94,9 +106,6 @@ public static class PriceUnitNormalizer
         }
         key = key.TrimEnd('.', ',', ' ');
 
-        if (!Known.TryGetValue(key, out var unit)) return providerUnit;
-
-        var lang = Rendered[unit].ContainsKey(language) ? language : "en";
-        return Rendered[unit][lang];
+        return Known.TryGetValue(key, out var unit) ? unit : null;
     }
 }

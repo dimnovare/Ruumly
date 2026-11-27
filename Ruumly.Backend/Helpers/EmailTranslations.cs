@@ -169,6 +169,17 @@ public static class EmailTranslations
         // never said so, which left a provider who was blocked with silence as
         // their only available move.
         string OutreachCannotPrice,
+        // Only for a provider whose own profile carries a flat daily rental
+        // price (see StandingPrice): that price goes into the customer's offer
+        // unless they update it. {price} = "80 €/ööpäev". Ends by introducing
+        // the change-price button (OutreachStandingPriceCta) that follows it.
+        string OutreachStandingPriceTpl,
+        string OutreachStandingPriceCta,
+        // The same letter's only other answer, with its own button straight to
+        // the decline panel on the quote page. Button text matches the page's
+        // own "quote.decline.cta" so the provider lands on the words they clicked.
+        string OutreachStandingDeclineLine,
+        string OutreachStandingDeclineCta,
         // Discrete field labels — the request facts are rendered as a table in
         // HTML and as "Label: value" lines in the text fallback.
         string OutreachLabelService,
@@ -569,6 +580,9 @@ public static class EmailTranslations
         /// when the lead actually carries a near-term need date.</summary>
         public string OutreachUrgent(string date) =>
             OutreachUrgentTpl.Replace("{date}", date);
+
+        public string OutreachStandingPrice(string price) =>
+            OutreachStandingPriceTpl.Replace("{price}", price);
 
         /// <summary>"Questions? Reply to this email, or write to us through our
         /// contact page: {url}" — build the URL with
@@ -1476,6 +1490,10 @@ public static class EmailTranslations
         OutreachProvenanceTpl:         "Klient esitas selle päringu meie veebilehel {date}. Vastamine on tasuta ja mittesiduv ning hinna esitamiseks ei ole kontot vaja.",
         OutreachAsk:                   "Kas saate selle töö vastu võtta? Piisab lühikesest vastusest: kas aeg sobib ja milline oleks ligikaudne hind. Kui saadate hinna, saame selle kliendile edasi anda; kui klient teie pakkumise valib, viime teid omavahel kokku.",
         OutreachCannotPrice:           "Kui te ei saa selle info põhjal hinda anda, märkige samal lehel, mida on juurde vaja — küsime kliendilt üle.",
+        OutreachStandingPriceTpl:      "Meie süsteemis on teie hind {price} ja pakume kliendile seda hinda. Kui hind on muutunud, muutke seda siin:",
+        OutreachStandingPriceCta:      "Muuda hinda",
+        OutreachStandingDeclineLine:   "Kui te ei saa seda tööd vastu võtta, märkige see siin:",
+        OutreachStandingDeclineCta:    "Ma ei saa seda tööd võtta",
         OutreachLabelService:          "Teenus",
         OutreachLabelLocation:         "Asukoht",
         OutreachLabelDate:             "Soovitud aeg",
@@ -1700,6 +1718,10 @@ public static class EmailTranslations
         OutreachProvenanceTpl:         "A customer submitted this request on our website on {date}. Answering is free and non-binding, and you don't need an account to send a price.",
         OutreachAsk:                   "Can you take this job? A short answer is enough: whether the date works for you and roughly what it would cost. If you send us a price, we can pass it to the customer; if the customer picks your offer, we put the two of you in touch.",
         OutreachCannotPrice:           "If you can't price this from what we've sent, say on the same page what is missing — we'll ask the customer.",
+        OutreachStandingPriceTpl:      "Your price in our system is {price}, and we will quote the customer this price. If your price has changed, change it here:",
+        OutreachStandingPriceCta:      "Change price",
+        OutreachStandingDeclineLine:   "If you cannot take this job, mark it here:",
+        OutreachStandingDeclineCta:    "I can't take this one",
         OutreachLabelService:          "Service",
         OutreachLabelLocation:         "Location",
         OutreachLabelDate:             "Preferred date",
@@ -1916,6 +1938,10 @@ public static class EmailTranslations
         OutreachProvenanceTpl:         "Клиент отправил этот запрос на нашем сайте {date}. Ответ бесплатный и ни к чему не обязывает, а для отправки цены не нужен аккаунт.",
         OutreachAsk:                   "Можете взять этот заказ? Достаточно короткого ответа: подходит ли дата и какой была бы примерная цена. Если вы пришлёте цену, мы сможем передать её клиенту; если клиент выберет ваше предложение, мы вас сведём.",
         OutreachCannotPrice:           "Если по этим данным цену назвать нельзя, укажите на той же странице, чего не хватает, — мы уточним у клиента.",
+        OutreachStandingPriceTpl:      "В нашей системе ваша цена {price}, и мы предложим клиенту эту цену. Если цена изменилась, измените её здесь:",
+        OutreachStandingPriceCta:      "Изменить цену",
+        OutreachStandingDeclineLine:   "Если вы не можете взять эту работу, отметьте это здесь:",
+        OutreachStandingDeclineCta:    "Не могу взять этот заказ",
         OutreachLabelService:          "Услуга",
         OutreachLabelLocation:         "Местоположение",
         OutreachLabelDate:             "Желаемая дата",
@@ -2132,6 +2158,10 @@ public static class EmailTranslations
         OutreachProvenanceTpl:         "Klients iesniedza šo pieprasījumu mūsu vietnē {date}. Atbildēt ir bez maksas un bez saistībām, un cenas nosūtīšanai konts nav vajadzīgs.",
         OutreachAsk:                   "Vai varat uzņemties šo darbu? Pietiek ar īsu atbildi: vai datums jums der un kāda būtu aptuvenā cena. Ja atsūtīsiet cenu, mēs to varēsim nodot klientam; ja klients izvēlēsies jūsu piedāvājumu, mēs jūs savedīsim kopā.",
         OutreachCannotPrice:           "Ja pēc šīs informācijas cenu nosaukt nevarat, tajā pašā lapā norādiet, kas trūkst — mēs pajautāsim klientam.",
+        OutreachStandingPriceTpl:      "Mūsu sistēmā jūsu cena ir {price}, un mēs piedāvāsim klientam šo cenu. Ja cena ir mainījusies, mainiet to šeit:",
+        OutreachStandingPriceCta:      "Mainīt cenu",
+        OutreachStandingDeclineLine:   "Ja nevarat uzņemties šo darbu, atzīmējiet to šeit:",
+        OutreachStandingDeclineCta:    "Nevaru uzņemties šo darbu",
         OutreachLabelService:          "Pakalpojums",
         OutreachLabelLocation:         "Atrašanās vieta",
         OutreachLabelDate:             "Vēlamais datums",
@@ -2348,6 +2378,10 @@ public static class EmailTranslations
         OutreachProvenanceTpl:         "Klientas pateikė šią užklausą mūsų svetainėje {date}. Atsakyti nemokama ir be įsipareigojimų, o kainai pateikti paskyros nereikia.",
         OutreachAsk:                   "Ar galite imtis šio darbo? Pakanka trumpo atsakymo: ar data jums tinka ir kokia būtų apytikslė kaina. Jei atsiųsite kainą, galėsime ją pateikti klientui; jei klientas pasirinks jūsų pasiūlymą, jus sujungsime.",
         OutreachCannotPrice:           "Jei pagal šią informaciją kainos pateikti negalite, tame pačiame puslapyje nurodykite, ko trūksta — paklausime kliento.",
+        OutreachStandingPriceTpl:      "Mūsų sistemoje jūsų kaina yra {price}, ir šią kainą pasiūlysime klientui. Jei kaina pasikeitė, pakeiskite ją čia:",
+        OutreachStandingPriceCta:      "Keisti kainą",
+        OutreachStandingDeclineLine:   "Jei negalite imtis šio darbo, pažymėkite tai čia:",
+        OutreachStandingDeclineCta:    "Negaliu imtis šio darbo",
         OutreachLabelService:          "Paslauga",
         OutreachLabelLocation:         "Vieta",
         OutreachLabelDate:             "Pageidaujama data",

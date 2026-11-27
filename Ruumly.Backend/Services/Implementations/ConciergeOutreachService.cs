@@ -113,6 +113,11 @@ public sealed class ConciergeOutreachService(
         // rather than a single job. Decides whether ServesRecurring applies.
         var wantsRecurring = LeadScope.WantsRecurringService(lead.ScopeJson);
 
+        // Providers whose own published daily rate becomes their quote for this
+        // request (see StandingPrice). Collected in the loop, written into the
+        // lead's draft offer in the same transaction as the outreach rows.
+        var standingSeeds = new List<(Supplier Supplier, ProviderOutreach Row, StandingPrice.Quote Quote)>();
+
         IDbContextTransaction? transaction = null;
 
         try
@@ -220,7 +225,13 @@ public sealed class ConciergeOutreachService(
                 };
                 db.ProviderOutreaches.Add(row);
                 sent.Add(new(row, supplier.Name));
+
+                if (StandingPrice.For(supplier, lead) is { } standing)
+                    standingSeeds.Add((supplier, row, standing));
             }
+
+            if (standingSeeds.Count > 0 && !IsClosed(lead))
+                await SeedStandingPricesAsync(lead, standingSeeds, ct);
 
             // First outreach is the first touch: New → Contacted (stamps
             // ContactedAt). Leads further down the funnel keep their status.
@@ -535,6 +546,71 @@ public sealed class ConciergeOutreachService(
     }
 
     // ─── PlatformSettings (key/value table — no migration for new keys) ───────
+
+    /// <summary>
+    /// Writes each standing price into the lead's draft offer as that provider's
+    /// option, keyed to the outreach row exactly as a quote-page answer is — so
+    /// when the provider does answer, QuoteController updates THIS option rather
+    /// than adding a second one beside it.
+    ///
+    /// The outreach row's own Quoted* fields are left alone: the provider has
+    /// not answered, and stamping QuotedAt would count silence as a reply in the
+    /// response-time and quote-rate metrics. Nor is auto-send triggered here —
+    /// an unconfirmed profile price reaches the customer when an admin sends it.
+    /// </summary>
+    private async Task SeedStandingPricesAsync(
+        DemandLead lead,
+        IReadOnlyList<(Supplier Supplier, ProviderOutreach Row, StandingPrice.Quote Quote)> seeds,
+        CancellationToken ct)
+    {
+        var offer = await DraftOffers.FindOrCreateAsync(db, lead, "standing-price", ct);
+        var added = 0;
+
+        foreach (var (supplier, row, quote) in seeds)
+        {
+            // A resend mints a fresh outreach row; the supplier's option from the
+            // first send is still the one to keep. Never two options per supplier.
+            if (offer.Options.Any(o => o.SupplierId == supplier.Id)) continue;
+
+            // The note is free text in the provider's own language; the offer is
+            // read in the customer's. Carry it only when they are the same.
+            var note = offer.Language == ProviderOutreachComposer.LanguageFor(supplier) ? quote.Note : null;
+
+            // Through the DbSet, not offer.Options — see QuoteController: a
+            // pre-generated key on a child of a tracked parent is otherwise
+            // treated as an UPDATE of a row that does not exist.
+            db.OfferOptions.Add(new OfferOption
+            {
+                Id                    = Guid.NewGuid(),
+                OfferId               = offer.Id,
+                SupplierId            = supplier.Id,
+                CreatedFromOutreachId = row.Id,
+                Title                 = DraftOffers.OptionTitle(supplier.Name, lead),
+                PriceAmount           = quote.Amount,
+                PriceUnit             = PriceUnitNormalizer.ToCustomerLanguage(quote.Unit, offer.Language),
+                Notes                 = note,
+                SortOrder             = offer.Options.Count + added,
+            });
+            added++;
+        }
+
+        if (added == 0) return;
+
+        offer.Version++;
+        db.AuditLogs.Add(new AuditLog
+        {
+            Id        = Guid.NewGuid(),
+            Action    = "offer.standing_price_seeded",
+            Actor     = "system",
+            Target    = offer.Id.ToString(),
+            Detail    = $"Lead {lead.Id}: {added} option(s) from providers' own profile prices, " +
+                        "unconfirmed until the provider answers.",
+            CreatedAt = DateTime.UtcNow,
+        });
+    }
+
+    private static bool IsClosed(DemandLead lead) =>
+        lead.Status is DemandLeadStatus.Converted or DemandLeadStatus.Dismissed or DemandLeadStatus.Unmatched;
 
     private async Task<string?> GetSettingAsync(string key, CancellationToken ct) =>
         await db.PlatformSettings

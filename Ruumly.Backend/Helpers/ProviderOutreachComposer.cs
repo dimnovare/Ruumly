@@ -98,7 +98,8 @@ public static class ProviderOutreachComposer
         // near-identical requests — addressed to nobody, from a name they did
         // not know. We are holding the company name the whole time; not using it
         // is the difference between a letter and a mailshot.
-        => ComposeInLanguage(LanguageFor(supplier), lead, appUrl, quoteToken, supplier.Name);
+        => ComposeInLanguage(LanguageFor(supplier), lead, appUrl, quoteToken, supplier.Name,
+                             StandingPrice.For(supplier, lead));
 
     /// <summary>
     /// Language of outbound provider mail — the supplier's own country, not the
@@ -119,7 +120,8 @@ public static class ProviderOutreachComposer
         DemandLead lead,
         string? appUrl = null,
         string? quoteToken = null,
-        string? providerName = null)
+        string? providerName = null,
+        StandingPrice.Quote? standingPrice = null)
     {
         var t = EmailTranslations.For(language);
         var route = string.IsNullOrWhiteSpace(lead.ToCity)
@@ -276,13 +278,20 @@ public static class ProviderOutreachComposer
         if (photoCount > 0)
             facts.Add((t.OutreachLabelPhotos, t.OutreachPhotos(photoCount)));
 
+        // Said only where there is a quote page to update the price on — the
+        // same condition under which ConciergeOutreachService seeds the draft.
+        var standingLine = standingPrice is not null && quoteUrl is not null
+            ? t.OutreachStandingPrice(StandingPrice.Format(standingPrice, language))
+            : null;
+
         var copy = new OutreachCopy(
             greeting,
             t.OutreachProvenance(submitted),
             urgentLine,
             quoteUrl,
             questions,
-            FrontendUrl.Contact(appUrl, language));
+            FrontendUrl.Contact(appUrl, language),
+            standingLine);
 
         return new(
             language,
@@ -316,7 +325,8 @@ public static class ProviderOutreachComposer
         string? UrgentLine,
         string? QuoteUrl,
         string Questions,
-        string ContactUrl);
+        string ContactUrl,
+        string? StandingPriceLine);
 
     /// <summary>
     /// The three answers this email accepts, in descending order of what they
@@ -352,6 +362,9 @@ public static class ProviderOutreachComposer
         IReadOnlyList<(string Label, string Value)> facts,
         OutreachCopy copy)
     {
+        if (copy.StandingPriceLine is not null && copy.QuoteUrl is not null)
+            return BuildStandingText(t, facts, copy);
+
         var lines = new List<string>
         {
             copy.Greeting,
@@ -397,6 +410,59 @@ public static class ProviderOutreachComposer
 
         return string.Join("\n", lines);
     }
+
+    /// <summary>
+    /// The letter to a provider whose own price is already on file (see
+    /// StandingPrice) — founder's wording, 2026-11-27. These are partners who
+    /// claimed their profile and set that price themselves: they know what Ruumly
+    /// is, so the introduction, the "what answering costs" reassurance, the
+    /// alternative answers and the opt-out paragraph are all gone. What is left
+    /// is the price we will quote, the two things they can do about it (change
+    /// it, or say they cannot take the job), and the request itself.
+    /// </summary>
+    private static string BuildStandingText(
+        EmailTranslations.EmailStrings t,
+        IReadOnlyList<(string Label, string Value)> facts,
+        OutreachCopy copy)
+    {
+        var lines = new List<string>
+        {
+            copy.Greeting,
+            "",
+            copy.StandingPriceLine!,
+            $"{t.OutreachStandingPriceCta} → {copy.QuoteUrl}",
+            "",
+            t.OutreachStandingDeclineLine,
+            $"{t.OutreachStandingDeclineCta} → {DeclineUrl(copy.QuoteUrl!)}",
+            "",
+            copy.Provenance,
+            "",
+        };
+
+        if (copy.UrgentLine is not null)
+        {
+            lines.Add($"** {copy.UrgentLine} **");
+            lines.Add("");
+        }
+
+        foreach (var (label, value) in facts)
+            lines.Add($"{label}: {value}");
+
+        lines.Add("");
+        lines.Add(t.OutreachSignature);
+        lines.Add("");
+        lines.Add(OperatorLegalLine);
+
+        return string.Join("\n", lines);
+    }
+
+    /// <summary>
+    /// The quote page with its decline panel already open (the page reads
+    /// <c>?answer=decline</c>). An older cached page build ignores the
+    /// parameter and simply shows the page, decline button at the bottom.
+    /// </summary>
+    internal static string DeclineUrl(string quoteUrl) =>
+        quoteUrl + (quoteUrl.Contains('?') ? "&" : "?") + "answer=decline";
 
     /// <summary>
     /// Minimal inline-styled HTML: no external CSS, no images, no tracking
@@ -468,6 +534,30 @@ public static class ProviderOutreachComposer
                      <p style="margin:0 0 20px;color:{MutedText};font-size:13px;word-break:break-all;">{E(copy.QuoteUrl)}</p>
                """;
 
+        // Highlighted, because it changes what silence means: for this provider
+        // NOT answering is itself an answer — their profile price goes out. The
+        // price change is the filled button; the decline is the quiet outline one.
+        var standingHtml = copy.StandingPriceLine is null || copy.QuoteUrl is null
+            ? ""
+            : $"""
+                     <table width="100%" cellpadding="0" cellspacing="0" style="background:#E0F2F1;border-left:4px solid {Teal};border-radius:4px;margin:0 0 20px;">
+                       <tr><td style="padding:16px;color:{BodyText};font-size:15px;line-height:1.6;">
+                         <p style="margin:0 0 12px;">{E(copy.StandingPriceLine)}</p>
+                         <table cellpadding="0" cellspacing="0" style="margin:0 0 18px;">
+                           <tr><td style="background:{Teal};border-radius:6px;">
+                             <a href="{E(copy.QuoteUrl)}" style="display:inline-block;padding:12px 24px;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;">{E(t.OutreachStandingPriceCta)}</a>
+                           </td></tr>
+                         </table>
+                         <p style="margin:0 0 12px;">{E(t.OutreachStandingDeclineLine)}</p>
+                         <table cellpadding="0" cellspacing="0">
+                           <tr><td style="background:#ffffff;border:1px solid #B0BEC5;border-radius:6px;">
+                             <a href="{E(DeclineUrl(copy.QuoteUrl))}" style="display:inline-block;padding:10px 20px;color:{BodyText};font-size:14px;font-weight:600;text-decoration:none;">{E(t.OutreachStandingDeclineCta)}</a>
+                           </td></tr>
+                         </table>
+                       </td></tr>
+                     </table>
+               """;
+
         // The signature now carries the public site address, and it has to be
         // clickable for exactly the reason the contact link does — most clients
         // will not auto-link a bare URL in an HTML body, and a "check us for
@@ -486,6 +576,39 @@ public static class ProviderOutreachComposer
                         <p style="margin:0 0 20px;color:{BodyText};font-size:15px;line-height:1.6;">{E(a)}</p>
             """));
 
+        var factsHtml = $"""
+                        <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
+            {factRows}
+                        </table>
+            """;
+
+        // Standing-price letter: price box first, then the request — nothing else
+        // (see BuildStandingText for why).
+        var content = standingHtml.Length > 0
+            ? $"""
+                        <p style="margin:0 0 16px;color:{BodyText};font-size:16px;">{E(copy.Greeting)}</p>
+            {standingHtml}
+                        <p style="margin:0 0 20px;color:{BodyText};font-size:15px;line-height:1.6;">{E(copy.Provenance)}</p>
+            {urgentHtml}
+            {factsHtml}
+                        <p style="margin:0;color:{MutedText};font-size:14px;line-height:1.6;">{signatureHtml}</p>
+                        <p style="margin:20px 0 0;padding-top:16px;border-top:1px solid #ECEFF1;color:{MutedText};font-size:12px;line-height:1.5;">{E(OperatorLegalLine)}</p>
+            """
+            : $"""
+                        <p style="margin:0 0 12px;color:{BodyText};font-size:16px;">{E(copy.Greeting)}</p>
+                        <p style="margin:0 0 16px;color:{BodyText};font-size:15px;line-height:1.6;">{E(t.OutreachIntro)}</p>
+                        <p style="margin:0 0 20px;color:{BodyText};font-size:15px;line-height:1.6;">{E(copy.Provenance)}</p>
+            {urgentHtml}
+            {factsHtml}
+                        <p style="margin:0 0 20px;color:{BodyText};font-size:15px;line-height:1.6;">{E(t.OutreachAsk)}</p>
+            {ctaHtml}
+            {answersHtml}
+                        <p style="margin:0 0 24px;color:{BodyText};font-size:15px;line-height:1.6;">{Linkified(copy.Questions, copy.ContactUrl)}</p>
+                        <p style="margin:0;color:{MutedText};font-size:14px;line-height:1.6;">{signatureHtml}</p>
+                        <p style="margin:20px 0 0;padding-top:16px;border-top:1px solid #ECEFF1;color:{MutedText};font-size:12px;line-height:1.5;">{E(t.IntroOptOut(SupplierIntroComposer.OptOutKeyword))}</p>
+                        <p style="margin:8px 0 0;color:{MutedText};font-size:12px;line-height:1.5;">{E(OperatorLegalLine)}</p>
+            """;
+
         return $"""
             <!DOCTYPE html>
             <html>
@@ -502,20 +625,7 @@ public static class ProviderOutreachComposer
                     </tr>
                     <tr>
                       <td style="padding:28px;">
-                        <p style="margin:0 0 12px;color:{BodyText};font-size:16px;">{E(copy.Greeting)}</p>
-                        <p style="margin:0 0 16px;color:{BodyText};font-size:15px;line-height:1.6;">{E(t.OutreachIntro)}</p>
-                        <p style="margin:0 0 20px;color:{BodyText};font-size:15px;line-height:1.6;">{E(copy.Provenance)}</p>
-            {urgentHtml}
-                        <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
-            {factRows}
-                        </table>
-                        <p style="margin:0 0 20px;color:{BodyText};font-size:15px;line-height:1.6;">{E(t.OutreachAsk)}</p>
-            {ctaHtml}
-            {answersHtml}
-                        <p style="margin:0 0 24px;color:{BodyText};font-size:15px;line-height:1.6;">{Linkified(copy.Questions, copy.ContactUrl)}</p>
-                        <p style="margin:0;color:{MutedText};font-size:14px;line-height:1.6;">{signatureHtml}</p>
-                        <p style="margin:20px 0 0;padding-top:16px;border-top:1px solid #ECEFF1;color:{MutedText};font-size:12px;line-height:1.5;">{E(t.IntroOptOut(SupplierIntroComposer.OptOutKeyword))}</p>
-                        <p style="margin:8px 0 0;color:{MutedText};font-size:12px;line-height:1.5;">{E(OperatorLegalLine)}</p>
+            {content}
                       </td>
                     </tr>
                   </table>
