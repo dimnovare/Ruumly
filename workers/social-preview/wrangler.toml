@@ -12,6 +12,13 @@ SITE_URL     = "https://ruumly.eu"
 # step with `wrangler deploy`. Alternatively, attach via the Cloudflare dashboard:
 #   Workers & Pages → ruumly-social-preview → Triggers → Routes → ruumly.eu/*
 #
+# Free plan = 100k Worker requests/day. Static files are EXCLUDED via worker-less
+# routes created in the dashboard/API (not managed here; `wrangler deploy` leaves
+# them alone): /assets/*, /index.html, /sw.js, /favicon.ico, /robots.txt,
+# /sitemap.xml, /manifest.json, /ruumly-*, /cdn-cgi/*, /.well-known/*.
+# The ruumly.eu/* route is set to FAIL OPEN (site keeps working if the cap is hit).
+# 2026-11-13: a US VPS bot (107.172.175.0/24, "Linux Chrome 145") did ~308k requests
+# and pushed the account to 96%.
 [[routes]]
 pattern  = "ruumly.eu/*"
 zone_name = "ruumly.eu"

@@ -138,11 +138,13 @@ const HUB_TITLE: Record<Lang, (noun: string, city: string) => string> = {
 };
 
 const HUB_DESC: Record<Lang, (noun: string, city: string) => string> = {
-  et: (n, c) => `${n} ${c} piirkonnas — võrdle kontrollitud pakkujaid Ruumlys. Või saada üks päring ja saa 2–3 pakkumist, tavaliselt 24 tunni jooksul.`,
-  en: (n, c) => `${n} in ${c} — compare verified providers on Ruumly, or send one request and get 2–3 offers, usually within 24 hours.`,
-  ru: (n, c) => `${n} — ${c}. Сравните проверенных поставщиков на Ruumly или отправьте один запрос и получите 2–3 предложения обычно за 24 часа.`,
-  lv: (n, c) => `${n} ${c} — salīdzini pārbaudītus pakalpojumu sniedzējus Ruumly. Vai sūti vienu pieprasījumu un saņem 2–3 piedāvājumus 24 stundās.`,
-  lt: (n, c) => `${n} ${c} — palyginkite patikrintus tiekėjus Ruumly. Arba atsiųskite vieną užklausą ir gaukite 2–3 pasiūlymus per 24 val.`,
+  // "up to 3 offers", no time promise — the site's own wording since 2026-08,
+  // when the 24-hour claim was dropped as one ops cannot guarantee.
+  et: (n, c) => `${n} ${c} piirkonnas — võrdle kontrollitud pakkujaid Ruumlys. Või saada üks päring ja saa kuni 3 pakkumist.`,
+  en: (n, c) => `${n} in ${c} — compare verified providers on Ruumly, or send one request and get up to 3 offers.`,
+  ru: (n, c) => `${n} — ${c}. Сравните проверенных поставщиков на Ruumly или отправьте одну заявку и получите до 3 предложений.`,
+  lv: (n, c) => `${n} ${c} — salīdzini pārbaudītus pakalpojumu sniedzējus Ruumly. Vai sūti vienu pieprasījumu un saņem līdz 3 piedāvājumiem.`,
+  lt: (n, c) => `${n} ${c} — palyginkite patikrintus tiekėjus Ruumly. Arba atsiųskite vieną užklausą ir gaukite iki 3 pasiūlymų.`,
 };
 
 // ── Homepage copy per language ─────────────────────────────────────────────────
@@ -154,34 +156,37 @@ const HUB_DESC: Record<Lang, (noun: string, city: string) => string> = {
 //     2026-08: Rīga, Daugavpils, Rēzekne, Jēkabpils, Valmiera, Cēsis, Sigulda,
 //     Ogre, Salaspils; Vilnius, Kaunas, Klaipėda, Šiauliai, Panevėžys). Coverage
 //     claims may say "the Baltics".
-//   • The CONCIERGE — "send one request, we broker 2–3 offers" — is still run out
+//   • The CONCIERGE — "send one request, we broker up to 3 offers" — is still run out
 //     of Estonia and is strongest in Tallinn/Harjumaa. Never phrase it so a Rīga
 //     or Vilnius customer reads full-service parity into it.
 // The titles below therefore say what the directory holds and where; the "one
-// request → 2–3 offers" promise moved into the description, where it carries no
+// request → up to 3 offers" promise moved into the description, where it carries no
 // country name. It used to sit in the title welded to a country, which read as a
 // full-service guarantee once the title said "Baltics".
 
 // No em dash here: withSiteName() appends " — Ruumly", and two of them in one
 // title reads badly in a search result. Use a colon if you need a break.
 const HOME_TITLE: Record<Lang, string> = {
-  et: "Kolimine, laopind ja haagised Baltikumis",
-  en: "Movers, storage and trailers in the Baltics",
-  ru: "Переезд, склады и прицепы в странах Балтии",
-  lv: "Pārcēlāji, noliktavas un piekabes Baltijā",
-  lt: "Krovėjai, sandėliai ir priekabos Baltijos šalyse",
+  // Verbatim the site's own seo.homeTitle (estonia-space-hub/src/i18n/locales).
+  // This Worker rewrites the head for EVERY visitor, Googlebot included, so any
+  // drift from the app's copy is what search results show. Each already carries
+  // "| Ruumly", so withSiteName() adds nothing.
+  et: "Kolimine, kaubiku rent, laopind — üks päring | Ruumly",
+  en: "Moving, van rental, storage — one request | Ruumly",
+  ru: "Переезд, аренда фургона, склад — одна заявка | Ruumly",
+  lv: "Pārvākšanās, furgona noma, glabāšana | Ruumly",
+  lt: "Perkraustymas, furgono nuoma, sandėliavimas | Ruumly",
 };
 
 const HOME_DESC: Record<Lang, string> = {
-  // Widened 2026-08: the LV/LT directory import is live, so "across Estonia" was
-  // understating real coverage. Geography here describes the DIRECTORY only —
-  // the concierge match loop is still Estonia-run, so don't rewrite these into a
-  // per-country service promise.
-  et: "Kolimine, laopind, haagis, kaubik ja koristus — kõik ühest kohast. Partnerid Eestis, Lätis ja Leedus. Üks päring, 2–3 pakkumist, tavaliselt 24 tunniga.",
-  en: "Movers, storage, trailers, vans and cleaning — verified partners in Estonia, Latvia and Lithuania. One request, 2–3 offers, usually within 24 hours.",
-  ru: "Переезд, склад, прицепы, фургоны и уборка. Проверенные партнёры в Эстонии, Латвии и Литве. Один запрос — 2–3 предложения, обычно за 24 часа.",
-  lv: "Pārvākšanās, noliktavas, piekabes, furgoni un uzkopšana. Pārbaudīti partneri Igaunijā, Latvijā un Lietuvā. Viens pieprasījums — 2–3 piedāvājumi 24 stundās.",
-  lt: "Perkraustymas, sandėliai, priekabos, furgonai ir valymas. Patikrinti partneriai Estijoje, Latvijoje ir Lietuvoje. Viena užklausa — 2–3 pasiūlymai per 24 val.",
+  // Verbatim the site's own seo.homeDescription — see HOME_TITLE. Until
+  // 2026-11-27 this said "2–3 offers, usually within 24 hours", three months
+  // after the site itself dropped the 24-hour promise.
+  et: "Kolimine ees? Üks päring — kuni 3 pakkumist kohalikelt partneritelt: kolimine, kaubiku ja haagise rent, laopind, koristus. Tasuta, kogu Baltikum.",
+  en: "Moving soon? One request — up to 3 offers from local partners: movers, van and trailer rental, storage, cleaning. Free, no obligation, all the Baltics.",
+  ru: "Скоро переезд? Одна заявка — до 3 предложений от местных партнёров: грузчики, аренда фургона и прицепа, склад, уборка. Бесплатно, вся Балтия.",
+  lv: "Pārvākšanās? Viens pieprasījums — līdz 3 piedāvājumiem no vietējiem partneriem: pārcēlāji, furgona un piekabes noma, glabāšana, uzkopšana. Bez maksas, Baltijā.",
+  lt: "Kraustymasis? Viena užklausa — iki 3 pasiūlymų iš vietos partnerių: krovėjai, furgono ir priekabos nuoma, sandėliavimas, valymas. Nemokamai, Baltijos šalyse.",
 };
 
 function parseLang(segment: string | undefined): Lang {
@@ -236,7 +241,7 @@ const DEFAULT_IMAGE = "https://ruumly.eu/ruumly-og.png?v=3";
 // Bump to invalidate cached OG HTML at the edge (caches.default persists across
 // deploys, so changing og:image/title/desc otherwise won't reach crawlers until
 // the entry's TTL expires).
-const OG_CACHE_VERSION = "5";
+const OG_CACHE_VERSION = "6";
 const DEFAULT_TITLE = HOME_TITLE.en;
 const DEFAULT_DESC  = HOME_DESC.en;
 
